@@ -27,7 +27,7 @@ namespace SCRambl
 		inline MacroCode & Code()						{ return m_Code; }
 	};
 
-	class Macros
+	class CMacros
 	{
 		// macro macro maaaap... I wanna be, a macro map!
 		static const MacroMap			g_PredefinedMacros;
@@ -35,10 +35,11 @@ namespace SCRambl
 		MacroMap							m_Map;
 
 	public:
-		Macros();
+		CMacros();
 
 		const MacroCode		*	Get(const MacroName &) const;
 		void						Define(const MacroName &, const MacroCode &);
+		void						Define(const MacroName &, const std::string &);
 		void						Undefine(const MacroName &);
 		size_t					Size() const;
 	};

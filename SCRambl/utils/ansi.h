@@ -4,12 +4,12 @@
 namespace SCRambl
 {
 	// For checking characters
-	inline bool IsAlphabetic(char c)		{ return isalpha((int)c) != 0; }
-	inline bool IsAlphanumeric(char c)	{ return isalnum((int)c) != 0; }
-	inline bool IsDecimal(char c)		{ return isdigit((int)c) != 0; }
-	inline bool IsHex(char c)			{ return isxdigit((int)c) != 0; }
-	inline bool IsSpace(char c)			{ return isspace((int)c) != 0; }
-	inline bool IsPrint(char c)			{ return isprint((int)c) != 0; }
-	inline bool IsUpper(char c)			{ return isupper((int)c) != 0; }
-	inline bool IsLower(char c)			{ return islower((int)c) != 0; }
+	inline int IsAlphabetic(int c)		{ return std::isalpha(c) != 0; }
+	inline int IsAlphanumeric(int c)		{ return std::isalnum(c) != 0; }
+	inline int IsDecimal(int c)			{ return std::isdigit(c) != 0; }
+	inline int IsHex(int c)				{ return std::isxdigit(c) != 0; }
+	inline int IsSpace(int c)			{ return std::isspace(c) != 0; }
+	inline int IsPrint(int c)			{ return std::isprint(c) != 0; }
+	inline int IsUpper(int c)			{ return std::isupper(c) != 0; }
+	inline int IsLower(int c)			{ return std::islower(c) != 0; }
 }

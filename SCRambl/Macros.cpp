@@ -3,7 +3,7 @@
 
 namespace SCRambl
 {
-	const MacroMap Macros::g_PredefinedMacros = {
+	const MacroMap CMacros::g_PredefinedMacros = {
 		// Name					Macro()
 		{ "__SCRAMBL",			Macro("__SCRAMBL") },
 		{ "__SCRAMBL_VER",		Macro("__SCRAMBL_VER", MacroCode({ "0x01000101" })) },
@@ -22,27 +22,32 @@ namespace SCRambl
 	Macro::~Macro()
 	{}
 
-	const MacroCode * Macros::Get(const MacroName & name) const
+	const MacroCode * CMacros::Get(const MacroName & name) const
 	{
 		auto it = m_Map.find(name);
 		return it != m_Map.end() ? &it->second.Code() : nullptr;
 	}
 
-	void Macros::Define(const MacroName & name, const MacroCode & code)
+	void CMacros::Define(const MacroName & name, const MacroCode & code)
 	{
 		m_Map.insert(std::make_pair(name, Macro(name, code)));
 	}
 
-	void Macros::Undefine(const MacroName & name)
+	void CMacros::Define(const MacroName & name, const std::string &code)
+	{
+		m_Map.insert(std::make_pair(name, Macro(name, { code })));
+	}
+
+	void CMacros::Undefine(const MacroName & name)
 	{
 		m_Map.erase(name);
 	}
 
-	size_t Macros::Size() const
+	size_t CMacros::Size() const
 	{
 		return m_Map.size();
 	}
 
-	Macros::Macros() : m_Map(g_PredefinedMacros)
+	CMacros::CMacros() : m_Map(g_PredefinedMacros)
 	{}
 }

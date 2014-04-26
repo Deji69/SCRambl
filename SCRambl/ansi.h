@@ -3,18 +3,18 @@
 #include <cctype>
 
 // For checking characters
-inline bool IsAlphabetic(int c)		{ return isalpha(c) != 0; }
-inline bool IsAlphanumeric(int c)	{ return isalnum(c) != 0; }
-inline bool IsDecimal(int c)			{ return isdigit(c) != 0; }
-inline bool IsHex(int c)				{ return isxdigit(c) != 0; }
-inline bool IsSpace(int c)			{ return isspace(c) != 0; }
-inline bool IsPrint(int c)			{ return isprint(c) != 0; }
-inline bool IsUpper(int c)			{ return isupper(c) != 0; }
-inline bool IsLower(int c)			{ return islower(c) != 0; }
+inline int IsAlphabetic(int c)		{ return std::isalpha(c) != 0; }
+inline int IsAlphanumeric(int c)		{ return std::isalnum(c) != 0; }
+inline int IsDecimal(int c)			{ return std::isdigit(c) != 0; }
+inline int IsHex(int c)				{ return std::isxdigit(c) != 0; }
+inline int IsSpace(int c)			{ return std::isspace(c) != 0; }
+inline int IsPrint(int c)			{ return std::isprint(c) != 0; }
+inline int IsUpper(int c)			{ return std::isupper(c) != 0; }
+inline int IsLower(int c)			{ return std::islower(c) != 0; }
 
 // For transforming characters
-inline int ToUpper(int c)			{ return toupper(c); };
-inline int ToLower(int c)			{ return tolower(c); };
+inline int ToUpper(int c)			{ return std::toupper(c); };
+inline int ToLower(int c)			{ return std::tolower(c); };
 
 // For checking strings
 bool	 IsStringInt(const char *szStr)

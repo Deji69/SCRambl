@@ -17,10 +17,10 @@ namespace SCRambl
 	{
 		return std::isalnum(c) || c == '_' || c == '.';
 	}
-	int IsSpace(int c)
+	/*int IsSpace(int c)
 	{
 		return std::isspace(c);
-	}
+	}*/
 	int BothAreSpaces(int a, int b)
 	{
 		return IsSpace(a) && IsSpace(b);
@@ -59,4 +59,7 @@ namespace SCRambl
 	{
 		return IsSeparator(a) && IsSpace(b);
 	}
+
+	template<class A, class Z>
+	std::string GetIdentifier(A begin, Z end);
 }

@@ -34,7 +34,7 @@ namespace SCRambl
 			return is;
 		}
 	};
-	
+
 	typedef std::vector<std::string> CodeList;
 	typedef std::vector<std::string> StringList;
 
@@ -43,11 +43,13 @@ namespace SCRambl
 		CodeList								m_Code;
 		StringList							m_Errors;
 		StringList							m_Warnings;
-		Macros								m_Macros;
+		CMacros								m_Macros;
 		//std::map<std::string, Macro>		m_Macros;
 		//std::map<std::map, Variable>		m_Variables;
 
 		int									m_nCommentDepth;
+
+		std::vector<bool>					m_PreprocessorHistory;
 
 	public:
 		// Construct script parser with code from memory
@@ -73,10 +75,17 @@ namespace SCRambl
 		inline size_t GetNumLines() const { return m_Code.size(); }
 		inline bool InComment() const { return m_nCommentDepth > 0; }
 
-		//inline Macros & GetMacros() { return m_Macros; };
-		inline const Macros & GetMacros() const { return m_Macros; };
+		inline CMacros & Macros() { return m_Macros; };
+		inline const CMacros & Macros() const { return m_Macros; };
 
 		void Preprocess();
 		void PreprocessLine(std::string & code);
+		void PushSourceControl(bool b) { m_PreprocessorHistory.push_back(b); }
+		void PopSourceControl() { m_PreprocessorHistory.pop_back(); }
+		void InvertSourceControl() { m_PreprocessorHistory.back() = !m_PreprocessorHistory.back(); }
+		bool GetSourceControl() const {
+			ASSERT(!m_PreprocessorHistory.empty()); // if this activates, you popped too much!
+			return m_PreprocessorHistory.back();
+		}
 	};
 }

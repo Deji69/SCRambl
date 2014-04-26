@@ -11,7 +11,7 @@ namespace SCRambl
 		{
 			auto & ln = *it;
 
-			PreprocessLine(ln);
+			PreprocessLine(ln); 
 			
 			// we're keeping blank lines, merely so we know the line numbers for errors
 			// we've allocated the useless stuff already - the damage is done :)
@@ -28,6 +28,7 @@ namespace SCRambl
 	void Script::Init()
 	{
 		m_nCommentDepth = 0;
+		m_PreprocessorHistory.push_back(true);
 	}
 
 	void Script::Init(const CodeList & code)
@@ -46,7 +47,7 @@ namespace SCRambl
 		bool is_separated = false;
 
 		// look for comments, macros to replace, etc.
-		for (int i = 0; i < code.length(); ++i)
+		for (size_t i = 0; i < code.length(); ++i)
 		{
 			// Check for comment
 			if (i < code.length() - 1)
@@ -130,21 +131,57 @@ namespace SCRambl
 			{
 				if (!IsIdentifierStart(code[1]))
 				{
-
+					// error
 				}
 
-				std::string dir(code.begin(), std::find_if(code.begin()+1, code.end(), IsIdentifier));
+				//std::string dir(code.begin(), std::find_if(code.begin()+1, code.end(), IsIdentifier));
+				std::string dir = GetIdentifier(code.substr(1));
+				std::string def(code.begin() + 1 + dir.length(), code.end());
+
+				if (dir.empty())
+				{
+					// error
+				}
+				if (def.empty())
+				{
+					// error
+				}
 				
 				switch (GetDirective(dir))
 				{
 				case DIRECTIVE_DEFINE:
-
+					{
+						std::string name = GetIdentifier(def);
+						std::string val = GetIdentifier(ltrim(def).substr(name.length()));
+						Macros().Define(name, val);
+					}
+					break;
+				case DIRECTIVE_IFDEF:
+					{
+						std::string name = GetIdentifier(def);
+						PushSourceControl(Macros().Get(name) != nullptr);
+					}
+					break;
+				case DIRECTIVE_IF:
+					//PushSourceControl(EvaluateLogic(def))
+					break;
+				case DIRECTIVE_ELIF:
+					if (!GetSourceControl() && EvaluateLogic(def))
+						InvertSourceControl();
+					break;
+				case DIRECTIVE_ELSE:
+					InvertSourceControl();
+					break;
+				case DIRECTIVE_ENDIF:
+					PopSourceControl();
 					break;
 				}
 
-				dir = "";
 				//code.find()
 				//identifier = code.substr(code)
+
+				// done, prevent it from being parsed
+				code = "";
 			}
 		}
 	}
