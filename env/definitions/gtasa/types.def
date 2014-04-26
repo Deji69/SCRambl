@@ -1,0 +1,195 @@
+; Description:
+;	Defines types and translations. SCR types cannot be redefined, but extended types can be added.
+;	Add translations to specify how types are compiled. Values up to 4 bytes are written unsigned.
+;	Using the parse marker symbol '@x' writes an operand from 0 (see Built-in Type Declarations table)
+;	There is a limit of 8 elements in a translation. Element size depends on the appropriate condition.
+;	The conditions specify maximum data sizes for the operands in the order they occur.
+;		e.g. INT(INT8) 0x04 @0
+;	If the INT type is within INT8 limits, this writes the 8-bit value 0x04, followed by the first
+;	operand (the value which matched the condition, picture it as @0 writing the INT and @1 writing
+;	the INT8, which is the actual size of the INT).
+;
+; Sizes:
+;	NULL	- NULL values (e.g. an integer 0 or 0-indexed vars)
+;	INT32	- 32 bit int
+;	INT24	- 24 bit int
+;	INT16 	- 16 bit int
+;	INT8	- 8 bit int
+;	FLOAT32 - 32 bit float
+;	FLOAT24	- 24 bit packed float
+;	FLOAT16 - 16 bit packed float
+;	FLOAT8	- 8 bit packed float
+;	FIXED16 - Fixed-point 16-bit float
+;	Max size: 255 bytes (for strings)
+;		= to use a fixed string size e.g. =128 for 128 chars of string data (no matter how long the string is)
+;	
+; Syntax:
+;	TYPE[index type]([condition,...]) [translation]
+;
+; Built-in Type Declarations:
+;	id		name(standardisation)	operands(@0+)
+;	0 		NONE
+;	i 		INT						val, val.len
+;	f 		FLOAT					val, val.len
+;	t 		TEXT_LABEL 				str, str.len
+;	s 		STRING 					str, str.len
+;	c 		CONST					val, val.len
+;	v 		VAR						var.idx, var.idx.len
+;	vi 		VAR_INT					var.idx, var.idx.len
+;	vf 		VAR_FLOAT				var.idx, var.idx.len
+;	vt 		VAR_TEXT_LABEL			var.idx, var.idx.len
+;	vs 		VAR_STRING				var.idx, var.idx.len
+;	l 		LVAR					lvar.idx, lvar.idx.len
+;	li 		LVAR_INT				lvar.idx, lvar.idx.len
+;	lf 		LVAR_FLOAT				lvar.idx, lvar.idx.len
+;	lt 		LVAR_TEXT_LABEL			lvar.idx, lvar.idx.len
+;	ls 		LVAR_STRING				lvar.idx, lvar.idx.len
+;	va		VAR_ARRAY				var.idx, index_var.idx, var.idx.len, index_var.idx.len, var.num_elements
+;	via 	VAR_INT_ARRAY			var.idx, index_var.idx, var.idx.len, index_var.idx.len, var.num_elements
+;	vfa 	VAR_FLOAT_ARRAY			var.idx, index_var.idx, var.idx.len, index_var.idx.len, var.num_elements
+;	vta 	VAR_TEXT_LABEL_ARRAY	var.idx, index_var.idx, var.idx.len, index_var.idx.len, var.num_elements
+;	vsa 	VAR_STRING_ARRAY		var.idx, index_var.idx, var.idx.len, index_var.idx.len, var.num_elements
+;	lva		LVAR_ARRAY				var.idx, index_var.idx, var.idx.len, index_var.idx.len, var.num_elements
+;	lia 	LVAR_INT_ARRAY			lvar.idx, index_var.idx, var.idx.len, index_var.idx.len, var.num_elements
+;	lfa 	LVAR_FLOAT_ARRAY		lvar.idx, index_var.idx, var.idx.len, index_var.idx.len, var.num_elements
+;	lta 	LVAR_TEXT_LABEL_ARRAY	lvar.idx, index_var.idx, var.idx.len, index_var.idx.len, var.num_elements
+;	lsa 	LVAR_STRING_ARRAY		lvar.idx, index_var.idx, var.idx.len, index_var.idx.len, var.num_elements
+;
+; 	Extended types inherit the operands of the associated built-in type
+;
+; Internally translations are stored by type. The parser will only perform comparisons on those of the type it's compiling.
+; So, for INT types, they will be checked in the order: "INT(INT8), INT(INT16), INT(INT32)". However, if the INT value requires
+; 2 bytes (signed), the parser will stop at "INT(INT16)" and set that translation, as it's the lowest possible size it can use.
+; If only a INT32 translation existed, the compiler will use that one, as it would then be the lowest possible size.
+;
+
+; NONE @0 would do the same thing
+NONE 0x00
+
+; INT([val]) [translation]
+INT(INT8) 0x04 @0
+INT(INT16) 0x05 @0
+INT(INT32) 0x01 @0
+; INT(FLOAT32) would write the value as a 32-bit float
+
+; FLOAT([val]) [translation]
+FLOAT(FLOAT32) 0x06 @0
+; FLOAT(INT32) would write the value as a 32-bit int
+
+; CONST([val]) [translation]
+CONST(INT32) 0x01 @0
+
+; TEXTLABEL([string\0]) [translation]
+TEXT_LABEL(=8) 0x09 @0
+TEXT_LABEL(=16) 0x0F @0
+
+; STRING([string\0]) [translation]
+STRING(255) 0x0E @1 @0
+
+; [L]VAR_[INT|FLOAT|TEXT_LABEL|STRING]([var]) [translation]
+VAR_INT(INT16) 0x02 @0
+LVAR_INT(INT16) 0x03 @0
+VAR_FLOAT(INT16) 0x02 @0
+LVAR_FLOAT(INT16) 0x03 @0
+VAR_TEXT_LABEL(INT16) 0x0A @0
+LVAR_TEXT_LABEL(INT16) 0x0B @0
+VAR_STRING(INT16) 0x10 @0
+LVAR_STRING(INT16) 0x11 @0
+
+; [L]VAR_ARRAY[[L]VAR_INT[_ARRAY]]([var],[index_var],[var.len],[index_var.len],[var.num_elements]) [translation]
+VAR_INT_ARRAY(INT16) 0x02 @0
+;VAR_INT[VAR_INT](INT16,INT16) 0x07 @0 @1 0x01 0x80
+VAR_INT_ARRAY[VAR_INT](INT16,INT16,INT8) 0x07 @0 @1 @4 0x80
+VAR_INT_ARRAY[VAR_INT_ARRAY](INT16,INT16,INT8) 0x07 @0 @1 @4 0x80
+;VAR_INT[LVAR_INT](INT16,INT16) 0x07 @0 @1 0x01 0x00
+VAR_INT_ARRAY[LVAR_INT](INT16,INT16,INT8) 0x07 @0 @1 @4 0x00
+VAR_INT_ARRAY[LVAR_INT_ARRAY](INT16,INT16,INT8) 0x07 @0 @1 @4 0x00
+LVAR_INT_ARRAY(INT16) 0x03 @0
+LVAR_INT[VAR_INT](INT16,INT16) 0x08 @0 @1 0x01 0x80
+LVAR_INT_ARRAY[VAR_INT](INT16,INT16,INT8) 0x08 @0 @1 @4 0x80
+LVAR_INT_ARRAY[VAR_INT_ARRAY](INT16,INT16,INT8) 0x08 @0 @1 @4 0x80
+LVAR_INT[LVAR_INT](INT16,INT16) 0x08 @0 @1 0x01 0x00
+LVAR_INT_ARRAY[LVAR_INT](INT16,INT16,INT8) 0x08 @0 @1 @4 0x00
+LVAR_INT_ARRAY[LVAR_INT_ARRAY](INT16,INT16,INT8) 0x08 @0 @1 @4 0x00
+
+VAR_FLOAT_ARRAY(INT16) 0x02 @0
+;VAR_FLOAT[VAR_INT](INT16,INT16) 0x07 @0 @1 0x01 0x81
+VAR_FLOAT_ARRAY[VAR_INT](INT16,INT16,INT8) 0x07 @0 @1 @4 0x81
+VAR_FLOAT_ARRAY[VAR_INT_ARRAY](INT16,INT16,INT8) 0x07 @0 @1 @4 0x81
+;VAR_FLOAT[LVAR_INT](INT16,INT16) 0x07 @0 @1 0x01 0x01
+VAR_FLOAT_ARRAY[LVAR_INT](INT16,INT16,INT8) 0x07 @0 @1 @4 0x01
+VAR_FLOAT_ARRAY[LVAR_INT_ARRAY](INT16,INT16,INT8) 0x07 @0 @1 @4 0x01
+LVAR_FLOAT_ARRAY(INT16) 0x03 @0
+;LVAR_FLOAT[VAR_INT](INT16,INT16) 0x08 @0 @1 0x01 0x81
+LVAR_FLOAT_ARRAY[VAR_INT](INT16,INT16,INT8) 0x08 @0 @1 @4 0x81
+LVAR_FLOAT_ARRAY[VAR_INT_ARRAY](INT16,INT16,INT8) 0x08 @0 @1 @4 0x81
+;LVAR_FLOAT[LVAR_INT](INT16,INT16) 0x08 @0 @1 0x01 0x81
+LVAR_FLOAT_ARRAY[LVAR_INT](INT16,INT16,INT8) 0x08 @0 @1 @4 0x01
+LVAR_FLOAT_ARRAY[LVAR_INT_ARRAY](INT16,INT16,INT8) 0x08 @0 @1 @4 0x01
+
+VAR_TEXT_LABEL_ARRAY(INT16) 0x0A @0
+;VAR_TEXT_LABEL[VAR_INT](INT16,INT16) 0x07 @0 @1 0x01 0x82
+VAR_TEXT_LABEL_ARRAY[VAR_INT](INT16,INT16,INT8) 0x07 @0 @1 @4 0x82
+VAR_TEXT_LABEL_ARRAY[VAR_INT_ARRAY](INT16,INT16,INT8) 0x07 @0 @1 @4 0x82
+;VAR_TEXT_LABEL[LVAR_INT](INT16,INT16) 0x07 @0 @1 0x01 0x02
+VAR_TEXT_LABEL_ARRAY[LVAR_INT](INT16,INT16,INT8) 0x07 @0 @1 @4 0x02
+VAR_TEXT_LABEL_ARRAY[LVAR_INT_ARRAY](INT16,INT16,INT8) 0x07 @0 @1 @4 0x02
+LVAR_TEXT_LABEL_ARRAY(INT16) 0x0B @0
+;LVAR_TEXT_LABEL[VAR_INT](INT16,INT16) 0x08 @0 @1 0x01 0x82
+LVAR_TEXT_LABEL_ARRAY[VAR_INT](INT16,INT16,INT8) 0x08 @0 @1 @4 0x82
+LVAR_TEXT_LABEL_ARRAY[VAR_INT_ARRAY](INT16,INT16,INT8) 0x08 @0 @1 @4 0x82
+;LVAR_TEXT_LABEL[LVAR_INT](INT16,INT16) 0x08 @0 @1 0x01 0x02
+LVAR_TEXT_LABEL_ARRAY[LVAR_INT](INT16,INT16,INT8) 0x08 @0 @1 @4 0x02
+LVAR_TEXT_LABEL_ARRAY[LVAR_INT_ARRAY](INT16,INT16,INT8) 0x08 @0 @1 @4 0x02
+
+VAR_STRING_ARRAY(INT16) 0x10 @0
+;VAR_STRING[VAR_INT](INT16,INT16) 0x12 @0 @1 0x01 0x83
+VAR_STRING_ARRAY[VAR_INT](INT16,INT16,INT8) 0x12 @0 @1 @4 0x83
+VAR_STRING_ARRAY[VAR_INT_ARRAY](INT16,INT16,INT8) 0x12 @0 @1 @4 0x83
+;VAR_STRING[LVAR_INT](INT16,INT16) 0x12 @0 @1 0x01 0x03
+VAR_STRING_ARRAY[LVAR_INT](INT16,INT16,INT8) 0x12 @0 @1 @4 0x03
+VAR_STRING_ARRAY[LVAR_INT_ARRAY](INT16,INT16,INT8) 0x12 @0 @1 @4 0x03
+LVAR_STRING_ARRAY(INT16) 0x11 @0
+;LVAR_STRING[VAR_INT](INT16,INT16) 0x13 @0 @1 0x01 0x83
+LVAR_STRING_ARRAY[VAR_INT](INT16,INT16,INT8) 0x13 @0 @1 @4 0x83
+LVAR_STRING_ARRAY[VAR_INT_ARRAY](INT16,INT16,INT8) 0x13 @0 @1 @4 0x83
+;LVAR_STRING[LVAR_INT](INT16,INT16) 0x13 @0 @1 0x01 0x03
+LVAR_STRING_ARRAY[LVAR_INT](INT16,INT16,INT8) 0x13 @0 @1 @4 0x03
+LVAR_STRING_ARRAY[LVAR_INT_ARRAY](INT16,INT16,INT8) 0x13 @0 @1 @4 0x03
+
+;
+; Declare extended types with a a-z identifier to use in commands.def, a supported token
+; type e.g. LABEL or CONSTANT and a standardisation e.g. (INT)
+;
+; Built-in Extended Type Declarations:
+;	id		name(standardisation)	token type / enum
+;	p 		LABEL(INT) 				LABEL					; use as label declaration (label existance not checked until after parsing)
+;	m 		MODEL(INT)				MODEL					; use model constant
+;
+; Token Types:
+;	type			description
+;	VALUE			tries to evaluate the string as a value to match the type
+;	VAR			tries to turn an identifier token into a variable
+;	LABEL			tries to turn an identifier token into a label, or creates a new label to match the type
+;	CONSTANT		tries to turn an identifier token into a constant (or enumerator) from the script or constants.def
+;	MODEL			tries to turn an identifier token into a model constant from the game files
+;	STRING			turns identifier into a string identifier
+;
+;sv SUPERVAR(LVAR) VAR			; (example) declare a new var type ; SUPERVAR svar
+
+z			BUFFER(STRING)			STRING
+
+; Define translations for extended types
+LABEL(INT32) 0x01 @0
+;MODEL(INT8) 0x04 @0 ; ?
+MODEL(INT16) 0x05 @0
+;MODEL(INT32) 0x01 @0
+
+; BUFFER for that command with no data type and 128 mostly useless chars of string data
+BUFFER(=128) @0
+
+; (example) translation for new var type
+;SUPERVAR(INT16) 0x10 @0
+;SUPERVAR[VAR_INT](INT16,INT16,INT8) 0x13 @0 @1 @4 0x83		; svar[var]
+;SUPERVAR[LVAR_INT](INT16,INT16,INT8) 0x13 @0 @1 @4 0x03		; svar[lvar]
+;SUPERVAR[INT](INT16,INT16,INT8) 0x13 @0 @1 @4 0x40			; svar[8]

@@ -1,0 +1,61 @@
+; Description:
+;	Sets internal identifiers used when compiling.
+;	Commands can be used in place of values. Append 0x for hexadecimal values.
+;
+
+;[OPCODES]
+; Parsed opcodes
+
+; Compiler needs to use goto's when writing SCM headers and converting high constructs
+; Decompiler reads scripts like the game would (resulting in accurate decompilations) by following code jumps
+SCRIPT_GOTO 0x2
+SCRIPT_ELSE_GOTO 0x4D
+
+; Compiler uses this to count the conditions and build the control structure code
+; Decompiler builds a control structure from the code when this occurs
+; (not compiled)
+SCRIPT_IF 0xCF
+SCRIPT_ELSE 0xD1
+SCRIPT_ENDIF 0xD2
+
+; For while constructs
+SCRIPT_WHILE 0xD3
+SCRIPT_ENDWHILE 0xD5
+
+; SCRIPT_ANDOR used for IF constructs with AND/OR param
+SCRIPT_ANDOR 0xD6
+
+; Used to start a new script
+SCRIPT_START_SCRIPT 0x4F
+SCRIPT_START_MISSION 0xD7
+
+; Used to end current script
+SCRIPT_END 0x4E
+
+; Decompiler uses this to name labels
+SCRIPT_NAME 0x3A4
+
+; For repeat statements
+SCRIPT_REPEAT 0xCD
+SCRIPT_ENDREPEAT 0xCE
+
+; For jump tables
+SCRIPT_CASE 0x871
+SCRIPT_WHEN 0x872
+SCRIPT_ENDCASE 0x870
+
+;[DEFINITIONS]
+; Definitions used by the compiler/decompiler (also available in scripts)
+
+; Limits
+MAX_CONDITIONS 8
+MAX_VAR_INDEX 0xFFFF		; altering this may affect the amount of bytes used to represent a var in compilation
+
+NUM_BYTES_IN_ARRAY_FLAG	1	; number of bytes used to represent array flags in compilation
+
+MAIN_VAR_BLOCK_OFFSET	8
+
+; Values for logical operators
+LOGICAL_AND 0
+LOGICAL_OR 20
+LOGICAL_NOT 0x8000

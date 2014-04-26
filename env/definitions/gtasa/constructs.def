@@ -1,0 +1,29 @@
+; Description:
+;	Defines control structures.
+;
+; Syntax:
+;	CONSTRUCT_BEGIN {
+;		[CODE...]
+;	} CONSTRUCT_END {
+;		[CODE...]
+;	} [...]
+;
+; ENUM format:
+;	ENUM_NAME {
+;		ENUMERATOR_NAME		INT_VALUE
+;		[...]
+;	} [type identifier for commands.def]
+;
+
+IF:
+LVAR_INT n
+ANDOR n
+
+
+} ? {
+  @0 
+}
+
+REPEAT {
+} ENDREPEAT {
+}

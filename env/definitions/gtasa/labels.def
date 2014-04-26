@@ -1,0 +1,14 @@
+; Description:
+;	Predefines label identifiers.
+;
+; offset			name
+0x124FF				shoot
+0x12A72				r3
+0x1264A				gym
+0x13AC8				bloodr
+0x13B57				hotr
+0x13C25				kicks
+0x13FAD				oddveh
+0x155BF				psave1
+0x1684A				help
+0x1743A				flow

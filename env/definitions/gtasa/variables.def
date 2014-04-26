@@ -1,0 +1,24 @@
+; Description:
+;	Pre-defines variables for (de)compilation.
+;	Pre-defined LVAR's represent the same index in all scopes
+;	Variables are marked as timers simply to let SCRambl know the var is modified outside of the script
+;	this may affect behaviour in optimisations and debugging
+
+; index 		type		array size		is timer	name
+32				li			0				true		TIMERA		; amount of timers cannot exceed the number specified in limits.ini (A-Z)
+33				li			0				true		TIMERB
+
+; offset		type		array size		is timer	name
+;8				vi			0				false		player
+;12				vi			0				false		scplayer
+;44				vi			0				false		player_group
+;56				vi			0				false		delay_time
+;160			vi			0				false		day_of_week
+;276			vf			0				false		temp_var_x
+;280			vf			0				false 		temp_var_y
+;284			vf			0				false		temp_var_z
+;288			vf			0				false		temp_heading
+;292			vf			0				false		temp_float_1
+;296			vf			0				false		temp_float_2
+;300			vf			0				false		temp_float_3
+;1636			vi			0				false		flag_player_on_mission

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SCRambl Project File -->
+
+<project name="DemoProject1" version="1.0" type="">
+	<!-- Set properties which can be used throughout the build -->
+	<properties> 
+		<ProjectName>DemoProject1</ProjectName>
+	</properties>
+	<sources>
+		<!-- All fields are optional, but any <file> is linked by 'target' to the build process -->
+		<file path="demo1.sch" />
+		<file path="demo1.sc" target="gtasa_scm" />
+	</sources>
+	
+	<target >
+		
+	</configurations>
+	
+	<target name="gtasa_scm">
+		<echo msg="Building $(file.path) for GTA: San Andreas" />
+		<SCRambl src="$(file.path)" dest=
+	</target>
+</project>

@@ -1,0 +1,250 @@
+; Description:
+;	- Declares standard operators. Operations will be matched by their operator and type.
+;	- Use ~ to swap the order of LTYPE and RTYPE when compiling.
+;	- Use .[size] before the RTYPE to set the internal string length limit (e.g. '.16s')
+;	- Unary operations must be given a const RValue (e.g. 'LI++1' for int increments, 'LI++4' for 32bit pointer increments).
+;	|	The value specified will be compiled and no right value will be taken.
+;
+;	SCRambl supports loose matching. A type can be assigned to any variable of another type as long as their basic
+;   types match. RTYPE takes precedence when variable matching (so [V|L]S=I could be matched if no other match is found).
+;
+; Syntax:
+;	OPCODE [~:swap]LTYPE[[?:conditional]OPERATOR][[max_strlen.]RTYPE|COMMAND]
+;
+; Types:
+;	VI = VAR_INT
+;	VF = VAR_FLOAT
+;	VT = VAR_TEXT_LABEL
+;	VS = VAR_STRING
+;	LI = LVAR_INT
+;	LF = LVAR_FLOAT
+;	LN = LVAR_TEXT_LABEL
+;	LS = LVAR_STRING
+;	I  = INT
+;	F  = FLOAT
+;	S  = STRING
+;	T  = TEXT_LABEL
+;	C  = CONST
+;
+
+0004 VI=I
+0005 VF=F
+0006 LI=I
+0007 LF=F
+0008 VI+I
+0008 VI++1
+0009 VF+F
+000A LI+I
+000A LI++1
+000B LF+F
+000C VI-I
+000C VI--1
+000D VF-F
+000E LI-I
+000E LI--1
+000F LF-F
+0010 VI*I
+0011 VF*F
+0012 LI*I
+0013 LF*F
+0014 VI/I
+0015 VF/F
+0016 LI/I
+0017 LF/F
+0018 VI?>I
+0019 LI?>I
+001A I?>VI
+001B I?>LI
+001C VI?>VI
+001D LI?>LI
+001E VI?>LI
+001F LI?>VI
+0020 VF?>F
+0021 LF?>F
+0022 F?>VF
+0023 F?>LF
+0024 VF?>VF
+0025 LF?>LF
+0026 VF?>LF
+0027 LF?>VF
+0028 VI?>=I
+0029 LI?>=I
+002A I?>=VI
+002B I?>=LI
+002C VI?>=VI
+002D LI?>=LI
+002E VI?>=LI
+002F LI?>=VI
+0030 VF?>=F
+0031 LF?>=F
+0032 F?>=VF
+0033 F?>=LF
+0034 VF?>=VF
+0035 LF?>=LF
+0036 VF?>=LF
+0037 LF?>=VF
+0038 VI?=I
+0039 LI?=I
+003A VI?=VI
+003B LI?=LI
+003C VI?=LI
+0042 VF?=F
+0043 LF?=F
+0044 VF?=VF
+0045 LF?=LF
+0046 VF?=LF
+07D6 LI?=VI
+07D7 LF?=VF
+0058 VI+VI
+0059 VF+VF
+005E VI+LI
+005F VF+LF
+005A LI+LI
+005B LF+LF
+005C LI+VI
+005D LF+VF
+0060 VI-VI
+0061 VF-VF
+0062 LI-LI
+0063 LF-LF
+0064 LI-VI
+0065 LF-VF
+0066 VI-LI
+0067 VF-LF
+0068 VI*VI
+0069 VF*VF
+006A LI*LI
+006B LF*LF
+006C VI*I
+006D VF*F
+006E LI*VI
+006F LF*VF
+0070 VI/VI
+0071 VF/VF
+0072 LI/LI
+0073 LF/LF
+0074 VI/LI
+0075 LF/LF
+0076 LI/VI
+0077 LF/VF
+0078 VF+@F
+0079 LF+@F
+007A VF+@VF
+007B LF+@LF
+007C LF+@VF
+007D VF+@LF
+007E VF-@F
+007F LF-@F
+0080 VF-@VF
+0081 LF-@LF
+0082 LF-@VF
+0083 VF-@LF
+0084 VI=VI
+0085 LI=LI
+0086 VF=VF
+0087 LF=LF
+0088 VF=LF
+0089 LF=VF
+008A VI=LI
+008B LI=VI
+008C VI#VF
+008D VF#VI
+008E LI#VF
+008F LF#VI
+0090 VI#LF
+0091 VF#LI
+0092 LI#LF
+0093 LF#LI
+05A9 VT=8t
+05A9 VT=VT
+05A9 VT=LT
+05AA LT=8t
+05AA LT=LT
+05AA LT=VT
+05AD VT?=8t
+05AD VT?=VT
+05AD VT?=LT
+05AE LT?=8t
+05AE LT?=LT
+05AE LT?=VT
+06D1 VS=16s
+06D1 VS=VS
+06D1 VS=LS
+06D2 LS=16s
+06D2 LS=VS
+06D2 LS=LS
+08F9 VS?=16s
+08F9 VS?=VS
+08F9 VS?=LS
+08FA LS?=16s
+08FA LS?=LS
+08FA LS?=VS
+
+;(CLEO 4.3 - IntOperations.cleo)
+0B17 ~VI&(I)
+0B17 ~LI&(I)
+0B18 ~VI|(I)
+0B18 ~LI|(I)
+0B19 ~VI^(I)
+0B19 ~LI^(I)
+0B1A ~VI~
+0B1A ~LI~
+0B1B ~VI%(I)
+0B1B ~LI%(I)
+0B1C ~VI>>(I)
+0B1C ~LI>>(I)
+0B1D ~VI<<(I)
+0B1D ~LI<<(I)
+
+04A3 VI?=C
+04A4 LI?=C
+04AE VI=C
+04AF LI=C
+04B0 VI?>C
+04B1 LI?>C
+04B2 C?<=VI
+04B3 C?<=LI
+04B4 VI?>=C
+04B5 LI?>=C
+04B6 C?<LI
+04B7 C?<VI
+
+0018 ~I?<=VI
+0019 ~I?<=LI
+001C ~VI?<=VI
+001D ~LI?<=LI
+001E ~LI?<=VI
+001F ~VI?<=LI
+0020 ~F?<=VF
+0021 ~F?<=LF
+0022 ~VF?<=F
+0023 ~LF?<=F
+0024 ~VF?<=VF
+0025 ~LF?<=LF
+0026 ~LF?<=VF
+0027 ~VF?<=LF
+0028 ~I?<VI
+0029 ~I?<LI
+002A ~VI?<I
+002B ~LI?<I
+002C ~VI?<VI
+002D ~LI?<LI
+002E ~LI?<VI
+002F ~VI?<LI
+0030 ~F?<VF
+0031 ~F?<LF
+0032 ~VF?<F
+0033 ~LF?<F
+0034 ~VF?<VF
+0035 ~LF?<LF
+0036 ~LF?<VF
+0037 ~VF?<LF
+
+04B0 ~C?<=VI
+04B1 ~C?<=LI
+04B2 ~VI?>C
+04B3 ~LI?>C
+04B4 ~C?<VI
+04B5 ~C?<LI
+04B6 ~LI?>=C
+04B7 ~VI?>=C

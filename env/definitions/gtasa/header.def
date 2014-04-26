@@ -1,0 +1,45 @@
+; Detcription:
+;	Defines the structure of the SCM header.
+;
+; Identifiers:
+;	BYTE [var]				- BYTE value to read
+;	WORD [var]				- WORD value to read
+;	DWORD [var]				- DWORD value to read
+;	VAR_SPACE				- NULLed VAR space until next segment (4 * num variables)
+;	MODEL_NAMES x				- Model names (char[x] * NumModels)
+;	MISSION_OFFSETS				- 4-byte pointers to mission begin offsets
+;	STREAMED_SCRIPT_INFO x			- Streamed script info (char name[x], uint offset, uint size)
+
+[SEG0]
+BYTE TargetGame
+VAR_SPACE
+
+[SEG1]
+BYTE SegID	
+DWORD NumModels
+MODEL_NAMES 24
+
+[SEG2]
+BYTE SegID
+DWORD MainSize
+DWORD LargestMissionSize
+DWORD NumMissions
+DWORD HighestNumLVARs
+MISSION_OFFSETS
+
+[SEG3]
+BYTE SegID
+DWORD LargestStreamedScriptSize
+DWORD NumStreamedScripts
+STREAMED_SCRIPT_INFO 20
+
+[SEG4]
+BYTE SegID
+DWORD 0
+
+[SEG5]
+BYTE SegID
+DWORD VarSpaceSize
+BYTE 0x3E
+BYTE 2
+WORD 0

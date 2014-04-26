@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Paths are relative to the install directory -->
+
+<SCRambl Version="1.0" />
+
+<BuildConfig>
+	<!-- Configurations for parsing and compilation -->
+    <Configuration ID="scm_sa" Name="GTA:SA SCM">
+		<!-- Paths of definitions and additional include paths -->
+        <DefinitionPath>definitions\gtasa\</DefinitionPath>
+        <LibraryPath>definitions\gtasa\lib\</LibraryPath>
+		<IncludePaths>
+			<Path>definitions\gtasa\lib\</Path>
+		</IncludePaths>
+		
+		<FileType Name="SCR Source Code" Ext="sc" Type="source">
+			
+		</FileType>
+		
+		<FileType Name="SCR Compiled Code" Ext="scc" Type="compiled">
+			
+		</FileType>
+		
+		<FileType Name="SCR Compiled Script Multifile" Ext="scm" Type="merged">
+			
+		</FileType>
+    </Configuration>
+	
+	<Configuration ID="cleo_sa" Name="GTA:SA CLEO">
+        <!-- Paths of definitions and additional include paths -->
+        <DefinitionPath>definitions\gtasa\</DefinitionPath>
+        <LibraryPath>definitions\gtasa\lib\</LibraryPath>
+    </Configuration>
+	
+	<!-- Configurations dependent on the target goal/tool/application -->
+    <Target ID="gtasa" Name="GTA: San Andreas">
+        <InstallDir>C:\Program Files\Rockstar Games\GTA San Andreas</InstallDir>
+		<UseConfig>
+			<Config>gtasa</Config>
+		</UseConfig>
+    </Target>
+    <Target ID="cleo_sa" Name="CLEO for GTA San Andreas">
+        <InstallDir>C:\Program Files\Rockstar Games\GTA San Andreas\cleo\</InstallDir>
+    </Target>
+</BuildConfig>

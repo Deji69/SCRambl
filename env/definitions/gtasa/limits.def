@@ -1,0 +1,27 @@
+; Description:
+;	Sets the limits for checking in compilation or internal space reservation in decompilation.
+; Syntax:
+;   IDENTIFIER [SIZE]
+; Identifiers:
+;	MODELS							- Limit of model constants
+;	SCRIPT_SPACE					- The amount of space the application has for scripts (= size limit for SCM files)
+;	NUM_SCRIPT_VARS					- Number of VAR's usable in scripts
+;	NUM_MODULE_LVARS				- Number of LVAR's usable in each module scope
+;	NUM_SCRIPT_LVARS				- Number of LVAR's usable in each script scope
+;	NUM_SCRIPT_TIMERS				- TIMERA, TIMERB... SCRIPT_NUM_SCRIPT_VARS defines which index these start from
+;	MAX_ARRAY_SIZE					- Maximum number of array indicies
+;	MAX_TEXT_LABEL_LENGTH			- Maximum number of characters in a text label
+;	MAX_STRING_LENGTH				- Maximum number of characters in a string
+;	
+
+MODELS							20000
+
+SCRIPT_SPACE					269000
+NUM_SCRIPT_VARS					0x2400
+NUM_MODULE_LVARS				1024
+NUM_SCRIPT_LVARS				32		; don't include timers or scripts may crash!
+NUM_SCRIPT_TIMERS				2
+JUMP_TABLE_SIZE					79
+MAX_ARRAY_SIZE					255
+MAX_TEXT_LABEL_LENGTH			16
+MAX_STRING_LENGTH				255		; affects number of bytes used to compile string lengths
