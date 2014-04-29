@@ -2,27 +2,43 @@
 #include "Parser.h"
 #include "Scripts.h"
 #include "Directives.h"
+#include "Literals.h"
 
 namespace SCRambl
 {
-	void Script::Preprocess()
+	bool Script::Preprocess()
 	{
-		for (auto it = m_Code.begin(); it != m_Code.end(); ++it)
+		try
 		{
-			auto & ln = *it;
-
-			PreprocessLine(ln); 
-			
-			// we're keeping blank lines, merely so we know the line numbers for errors
-			// we've allocated the useless stuff already - the damage is done :)
-			/*// Remove an unnecessary line
-			if (ln.empty())
+			for (auto it = m_Code.begin(); it != m_Code.end(); ++it)
 			{
-				auto new_it = std::prev(it);
-				m_Code.erase(it);
-				it = new_it;
-			}*/
+				auto & ln = *it;
+
+				try
+				{
+					PreprocessLine(ln);
+
+					// we're keeping blank lines, merely so we know the line numbers for errors
+					// we've allocated the useless stuff already - the damage is done :)
+					/*// Remove an unnecessary line
+					if (ln.empty())
+					{
+					auto new_it = std::prev(it);
+					m_Code.erase(it);
+					it = new_it;
+					}*/
+				}
+				catch (...)
+				{
+				}
+			}
+			return true;
 		}
+		catch (...)
+		{
+			
+		}
+		return false;
 	}
 
 	void Script::Init()
@@ -131,7 +147,8 @@ namespace SCRambl
 			{
 				if (!IsIdentifierStart(code[1]))
 				{
-					// error
+					std::string err("");
+					Error(SCR_BAD_DIRECTIVE_CHAR, err);
 				}
 
 				//std::string dir(code.begin(), std::find_if(code.begin()+1, code.end(), IsIdentifier));
@@ -163,10 +180,10 @@ namespace SCRambl
 					}
 					break;
 				case DIRECTIVE_IF:
-					//PushSourceControl(EvaluateLogic(def))
+					PushSourceControl(EvaluateExpression(def) != 0);
 					break;
 				case DIRECTIVE_ELIF:
-					if (!GetSourceControl() && EvaluateLogic(def))
+					if (!GetSourceControl() && EvaluateExpression(def))
 						InvertSourceControl();
 					break;
 				case DIRECTIVE_ELSE:
@@ -186,7 +203,78 @@ namespace SCRambl
 		}
 	}
 
-	Script::Script(const std::string & path)
+	void Script::Error(int code, const std::string & msg)
+	{
+		//ScriptError()
+
+	}
+
+	long long Script::EvaluateExpression(const std::string & expr, int depth) const
+	{
+		bool bGotLVal = false;
+		int lVal = 0, rVal = 0;
+		int nStartDepth = depth;
+
+		for (size_t i = 0; i < expr.length(); ++i)
+		{
+			char c = expr[i];
+
+			// Nothings
+			if (IsSpace(c))
+				continue;
+
+			// Identifiers
+			if (IsIdentifierStart(c))
+			{
+				auto id = GetIdentifier(expr.substr(i));
+				i += id.length();
+
+				if (auto pCode = Macros().Get(id))
+				{
+					EvaluateExpression(*pCode, depth);
+				}
+				else
+				{
+					// ERROR
+				}
+				continue;
+			}
+
+			// Numeros
+			try
+			{
+				IntConst value(expr.substr(i));
+				i += value.Pos();
+				continue;
+			}
+			catch (...)
+			{
+			}
+
+			// Operations
+			switch (c)
+			{
+			case '(':
+				++depth;
+				if (bGotLVal)
+				{
+				}
+				else
+				{
+				}
+				break;
+			}
+		}
+
+		if (nStartDepth != depth)
+		{
+			// ERROR
+		}
+
+		return lVal;
+	}
+
+	void Script::LoadFile(const std::string & path)
 	{
 		std::ifstream file(path, std::ios::in);
 
@@ -196,5 +284,10 @@ namespace SCRambl
 		}
 
 		Init();
+	}
+
+	Script::Script(const std::string & path)
+	{
+		LoadFile(path);
 	}
 }

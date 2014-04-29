@@ -7,7 +7,7 @@
 namespace SCRambl
 {
 	typedef IdentifierMap<class Macro> MacroMap;
-	typedef std::vector<std::string> MacroCode;
+	typedef std::string MacroCode;
 	typedef Identifier MacroName;
 
 	class Macro
@@ -39,7 +39,7 @@ namespace SCRambl
 
 		const MacroCode		*	Get(const MacroName &) const;
 		void						Define(const MacroName &, const MacroCode &);
-		void						Define(const MacroName &, const std::string &);
+		//void						Define(const MacroName &, const std::string &);
 		void						Undefine(const MacroName &);
 		size_t					Size() const;
 	};

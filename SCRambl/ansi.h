@@ -19,10 +19,11 @@ inline int ToLower(int c)			{ return std::tolower(c); };
 // For checking strings
 bool	 IsStringInt(const char *szStr)
 {
-	if (*szStr == '-') szStr++;
+	if (IsSpace(*szStr)) ++szStr;
+	if (*szStr == '-') ++szStr;
 	if (*szStr == '0' && ToLower(szStr[1]) == 'x')
 	{
-		for (szStr += 2; *szStr; szStr++)
+		for (szStr += 2; *szStr; ++szStr)
 		{
 			if (IsSpace(*szStr)) return true;
 			else if (!IsHex(*szStr)) return false;
@@ -30,7 +31,7 @@ bool	 IsStringInt(const char *szStr)
 	}
 	else if (IsDecimal(*szStr))
 	{
-		for (szStr++; *szStr; szStr++)
+		for (++szStr; *szStr; ++szStr)
 		{
 			if (IsSpace(*szStr)) return true;
 			else if (!IsDecimal(*szStr)) return false;

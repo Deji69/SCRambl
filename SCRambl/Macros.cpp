@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "Macros.h"
+#include <algorithm>
+#include <string>
 
 namespace SCRambl
 {
@@ -17,7 +19,9 @@ namespace SCRambl
 	{}
 
 	Macro::Macro(const MacroName & name, const MacroCode & code) : m_Name(name), m_Code(code)
-	{}
+	{
+		m_Code.erase(std::remove(m_Code.begin(), m_Code.end(), '\n'), m_Code.end());
+	}
 
 	Macro::~Macro()
 	{}
@@ -33,10 +37,10 @@ namespace SCRambl
 		m_Map.insert(std::make_pair(name, Macro(name, code)));
 	}
 
-	void CMacros::Define(const MacroName & name, const std::string &code)
+	/*void CMacros::Define(const MacroName & name, const std::string &code)
 	{
-		m_Map.insert(std::make_pair(name, Macro(name, { code })));
-	}
+		m_Map.insert(std::make_pair(name, Macro(name, code)));
+	}*/
 
 	void CMacros::Undefine(const MacroName & name)
 	{

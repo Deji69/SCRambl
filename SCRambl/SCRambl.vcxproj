@@ -54,6 +54,9 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Lib>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -77,19 +80,25 @@
   <ItemGroup>
     <ClInclude Include="..\SCRambl.h" />
     <ClInclude Include="ansi.h" />
+    <ClInclude Include="Errors.h" />
     <ClInclude Include="BuildSystem.h" />
     <ClInclude Include="Directives.h" />
     <ClInclude Include="Environment.h" />
+    <ClInclude Include="Exception.h" />
+    <ClInclude Include="Expressions.h" />
     <ClInclude Include="FileSystem.h" />
     <ClInclude Include="Identifiers.h" />
     <ClInclude Include="Language.h" />
     <ClInclude Include="Lexer.h" />
     <ClInclude Include="Containers.h" />
+    <ClInclude Include="Literals.h" />
     <ClInclude Include="Macros.h" />
     <ClInclude Include="Parser.h" />
     <ClInclude Include="ProjectManager.h" />
     <ClInclude Include="key.h" />
     <ClInclude Include="Reporting.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="resource1.h" />
     <ClInclude Include="Scripts.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -101,12 +110,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Directives.cpp" />
+    <ClCompile Include="Exception.cpp" />
     <ClCompile Include="FileSystem.cpp" />
     <ClCompile Include="Identifiers.cpp" />
+    <ClCompile Include="Literals.cpp" />
     <ClCompile Include="Macros.cpp" />
     <ClCompile Include="Parser.cpp" />
     <ClCompile Include="ProjectManager.cpp" />
-    <ClCompile Include="main.cpp" />
     <ClCompile Include="Reporting.cpp" />
     <ClCompile Include="Scripts.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -120,6 +130,9 @@
     <ClCompile Include="utils\pugixml\pugixml.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="SCRambl.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

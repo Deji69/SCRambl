@@ -1,3 +1,9 @@
+/**********************************************************/
+// SCRambl Advanced SCR Compiler/Assembler
+// This program is distributed freely under the MIT license
+// (See the LICENSE file provided
+//	 or copy at http://opensource.org/licenses/MIT)
+/**********************************************************/
 #pragma once
 #include "utils.h"
 
@@ -11,6 +17,12 @@ namespace SCRambl
 	int IsSeparator(int);
 	int BothAreSeparators(int, int);
 	int IsUselessSeparator(int, int);
+
+	int ExprToChar(const std::string& str, size_t * pos = nullptr);
+	template<class T>
+	T ExprToInt(const std::string& str, size_t * pos = nullptr, int base = 0);
+	template<class T>
+	T ExprToFlt(const std::string& str, size_t * pos = nullptr);
 	
 	inline std::string GetIdentifier(std::string & src)
 	{

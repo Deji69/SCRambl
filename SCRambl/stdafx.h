@@ -13,7 +13,6 @@
 #include <hash_map>
 #include <exception>
 #include <tchar.h>
-#include <windows.h>
 #include <direct.h>
 #include <conio.h>
 #include <iostream>

@@ -5,23 +5,27 @@
 //	 or copy at http://opensource.org/licenses/MIT)
 /**********************************************************/
 #pragma once
-#include <stdint.h>
 #include <string>
-#include "MurmurHash3.h"
 
 namespace SCRambl
 {
-	static uint_fast32_t GenerateHash(const std::string buf)
+	class Error
 	{
-		uint_fast32_t dw;
-		MurmurHash3_x86_32(buf.c_str(), buf.length(), 0x88664422, &dw);
-		return dw;
-	}
+		std::string			m_Message;
 
-	static uint_fast32_t GenerateHash(const char *buf, size_t size)
-	{
-		uint_fast32_t dw;
-		MurmurHash3_x86_32(buf, size, 0x88664422, &dw);
-		return dw;
-	}
+		virtual std::string BuildError(const std::string & msg)
+		{
+			return msg;
+		}
+
+	protected:
+		Error() : m_Message(BuildError(""))
+		{
+		}
+	public:
+		explicit Error(const std::string & msg) : m_Message(BuildError(msg))
+		{
+		}
+		const char * Message() const { return m_Message.c_str(); }
+	};
 }

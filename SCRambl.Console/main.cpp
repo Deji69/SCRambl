@@ -52,18 +52,20 @@ int main(int argc, char* argv[])
 	auto files = CmdParser.GetOpts();
 	for (auto path : files)
 	{
-		std::ifstream file(path);
+		/*std::ifstream file(path);
 		
-		ASSERT(file.is_open());
+		ASSERT(file.is_open());*/
 
-		if (file.is_open())
+		SCRambl::Script m_Script;
+
+		try
 		{
 			SCRambl::Script m_Script(path);
 			m_Script.Preprocess();
 		}
-		else
+		catch (...)
 		{
-			std::cout << "ERROR: cannot open file '" << path << "'\n";
+			std::cout << "ERROR: failed to compile file '" << path << "'\n";
 			return 1;
 		}
 	}
