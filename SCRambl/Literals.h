@@ -23,6 +23,7 @@ namespace SCRambl
 		template<class T>
 		inline T		Value() const				{ return m_nVal; }
 		inline size_t	Pos() const					{ return m_nSize; }
+		inline bool		IsSigned() const			{ return m_nVal < 0; }
 	};
 
 	// Floating-point constant type

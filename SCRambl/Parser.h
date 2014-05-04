@@ -19,8 +19,20 @@ namespace SCRambl
 	int IsUselessSeparator(int, int);
 
 	int ExprToChar(const std::string& str, size_t * pos = nullptr);
+
 	template<class T>
 	T ExprToInt(const std::string& str, size_t * pos = nullptr, int base = 0);
+
+	template<> inline long long ExprToInt<long long>(const std::string& str, size_t * pos, int base)
+	{
+		return std::stoll(widen(str), pos, base);
+	}
+
+	template<> inline unsigned long long ExprToInt<unsigned long long>(const std::string& str, size_t * pos, int base)
+	{
+		return std::stoull(widen(str), pos, base);
+	}
+
 	template<class T>
 	T ExprToFlt(const std::string& str, size_t * pos = nullptr);
 	

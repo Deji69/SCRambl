@@ -49,19 +49,39 @@ int main(int argc, char* argv[])
 		}
 	}
 
+	// Initiate SCRambl engine
+	SCRambl::Engine engine;
+
+	// Load a script from each file and feed it into the SCRambl engine
 	auto files = CmdParser.GetOpts();
 	for (auto path : files)
 	{
-		/*std::ifstream file(path);
-		
-		ASSERT(file.is_open());*/
-
-		SCRambl::Script m_Script;
-
 		try
 		{
-			SCRambl::Script m_Script(path);
-			m_Script.Preprocess();
+			// Attempt to initialise script - will throw on invalid input
+			SCRambl::Script script(path);
+
+			//
+			bool bRunning = true;
+			do
+			{
+				using SCRambl::RunningState;
+				auto state = engine.Run().GetState();
+				switch (state)
+				{
+				case RunningState::running:
+					// output errors, warnings and status
+					break;
+				case RunningState::finished:
+					//
+					bRunning = false;
+					break;
+				case RunningState::error:
+					std::cout << "FATAL ERROR: ";
+					bRunning = false;
+					break;
+				}
+			} while (bRunning);
 		}
 		catch (...)
 		{

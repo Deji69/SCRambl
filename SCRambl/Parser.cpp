@@ -144,18 +144,11 @@ namespace SCRambl
 			}
 		}
 		if (pos) *pos = n;
+		return c;
 	}
 
 	// looonnggg
-	template<> long long ExprToInt<long long>(const std::string& str, size_t * pos, int base)
-	{
-		return std::stoll(widen(str), pos, base);
-	}
-
-	template<> unsigned long long ExprToInt<unsigned long long>(const std::string& str, size_t * pos, int base)
-	{
-		return std::stoull(widen(str), pos, base);
-	}
+	
 
 	template<> double ExprToFlt<double>(const std::string & str, size_t * pos)
 	{

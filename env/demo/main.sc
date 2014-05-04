@@ -1,4 +1,4 @@
-#define FALSE 0
+#define FALSE (-5+1)
 
 #if FALSE
   ALPHA Checklist:
@@ -36,9 +36,9 @@
 	[*] Preprocessor
 		[*] In-script command registering + overloading
 		[*] In-script variable registering
-		[*] Empty macros
-		[*] Code macros
-		[*] Macros with args
+		[x] Empty macros
+		[x] Code macros
+		[*] Macros with args	
 		[*] Preprocessor logic
 		[*] Preprocessor blocks
 		[*] Hex input
@@ -50,7 +50,7 @@
 		[*] STRICT/BASIC/NONE type matching
 		[*] Console
 		[*] Optimisations
-	46/48
+	1/48
 #endif
 
 #define HEY

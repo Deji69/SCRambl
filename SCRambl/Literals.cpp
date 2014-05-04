@@ -8,7 +8,7 @@ namespace SCRambl
 	{
 		try
 		{
-			m_nVal = ExprToInt<unsigned long long>(expr, &m_nSize);
+			m_nVal = ExprToInt<long long>(expr, &m_nSize);
 		}
 		catch (...)
 		{

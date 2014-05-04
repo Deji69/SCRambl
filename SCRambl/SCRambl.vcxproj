@@ -80,6 +80,8 @@
   <ItemGroup>
     <ClInclude Include="..\SCRambl.h" />
     <ClInclude Include="ansi.h" />
+    <ClInclude Include="Builder.h" />
+    <ClInclude Include="Engine.h" />
     <ClInclude Include="Errors.h" />
     <ClInclude Include="BuildSystem.h" />
     <ClInclude Include="Directives.h" />
@@ -94,14 +96,13 @@
     <ClInclude Include="Literals.h" />
     <ClInclude Include="Macros.h" />
     <ClInclude Include="Parser.h" />
+    <ClInclude Include="Preprocessor.h" />
     <ClInclude Include="ProjectManager.h" />
     <ClInclude Include="key.h" />
     <ClInclude Include="Reporting.h" />
-    <ClInclude Include="resource.h" />
-    <ClInclude Include="resource1.h" />
     <ClInclude Include="Scripts.h" />
+    <ClInclude Include="States.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="targetver.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="utils\hash.h" />
     <ClInclude Include="utils\MurmurHash3.h" />
@@ -109,16 +110,20 @@
     <ClInclude Include="utils\xml.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Builder.cpp" />
     <ClCompile Include="Directives.cpp" />
+    <ClCompile Include="Engine.cpp" />
     <ClCompile Include="Exception.cpp" />
     <ClCompile Include="FileSystem.cpp" />
     <ClCompile Include="Identifiers.cpp" />
     <ClCompile Include="Literals.cpp" />
     <ClCompile Include="Macros.cpp" />
     <ClCompile Include="Parser.cpp" />
+    <ClCompile Include="Preprocessor.cpp" />
     <ClCompile Include="ProjectManager.cpp" />
     <ClCompile Include="Reporting.cpp" />
     <ClCompile Include="Scripts.cpp" />
+    <ClCompile Include="States.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -130,9 +135,6 @@
     <ClCompile Include="utils\pugixml\pugixml.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="SCRambl.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

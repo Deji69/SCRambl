@@ -3,6 +3,7 @@
 #include "Scripts.h"
 #include "Directives.h"
 #include "Literals.h"
+#include "Expressions.h"
 
 namespace SCRambl
 {
@@ -61,6 +62,8 @@ namespace SCRambl
 		size_t comment_offset = 0;
 
 		bool is_separated = false;
+
+		/* Phase 1 */
 
 		// look for comments, macros to replace, etc.
 		for (size_t i = 0; i < code.length(); ++i)
@@ -169,7 +172,7 @@ namespace SCRambl
 				case DIRECTIVE_DEFINE:
 					{
 						std::string name = GetIdentifier(def);
-						std::string val = GetIdentifier(ltrim(def).substr(name.length()));
+						std::string val = ltrim(def).substr(name.length());
 						Macros().Define(name, val);
 					}
 					break;
@@ -180,7 +183,7 @@ namespace SCRambl
 					}
 					break;
 				case DIRECTIVE_IF:
-					PushSourceControl(EvaluateExpression(def) != 0);
+					PushSourceControl(EvaluateExpression(ltrim(def)) != 0);
 					break;
 				case DIRECTIVE_ELIF:
 					if (!GetSourceControl() && EvaluateExpression(def))
@@ -209,19 +212,20 @@ namespace SCRambl
 
 	}
 
-	long long Script::EvaluateExpression(const std::string & expr, int depth) const
+	long long Script::EvaluateExpression(const std::string & expr, int depth)
 	{
-		bool bGotLVal = false;
-		int lVal = 0, rVal = 0;
+		IntExpression<long long, unsigned long long> eval;
+
 		int nStartDepth = depth;
 
 		for (size_t i = 0; i < expr.length(); ++i)
 		{
 			char c = expr[i];
+			char next = (i + 1) < expr.length() ? expr[i + 1] : 0;
+			if (next && IsSpace(next)) next = 0;
 
 			// Nothings
-			if (IsSpace(c))
-				continue;
+			if (IsSpace(c)) continue;
 
 			// Identifiers
 			if (IsIdentifierStart(c))
@@ -235,8 +239,40 @@ namespace SCRambl
 				}
 				else
 				{
-					// ERROR
+					// ERROR ?
 				}
+				continue;
+			}
+
+			// Symbols
+			switch (c)
+			{
+			case '(':
+			{
+				auto n = expr.find_first_of(')', i + 1);
+				eval.Evaluate(EvaluateExpression(expr.substr(i + 1, n - 1), depth + 1));
+				i += n;
+				continue;
+			}
+			case ')':
+				if (depth) --depth;
+				return eval.Result<long long>();
+
+				// Operators
+			case '!':
+				eval.Logicate(EXPR_LOG_NOT);
+				continue;
+			case '+':
+				if (next == '+')
+					Error(SCR_BAD_CONSTEXPR_OPERATOR, "invalid operator '++' in constant expression");
+				eval.Operate(EXPR_OP_ADD);
+				continue;
+			case '-':
+				if (next == '-')
+					Error(SCR_BAD_CONSTEXPR_OPERATOR, "invalid operator '--' in constant expression");
+				eval.Operate(EXPR_OP_SUBTRACT);
+				continue;
+			case '*':
 				continue;
 			}
 
@@ -245,33 +281,33 @@ namespace SCRambl
 			{
 				IntConst value(expr.substr(i));
 				i += value.Pos();
+				if (IsIdentifier(expr[i]))
+				{
+					switch (expr[i])
+					{
+					case 'U':
+						eval.Evaluate(value.Value<unsigned long long>());
+						break;
+					default:
+						Error(SCR_BAD_NUMBER_SUFFIX, "bad number suffix '" + std::string(&expr[i], &expr[i + 1]) + "'");
+						break;
+					}
+				}
+				else eval.Evaluate(value.Value<long long>());
 				continue;
 			}
 			catch (...)
 			{
 			}
-
-			// Operations
-			switch (c)
-			{
-			case '(':
-				++depth;
-				if (bGotLVal)
-				{
-				}
-				else
-				{
-				}
-				break;
-			}
 		}
+
 
 		if (nStartDepth != depth)
 		{
 			// ERROR
 		}
 
-		return lVal;
+		return eval.Result<long long>();
 	}
 
 	void Script::LoadFile(const std::string & path)

@@ -47,7 +47,9 @@ namespace SCRambl
 		enum eSCR_Error
 		{
 			SCR_UNKNOWN_ERROR = 1000,			// dummy. no, I mean you're a dummy
-			SCR_BAD_DIRECTIVE_CHAR,
+			SCR_BAD_DIRECTIVE_CHAR = 1001,
+			SCR_BAD_CONSTEXPR_OPERATOR = 1002,
+			SCR_BAD_NUMBER_SUFFIX = 1003,
 		};
 		
 		CodeList							m_Code;
@@ -110,6 +112,6 @@ namespace SCRambl
 			ASSERT(!m_PreprocessorHistory.empty()); // if this activates, you popped too much!
 			return m_PreprocessorHistory.back();
 		}
-		long long EvaluateExpression(const std::string & expr, int depth = 0) const;
+		long long EvaluateExpression(const std::string & expr, int depth = 0);
 	};
 }

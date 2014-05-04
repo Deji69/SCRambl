@@ -6,6 +6,7 @@
 /**********************************************************/
 #pragma once
 
+#include "SCRambl\Engine.h"
 #include "SCRambl\Scripts.h"
 
 namespace SCRambl
