@@ -1,10 +1,11 @@
-﻿cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
+cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
+
+SET(CMAKE_LEGACY_CYGWIN_WIN32 0)
 
 SET(ProjectName SCRambl)
 SET(Files 
-	stdafx.h 
 	stdafx.cpp
-        Builder.cpp
+    Builder.cpp
 	Directives.cpp
 	Engine.cpp
 	Exception.cpp
@@ -18,9 +19,17 @@ SET(Files
 	Reporting.cpp
 	Scripts.cpp
 	States.cpp
-	stdafx.cpp
 )
 
-include_directories("../")
+#SET(CXX_FLAGS "")
+IF(CMAKE_COMPILER_IS_GNUCXX)
+    SET(CXX_FLAGS "${CXX_FLAGS} -std=gnu++11")
+ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_FLAGS}")
+#SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${CXX_FLAGS}")
+
+#include_directories("../")
+
+add_definitions(${CXX_FLAGS})
 add_executable(${ProjectName} ${Files})

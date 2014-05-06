@@ -30,35 +30,45 @@ namespace SCRambl
 		State m_State;
 
 	protected:
-		virtual void RunTask() = 0;
-		virtual void AdvanceState(State & state) = 0;
+		//virtual void RunTask() = 0;
+		virtual Task & RunTask() = 0;
+		virtual Task & AdvanceState(State & state) = 0;
 
 		State	&	TaskState();
+
 	public:
+		inline State GetState()	const		{ return m_State; }
+
 		Task()
 		{
 			m_State = running;
 		}
-		const State & Run()
+
+		const Task & Run()
 		{
-			// the state has started as...
 			switch (m_State)
 			{
 			case error:
 				m_State = running;
 			case running:
-				RunTask();
+				try
+				{
+					m_State = RunTask().Run().GetState();
+				}
+				catch (...)
+				{
+					m_State = error;
+				}
 				break;
 			case finished:
-				AdvanceState(m_State);
+				m_State = AdvanceState(m_State).GetState();
 				break;
 			}
-			// ... ends up as
-			return m_State;
+			return *this;
 		};
 	};
 
-	class PreprocessorState : public Task
+	class PreprocessorState : protected Task
 	{
 	public:
 		enum State {
@@ -73,22 +83,22 @@ namespace SCRambl
 		};
 	};
 
-	class ParserState : public Task
+	class ParserState : protected Task
 	{
 
 	};
 
-	class LinkerState : public Task
+	class LinkerState : protected Task
 	{
 
 	};
 
-	class CompilerState : public Task
+	class CompilerState : protected Task
 	{
 
 	};
 
-	class BuilderState : public Task
+	class BuilderState : protected Task
 	{
 	public:
 		enum State { init, preprocess, parse, link, compile, max_state };
@@ -108,8 +118,11 @@ namespace SCRambl
 				state.State() = RunningState::finished;
 				m_State = init;
 			}
+			else state.State() = RunningState::running;
 		}
 
+	public:
+		inline State GetState() const { return m_State; }
 	};
 
 	class GlobalState

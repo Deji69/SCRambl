@@ -82,7 +82,7 @@ template<class SignedType, class UnsignedType>
 			case EXPR_OP_GREATER:	return EvalLogic(m_nVal ? true : false, bLogicalNot, bLogicalOp, m_nVal > val);
 			case EXPR_OP_LESSER:	return EvalLogic(m_nVal ? true : false, bLogicalNot, bLogicalOp, m_nVal < val);*/
 			default:
-				throw(std::invalid_argument());
+				throw(std::invalid_argument("invalid integer expression operation"));
 			}
 		}
 

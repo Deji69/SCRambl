@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include "utils.h"
 
 namespace SCRambl
@@ -19,7 +20,8 @@ namespace SCRambl
 			template<char match, char... rest>
 			class Equality
 			{
-				std::map<
+				std::unordered_map<char, 
+
 			public:
 				Equality(match, rest)
 				{

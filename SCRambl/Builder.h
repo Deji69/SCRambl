@@ -11,9 +11,11 @@ namespace SCRambl
 {
 	class Builder : public BuilderState
 	{
+	private:
 		void Init();
 
 	protected:
-		void RunTask() override;
+		Task & RunTask() override;
+		Task & AdvanceState(Task::State & state) override;
 	};
 }

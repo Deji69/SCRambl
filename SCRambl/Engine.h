@@ -6,17 +6,18 @@
 /**********************************************************/
 #pragma once
 #include "Builder.h"
+#include "States.h"
 #include <list>
 
 namespace SCRambl
 {
-	class Engine
+	class Engine : public GlobalState
 	{
 		Builder				*	m_pBuild;
 
 	public:
 		Engine();
 
-		RunningState Run();
+		Task & Run();
 	};
 }

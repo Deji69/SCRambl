@@ -12,6 +12,7 @@ namespace SCRambl
 	class Preprocessor : public PreprocessorState
 	{
 	public:
-		void RunTask(RunningState &) override;
+		Task & RunTask() override;
+		Task & AdvanceState(Task::State & state) override;
 	};
 }

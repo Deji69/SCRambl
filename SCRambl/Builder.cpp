@@ -3,20 +3,33 @@
 
 using namespace SCRambl;
 
-void Builder::RunTask(RunningState & running)
+Task & Builder::RunTask()
 {
-	switch (running.State)
-	{
-	case RunningState::finished:
+	TaskState() = Task::running;
 
-		break;
-	}
-	switch (State)
+	try
 	{
-	case init:
-		Init()
-		break;
+		switch (GetState())
+		{
+		case init:
+			Init();
+			break;
+		case preprocess:
+		case parse:
+		case compile:
+		case link:
+			break;
+		default:
+			TaskState() = Task::finished;
+			break;
+		}
 	}
+	catch (...)
+	{
+		TaskState() = Task::error;
+	}
+	
+	return *this;
 }
 
 void Builder::Init()

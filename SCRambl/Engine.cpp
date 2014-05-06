@@ -7,7 +7,8 @@ Engine::Engine()
 {
 }
 
-RunningState Engine::Run()
+Task & Engine::Run()
 {
 	m_pBuild->Run();
+	return *this;
 }

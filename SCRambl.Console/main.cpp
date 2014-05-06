@@ -65,18 +65,20 @@ int main(int argc, char* argv[])
 			bool bRunning = true;
 			do
 			{
-				using SCRambl::RunningState;
-				auto state = engine.Run().GetState();
-				switch (state)
+				using SCRambl::Task;
+				switch (engine.Run().GetState())
 				{
-				case RunningState::running:
+				case Task::running:
 					// output errors, warnings and status
+					/*switch (engine.GetState())
+					{
+					}*/
 					break;
-				case RunningState::finished:
+				case Task::finished:
 					//
 					bRunning = false;
 					break;
-				case RunningState::error:
+				case Task::error:
 					std::cout << "FATAL ERROR: ";
 					bRunning = false;
 					break;
