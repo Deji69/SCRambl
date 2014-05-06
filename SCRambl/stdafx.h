@@ -16,11 +16,11 @@
 #include <sstream>
 #include <map>
 #include <unordered_map>
-#include <hash_map>
+//#include <hash_map>
 #include <exception>
-#include <tchar.h>
-#include <direct.h>
-#include <conio.h>
+//#include <tchar.h>
+//#include <direct.h>
+//#include <conio.h>
 #include <iostream>
 #include <vector>
 #include <list>

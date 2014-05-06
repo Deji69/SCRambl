@@ -6,10 +6,181 @@
 /**********************************************************/
 #pragma once
 #include <string>
+#include <vector>
+#include <map>
 #include "utils.h"
 
 namespace SCRambl
 {
+	namespace Lexer
+	{
+		namespace Expressions
+		{
+			template<char match, char... rest>
+			class Equality
+			{
+				std::map<
+			public:
+				Equality(match, rest)
+				{
+
+				}
+			};
+
+			class RegExp
+			{
+
+			};
+		}
+		namespace Grammar
+		{
+			namespace Punctuation
+			{
+				
+			}
+
+			class Whitespace
+			{
+			public:
+				enum State { before, during, after };
+
+			private:
+				State		m_State;
+
+			public:
+
+				template<typename CharType>
+				bool operator ()(CharType a) const
+				{
+					switch (a)
+					{
+					case ' ':
+					case '\n':
+					case '\r':
+					case '\t':
+					case '\v':
+					case '\f':
+						return true;
+					default:
+						
+					}
+				}
+			};
+
+			template<class T>
+			class Lexeme : public T
+			{
+				enum State { before, during, after };
+
+			public:
+				State		m_State;
+				before_fun	m_StartsWith;
+				during_fun	m_ConsistsOf;
+				after_fun	m_EndsWith;
+
+			public:
+				Lexeme(before_fun starts, during_fun consists, after_fun ends) :
+					m_StartsWith(starts), m_ConsistsOf(consists), m_EndsWith(ends)
+				{
+				}
+
+				bool operator ()(char ch) const
+				{
+					switch (m_State)
+					{
+					case before:
+						if (m_StartsWith(ch)) m_State = during;
+						break;
+					case during:
+						if (m_ConsistsOf(ch)) return true;
+						else m_State = after;
+					case after:
+						if (m_EndsWith(ch)) return true;
+						else return false;
+					default:
+						throw(std::runtime_error("bad state"));
+					}
+					return false;
+				}
+			};
+
+			/*template<typename before_fun, typename during_fun = before_fun, typename after_fun = before_fun>
+			class Lexeme
+			{
+				enum State { before, during, after };
+
+			public:
+				State		m_State;
+				before_fun	m_StartsWith;
+				during_fun	m_ConsistsOf;
+				after_fun	m_EndsWith;
+
+			public:
+				Lexeme(before_fun starts, during_fun consists, after_fun ends) :
+					m_StartsWith(starts), m_ConsistsOf(consists), m_EndsWith(ends)
+				{
+				}
+
+				bool operator ()(char ch) const
+				{
+					switch (m_State)
+					{
+					case before:
+						if (m_StartsWith(ch)) m_State = during;
+						break;
+					case during:
+						if (m_ConsistsOf(ch)) return true;
+						else m_State = after;
+					case after:
+						if (m_EndsWith(ch)) return true;
+						else return false;
+					default:
+						throw(std::runtime_error("bad state"));
+					}
+					return false;
+				}
+			};*/
+
+			template<typename lexeme_type>
+			class Scanner
+			{
+				std::vector<ch> Characters;
+
+			public:
+				Scanner(const std::initializer_list<ch> & chars) : Characters(chars)
+				{
+				}
+
+				void AddCharacter(ch character)
+				{
+					Characters.push_back(character);
+				}
+
+				operator bool(lexeme_type character) const
+				{
+
+				}
+			};
+		}
+
+		class Token
+		{
+		public:
+			enum Type {
+				punctuator, number, identifier, string, label,
+			};
+
+		private:
+			Type				TokenType;
+			std::string			TokenString;
+
+		public:
+			Token(const char * pc)
+			{
+				Scanner<Grammar::Whitespace> scan(pc);
+			}
+		};
+	}
 	enum eLexToken
 	{
 		LEX_EOF = -1,
