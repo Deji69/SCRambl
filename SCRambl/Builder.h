@@ -5,17 +5,29 @@
 //	 or copy at http://opensource.org/licenses/MIT)
 /**********************************************************/
 #pragma once
-#include "States.h"
+#include "Tasks.h"
 
 namespace SCRambl
 {
-	class Builder : public BuilderState
+	class Builder : public Task
 	{
+	public:
+		enum State {
+			init, preprocess, parse, compile, link,
+			finished
+		};
+
 	private:
+		State		m_State;
+
 		void Init();
+		void Run();
 
 	protected:
-		Task & RunTask() override;
-		Task & AdvanceState(Task::State & state) override;
+		void RunTask() override				{ Run(); }
+		bool IsTaskFinished() override		{ return m_State == finished; }
+		void ResetTask() override			{ Init(); }
+
+	public:
 	};
 }

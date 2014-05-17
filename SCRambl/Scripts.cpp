@@ -54,12 +54,13 @@ namespace SCRambl
 		Init();
 	}
 
-	void Script::PreprocessLine(std::string & code)
+	void Script::PreprocessLine(ScriptLine & line)
 	{
 		// initialise the comment offset, as we might be already in a comment from a previous line
 		// if that comment ends (and it wasn't nested), remove up to the end of it on this line.
 		// the main preprocessor handles completely removing lines that are commented out
 		size_t comment_offset = 0;
+		std::string & code = line;
 
 		bool is_separated = false;
 
@@ -312,18 +313,61 @@ namespace SCRambl
 
 	void Script::LoadFile(const std::string & path)
 	{
-		std::ifstream file(path, std::ios::in);
+		if (!m_Code.empty()) m_Code.clear();
+		if (!m_Files.empty()) m_Files.clear();
+		m_Files.emplace_back(path, m_Code);
+		m_pFile = m_Files.begin() != m_Files.end() ? &*m_Files.begin() : nullptr;
+		/*std::ifstream file(path, std::ios::in);
+		
+		if (file.is_open())
+		{
+			std::string code;
+			long i = 0;
+			while (std::getline(file, code))
+			{
+				m_Code.emplace_back( ++i, code );
+			}
+		}
+		*/
+		//std::copy(std::istream_iterator<ScriptLine>(file), std::istream_iterator<ScriptLine>(), std::back_inserter(m_Code));
+
+		Init();
+	}
+
+	void Script::IncludeFile(const std::string & path, CodeList::iterator line)
+	{
+		CodeList code;
+		m_Files.emplace_back(path, code, m_pFile);
+		/*std::ifstream file(path, std::ios::in);
 
 		if (file.is_open())
 		{
-			std::copy(std::istream_iterator<ScriptLine>(file), std::istream_iterator<ScriptLine>(), std::back_inserter(m_Code));
-		}
+			std::string code;
+			long i = line != m_Code.end() ? line->Line : m_Code.back().Line;
 
-		Init();
+			while (std::getline(file, code))
+			{
+				m_Code.emplace(line, ++i, code);
+			}
+		}*/
 	}
 
 	Script::Script(const std::string & path)
 	{
 		LoadFile(path);
+	}
+
+	ScriptFile::ScriptFile(std::string path, CodeList & code, const ScriptFile * parent) :
+		m_FilePath(path), m_Parent(parent), m_NumLines(0)
+	{
+		std::ifstream file(path, std::ios::in);
+		if (file)
+		{
+			std::string line;
+			while (std::getline(file, line))
+			{
+				code.emplace_back(++m_NumLines, line, this);
+			}
+		}
 	}
 }

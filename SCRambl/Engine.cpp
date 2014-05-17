@@ -5,10 +5,24 @@ using namespace SCRambl;
 
 Engine::Engine()
 {
+	CurrentTask = Tasks.end();
 }
 
-Task & Engine::Run()
+const Task & Engine::Run() const
 {
-	m_pBuild->Run();
+	auto it = CurrentTask != Tasks.end() ? CurrentTask : Tasks.begin();
+	
+	if (it != Tasks.end())
+	{
+		auto task = it->first;
+		
+		while (it->first->GetState() == Task::finished)
+		{
+			++it;
+			if (it == Tasks.end()) return *this;
+		}
+
+		return task->Run();
+	}
 	return *this;
 }

@@ -18,9 +18,10 @@
 
 namespace SCRambl
 {
-	class ScriptLine
+	/*class ScriptLine
 	{
-		std::string str;
+		std::string		str;
+
 	public:
 		operator std::string() const { return str; }
 		friend std::istream & operator>>(std::istream &is, ScriptLine &l)
@@ -37,10 +38,78 @@ namespace SCRambl
 			while (l.str.empty());
 			return is;
 		}
+	};*/
+
+	/*class ScriptLine
+	{
+		long			line;
+		bool			read;
+		std::string		str;
+
+	public:
+		ScriptLine() : read(false)
+		{
+		}
+
+		//operator std::string() const { return str; }
+		operator const std::string &() const { return str; }
+		operator std::string &() { return str; }
+
+		friend std::istream & operator>>(std::istream &is, ScriptLine &l)
+		{
+			do
+			{
+				if (!std::getline(is, l.str))
+				{
+					l.read = true;
+					l.str = "";
+					break;
+				}
+				if (!l.str.empty()) trim(l.str);
+			} while (l.str.empty());
+			return is;
+		}
+
+		inline int GetLine() const				{ return line; }
+	};*/
+
+	typedef std::vector<class ScriptFile> ScriptFiles;
+	typedef std::list<class ScriptLine> CodeList;
+	typedef std::vector<std::string> StringList;
+
+	class ScriptFile
+	{
+		const ScriptFile				*	m_Parent = nullptr;
+		long								m_NumLines = 0;
+		std::string							m_FilePath;
+		ScriptFiles							m_Includes;
+
+	public:
+		ScriptFile(std::string path, CodeList & code, const ScriptFile * parent = nullptr);
+
+		inline long GetNumLines() const { return m_NumLines; }
+		inline const std::string & GetPath() const { return m_FilePath; }
 	};
 
-	typedef std::vector<std::string> CodeList;
-	typedef std::vector<std::string> StringList;
+	class ScriptLine
+	{
+		const ScriptFile	*	File = nullptr;
+		long					Line = -1;
+		std::string				Code = "";
+
+	public:
+		ScriptLine(long nLine, std::string sCode, const ScriptFile * file) : Line(nLine), Code(sCode), File(file)
+		{
+		}
+
+		ScriptLine() { }
+
+		inline const ScriptFile * GetFile() const { return File; }
+
+		operator const std::string &() const { return Code; }
+		operator std::string &() { return Code; }
+		operator long() const { return Line; }
+	};
 
 	class Script
 	{
@@ -56,6 +125,8 @@ namespace SCRambl
 		StringList							m_Errors;
 		StringList							m_Warnings;
 		CMacros								m_Macros;
+		ScriptFiles							m_Files;
+		ScriptFile						*	m_pFile;
 		//std::map<std::string, Macro>		m_Macros;
 		//std::map<std::map, Variable>		m_Variables;
 
@@ -92,16 +163,23 @@ namespace SCRambl
 
 		// Load file into code lines
 		void LoadFile(const std::string & path);
+		
+		// Include file in specific code line
+		void IncludeFile(const std::string & path, CodeList::iterator line);
 
 		inline bool OK() const { return true; }
 		inline size_t GetNumLines() const { return m_Code.size(); }
 		inline bool InComment() const { return m_nCommentDepth > 0; }
 
+		inline CodeList & Code() { return m_Code; }
+
 		inline CMacros & Macros() { return m_Macros; };
 		inline const CMacros & Macros() const { return m_Macros; };
 
+		// For preprocessor eyes only
+
 		bool Preprocess();
-		void PreprocessLine(std::string & code);
+		void PreprocessLine(ScriptLine & code);
 		void PushSourceControl(bool b) { m_PreprocessorHistory.push_back(b); }
 		void PopSourceControl() {
 			ASSERT(!m_PreprocessorHistory.empty());

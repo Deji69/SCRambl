@@ -8,6 +8,7 @@
 
 #include "SCRambl\Engine.h"
 #include "SCRambl\Scripts.h"
+#include "SCRambl\Preprocessor.h"
 
 namespace SCRambl
 {

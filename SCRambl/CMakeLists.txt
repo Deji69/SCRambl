@@ -5,7 +5,7 @@ SET(CMAKE_LEGACY_CYGWIN_WIN32 0)
 SET(ProjectName SCRambl)
 SET(Files 
 	stdafx.cpp
-    Builder.cpp
+	Builder.cpp
 	Directives.cpp
 	Engine.cpp
 	Exception.cpp

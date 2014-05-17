@@ -52,6 +52,12 @@ int main(int argc, char* argv[])
 	// Initiate SCRambl engine
 	SCRambl::Engine engine;
 
+	enum Task
+	{
+		preprocessor,
+		finished
+	};
+
 	// Load a script from each file and feed it into the SCRambl engine
 	auto files = CmdParser.GetOpts();
 	for (auto path : files)
@@ -60,6 +66,9 @@ int main(int argc, char* argv[])
 		{
 			// Attempt to initialise script - will throw on invalid input
 			SCRambl::Script script(path);
+
+			// Add a preprocessor task to preprocess the script - give it our 'preprocessor' ID so we can identify it later
+			engine.AddTask<Task, SCRambl::PreprocessorTask, SCRambl::Script>(preprocessor, script);
 
 			//
 			bool bRunning = true;
