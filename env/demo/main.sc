@@ -1,4 +1,5 @@
-#include "build.xml"
+/*aaaa
+*/#include "build.xml"
 #define FALSE (-5+1)
 
 #if FALSE

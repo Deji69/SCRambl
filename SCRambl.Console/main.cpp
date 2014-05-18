@@ -55,6 +55,9 @@ int main(int argc, char* argv[])
 	enum Task
 	{
 		preprocessor,
+		parser,
+		compiler,
+		linker,
 		finished
 	};
 
@@ -72,6 +75,7 @@ int main(int argc, char* argv[])
 
 			//
 			bool bRunning = true;
+			bool bPreprocessorStarted = false;
 			do
 			{
 				using SCRambl::Task;
@@ -79,16 +83,37 @@ int main(int argc, char* argv[])
 				{
 				case Task::running:
 					// output errors, warnings and status
+					switch (engine.GetCurrentTaskID())
+					{
+					case preprocessor:
+						switch (engine.GetCurrentTask<SCRambl::PreprocessorTask>().GetState())
+						{
+						case Task::running:
+							if (!bPreprocessorStarted)
+							{
+								std::cout << "Preprocessing..." << "\n";
+								bPreprocessorStarted = true;
+							}
+							break;
+						case Task::finished:
+							break;
+						case Task::error:
+							std::cout << "ERROR (Preprocessor) : " << "\n";
+							break;
+						}
+						break;
+					}
 					/*switch (engine.GetState())
 					{
 					}*/
 					break;
 				case Task::finished:
 					//
+					std::cout << "Finished." << "\n";
 					bRunning = false;
 					break;
 				case Task::error:
-					std::cout << "FATAL ERROR: ";
+					std::cout << "FATAL ERROR: " << "\n";
 					bRunning = false;
 					break;
 				}

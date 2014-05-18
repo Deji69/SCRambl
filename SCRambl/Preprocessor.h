@@ -18,22 +18,24 @@ namespace SCRambl
 		{
 			switch (state)
 			{
+				// return true if IsSpace
 			case Lexer::LexerState::before: return IsSpace(*it) != 0;
-			case Lexer::LexerState::inside:
-				while (IsSpace(*it)) ++it;
-				return true;
+				// skip the rest of the IsSpace's now and return true to advance state
+			case Lexer::LexerState::inside: while (it != std::end(str) && IsSpace(*it)) ++it; return true;
+				// all done
 			case Lexer::LexerState::after: return true;
 			}
 			return false;
 		}
 	};
-	class IdentifierScanner : public Lexer::Scanner
+	/*class IdentifierScanner : public Lexer::Scanner
 	{
 	public:
 		bool Scan(const Lexer::LexerState & state, const std::string & str, std::string::const_iterator & it) override
 		{
 			switch (state)
 			{
+				// return true if IsIdentifierStart
 			case Lexer::LexerState::before:
 				if (IsIdentifierStart(*it))
 				{
@@ -41,15 +43,17 @@ namespace SCRambl
 					return true;
 				}
 				break;
+				// return true once we've read all the identifier characters
 			case Lexer::LexerState::inside:
 				return !IsIdentifier(*it++);
+				// make sure that a separator followed the identifier chars - else throw a tantrum
 			case Lexer::LexerState::after:
 				if (!IsSeparator(*it)) throw(*this);
 				return true;
 			}
 			return false;
 		}
-	};
+	};*/
 	class DirectiveScanner : public Lexer::Scanner
 	{
 	public:
@@ -68,11 +72,8 @@ namespace SCRambl
 
 				// check for first unfitting character
 			case Lexer::LexerState::inside:
-				if (IsIdentifier(*it))
-				{
-					++it;
-					return true;
-				}
+				if (!IsIdentifier(*it)) return true;
+				++it;
 				break;
 
 				// no suffix? no problem.
@@ -92,18 +93,13 @@ namespace SCRambl
 			{
 				// return number of matched prefix chars
 			case Lexer::LexerState::before:
-				if (it[0] == '/' && it[1] == '/')
-				{
-					it += 2;
+				if (*it++ == '/' && it != std::end(str) && *it++ == '/')
 					return true;
-				}
 				break;
 
-				// keep going until EOL
+				// dont bother scanning the rest of the line - the preprocessor will only be deleting it - just the '//' will do
 			case Lexer::LexerState::inside:
-				if (*it == '\n' || *it == '\r')
-					return true;
-				break;
+				return true;
 
 				// yeah, k
 			case Lexer::LexerState::after:
@@ -116,7 +112,6 @@ namespace SCRambl
 	class BlockCommentScanner : public Lexer::Scanner
 	{
 		int				depth = 0;
-		char			last_char = 0;
 
 	public:
 		bool Scan(const Lexer::LexerState & state, const std::string & str, std::string::const_iterator & it) override
@@ -125,72 +120,99 @@ namespace SCRambl
 			{
 				// check for opening of block comment sequence
 			case Lexer::LexerState::before:
-				if (*it != '/' || it[1] != '*')
-					break;
-				it += 2;
-				return true;
-
-				// check for nested comments
-			case Lexer::LexerState::inside:
-				if (*it == '*')
+				if (depth)
+					return true;		// we're already inside a block comment
+				if (*it == '/')
 				{
-					if (last_char == '/')
-						++depth;
-					else if (it[1] == '/')
+					++it;
+					if (it != std::end(str) && *it == '*')
 					{
-						if (!depth)
-						{
-							it += 2;
-							return true;
-						}
-						--depth;
+						++it;
+						++depth;
+						return true;
 					}
 				}
+				break;
+
+				// check for nested comments and closing comment
+			case Lexer::LexerState::inside:
+				if (it == std::end(str))
+					return true;
+				if (*it == '/')
+				{
+					++it;
+					if (it != std::end(str) && *it == '*')
+					{
+						++it;
+						++depth;
+					}
+				}
+				else if (*it == '*')
+				{
+					++it;
+					if (it != std::end(str) && *it == '/')
+					{
+						++it;
+						if (!--depth) return true;
+					}
+				}
+				else ++it;
 				break;
 
 			case Lexer::LexerState::after:
 				return true;
 			}
 
-			last_char = *it;
 			return false;
 		}
 	};
 
-	class Preprocessor : virtual private Task
+	class Preprocessor
 	{
 		enum Token
 		{
 			token_none,
+			token_whitespace,					// we'll be trimming whitespace, tabs, comments, etc. down to one single white space character for easier parsing
 			token_directive,
 			token_comment,
 			token_block_comment,
 			token_invalid,
 			token_max = token_invalid
 		};
+		enum Directive
+		{
+			directive_include,
+			directive_define,
+			directive_invalid,
+		};
 
-		Engine						&	m_Engine;
-		Lexer::Lexer<Token>				m_Lexer;
-		DirectiveScanner				m_DirectiveScanner;
-		CommentScanner					m_CommentScanner;
-		BlockCommentScanner				m_BlockCommentScanner;
-		WhitespaceScanner				m_WhitespaceScanner;
-		std::string					*	m_Code;
-		std::string::iterator			m_CodeIterator;
+		using DirectiveMap = std::unordered_map<std::string, Directive>;
+
+		Engine									&	m_Engine;
+
+		DirectiveScanner							m_DirectiveScanner;
+		CommentScanner								m_CommentScanner;
+		BlockCommentScanner							m_BlockCommentScanner;
+		WhitespaceScanner							m_WhitespaceScanner;
+
+		Lexer::Lexer<Token>							m_Lexer;
+		std::string								*	m_Code;
+		std::string::iterator						m_CodeIterator;
+		std::string::iterator						m_SavedCodePos;
+		DirectiveMap								m_Directives;
+		Directive									m_Directive;
 
 	public:
 		enum State {
 			init,
-			begin_line, end_of_line,
-			before_directive, during_directive, after_directive,
-			before_comment, during_comment, after_comment,
+			//begin_line, during_line, end_of_line,
+			idle, lexing,
+			found_directive, during_directive,
+			found_comment, inside_comment,
 			finished,
 			bad_state,
-			max_state = bad_state,		// deprecated
+			max_state = bad_state,
 		};
-		/*enum Error {
-			error_
-		};*/
 
 		Preprocessor(Engine &, Script &);
 
@@ -205,12 +227,45 @@ namespace SCRambl
 		bool					m_bScriptIsLoaded;		// if so, we only need to add-in any #include's
 
 		void RunningState();
-		inline bool NextLine()					{ return ++m_ScriptLine != m_Script.Code().end(); }
+		void LexerPhase();
+
+		void HandleDirective();
+		void HandleComment();
+
 		inline int GetLineNumber() const		{ return *m_ScriptLine; }
 		inline std::string & GetLineCode()		{ return *m_ScriptLine; }
+
+		// Returns true if there was another line
+		bool NextLine()
+		{
+			{
+				// try to get a new line, but keep a reference to the current
+				auto & last_line = *m_ScriptLine++;
+
+				// if the last line contained nothing or nothing but whitespace, get rid of it
+				if (!m_Code->empty()) *m_Code = trim(*m_Code);
+				if (m_Code->empty()) m_Script.Code().remove(last_line);
+			}
+			
+			// if we managed to get a new line, get the new code
+			if (m_ScriptLine != std::end(m_Script.Code()))
+			{
+				m_Code = &GetLineCode();
+				m_CodeIterator = std::begin(*m_Code);
+				return true;
+			}
+			return false;
+		}
+
+		// Returns directive_invalid if it didnt exist
+		inline Directive GetDirective(const std::string & str) const
+		{
+			DirectiveMap::const_iterator it;
+			return it = m_Directives.find(str), it != m_Directives.end() ? (*it).second : directive_invalid;
+		}
 	};
 
-	class PreprocessorTask : public Preprocessor, virtual public Task
+	class PreprocessorTask : public Task, public Preprocessor
 	{
 	public:
 		PreprocessorTask(Engine & engine, Script & script) : Preprocessor(engine, script)

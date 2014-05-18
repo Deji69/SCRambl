@@ -43,10 +43,10 @@ namespace SCRambl
 	public:
 		CMacros();
 
-		const MacroCode		*	Get(const MacroName &) const;
+		const MacroCode			*	Get(const MacroName &) const;
 		void						Define(const MacroName &, const MacroCode &);
 		//void						Define(const MacroName &, const std::string &);
 		void						Undefine(const MacroName &);
-		size_t					Size() const;
+		size_t						Size() const;
 	};
 }

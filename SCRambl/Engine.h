@@ -13,41 +13,54 @@ namespace SCRambl
 {
 	class Engine : protected Task
 	{
-		using TaskEntry = std::pair<Task*, int>;
-		std::list<TaskEntry>							Tasks;
-		std::list<TaskEntry>::iterator					CurrentTask;
+		using TaskEntry = std::pair<int, Task*>;
+		//std::list<TaskEntry>							Tasks;
+		//std::list<TaskEntry>::iterator					CurrentTask;
+		std::map<int, Task*>							Tasks;
+		std::map<int, Task*>::iterator					CurrentTask;
+		bool											HaveTask;
 
 		void Init()
 		{
-			/*if (Tasks.size())
-			{
-				for (auto task : Tasks)
-				{
-					delete task.first;
-				}
-
-				Tasks.clear();
-			}*/
-
-			CurrentTask = Tasks.begin();
+			CurrentTask = std::begin(Tasks);
 		}
 
 	public:
 		Engine();
+		virtual ~Engine()
+		{
+			if (!Tasks.empty())
+			{
+				for (auto task : Tasks)
+				{
+					delete task.second;
+				}
+
+				Tasks.clear();
+			}
+		}
 
 		template<class ID, class T, class ... Params>
-		inline void AddTask(ID id, Params &... prms)	{ Tasks.push_back(TaskEntry(new T(*this, prms...), id)); }
+		void AddTask(ID id, Params &... prms)
+		{
+			Tasks.emplace(id, new T(*this, prms...));
+			if (!HaveTask)
+			{
+				Init();
+				HaveTask = true;
+			}
+		}
 
 		template<class T>
-		inline T & GetCurrentTask()					{ return CurrentTask->first; }
-		inline int GetCurrentTaskID() const			{ return CurrentTask->second; }
+		inline T & GetCurrentTask()					{ return *reinterpret_cast<T*>((*CurrentTask).second); }
+		inline int GetCurrentTaskID() const			{ return (*CurrentTask).first; }
 		inline size_t GetNumTasks() const			{ return Tasks.size(); }
 		inline void ClearTasks()					{ Tasks.clear(); }
 
 		const Task & Run() const;
 
 	protected:
-		bool IsTaskFinished() override				{ return CurrentTask == Tasks.end(); }
+		bool IsTaskFinished() override				{ return CurrentTask == std::end(Tasks); }
 		void ResetTask() override					{ Init(); }
 		void RunTask() override						{ Run(); }
 	};

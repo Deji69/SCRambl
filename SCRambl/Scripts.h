@@ -18,61 +18,6 @@
 
 namespace SCRambl
 {
-	/*class ScriptLine
-	{
-		std::string		str;
-
-	public:
-		operator std::string() const { return str; }
-		friend std::istream & operator>>(std::istream &is, ScriptLine &l)
-		{
-			do
-			{
-				if (!std::getline(is, l.str))
-				{
-					l.str = "";
-					break;
-				}
-				if (!l.str.empty()) trim(l.str);
-			}
-			while (l.str.empty());
-			return is;
-		}
-	};*/
-
-	/*class ScriptLine
-	{
-		long			line;
-		bool			read;
-		std::string		str;
-
-	public:
-		ScriptLine() : read(false)
-		{
-		}
-
-		//operator std::string() const { return str; }
-		operator const std::string &() const { return str; }
-		operator std::string &() { return str; }
-
-		friend std::istream & operator>>(std::istream &is, ScriptLine &l)
-		{
-			do
-			{
-				if (!std::getline(is, l.str))
-				{
-					l.read = true;
-					l.str = "";
-					break;
-				}
-				if (!l.str.empty()) trim(l.str);
-			} while (l.str.empty());
-			return is;
-		}
-
-		inline int GetLine() const				{ return line; }
-	};*/
-
 	typedef std::vector<class ScriptFile> ScriptFiles;
 	typedef std::list<class ScriptLine> CodeList;
 	typedef std::vector<std::string> StringList;
