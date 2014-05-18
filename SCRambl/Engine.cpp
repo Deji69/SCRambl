@@ -3,23 +3,24 @@
 
 using namespace SCRambl;
 
-Engine::Engine()
+Engine::Engine() : HaveTask(false)
 {
-	CurrentTask = Tasks.end();
+	//CurrentTask = Tasks.end();
 }
 
 const Task & Engine::Run() const
 {
-	auto it = CurrentTask != Tasks.end() ? CurrentTask : Tasks.begin();
+	auto it = CurrentTask != std::end(Tasks) ? CurrentTask : std::begin(Tasks);
 	
-	if (it != Tasks.end())
+	if (it != std::end(Tasks))
 	{
-		auto task = it->first;
+		auto task = it->second;
 		
-		while (it->first->GetState() == Task::finished)
+		while (task->GetState() == Task::finished)
 		{
 			++it;
-			if (it == Tasks.end()) return *this;
+			if (it == std::end(Tasks))
+				return *this;
 		}
 
 		return task->Run();

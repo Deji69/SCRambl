@@ -7,7 +7,10 @@
 #pragma once
 #pragma warning(disable:4341)
 
-#include <Windows.h>
+#ifdef WIN32
+	#include <Windows.h>
+#endif
+
 #include <stdio.h>
 #include <string>
 #include <algorithm>

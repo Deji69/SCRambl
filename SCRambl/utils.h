@@ -18,10 +18,10 @@ namespace SCRambl
 #define ASSERT(expr) do{assert(expr);}while(0)
 #define BREAK() do{__debugbreak();}while(0)
 
-#include "utils\hash.h"
-#include "utils\utf8.h"
-#include "utils\ansi.h"
-#include "utils\key.h"
+#include "utils/hash.h"
+#include "utils/utf8.h"
+#include "utils/ansi.h"
+#include "utils/key.h"
 
 namespace SCRambl
 {

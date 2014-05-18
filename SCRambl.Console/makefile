@@ -1,5 +1,5 @@
 CXX=g++
-CXXFLAGS=-I-=../ -std=gnu++11 -Dscrambl
+CXXFLAGS=-I../ -std=gnu++11 -Dscrambl
 OBJS=main.o
 
 scrambl : $(OBJS)
