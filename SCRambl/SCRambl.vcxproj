@@ -81,6 +81,8 @@
     <ClInclude Include="..\SCRambl.h" />
     <ClInclude Include="ansi.h" />
     <ClInclude Include="Builder.h" />
+    <ClInclude Include="Code.h" />
+    <ClInclude Include="Configuration.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="Errors.h" />
     <ClInclude Include="BuildSystem.h" />
@@ -96,6 +98,7 @@
     <ClInclude Include="Literals.h" />
     <ClInclude Include="Macros.h" />
     <ClInclude Include="Parser.h" />
+    <ClInclude Include="Preparser.h" />
     <ClInclude Include="Preprocessor.h" />
     <ClInclude Include="ProjectManager.h" />
     <ClInclude Include="key.h" />
@@ -119,6 +122,7 @@
     <ClCompile Include="Literals.cpp" />
     <ClCompile Include="Macros.cpp" />
     <ClCompile Include="Parser.cpp" />
+    <ClCompile Include="Preparser.cpp" />
     <ClCompile Include="Preprocessor.cpp" />
     <ClCompile Include="ProjectManager.cpp" />
     <ClCompile Include="Reporting.cpp" />

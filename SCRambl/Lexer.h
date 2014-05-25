@@ -15,6 +15,8 @@ namespace SCRambl
 {
 	namespace Lexer
 	{
+
+
 		/*
 		* LexerState stores global state information about the in-use Lexer
 		*/

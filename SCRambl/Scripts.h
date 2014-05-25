@@ -15,6 +15,7 @@
 #include "Identifiers.h"
 #include "Macros.h"
 #include "Errors.h"
+#include "Code.h"
 
 namespace SCRambl
 {
@@ -40,19 +41,22 @@ namespace SCRambl
 	{
 		const ScriptFile	*	File = nullptr;
 		long					Line = -1;
-		std::string				Code = "";
+		CodeLine				Code;
 
 	public:
-		ScriptLine(long nLine, std::string sCode, const ScriptFile * file) : Line(nLine), Code(sCode), File(file)
+		ScriptLine(long line, CodeLine code, const ScriptFile * file) : Line(line), Code(code), File(file)
 		{
 		}
 
 		ScriptLine() { }
 
-		inline const ScriptFile * GetFile() const { return File; }
+		inline const ScriptFile * GetFile() const	{ return File; }
+		inline long GetLine() const					{ return Line; }
+		inline CodeLine & GetCode()					{ return Code; }
+		inline const CodeLine & GetCode() const		{ return Code; }
 
-		operator const std::string &() const { return Code; }
-		operator std::string &() { return Code; }
+		operator const CodeLine &() const { return GetCode(); }
+		operator CodeLine &() { return GetCode(); }
 		operator long() const { return Line; }
 	};
 
@@ -67,11 +71,9 @@ namespace SCRambl
 		};
 		
 		CodeList							m_Code;
-		StringList							m_Errors;
+		//StringList							m_Errors;
 		StringList							m_Warnings;
-		CMacros								m_Macros;
-		ScriptFiles							m_Files;
-		ScriptFile						*	m_pFile;
+		//MacroMap							m_Macros;
 		//std::map<std::string, Macro>		m_Macros;
 		//std::map<std::map, Variable>		m_Variables;
 
@@ -94,20 +96,14 @@ namespace SCRambl
 		}
 
 		// Construct script parser with code from memory
-		Script(const CodeList & code)
-		{
-			Init(code);
-		}
-
-		// Construct script parser with code from file
-		Script(const std::string & path);
+		Script(const CodeList & code);
 
 		~Script()
 		{
 		}
 
 		// Load file into code lines
-		void LoadFile(const std::string & path);
+		//void LoadFile(const std::string & path);
 		
 		// Include file in specific code line
 		void IncludeFile(const std::string & path, CodeList::iterator line);
@@ -118,8 +114,8 @@ namespace SCRambl
 
 		inline CodeList & Code() { return m_Code; }
 
-		inline CMacros & Macros() { return m_Macros; };
-		inline const CMacros & Macros() const { return m_Macros; };
+		//inline CMacros & Macros() { return m_Macros; };
+		//inline const CMacros & Macros() const { return m_Macros; };
 
 		// For preprocessor eyes only
 

@@ -12,7 +12,7 @@
 
 namespace SCRambl
 {
-	typedef IdentifierMap<class Macro> MacroMap;
+	
 	typedef std::string MacroCode;
 	typedef Identifier MacroName;
 
@@ -33,15 +33,16 @@ namespace SCRambl
 		inline MacroCode & Code()						{ return m_Code; }
 	};
 
-	class CMacros
+	class MacroMap
 	{
-		// macro macro maaaap... I wanna be, a macro map!
-		static const MacroMap			g_PredefinedMacros;
+		typedef IdentifierMap<class Macro> MacMap;
 
-		MacroMap							m_Map;
+		// macro macro maaaap... I wanna be, a macro map!
+		MacMap						m_Map;
 
 	public:
-		CMacros();
+		MacroMap() = default;
+		MacroMap(const MacMap & predefined);
 
 		const MacroCode			*	Get(const MacroName &) const;
 		void						Define(const MacroName &, const MacroCode &);

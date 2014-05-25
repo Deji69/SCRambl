@@ -11,6 +11,7 @@ namespace SCRambl
 		m_Lexer.AddTokenScanner<BlockCommentScanner>(token_block_comment, m_BlockCommentScanner);
 		m_Lexer.AddTokenScanner<CommentScanner>(token_comment, m_CommentScanner);
 		m_Lexer.AddTokenScanner<DirectiveScanner>(token_directive, m_DirectiveScanner);
+		m_Lexer.AddTokenScanner<IdentifierScanner>(token_identifier, m_IdentifierScanner);
 
 		m_Directives["include"] = directive_include;
 		m_Directives["define"] = directive_define;
@@ -104,8 +105,15 @@ namespace SCRambl
 		switch (m_Directive)
 		{
 		case directive_define:
+		case during_directive:
 
-			break;
+			LexerPhase();
+
+			m_State = during_directive;
+			return;
+
+		default:
+			BREAK();
 		}
 
 		m_State = idle;

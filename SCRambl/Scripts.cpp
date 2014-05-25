@@ -17,7 +17,7 @@ namespace SCRambl
 
 				try
 				{
-					PreprocessLine(ln);
+					//PreprocessLine(ln);
 
 					// we're keeping blank lines, merely so we know the line numbers for errors
 					// we've allocated the useless stuff already - the damage is done :)
@@ -54,6 +54,7 @@ namespace SCRambl
 		Init();
 	}
 
+#if FALSE
 	void Script::PreprocessLine(ScriptLine & line)
 	{
 		// initialise the comment offset, as we might be already in a comment from a previous line
@@ -206,6 +207,7 @@ namespace SCRambl
 			}
 		}
 	}
+#endif
 
 	void Script::Error(int code, const std::string & msg)
 	{
@@ -213,6 +215,7 @@ namespace SCRambl
 
 	}
 
+#if FALSE
 	long long Script::EvaluateExpression(const std::string & expr, int depth)
 	{
 		IntExpression<long long, unsigned long long> eval;
@@ -317,6 +320,7 @@ namespace SCRambl
 		if (!m_Files.empty()) m_Files.clear();
 		m_Files.emplace_back(path, m_Code);
 		m_pFile = m_Files.begin() != m_Files.end() ? &*m_Files.begin() : nullptr;
+		ASSERT(m_pFile);
 		/*std::ifstream file(path, std::ios::in);
 		
 		if (file.is_open())
@@ -351,10 +355,11 @@ namespace SCRambl
 			}
 		}*/
 	}
+#endif
 
-	Script::Script(const std::string & path)
+	Script::Script(const CodeList & code) : m_Code(code)
 	{
-		LoadFile(path);
+		//LoadFile(path);
 	}
 
 	ScriptFile::ScriptFile(std::string path, CodeList & code, const ScriptFile * parent) :
@@ -366,7 +371,7 @@ namespace SCRambl
 			std::string line;
 			while (std::getline(file, line))
 			{
-				code.emplace_back(++m_NumLines, line, this);
+				//code.emplace_back(++m_NumLines, line, this);
 			}
 		}
 	}

@@ -5,13 +5,15 @@
 //	 or copy at http://opensource.org/licenses/MIT)
 /**********************************************************/
 #pragma once
-
-#include "SCRambl/Engine.h"
-#include "SCRambl/Scripts.h"
-#include "SCRambl/Preparser.h"
-#include "SCRambl/Preprocessor.h"
+#include <string>
+#include <fstream>
+//#include "Tasks.h"
+//#include "Scripts.h"
 
 namespace SCRambl
 {
-
+template <class T>
+	class Configuration
+	{
+	};
 }

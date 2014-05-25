@@ -54,6 +54,7 @@ int main(int argc, char* argv[])
 
 	enum Task
 	{
+		preparser,
 		preprocessor,
 		parser,
 		compiler,
@@ -61,17 +62,22 @@ int main(int argc, char* argv[])
 		finished
 	};
 
+	// Initialise script
+	SCRambl::Script script;
+
 	// Load a script from each file and feed it into the SCRambl engine
 	auto files = CmdParser.GetOpts();
 	for (auto path : files)
 	{
+		engine.AddTask<Task, SCRambl::PreparserTask>(preparser, script, path);
+	}
 		try
 		{
-			// Attempt to initialise script - will throw on invalid input
-			SCRambl::Script script(path);
+			// Add a preparser task to read the script into a simpler format
+			//engine.AddTask<Task, SCRambl::PreparserTask, SCRambl::Script>(preparser, script);
 
 			// Add a preprocessor task to preprocess the script - give it our 'preprocessor' ID so we can identify it later
-			engine.AddTask<Task, SCRambl::PreprocessorTask, SCRambl::Script>(preprocessor, script);
+			//engine.AddTask<Task, SCRambl::PreprocessorTask, SCRambl::Script>(preprocessor, script);
 
 			//
 			bool bRunning = true;
@@ -121,10 +127,10 @@ int main(int argc, char* argv[])
 		}
 		catch (...)
 		{
-			std::cout << "ERROR: failed to compile file '" << path << "'\n";
+			std::cout << "ERROR: failed to compile file '" << "'\n";
 			return 1;
 		}
-	}
+	//}
 
 	//SCRambl::
 	return 0;

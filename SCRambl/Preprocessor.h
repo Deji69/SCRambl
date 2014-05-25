@@ -8,6 +8,8 @@
 #include "Tasks.h"
 #include "Scripts.h"
 #include "Lexer.h"
+#include "Macros.h"
+#include "Identifiers.h"
 
 namespace SCRambl
 {
@@ -173,6 +175,8 @@ namespace SCRambl
 		{
 			token_none,
 			token_whitespace,					// we'll be trimming whitespace, tabs, comments, etc. down to one single white space character for easier parsing
+			token_eol,
+			token_identifier,
 			token_directive,
 			token_comment,
 			token_block_comment,
@@ -190,6 +194,7 @@ namespace SCRambl
 
 		Engine									&	m_Engine;
 
+		IdentifierScanner							m_IdentifierScanner;
 		DirectiveScanner							m_DirectiveScanner;
 		CommentScanner								m_CommentScanner;
 		BlockCommentScanner							m_BlockCommentScanner;
@@ -201,6 +206,7 @@ namespace SCRambl
 		std::string::iterator						m_SavedCodePos;
 		DirectiveMap								m_Directives;
 		Directive									m_Directive;
+		MacroMap									m_Macros;
 
 	public:
 		enum State {
@@ -232,8 +238,8 @@ namespace SCRambl
 		void HandleDirective();
 		void HandleComment();
 
-		inline int GetLineNumber() const		{ return *m_ScriptLine; }
-		inline std::string & GetLineCode()		{ return *m_ScriptLine; }
+		inline int GetLineNumber() const			{ return *m_ScriptLine; }
+		inline std::string &GetLineCode()			{ static std::string str = ""; return str; }//(*m_ScriptLine).GetCode(); }
 
 		// Returns true if there was another line
 		bool NextLine()

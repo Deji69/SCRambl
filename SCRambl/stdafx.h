@@ -7,7 +7,7 @@
 #pragma once
 #pragma warning(disable:4341)
 
-#ifdef WIN32
+#ifdef _WIN32
 	#include <Windows.h>
 #endif
 
