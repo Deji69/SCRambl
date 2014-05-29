@@ -14,11 +14,13 @@ namespace SCRambl
 	class Engine : protected Task
 	{
 		using TaskEntry = std::pair<int, Task*>;
+		using TaskMap = std::map<int, Task*>;
 		//std::list<TaskEntry>							Tasks;
 		//std::list<TaskEntry>::iterator					CurrentTask;
-		std::map<int, Task*>							Tasks;
-		std::map<int, Task*>::iterator					CurrentTask;
-		bool											HaveTask;
+		TaskMap					Tasks;
+		TaskMap::iterator		CurrentTask;
+		Task::State				LastTaskState;
+		bool					HaveTask;
 
 		void Init()
 		{
@@ -51,13 +53,35 @@ namespace SCRambl
 			}
 		}
 
+		template<class ID>
+		bool RemoveTask(ID id)
+		{
+			if (!std::is_empty(Tasks))
+			{
+				auto it = std::find(std::begin(Tasks), std::end(Tasks), id);
+				if (it != std::end(Tasks))
+				{
+					delete it->second;
+					Tasks.erase(it);
+
+					if (std::is_empty(Tasks))
+					{
+						HaveTask = false;
+						CurrentTask = std::end(Tasks);
+					}
+					return true;
+				}
+			}
+			return false;
+		}
+
 		template<class T>
 		inline T & GetCurrentTask()					{ return *reinterpret_cast<T*>((*CurrentTask).second); }
 		inline int GetCurrentTaskID() const			{ return (*CurrentTask).first; }
 		inline size_t GetNumTasks() const			{ return Tasks.size(); }
 		inline void ClearTasks()					{ Tasks.clear(); }
 
-		const Task & Run() const;
+		const Task & Run();
 
 	protected:
 		bool IsTaskFinished() override				{ return CurrentTask == std::end(Tasks); }

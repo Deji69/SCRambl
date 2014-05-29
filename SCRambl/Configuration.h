@@ -12,8 +12,13 @@
 
 namespace SCRambl
 {
-template <class T>
+	template <class T>
 	class Configuration
 	{
+	};
+
+	class Config
+	{
+
 	};
 }

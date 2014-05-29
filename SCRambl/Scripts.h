@@ -15,7 +15,7 @@
 #include "Identifiers.h"
 #include "Macros.h"
 #include "Errors.h"
-#include "Code.h"
+#include "Symbols.h"
 
 namespace SCRambl
 {

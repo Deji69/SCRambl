@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Preparser.h"
-#include "Code.h"
+#include "Symbols.h"
 
 namespace SCRambl
 {

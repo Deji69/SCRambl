@@ -7,6 +7,7 @@
 #pragma once
 #include <string>
 #include <fstream>
+#include "Configuration.h"
 #include "Tasks.h"
 #include "Scripts.h"
 

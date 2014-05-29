@@ -11,7 +11,7 @@ namespace SCRambl
 		m_Lexer.AddTokenScanner<BlockCommentScanner>(token_block_comment, m_BlockCommentScanner);
 		m_Lexer.AddTokenScanner<CommentScanner>(token_comment, m_CommentScanner);
 		m_Lexer.AddTokenScanner<DirectiveScanner>(token_directive, m_DirectiveScanner);
-		m_Lexer.AddTokenScanner<IdentifierScanner>(token_identifier, m_IdentifierScanner);
+		//m_Lexer.AddTokenScanner<IdentifierScanner>(token_identifier, m_IdentifierScanner);
 
 		m_Directives["include"] = directive_include;
 		m_Directives["define"] = directive_define;
@@ -33,10 +33,7 @@ namespace SCRambl
 			break;
 		}
 
-		m_State = lexing;
-		m_ScriptLine = m_Script.Code().begin();
-		m_Code = &GetLineCode();
-		m_CodeIterator = m_Code->begin();
+		m_State = init;
 	}
 
 	void Preprocessor::Run()
@@ -46,7 +43,10 @@ namespace SCRambl
 			switch (m_State)
 			{
 			case init:
-				throw("Preprocessor was left un-initialised");
+				m_State = lexing;
+				m_ScriptLine = std::begin(m_Script.Code());
+				m_Code = &GetLineCode();
+				m_CodeIterator = std::begin(m_Code->Symbols());
 				break;
 			default:
 				RunningState();
@@ -81,22 +81,19 @@ namespace SCRambl
 			break;
 		}
 
-		if (m_State == idle)
+		if (m_CodeIterator == std::end(m_Code->Symbols()))
 		{
-			if (m_CodeIterator == m_Code->end())
+			if (m_State == inside_comment)
+				HandleComment();			// delete everything on line from the comment and continue it on the next line
+
+			if (!NextLine())
 			{
-				if (m_State == inside_comment)
-					HandleComment();			// delete everything on line from the comment and continue it on the next line
-
-				if (!NextLine())
-				{
-					m_State = finished;
-					return;
-				}
-
-				m_State = idle;
+				m_State = finished;
 				return;
 			}
+
+			m_State = lexing;
+			return;
 		}
 	}
 
@@ -126,11 +123,12 @@ namespace SCRambl
 		case token_comment:
 			// just remove the whole line
 			*m_Code = "";
-			m_CodeIterator = m_Code->end();
+			m_CodeIterator = std::end(m_Code->Symbols());
 			break;
 		case token_block_comment:
 			// replace it with a single whitespace character (for the parsing stage) and skip it ourselves
-			m_Code->replace(m_Lexer.GetTokenStart(), m_Lexer.GetTokenEnd(), " ");
+			//m_Code->Symbols().replace(m_Lexer.GetTokenStart(), m_Lexer.GetTokenEnd(), { ' ' });
+			m_Code->Symbols().erase(m_Lexer.GetTokenStart(), std::prev(m_Lexer.GetTokenEnd()))[0] = Symbol(' ');
 			m_CodeIterator = std::next(m_Lexer.GetTokenStart());
 			break;
 		default:
@@ -142,16 +140,18 @@ namespace SCRambl
 
 	void Preprocessor::LexerPhase()
 	{
-		switch (m_Lexer.GetState())
+		bool b = m_Lexer.Scan(*m_Code, m_CodeIterator);
+		ASSERT(b);
+		/*switch (m_Lexer.GetState())
 		{
-		case Lexer::LexerState::before:
+		case Lexer::State::before:
 			// we're in the preprocessor, so just ignore anything alien
 			while (!m_Lexer.Scan(*m_Code, m_CodeIterator) && ++m_CodeIterator != m_Code->end());
 			// possible scanner match! next state...
 			m_State = lexing;
 			return;
 
-		case Lexer::LexerState::inside:
+		case Lexer::State::inside:
 			if (m_Lexer.Scan(m_CodeIterator)) {
 				// end of the token? next state...
 
@@ -174,7 +174,7 @@ namespace SCRambl
 			}
 			break;
 
-		case Lexer::LexerState::after:
+		case Lexer::State::after:
 			// see if the token is valid
 			if (m_Lexer.Scan(m_CodeIterator))
 			{
@@ -210,10 +210,10 @@ namespace SCRambl
 			{
 				// scanner invalidated. if any following scanner validates the code, the state will now be 'inside',
 				// otherwise no scanner validated the code and the process may begin again with new code
-				m_State = m_Lexer.GetState() == Lexer::LexerState::inside ? lexing : idle;
+				m_State = m_Lexer.GetState() == Lexer::State::inside ? lexing : idle;
 				return;
 			}
 			break;
-		}
+		}*/
 	}
 }

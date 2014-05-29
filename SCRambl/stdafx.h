@@ -8,7 +8,7 @@
 #pragma warning(disable:4341)
 
 #ifdef _WIN32
-	#include <Windows.h>
+#include <Windows.h>
 #endif
 
 #include <stdio.h>

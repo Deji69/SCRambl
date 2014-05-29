@@ -28,10 +28,8 @@ namespace SCRambl
 	public:
 		inline State GetState()	const		{ return m_State; }
 
-		Task()
-		{
-			m_State = running;
-		}
+		Task() : m_State(running)
+		{ }
 		virtual ~Task() { };
 
 		const Task & Run()

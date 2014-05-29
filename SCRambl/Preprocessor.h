@@ -16,16 +16,22 @@ namespace SCRambl
 	class WhitespaceScanner : public Lexer::Scanner
 	{
 	public:
-		bool Scan(const Lexer::LexerState & state, const std::string & str, std::string::const_iterator & it) override
+		bool Scan(Lexer::State & state, CodeLine & line, CodeLine::iterator & it) override
 		{
-			switch (state)
+			if (state == Lexer::State::before)
 			{
-				// return true if IsSpace
-			case Lexer::LexerState::before: return IsSpace(*it) != 0;
-				// skip the rest of the IsSpace's now and return true to advance state
-			case Lexer::LexerState::inside: while (it != std::end(str) && IsSpace(*it)) ++it; return true;
-				// all done
-			case Lexer::LexerState::after: return true;
+				if (it->GetType() == Symbol::whitespace)
+				{
+					// remove excess whitespace
+					while (true)
+					{
+						auto nex = std::next(it);
+						if (nex == line.Symbols().end() || nex->GetType() != Symbol::whitespace)
+							break;
+						line.Symbols().erase(nex);
+					}
+					return true;
+				}
 			}
 			return false;
 		}
@@ -33,12 +39,12 @@ namespace SCRambl
 	/*class IdentifierScanner : public Lexer::Scanner
 	{
 	public:
-		bool Scan(const Lexer::LexerState & state, const std::string & str, std::string::const_iterator & it) override
+		bool Scan(const Lexer::State & state, const std::string & str, std::string::const_iterator & it) override
 		{
 			switch (state)
 			{
 				// return true if IsIdentifierStart
-			case Lexer::LexerState::before:
+			case Lexer::State::before:
 				if (IsIdentifierStart(*it))
 				{
 					++it;
@@ -46,10 +52,10 @@ namespace SCRambl
 				}
 				break;
 				// return true once we've read all the identifier characters
-			case Lexer::LexerState::inside:
+			case Lexer::State::inside:
 				return !IsIdentifier(*it++);
 				// make sure that a separator followed the identifier chars - else throw a tantrum
-			case Lexer::LexerState::after:
+			case Lexer::State::after:
 				if (!IsSeparator(*it)) throw(*this);
 				return true;
 			}
@@ -59,27 +65,32 @@ namespace SCRambl
 	class DirectiveScanner : public Lexer::Scanner
 	{
 	public:
-		bool Scan(const Lexer::LexerState & state, const std::string & str, std::string::const_iterator & it) override
+		bool Scan(Lexer::State & state, CodeLine & line, CodeLine::iterator & it) override
 		{
 			switch (state)
 			{
 				// check prefix
-			case Lexer::LexerState::before:
+			case Lexer::State::before:
 				if (*it == '#')
 				{
+					state = Lexer::State::inside;
 					++it;
 					return true;
 				}
 				break;
 
 				// check for first unfitting character
-			case Lexer::LexerState::inside:
-				if (!IsIdentifier(*it)) return true;
+			case Lexer::State::inside:
+				if (it->GetType() == Symbol::identifier || it->GetType() == Symbol::number)
+					state = Lexer::State::after;
 				++it;
-				break;
+				return true;
 
 				// no suffix? no problem.
-			case Lexer::LexerState::after:
+			case Lexer::State::after:
+				if (it->GetType() == Symbol::whitespace || it->GetType() == Symbol::separator)
+				{
+				}
 				return true;
 			}
 			return false;
@@ -89,22 +100,22 @@ namespace SCRambl
 	class CommentScanner : public Lexer::Scanner
 	{
 	public:
-		bool Scan(const Lexer::LexerState & state, const std::string & str, std::string::const_iterator & it) override
+		bool Scan(Lexer::State & state, CodeLine & str, CodeLine::iterator & it) override
 		{
 			switch (state)
 			{
 				// return number of matched prefix chars
-			case Lexer::LexerState::before:
-				if (*it++ == '/' && it != std::end(str) && *it++ == '/')
+			case Lexer::State::before:
+				if (*it++ == '/' && it != std::end(str.Symbols()) && *it++ == '/')
 					return true;
 				break;
 
 				// dont bother scanning the rest of the line - the preprocessor will only be deleting it - just the '//' will do
-			case Lexer::LexerState::inside:
+			case Lexer::State::inside:
 				return true;
 
 				// yeah, k
-			case Lexer::LexerState::after:
+			case Lexer::State::after:
 				return true;
 			}
 			return false;
@@ -116,52 +127,73 @@ namespace SCRambl
 		int				depth = 0;
 
 	public:
-		bool Scan(const Lexer::LexerState & state, const std::string & str, std::string::const_iterator & it) override
+		bool Scan(Lexer::State & state, CodeLine & str, CodeLine::iterator & it) override
 		{
 			switch (state)
 			{
 				// check for opening of block comment sequence
-			case Lexer::LexerState::before:
+			case Lexer::State::before:
 				if (depth)
-					return true;		// we're already inside a block comment
+				{
+					// we're already inside a block comment
+					state = Lexer::State::inside;
+					return true;
+				}
+
+				// check for opening
 				if (*it == '/')
 				{
 					++it;
-					if (it != std::end(str) && *it == '*')
+					if (it != std::end(str.Symbols()) && *it == '*')
 					{
 						++it;
 						++depth;
+						state = Lexer::State::inside;
 						return true;
 					}
 				}
 				break;
 
 				// check for nested comments and closing comment
-			case Lexer::LexerState::inside:
-				if (it == std::end(str))
-					return true;
-				if (*it == '/')
+			case Lexer::State::inside:
+				if (it != std::end(str.Symbols()))
 				{
-					++it;
-					if (it != std::end(str) && *it == '*')
+					if (*it == Symbol::punctuator)
 					{
-						++it;
-						++depth;
-					}
-				}
-				else if (*it == '*')
-				{
-					++it;
-					if (it != std::end(str) && *it == '/')
-					{
-						++it;
-						if (!--depth) return true;
-					}
-				}
-				else ++it;
-				break;
+						switch (*it)
+						{
+						case '/':
+							++it;
+							if (it != std::end(str.Symbols()) && *it == '*')
+							{
+								++it;
+								++depth;
+							}
+							break;
 
-			case Lexer::LexerState::after:
+						case '*':
+							++it;
+							if (it != std::end(str.Symbols()) && *it == '/')
+							{
+								++it;
+								if (!--depth)
+								{
+									state = Lexer::State::after;
+									return true;
+								}
+							}
+							break;
+
+						default:
+							++it;
+							break;
+						}
+					}
+					else ++it;
+				}
+				return true;
+
+			case Lexer::State::after:
 				return true;
 			}
 
@@ -194,15 +226,15 @@ namespace SCRambl
 
 		Engine									&	m_Engine;
 
-		IdentifierScanner							m_IdentifierScanner;
+		//IdentifierScanner							m_IdentifierScanner;
 		DirectiveScanner							m_DirectiveScanner;
 		CommentScanner								m_CommentScanner;
 		BlockCommentScanner							m_BlockCommentScanner;
 		WhitespaceScanner							m_WhitespaceScanner;
 
 		Lexer::Lexer<Token>							m_Lexer;
-		std::string								*	m_Code;
-		std::string::iterator						m_CodeIterator;
+		CodeLine								*	m_Code;
+		CodeLine::iterator							m_CodeIterator;
 		std::string::iterator						m_SavedCodePos;
 		DirectiveMap								m_Directives;
 		Directive									m_Directive;
@@ -239,25 +271,16 @@ namespace SCRambl
 		void HandleComment();
 
 		inline int GetLineNumber() const			{ return *m_ScriptLine; }
-		inline std::string &GetLineCode()			{ static std::string str = ""; return str; }//(*m_ScriptLine).GetCode(); }
+		inline CodeLine & GetLineCode()				{ return *m_ScriptLine; }
 
 		// Returns true if there was another line
 		bool NextLine()
 		{
-			{
-				// try to get a new line, but keep a reference to the current
-				auto & last_line = *m_ScriptLine++;
-
-				// if the last line contained nothing or nothing but whitespace, get rid of it
-				if (!m_Code->empty()) *m_Code = trim(*m_Code);
-				if (m_Code->empty()) m_Script.Code().remove(last_line);
-			}
-			
 			// if we managed to get a new line, get the new code
-			if (m_ScriptLine != std::end(m_Script.Code()))
+			if (++m_ScriptLine != std::end(m_Script.Code()))
 			{
 				m_Code = &GetLineCode();
-				m_CodeIterator = std::begin(*m_Code);
+				m_CodeIterator = std::begin(m_Code->Symbols());
 				return true;
 			}
 			return false;

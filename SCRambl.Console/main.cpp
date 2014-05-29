@@ -69,15 +69,13 @@ int main(int argc, char* argv[])
 	auto files = CmdParser.GetOpts();
 	for (auto path : files)
 	{
-		engine.AddTask<Task, SCRambl::PreparserTask>(preparser, script, path);
-	}
 		try
 		{
 			// Add a preparser task to read the script into a simpler format
-			//engine.AddTask<Task, SCRambl::PreparserTask, SCRambl::Script>(preparser, script);
+			engine.AddTask<Task, SCRambl::PreparserTask, SCRambl::Script>(preparser, script, path);
 
 			// Add a preprocessor task to preprocess the script - give it our 'preprocessor' ID so we can identify it later
-			//engine.AddTask<Task, SCRambl::PreprocessorTask, SCRambl::Script>(preprocessor, script);
+			engine.AddTask<Task, SCRambl::PreprocessorTask, SCRambl::Script>(preprocessor, script);
 
 			//
 			bool bRunning = true;
@@ -130,7 +128,7 @@ int main(int argc, char* argv[])
 			std::cout << "ERROR: failed to compile file '" << "'\n";
 			return 1;
 		}
-	//}
+	}
 
 	//SCRambl::
 	return 0;
