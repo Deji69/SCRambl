@@ -11,22 +11,25 @@
 #include <unordered_map>
 #include "utils.h"
 #include "Symbols.h"
+#include "Scripts.h"
 
 namespace SCRambl
 {
 	namespace Lexer
 	{
+		enum ScanResult {
+			found_nothing,
+			found_token,
+			still_scanning
+		};
+
 		/*\
 		 - Lexer::Scanner is a base interface for token scanners
 		\*/
 		class Scanner
 		{
 		public:
-			virtual bool Scan(class State & state, CodeLine & line, CodeLine::iterator & sym) = 0;
-			/*{
-				if (*sym != Symbol::eol) ++sym;
-				return false;
-			}*/
+			virtual bool Scan(class State & state, Script::Position & pos) = 0;
 		};
 
 		/*\
@@ -35,20 +38,29 @@ namespace SCRambl
 		template<typename TokenIDType>
 		class Token
 		{
+			template<class>
+			friend class Lexer;
+
 			TokenIDType						m_Type;
-			std::string						m_Token;
+			Script::Position				m_Start;
+			Script::Position				m_End;
+
+			inline void operator ()(TokenIDType type, Script::Position start, Script::Position end) {
+				m_Type = type;
+				m_Start = start;
+				m_End = end;
+			}
 
 		public:
-			Token(TokenIDType type, std::string::const_iterator start, std::string::const_iterator end) : m_Type(type), m_Token(start, end)
+			Token()
 			{}
 
 			inline TokenIDType				GetType() const			{ return m_Type; }
-			inline std::string				GetToken() const		{ return m_Token; }
+			inline Script::Position			Begin() const			{ return m_Start; }
+			inline Script::Position			End() const				{ return m_End; }
 
 			inline operator TokenIDType &()							{ return m_Type; }
-			inline operator std::string &()							{ return m_Token; }
 			inline operator TokenIDType () const					{ return m_Type; }
-			inline operator const std::string &() const				{ return m_Token; }
 		};
 
 		/*\
@@ -66,36 +78,31 @@ namespace SCRambl
 			// current state
 			state_t							m_State = before;
 
-			// current code symbol
-			CodeLine::iterator				m_CodeCur;
+			// current code symbol position
+			Script::Position				m_CodeCur;
 
-			// *before* code symbol iterator
-			CodeLine::iterator				m_CodeBefore;
-			// *inside* code symbol iterator
-			CodeLine::iterator				m_CodeInside;
-			// *after* code symbol iterator
-			CodeLine::iterator				m_CodeAfter;
+			// *before* code symbol position
+			Script::Position				m_CodeBefore;
 
-			/*inline State & operator=(CodeLine::iterator code) {
-				m_State = before;
-				m_CodeBefore = m_CodeInside = m_CodeAfter = m_CodeCur = code;
-				return *this;
-			}*/
-			explicit State(CodeLine::iterator code):
-				m_CodeCur(code),
-				m_CodeBefore(code),
-				m_CodeInside(code),
-				m_CodeAfter(code)
+			// *inside* code symbol position
+			Script::Position				m_CodeInside;
+
+			// *after* code symbol position
+			Script::Position				m_CodeAfter;
+
+			explicit State(Script::Position pos) :
+				m_CodeCur(pos),
+				m_CodeBefore(pos),
+				m_CodeInside(pos),
+				m_CodeAfter(pos)
 			{}
 
-			inline CodeLine::iterator & Current()				{ return m_CodeCur; }
-			inline CodeLine::iterator & Before()				{ return m_CodeBefore; }
-			inline CodeLine::iterator & Inside()				{ return m_CodeInside; }
-			inline CodeLine::iterator & After()					{ return m_CodeAfter; }
+			inline Script::Position & Current()				{ return m_CodeCur; }
+			inline Script::Position & Before()				{ return m_CodeBefore; }
+			inline Script::Position & Inside()				{ return m_CodeInside; }
+			inline Script::Position & After()				{ return m_CodeAfter; }
 
 		public:
-			State() = default;
-
 			inline void ChangeState(state_t val)
 			{
 				switch (m_State = val)
@@ -111,8 +118,6 @@ namespace SCRambl
 					break;
 				default: BREAK();
 				}
-
-				//m_State = val;
 			}
 
 			//inline operator State &()			{ return m_State; }
@@ -123,43 +128,22 @@ namespace SCRambl
 
 		/*\
 		 - The Lexer is a scanning engine, bridging the gaps between token scanners and the parser
+		 - This wonderful class makes adding new code elements a 2-step process
 		\*/
 		template<typename TokenIDType>
 		class Lexer
 		{
-			//using TokenScanner = std::pair<const TokenIDType, Scanner&>;
-			//using ScannerList = std::vector<TokenScanner>;
-			//using ScannerStates = std::vector<std::pair<State, TokenScanner&>>;
+		private:
 			typedef std::pair</*const */TokenIDType, Scanner&> TokenScanner;
 			typedef std::vector<TokenScanner> ScannerList;
 			typedef std::vector<std::pair<State, TokenScanner&>> ScannerStates;
 
-			//State										m_State;
-			enum Status { init, scanning, finished }	m_State = init;
-
-			CodeLine::iterator					m_Start;
-			CodeLine::iterator					m_Current;
-			CodeLine						*	m_pCode = nullptr;
+			enum Status { init, scanning }	m_State = init;
 			
 			ScannerList							m_Scanners;
 			ScannerStates						m_ScannerStates;
 
-			typename ScannerList::iterator		m_ScannerIter;
-			Scanner							*	m_Scanner = nullptr;
-
 		public:
-			//inline State					&	GetState()				{ return m_State; }
-			//inline const State				&	GetState() const		{ return m_State; }
-			inline TokenIDType					GetTokenType()			{
-				ASSERT(!m_ScannerStates.empty());
-				const TokenScanner & r = m_ScannerStates.front().second;
-				TokenIDType ty = r.first;
-				return r.first;
-			}
-			inline CodeLine::iterator			GetTokenStart()			{ ASSERT(!m_ScannerStates.empty()); return m_ScannerStates.front().first.Before(); }
-			inline CodeLine::iterator			GetTokenEnd()			{ ASSERT(!m_ScannerStates.empty()); return m_ScannerStates.front().first.After(); }
-			inline Token<TokenIDType>			Tokenize() const		{ /*ASSERT(m_State == State::after);*/ ASSERT(!m_ScannerStates.empty()); return{ GetTokenStart(), GetTokenEnd(), m_Current }; }
-
 			/*\
 			 - Adds a token scanner to this Lexer, causing Scan to attempt more detections on input
 			 - The token ID will be used by the lexer to represent which scanner detected a token
@@ -171,130 +155,68 @@ namespace SCRambl
 			}
 
 			/*\
-			 - This function expects a source CodeLine and iterator ref with the current symbol position
-			 - Returns true if the state advances, or false on failure, causing a reset
+			 - Give it the current Script::Position, let magic happen
 			\*/
-			bool Scan(CodeLine & str, CodeLine::iterator & it)
+			ScanResult Scan(const Script::Position & pos, Token<TokenIDType> & token)
 			{
-				//ASSERT(m_State == State::before);
+				ASSERT(!m_Scanners.empty());		// you need to add some scanners first!
 
-				// initialise the state with the starting symbol
-				//m_State = it;
-
-				// back up a pointer to the string
-				if (m_pCode != &str)
+				// if we haven't any active scanners, start trying to activate them
+				if (m_ScannerStates.empty())
 				{
-					m_pCode = &str;
-					m_State = init;
-				}
-
-				//m_Start = it;
-				//m_Current = it;
-
-				switch (m_State)
-				{
-				case init:
 					// throw a symbol at each scanner and keep any it sticks to...
 					for (auto scit = m_Scanners.begin(); scit != m_Scanners.end(); ++scit)
 					{
 						// initialise the state
-						State state(it);
-						
+						State state(pos);
+
 						// scan beginning token symbol with the scanner
-						auto & scanner = scit[0].second;
-						if (scanner.Scan(state, str, state.Current()))
+						auto & scanner = scit->second;
+						if (scanner.Scan(state, state.Current()))
 						{
 							// match? store its state...
 							m_ScannerStates.emplace_back(state, *scit);
 						}
 					}
 
-					// if we found a scanner, notify the callee and start scanning
-					if (!m_ScannerStates.empty())
-					{
-						m_State = scanning;
-						return true;
-					}
-					break;
-
-				case scanning:
-					// 
-					for (auto scit = m_ScannerStates.begin(); scit != m_ScannerStates.end(); ++scit)
+					// no scanner found? our master will not be pleased...
+					return m_ScannerStates.empty() ? found_nothing : still_scanning;
+				}
+				else
+				{
+					// go through those scanners we found
+					for (auto scit = m_ScannerStates.begin(); scit != m_ScannerStates.end(); )
 					{
 						// restore the scanners state
-						State & state = scit[0].first;
-						auto & scanner = scit[0].second.second;
+						State & state = scit->first;
+						auto & scanner = scit->second.second;
 
-						// scan inside the token
-						if (!scanner.Scan(state, str, state.Current()))
+						// all scanners finishing first qualify for the major league
+						bool last = state == State::after;
+
+						if (!scanner.Scan(state, state.Current()))
 						{
 							// failed? do away with this scanner, then...
-							//auto next = std::next(scit);
 							scit = m_ScannerStates.erase(scit);
-							//scit = std::prev(next);
-							continue;
+
+							// if we've got more scanners, let them continue - otherwise give up
+							if (!m_ScannerStates.empty()) continue;
+							return found_nothing;
 						}
-					}
-					return true;
-
-				case finished:
-					return true;
-				}
-				return false;
-			}
-
-			/*\
-			 - Use for inside/after states only
-			 - This function expects the iterator used in the initial Scan call, which holds the current lexing position
-			 - The passed iterator will represent the last scanned character on return
-			 - Returns true if the state advances (still false, however, if the state resets to use a different scanner)
-			\*/
-			/*bool Scan(std::string::const_iterator & it)
-			{
-				auto & str = *m_pCode;
-				switch (m_State)
-				{
-				case State::inside:
-					if (m_Scanner->Scan(m_State, str, m_Current))
-					{
-						m_State = State::after;
-					}
-					it = m_Current;
-					return false;
-
-				case State::after:
-					if (m_Scanner->Scan(m_State, str, m_Current))
-					{
-						m_State = State::before;
-						it = m_Current;
-						break;
-					}
-					else
-					{
-						m_Current = m_Start;
-						for (m_ScannerIter; m_ScannerIter != m_Scanners.end(); ++m_ScannerIter)
+						
+						// as soon as the quickest scanner finishes, call the race
+						if (last)
 						{
-							m_Scanner = &m_ScannerIter[0].second;
-
-							if (m_Scanner->Scan(m_State, str, m_Current))
-							{
-								m_State = State::inside;
-								break;
-							}
-							else m_Current = m_Start;
+							token(scit->second.first, state.Before(), state.After());
+							m_ScannerStates.clear();
+							return found_token;
 						}
-						m_Current = m_Start;
-						it = m_Current;
-						m_State = State::before;
-						return false;
-					}
-					break;
-				default: throw(std::runtime_error("Invalid Lexer State"));
-				}
 
-				it = m_Current;
-				return true;
-			}*/
+						++scit;
+					}
+					return still_scanning;
+				}
+			}
 		};
 	}
 }

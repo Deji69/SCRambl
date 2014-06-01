@@ -1,4 +1,6 @@
-/*aaaa\
+// comments, trigraph, newline escaping, #include directive
+/??/
+*aaaa
 */#include\
 "build.xml"
 #define FALSE (-5+1)

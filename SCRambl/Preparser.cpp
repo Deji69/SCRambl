@@ -40,7 +40,7 @@ namespace SCRambl
 		case continue_next_line:
 			if (!m_ParsedCode.Symbols().empty())
 			{
-				m_Script.Code().emplace_back(m_NumLines, m_ParsedCode, nullptr);		// TODO: something with ScriptFile
+				m_Script.GetCode().AddLine(m_ParsedCode);
 				m_ParsedCode.Symbols().clear();
 			}
 			m_State = reading;

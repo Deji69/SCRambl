@@ -16,20 +16,17 @@ namespace SCRambl
 	class WhitespaceScanner : public Lexer::Scanner
 	{
 	public:
-		bool Scan(Lexer::State & state, CodeLine & line, CodeLine::iterator & it) override
+		bool Scan(Lexer::State & state, Script::Position & code) override
 		{
 			if (state == Lexer::State::before)
 			{
-				if (it->GetType() == Symbol::whitespace)
+				if (code->GetType() == Symbol::whitespace)
 				{
 					// remove excess whitespace
-					while (true)
-					{
-						auto nex = std::next(it);
-						if (nex == line.Symbols().end() || nex->GetType() != Symbol::whitespace)
-							break;
-						line.Symbols().erase(nex);
-					}
+					auto next = code;
+					++next;
+					while (next && next->GetType() == Symbol::whitespace)
+						next.Delete();
 					return true;
 				}
 			}
@@ -65,30 +62,30 @@ namespace SCRambl
 	class DirectiveScanner : public Lexer::Scanner
 	{
 	public:
-		bool Scan(Lexer::State & state, CodeLine & line, CodeLine::iterator & it) override
+		bool Scan(Lexer::State & state, Script::Position & pos) override
 		{
 			switch (state)
 			{
 				// check prefix
 			case Lexer::State::before:
-				if (*it == '#')
+				if (*pos == '#')
 				{
 					state = Lexer::State::inside;
-					++it;
+					++pos;
 					return true;
 				}
 				break;
 
 				// check for first unfitting character
 			case Lexer::State::inside:
-				if (it->GetType() == Symbol::identifier || it->GetType() == Symbol::number)
+				if (pos->GetType() == Symbol::identifier || pos->GetType() == Symbol::number)
 					state = Lexer::State::after;
-				++it;
+				++pos;
 				return true;
 
 				// no suffix? no problem.
 			case Lexer::State::after:
-				if (it->GetType() == Symbol::whitespace || it->GetType() == Symbol::separator)
+				if (pos->GetType() == Symbol::whitespace || pos->GetType() == Symbol::separator)
 				{
 				}
 				return true;
@@ -100,18 +97,24 @@ namespace SCRambl
 	class CommentScanner : public Lexer::Scanner
 	{
 	public:
-		bool Scan(Lexer::State & state, CodeLine & str, CodeLine::iterator & it) override
+		bool Scan(Lexer::State & state, Script::Position & pos) override
 		{
 			switch (state)
 			{
 				// return number of matched prefix chars
 			case Lexer::State::before:
-				if (*it++ == '/' && it != std::end(str.Symbols()) && *it++ == '/')
+				if (*pos == '/' && ++pos && *pos == '/')
+				{
+					++pos;
+					state = Lexer::State::inside;
 					return true;
+				}
 				break;
 
-				// dont bother scanning the rest of the line - the preprocessor will only be deleting it - just the '//' will do
+				// run to the end of the line, quick!
 			case Lexer::State::inside:
+				while (pos && pos->GetType() != Symbol::eol) ++pos;
+				state = Lexer::State::after;
 				return true;
 
 				// yeah, k
@@ -127,55 +130,41 @@ namespace SCRambl
 		int				depth = 0;
 
 	public:
-		bool Scan(Lexer::State & state, CodeLine & str, CodeLine::iterator & it) override
+		bool Scan(Lexer::State & state, Script::Position & pos) override
 		{
 			switch (state)
 			{
 				// check for opening of block comment sequence
 			case Lexer::State::before:
-				if (depth)
+				// check for opening
+				if (*pos == '/' && ++pos && *pos == '*')
 				{
-					// we're already inside a block comment
+					++pos;
+					++depth;
 					state = Lexer::State::inside;
 					return true;
-				}
-
-				// check for opening
-				if (*it == '/')
-				{
-					++it;
-					if (it != std::end(str.Symbols()) && *it == '*')
-					{
-						++it;
-						++depth;
-						state = Lexer::State::inside;
-						return true;
-					}
 				}
 				break;
 
 				// check for nested comments and closing comment
 			case Lexer::State::inside:
-				if (it != std::end(str.Symbols()))
-				{
-					if (*it == Symbol::punctuator)
+				do {
+					if (pos->GetType() == Symbol::punctuator)
 					{
-						switch (*it)
+						switch (*pos)
 						{
 						case '/':
-							++it;
-							if (it != std::end(str.Symbols()) && *it == '*')
+							if (++pos && *pos == '*')
 							{
-								++it;
+								++pos;
 								++depth;
 							}
 							break;
 
 						case '*':
-							++it;
-							if (it != std::end(str.Symbols()) && *it == '/')
+							if (++pos && *pos == '/')
 							{
-								++it;
+								++pos;
 								if (!--depth)
 								{
 									state = Lexer::State::after;
@@ -185,12 +174,12 @@ namespace SCRambl
 							break;
 
 						default:
-							++it;
+							++pos;
 							break;
 						}
 					}
-					else ++it;
-				}
+				} while (++pos);
+				ASSERT(!depth);			// TODO: throw error "still in comment at end-of-file"
 				return true;
 
 			case Lexer::State::after:
@@ -233,9 +222,7 @@ namespace SCRambl
 		WhitespaceScanner							m_WhitespaceScanner;
 
 		Lexer::Lexer<Token>							m_Lexer;
-		CodeLine								*	m_Code;
-		CodeLine::iterator							m_CodeIterator;
-		std::string::iterator						m_SavedCodePos;
+		Lexer::Token<Token>							m_Token;
 		DirectiveMap								m_Directives;
 		Directive									m_Directive;
 		MacroMap									m_Macros;
@@ -244,7 +231,7 @@ namespace SCRambl
 		enum State {
 			init,
 			//begin_line, during_line, end_of_line,
-			idle, lexing,
+			lexing,
 			found_directive, during_directive,
 			found_comment, inside_comment,
 			finished,
@@ -261,7 +248,7 @@ namespace SCRambl
 	private:
 		State					m_State;
 		Script				&	m_Script;
-		CodeList::iterator		m_ScriptLine;
+		Script::Position		m_CodePos;
 		bool					m_bScriptIsLoaded;		// if so, we only need to add-in any #include's
 
 		void RunningState();
@@ -270,21 +257,8 @@ namespace SCRambl
 		void HandleDirective();
 		void HandleComment();
 
-		inline int GetLineNumber() const			{ return *m_ScriptLine; }
-		inline CodeLine & GetLineCode()				{ return *m_ScriptLine; }
-
-		// Returns true if there was another line
-		bool NextLine()
-		{
-			// if we managed to get a new line, get the new code
-			if (++m_ScriptLine != std::end(m_Script.Code()))
-			{
-				m_Code = &GetLineCode();
-				m_CodeIterator = std::begin(m_Code->Symbols());
-				return true;
-			}
-			return false;
-		}
+		inline long GetLineNumber() const			{ return m_CodePos.GetLine(); }
+		inline CodeLine & GetLineCode()				{ return m_CodePos.GetLine().GetCode(); }
 
 		// Returns directive_invalid if it didnt exist
 		inline Directive GetDirective(const std::string & str) const

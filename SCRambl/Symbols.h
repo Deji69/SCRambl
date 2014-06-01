@@ -12,7 +12,6 @@
 #include <map>
 #include <unordered_map>
 #include "utils.h"
-#include "Identifiers.h"
 
 namespace SCRambl
 {
@@ -105,7 +104,6 @@ namespace SCRambl
 		inline char GetChar() const			{ return m_Character; }
 		inline Type GetType() const			{ return m_Type; }
 		inline operator char() const		{ return GetChar(); }
-		//inline operator Type() const		{ return GetType(); }
 	};
 
 	class CodeLine

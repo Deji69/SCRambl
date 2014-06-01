@@ -4,7 +4,7 @@
 
 namespace SCRambl
 {
-	Preprocessor::Preprocessor(Engine & engine, Script & script) : m_State(init), m_Engine(engine), m_Script(script), m_Lexer(), m_Code(nullptr)
+	Preprocessor::Preprocessor(Engine & engine, Script & script) : m_State(init), m_Engine(engine), m_Script(script), m_Lexer(), m_CodePos(script.GetCode())
 	{
 		Reset();
 		m_Lexer.AddTokenScanner<WhitespaceScanner>(token_none, m_WhitespaceScanner);
@@ -44,9 +44,6 @@ namespace SCRambl
 			{
 			case init:
 				m_State = lexing;
-				m_ScriptLine = std::begin(m_Script.Code());
-				m_Code = &GetLineCode();
-				m_CodeIterator = std::begin(m_Code->Symbols());
 				break;
 			default:
 				RunningState();
@@ -68,7 +65,6 @@ namespace SCRambl
 
 		switch (m_State)
 		{
-		case idle:
 		case lexing:
 		default:
 			LexerPhase();
@@ -81,7 +77,7 @@ namespace SCRambl
 			break;
 		}
 
-		if (m_CodeIterator == std::end(m_Code->Symbols()))
+		/*if (m_CodeIterator == std::end(m_Code->Symbols()))
 		{
 			if (m_State == inside_comment)
 				HandleComment();			// delete everything on line from the comment and continue it on the next line
@@ -94,7 +90,7 @@ namespace SCRambl
 
 			m_State = lexing;
 			return;
-		}
+		}*/
 	}
 
 	void Preprocessor::HandleDirective()
@@ -113,107 +109,49 @@ namespace SCRambl
 			BREAK();
 		}
 
-		m_State = idle;
+		m_State = lexing;
 	}
 
 	void Preprocessor::HandleComment()
 	{
-		switch (m_Lexer.GetTokenType())
-		{
-		case token_comment:
-			// just remove the whole line
-			*m_Code = "";
-			m_CodeIterator = std::end(m_Code->Symbols());
-			break;
-		case token_block_comment:
-			// replace it with a single whitespace character (for the parsing stage) and skip it ourselves
-			//m_Code->Symbols().replace(m_Lexer.GetTokenStart(), m_Lexer.GetTokenEnd(), { ' ' });
-			m_Code->Symbols().erase(m_Lexer.GetTokenStart(), std::prev(m_Lexer.GetTokenEnd()))[0] = Symbol(' ');
-			m_CodeIterator = std::next(m_Lexer.GetTokenStart());
-			break;
-		default:
-			BREAK();
-		}
+		// handle it with care by deleting the shit out of it
+		m_CodePos = m_Script.GetCode().Erase(m_Token.Begin(), m_Token.End());
 
-		m_State = idle;
+		m_State = lexing;
 	}
 
 	void Preprocessor::LexerPhase()
 	{
-		bool b = m_Lexer.Scan(*m_Code, m_CodeIterator);
-		ASSERT(b);
-		/*switch (m_Lexer.GetState())
+		while (m_CodePos && m_CodePos->GetType() == Symbol::eol) ++m_CodePos;
+
+		if (!m_CodePos)
 		{
-		case Lexer::State::before:
-			// we're in the preprocessor, so just ignore anything alien
-			while (!m_Lexer.Scan(*m_Code, m_CodeIterator) && ++m_CodeIterator != m_Code->end());
-			// possible scanner match! next state...
-			m_State = lexing;
+			m_State = finished;
+			return;
+		}
+
+		switch (m_Lexer.Scan(m_CodePos, m_Token))
+		{
+		case Lexer::ScanResult::still_scanning:
 			return;
 
-		case Lexer::State::inside:
-			if (m_Lexer.Scan(m_CodeIterator)) {
-				// end of the token? next state...
-
-				m_State = lexing;
-				return;
-			}
-			else {
-				// the code is still being scanned
-
-				switch (m_Lexer.Tokenize())
-				{
-				case token_block_comment:
-					// if a block comment is being scanned, make sure we know so we can remove commented code from this line if it ends before the comment
-					m_State = inside_comment;
-					return;
-				default:
-					m_State = lexing;
-					return;
-				}
-			}
-			break;
-
-		case Lexer::State::after:
-			// see if the token is valid
-			if (m_Lexer.Scan(m_CodeIterator))
+		case Lexer::ScanResult::found_token:
+			// we found one, we found one!
+			switch (m_Token)
 			{
-				// grab the token, do stuff
-				auto token = m_Lexer.Tokenize();
-
-				switch (token)
-				{
-				case token_whitespace:
-					// trim excessive whitespace down to one character and skip it
-					m_Code->replace(m_Lexer.GetTokenStart(), m_Lexer.GetTokenEnd(), " ");
-					m_CodeIterator = m_Lexer.GetTokenStart() + 1;
-					break;
-
-				case token_directive:
-					// get the directive and enter the directive handling state
-					m_Directive = GetDirective(token);
-					m_State = found_directive;
-					return;
-
-				case token_comment:
-				case token_block_comment:
-					// enter comment handling state
-					m_State = found_comment;
-					return;
-				}
-
-				// nothing special
-				m_State = idle;
+			case token_comment:
+			case token_block_comment:
+				m_State = found_comment;
+				return;
+			case token_directive:
+				m_State = found_directive;
 				return;
 			}
-			else
-			{
-				// scanner invalidated. if any following scanner validates the code, the state will now be 'inside',
-				// otherwise no scanner validated the code and the process may begin again with new code
-				m_State = m_Lexer.GetState() == Lexer::State::inside ? lexing : idle;
-				return;
-			}
-			break;
-		}*/
+			return;
+
+		case Lexer::ScanResult::found_nothing:
+			std::cerr << "found_nothing\n";
+			return;
+		}
 	}
 }

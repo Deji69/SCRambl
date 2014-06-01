@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
 
 	enum Task
 	{
-		preparser,
+		//preparser,
 		preprocessor,
 		parser,
 		compiler,
@@ -71,8 +71,19 @@ int main(int argc, char* argv[])
 	{
 		try
 		{
+			script.LoadFile(path);
+		}
+		catch (...)
+		{
+			std::cerr << "FATAL ERROR: failed to open file \'" << path << "\'\n";
+		}
+
+		std::cout << "Loaded. " << script.GetCode().NumLines() << " lines, " << script.GetCode().NumSymbols() << " symbols.";
+
+		try
+		{
 			// Add a preparser task to read the script into a simpler format
-			engine.AddTask<Task, SCRambl::PreparserTask, SCRambl::Script>(preparser, script, path);
+			//engine.AddTask<Task, SCRambl::PreparserTask, SCRambl::Script>(preparser, script, path);
 
 			// Add a preprocessor task to preprocess the script - give it our 'preprocessor' ID so we can identify it later
 			engine.AddTask<Task, SCRambl::PreprocessorTask, SCRambl::Script>(preprocessor, script);
@@ -102,14 +113,11 @@ int main(int argc, char* argv[])
 						case Task::finished:
 							break;
 						case Task::error:
-							std::cout << "ERROR (Preprocessor) : " << "\n";
+							std::cerr << "ERROR (Preprocessor) : " << "\n";
 							break;
 						}
 						break;
 					}
-					/*switch (engine.GetState())
-					{
-					}*/
 					break;
 				case Task::finished:
 					//
@@ -117,11 +125,16 @@ int main(int argc, char* argv[])
 					bRunning = false;
 					break;
 				case Task::error:
-					std::cout << "FATAL ERROR: " << "\n";
+					std::cerr << "FATAL ERROR: " << "\n";
 					bRunning = false;
 					break;
 				}
 			} while (bRunning);
+		}
+		catch (const std::exception & ex)
+		{
+			std::cout << "ERROR std::exception: '" << ex.what() << "'\n";
+			return 1;
 		}
 		catch (...)
 		{
