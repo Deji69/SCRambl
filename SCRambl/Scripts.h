@@ -114,16 +114,29 @@ namespace SCRambl
 				m_NumSymbols = 0;
 			}
 
-			// Insert code from elsewhere onto the next line
-			// Returns the beginning position of the inserted code
+
+			/*\
+			 - Insert code from elsewhere onto the next line
+			 - Returns the beginning position of the inserted code
+			\*/
 			Position & Insert(Position &, Code &);
 
-			// Erase the code from Position A to (and including) Position B
-			// Updates all positions automatically and returns the reference to Position A
+			/*\
+			 - Erase the code from Position A to (and including) Position B
+			 - Updates all positions automatically and returns the reference to Position A
+			\*/
 			Position & Erase(Position &, Position &);
 
-			// Selects a string sequence from Position A to Position B
-			std::string Select(Position, Position) const;
+			/*\
+			 - Selects a string sequence from Position A to Position B
+			\*/
+			std::string Select(const Position &, const Position &) const;
+
+			/*\
+			 - Copy the symbols from Position A to Position B
+			 - Returns the vector of collected symbols
+			\*/
+			CodeLine::vector & Copy(const Position &, const Position &, CodeLine::vector &) const;
 		};
 
 		/*\
@@ -167,13 +180,13 @@ namespace SCRambl
 			 - Attempt to erase the symbol at the current position
 			 - Returns a reference to this position at the next symbol
 			\*/
-			Script::Position & Delete();
+			Position & Delete();
 
 			/*\
 			 - Attempt to insert a symbol at the current position
 			 - Returns a reference to this position at the inserted symbol
 			\*/
-			Script::Position & Insert(Symbol sym);
+			Position & Insert(Symbol sym);
 
 			/*\
 			 - Returns true if this position is at the end of the symbol list

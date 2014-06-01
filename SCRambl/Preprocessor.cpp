@@ -12,7 +12,7 @@ namespace SCRambl
 		m_Lexer.AddTokenScanner(token_comment, m_CommentScanner);
 		m_Lexer.AddTokenScanner(token_directive, m_DirectiveScanner);
 		m_Lexer.AddTokenScanner(token_string, m_StringLiteralScanner);
-		//m_Lexer.AddTokenScanner<IdentifierScanner>(token_identifier, m_IdentifierScanner);
+		m_Lexer.AddTokenScanner(token_identifier, m_IdentifierScanner);
 
 		m_Directives["include"] = directive_include;
 		m_Directives["define"] = directive_define;
@@ -101,7 +101,23 @@ namespace SCRambl
 		case directive_define:
 			if (Lex() == Lexer::Result::found_token && m_Token == token_identifier)
 			{
+				Macro::Name name = m_Identifier;
+				
+				// skip to the good bit
+				while (m_CodePos && m_CodePos->IsIgnorable()) ++m_CodePos;
 
+				// gather up thy symbols
+				if (m_CodePos && m_CodePos->GetType() != Symbol::eol)
+				{
+					CodeLine::vector code;
+
+					auto start_pos = m_CodePos;
+					while (m_CodePos && m_CodePos->GetType() != Symbol::eol)
+						++m_CodePos;
+					
+					m_Macros.Define(name, m_Script.GetCode().Copy(start_pos, m_CodePos, code));
+				}
+				else m_Macros.Define(name);
 			}
 
 			m_State = during_directive;
@@ -213,6 +229,10 @@ namespace SCRambl
 				case token_string:
 					// save the string
 					m_String = m_Script.GetCode().Select(m_Token.Inside(), m_Token.End());
+					break;
+				case token_identifier:
+					// save the identifier
+					m_Identifier = m_Script.GetCode().Select(m_Token.Begin(), m_Token.End());
 					break;
 				}
 				break;

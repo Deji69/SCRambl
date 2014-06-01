@@ -129,8 +129,12 @@ namespace SCRambl
 		std::vector<Symbol>			m_Symbols;
 
 	public:
-		inline std::vector<Symbol> & Symbols() { return m_Symbols; }
-		inline const std::vector<Symbol> & Symbols() const { return m_Symbols; }
+		CodeLine() = default;
+		CodeLine(const vector symbols) : m_Symbols(symbols)
+		{}
+
+		inline vector & Symbols() { return m_Symbols; }
+		inline const vector & Symbols() const { return m_Symbols; }
 		inline std::string String() const {
 			std::string r;
 			for (char c : m_Symbols) r += c;
@@ -148,151 +152,4 @@ namespace SCRambl
 			return *this;
 		}
 	};
-
-#if 0
-	class CodeChar
-	{
-		friend class CodeLine;
-
-		enum Type : char {
-			whitespace,
-			eol,
-			identifier,
-			delimiter,
-			number,
-			string,
-			punctuator,
-		} m_Type;
-		char m_Character;
-
-		CodeChar(Type type, char character) : m_Type(type), m_Character(character)
-		{}
-
-	public:
-		CodeChar(char character) : m_Character(character), m_Type(GetCharType(character))
-		{
-		}
-
-		static Type GetCharType(char character)
-		{
-			switch (character)
-			{
-			default:
-				if (IsSpace(character)) return whitespace;
-				if (IsDecimal(character)) return number;
-				if (!IsIdentifier(character)) break;
-			case '.':
-			case '_':
-				return identifier;
-			case '\0':
-				return eol;
-			case '"': case '\'':
-			case '!': case '#': case '%': case '&': case '(': case ')':
-			case '*': case '+': case ',': case '-': case '/': case ':':
-			case ';': case '<': case '=': case '>': case '?': case '[':
-			case '\\': case ']': case '^': case '{': case '|': case '}':
-			case '~':
-				return punctuator;
-			}
-		}
-
-	public:
-		/*bool operator==(char c)  const
-		{
-			return c == m_Character;
-		}*/
-		inline operator char() const
-		{
-			return m_Character;
-		}
-	};
-
-	typedef std::vector<CodeChar> Code;
-
-	class CodeTranslator
-	{
-		enum State { before, inside, after } m_State;
-
-		std::map<char, std::pair<State, char>>		m_BeforeMap;
-		std::map<char, std::pair<State, char>>		m_DuringMap;
-		std::map<char, std::pair<State, char>>		m_AfterMap;
-	};
-
-	class CodeLine
-	{
-		Code						m_Code;
-
-		/*static char GetTrigraphChar(char c)
-		{
-			switch (c)
-			{
-			case '=': return '#';
-			case '\'': return '^';
-			case '!': return '|';
-			case '-': return '~';
-			case '/': return '\\';
-			case '(': return '[';
-			case ')': return ']';
-			case '<': return '{';
-			case '>': return '}';
-			}
-			return '\0';
-		}
-
-		inline void AddCharacter(char c)
-		{
-			auto & last = m_Code.empty() ? '\0' : m_Code.back();
-			if (last == '0')
-			{
-			}
-			m_Code.emplace_back(c);
-		}
-		inline bool AddTrigraph(char c)
-		{
-			if (char n = GetTrigraphChar(c))
-			{
-				AddCharacter(n);
-				return true;
-			}
-			return false;
-		}*/
-
-	public:
-		CodeLine(const std::string & str)
-		{}
-		/*CodeLine(const char * line)
-		{
-			// Do easy phases 1 & 2...
-
-			// Scan all chars, including the null terminator which will indicate the eol unless escaped
-			for (const char * pc = line; pc[-1] != '\0'; ++pc)
-			{
-				switch (pc[0])
-				{
-				case '?':
-					if (pc[1] == '?' && AddTrigraph(pc[3]))
-					{
-						pc += 2;
-						continue;
-					}
-					break;
-				case '\\':
-					switch (pc[1])
-					{
-						// don't add eol char if a backslash ends the line
-					case '\0':
-						pc += 2;
-						continue;
-					}
-					break;
-				}
-
-				AddCharacter(pc[0]);
-			}
-		}
-
-		inline operator std::vector<CodeChar> &()					{ return m_Code; }
-		inline operator const std::vector<CodeChar> &() const		{ return m_Code; }*/
-	};
-#endif
 }

@@ -33,32 +33,44 @@ namespace SCRambl
 			return false;
 		}
 	};
-	/*class IdentifierScanner : public Lexer::Scanner
+	
+	class IdentifierScanner : public Lexer::Scanner
 	{
 	public:
-		bool Scan(const Lexer::State & state, const std::string & str, std::string::const_iterator & it) override
+		bool Scan(Lexer::State & state, Script::Position & pos) override
 		{
 			switch (state)
 			{
-				// return true if IsIdentifierStart
+				// return true if the symbol can only be an identifier
 			case Lexer::State::before:
-				if (IsIdentifierStart(*it))
+				if (pos->GetType() == Symbol::identifier)
 				{
-					++it;
+					++pos;
+					state = Lexer::State::inside;
 					return true;
 				}
-				break;
-				// return true once we've read all the identifier characters
+				return false;
+
+				// return true once we've read all of the identifier characters
 			case Lexer::State::inside:
-				return !IsIdentifier(*it++);
+				while (pos && (pos->GetType() == Symbol::identifier || pos->GetType() == Symbol::number))
+					++pos;
+				state = Lexer::State::after;
+				return true;
+
 				// make sure that a separator followed the identifier chars - else throw a tantrum
 			case Lexer::State::after:
-				if (!IsSeparator(*it)) throw(*this);
-				return true;
+				if (!pos || pos->IsSeparating())
+				{
+					return true;
+				}
+				// throw()
+				return false;
 			}
 			return false;
 		}
-	};*/
+	};
+
 	class DirectiveScanner : public Lexer::Scanner
 	{
 	public:
@@ -270,6 +282,7 @@ namespace SCRambl
 		BlockCommentScanner							m_BlockCommentScanner;
 		CommentScanner								m_CommentScanner;
 		DirectiveScanner							m_DirectiveScanner;
+		IdentifierScanner							m_IdentifierScanner;
 		StringLiteralScanner						m_StringLiteralScanner;
 		WhitespaceScanner							m_WhitespaceScanner;
 
@@ -278,6 +291,7 @@ namespace SCRambl
 		DirectiveMap								m_Directives;
 		Directive									m_Directive = directive_invalid;
 		std::string									m_String;
+		Identifier									m_Identifier;
 		MacroMap									m_Macros;
 
 	public:

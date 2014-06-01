@@ -168,15 +168,20 @@ namespace SCRambl
 		return beg = end;
 	}
 
-	std::string Script::Code::Select(Position beg, Position end) const
+	std::string Script::Code::Select(const Position & beg, const Position & end) const
 	{
 		// so elegant, so simple
 		std::string r;
-
 		for (auto cur = beg; cur != end; ++cur)
 			r += *cur;
-
 		return r;
+	}
+
+	CodeLine::vector & Script::Code::Copy(const Position & beg, const Position & end, CodeLine::vector & vec) const
+	{
+		for (auto cur = beg; cur != end; ++cur)
+			vec.emplace_back(*cur);
+		return vec;
 	}
 
 	Script::Code::Code()

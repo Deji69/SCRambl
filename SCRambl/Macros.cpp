@@ -15,12 +15,12 @@ namespace SCRambl
 	///Macro::Macro()
 	//{}
 
-	Macro::Macro(const MacroName & name) : m_Name(name)
+	Macro::Macro(const Macro::Name & name) : m_Name(name)
 	{}
 
-	Macro::Macro(const MacroName & name, const MacroCode & code) : m_Name(name), m_Code(code)
+	Macro::Macro(const Macro::Name & name, const Macro::Code & code) : m_Name(name), m_Code(code)
 	{
-		m_Code.erase(std::remove(m_Code.begin(), m_Code.end(), '\n'), m_Code.end());
+		m_Code->erase(std::remove(m_Code->begin(), m_Code->end(), '\n'), m_Code->end());
 	}
 
 	Macro::~Macro()
@@ -30,19 +30,24 @@ namespace SCRambl
 	{
 	}
 
-	const MacroCode * MacroMap::Get(const MacroName & name) const
+	const Macro::Code * MacroMap::Get(const Macro::Name & name) const
 	{
-		auto it = m_Map.find(name);
-		return it != m_Map.end() ? &it->second.Code() : nullptr;
+		auto it = m_Map.find(*name);
+		return it != m_Map.end() ? &it->second.GetCode() : nullptr;
 	}
 
-	void MacroMap::Define(const MacroName & name, const MacroCode & code)
+	void MacroMap::Define(const Macro::Name & name)
+	{
+		m_Map.emplace(name, Macro(name));
+	}
+
+	void MacroMap::Define(const Macro::Name & name, const Macro::Code & code)
 	{
 		//m_Map.insert(std::make_pair(name, Macro(name, code)));
 		m_Map.emplace(name, Macro(name, code));
 	}
 
-	void MacroMap::Undefine(const MacroName & name)
+	void MacroMap::Undefine(const Macro::Name & name)
 	{
 		m_Map.erase(name);
 	}
