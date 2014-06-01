@@ -16,6 +16,10 @@ namespace SCRambl
 
 		m_Directives["include"] = directive_include;
 		m_Directives["define"] = directive_define;
+		m_Directives["ifdef"] = directive_ifdef;
+		m_Directives["elif"] = directive_elif;
+		m_Directives["else"] = directive_else;
+		m_Directives["endif"] = directive_endif;
 	}
 
 	void Preprocessor::Reset()
@@ -77,21 +81,6 @@ namespace SCRambl
 			HandleDirective();
 			break;
 		}
-
-		/*if (m_CodeIterator == std::end(m_Code->Symbols()))
-		{
-			if (m_State == inside_comment)
-				HandleComment();			// delete everything on line from the comment and continue it on the next line
-
-			if (!NextLine())
-			{
-				m_State = finished;
-				return;
-			}
-
-			m_State = lexing;
-			return;
-		}*/
 	}
 
 	void Preprocessor::HandleDirective()
@@ -123,9 +112,32 @@ namespace SCRambl
 			m_State = during_directive;
 			return;
 
-		case directive_include:
-			if (Lex() == Lexer::Result::found_token && m_Token == token_string)
+		case directive_ifdef:
+			if (Lex() == Lexer::Result::found_token && m_Token == token_identifier)
 			{
+				PushSourceControl(m_Macros.Get(m_Identifier) != nullptr);
+			}
+			//else
+			return;
+
+		case directive_else:
+			InvertSourceControl();
+			return;
+
+		case directive_endif:
+			PopSourceControl();
+			return;
+
+		case directive_include:
+			if (Lex() == Lexer::Result::found_token && (m_Token == token_string || m_Token == token_identifier))
+			{
+				if (m_Token == token_identifier)
+				{
+					if (auto pMacro = m_Macros.Get(m_String))
+					{
+					}
+					//
+				}
 				if (m_Script.Include(m_CodePos, m_String))
 				{
 					m_State = lexing;

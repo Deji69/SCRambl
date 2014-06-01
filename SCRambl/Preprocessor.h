@@ -5,6 +5,7 @@
 //	 or copy at http://opensource.org/licenses/MIT)
 /**********************************************************/
 #pragma once
+#include <stack>
 #include "Tasks.h"
 #include "Scripts.h"
 #include "Lexer.h"
@@ -272,6 +273,11 @@ namespace SCRambl
 			directive_invalid,
 			directive_include,
 			directive_define,
+			directive_ifdef,
+			directive_if,
+			directive_elif,
+			directive_else,
+			directive_endif
 		};
 
 		using DirectiveMap = std::unordered_map<std::string, Directive>;
@@ -317,6 +323,23 @@ namespace SCRambl
 		Script				&	m_Script;
 		Script::Position		m_CodePos;
 		bool					m_bScriptIsLoaded;		// if so, we only need to add-in any #include's
+		std::stack<bool>		m_PreprocessorLogic;
+
+		void PushSourceControl(bool b) {
+			m_PreprocessorLogic.push(b);
+		}
+		void PopSourceControl() {
+			ASSERT(!m_PreprocessorLogic.empty());
+			m_PreprocessorLogic.pop();
+		}
+		void InvertSourceControl() { 
+			ASSERT(!m_PreprocessorLogic.empty());
+			m_PreprocessorLogic.top() = !m_PreprocessorLogic.top();
+		}
+		bool GetSourceControl() const {
+			ASSERT(!m_PreprocessorLogic.empty()); // if this activates, you popped too much!
+			return m_PreprocessorLogic.top();
+		}
 
 		void RunningState();
 		void LexerPhase();
@@ -324,6 +347,7 @@ namespace SCRambl
 		void HandleDirective();
 		void HandleComment();
 
+		// Lex main code
 		Lexer::Result Lex();
 
 		inline long GetLineNumber() const			{ return m_CodePos.GetLine(); }
@@ -349,12 +373,4 @@ namespace SCRambl
 		void RunTask() final override			{ Preprocessor::Run(); }
 		void ResetTask() final override			{ Preprocessor::Reset(); }
 	};
-
-
-	/*class Preprocessor : public PreprocessorState
-	{
-	public:
-		Task & RunTask() override;
-		Task & AdvanceState(Task::State & state) override;
-	};*/
 }

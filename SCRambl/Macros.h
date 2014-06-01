@@ -108,7 +108,7 @@ namespace SCRambl
 		MacroMap() = default;
 		MacroMap(const MacMap & predefined);
 
-		const Macro::Code		*	Get(const Macro::Name &) const;
+		const Macro				*	Get(const Macro::Name &) const;
 		void						Define(const Macro::Name &);
 		void						Define(const Macro::Name &, const Macro::Code &);
 		void						Undefine(const Macro::Name &);

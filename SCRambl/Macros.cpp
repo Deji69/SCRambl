@@ -30,10 +30,10 @@ namespace SCRambl
 	{
 	}
 
-	const Macro::Code * MacroMap::Get(const Macro::Name & name) const
+	const Macro * MacroMap::Get(const Macro::Name & name) const
 	{
 		auto it = m_Map.find(*name);
-		return it != m_Map.end() ? &it->second.GetCode() : nullptr;
+		return it != m_Map.end() ? &it->second : nullptr;
 	}
 
 	void MacroMap::Define(const Macro::Name & name)

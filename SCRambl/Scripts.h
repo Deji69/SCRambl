@@ -147,7 +147,6 @@ namespace SCRambl
 			friend class Code;
 
 			Code					*	m_pCode;
-			//ScriptLine				*	m_pScriptLine = nullptr;
 			CodeList::iterator			m_LineIt;		// (x)
 			CodeLine::iterator			m_CodeIt;		// (y)
 
@@ -162,7 +161,6 @@ namespace SCRambl
 		public:
 			Position();
 			Position(Code & code);
-			//Position(const Position & pos);
 
 			/*\
 			 - Attempt to set this position at the next symbol
@@ -266,11 +264,7 @@ namespace SCRambl
 		
 	private:
 		Code								m_Code;
-		//StringList							m_Errors;
 		StringList							m_Warnings;
-		//MacroMap							m_Macros;
-		//std::map<std::string, Macro>		m_Macros;
-		//std::map<std::map, Variable>		m_Variables;
 
 
 		// Initialise script for parsing with current code
@@ -300,22 +294,5 @@ namespace SCRambl
 		inline size_t GetNumLines() const { return m_Code.NumLines(); }
 
 		inline Code & GetCode() { return m_Code; }
-
-		//inline CMacros & Macros() { return m_Macros; };
-		//inline const CMacros & Macros() const { return m_Macros; };
-
-		// For preprocessor eyes only
-
-		/*void PushSourceControl(bool b) { m_PreprocessorHistory.push_back(b); }
-		void PopSourceControl() {
-			ASSERT(!m_PreprocessorHistory.empty());
-			m_PreprocessorHistory.pop_back();
-		}
-		void InvertSourceControl() { m_PreprocessorHistory.back() = !m_PreprocessorHistory.back(); }
-		bool GetSourceControl() const {
-			ASSERT(!m_PreprocessorHistory.empty()); // if this activates, you popped too much!
-			return m_PreprocessorHistory.back();
-		}*/
-		//long long EvaluateExpression(const std::string & expr, int depth = 0);
 	};
 }
