@@ -95,6 +95,7 @@ namespace SCRambl
 			inline const CodeList	&	GetLines() const	{ return m_Code; }
 			inline long 				NumSymbols() const	{ return m_NumSymbols; }
 			inline long 				NumLines() const	{ return m_NumLines; }
+			inline bool					IsEmpty() const		{ return m_Code.empty(); }
 
 			inline const CodeList & operator *() const		{ return GetLines(); }
 			inline const CodeList * operator ->() const		{ return &**this; }
@@ -113,9 +114,16 @@ namespace SCRambl
 				m_NumSymbols = 0;
 			}
 
+			// Insert code from elsewhere onto the next line
+			// Returns the beginning position of the inserted code
+			Position & Insert(Position &, Code &);
+
 			// Erase the code from Position A to (and including) Position B
 			// Updates all positions automatically and returns the reference to Position A
 			Position & Erase(Position &, Position &);
+
+			// Selects a string sequence from Position A to Position B
+			std::string Select(Position, Position) const;
 		};
 
 		/*\
@@ -162,10 +170,23 @@ namespace SCRambl
 			Script::Position & Delete();
 
 			/*\
+			 - Attempt to insert a symbol at the current position
+			 - Returns a reference to this position at the inserted symbol
+			\*/
+			Script::Position & Insert(Symbol sym);
+
+			/*\
 			 - Returns true if this position is at the end of the symbol list
 			\*/
 			inline bool IsEnd() const {
 				return m_LineIt == GetCode()->end() || m_CodeIt == m_LineIt->GetCode().Symbols().end();
+			}
+
+			/*\
+			 - Returns true if each Position refers to the same script position
+			\*/
+			inline bool Compare(const Position & pos) const {
+				return m_pCode == pos.m_pCode && m_LineIt == pos.m_LineIt && m_CodeIt == pos.m_CodeIt;
 			}
 
 			// Get the current line of this position
@@ -220,6 +241,14 @@ namespace SCRambl
 				Backward();
 				return pos;
 			}
+
+			// Compare()
+			inline bool operator==(const Position & pos) const {
+				return Compare(pos);
+			}
+			inline bool operator!=(const Position & pos) const {
+				return !(*this == pos);
+			}
 		};
 		
 	private:
@@ -230,15 +259,13 @@ namespace SCRambl
 		//std::map<std::string, Macro>		m_Macros;
 		//std::map<std::map, Variable>		m_Variables;
 
-		int									m_nCommentDepth;
-
-		std::vector<bool>					m_PreprocessorHistory;
-
 
 		// Initialise script for parsing with current code
 		void Init();
 
 		void Error(int code, const std::string & msg);
+
+		void ReadFile(std::ifstream & file, Code & code);
 
 	public:
 		Script()
@@ -254,11 +281,10 @@ namespace SCRambl
 		void LoadFile(const std::string & path);
 		
 		// Include file in specific code line
-		//void IncludeFile(const std::string & path, CodeList::iterator line);
+		Position & Include(Position & pos, const std::string & path);
 
 		inline bool OK() const { return true; }
 		inline size_t GetNumLines() const { return m_Code.NumLines(); }
-		inline bool InComment() const { return m_nCommentDepth > 0; }
 
 		inline Code & GetCode() { return m_Code; }
 
@@ -267,7 +293,7 @@ namespace SCRambl
 
 		// For preprocessor eyes only
 
-		void PushSourceControl(bool b) { m_PreprocessorHistory.push_back(b); }
+		/*void PushSourceControl(bool b) { m_PreprocessorHistory.push_back(b); }
 		void PopSourceControl() {
 			ASSERT(!m_PreprocessorHistory.empty());
 			m_PreprocessorHistory.pop_back();
@@ -276,7 +302,7 @@ namespace SCRambl
 		bool GetSourceControl() const {
 			ASSERT(!m_PreprocessorHistory.empty()); // if this activates, you popped too much!
 			return m_PreprocessorHistory.back();
-		}
+		}*/
 		//long long EvaluateExpression(const std::string & expr, int depth = 0);
 	};
 }

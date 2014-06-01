@@ -51,7 +51,7 @@ namespace SCRambl
 				/* 20-2F */	{ /*   */ whitespace }, { /* ! */ punctuator }, { /* " */ delimiter },	{ /* # */ punctuator },
 							{ /* $ */ punctuator }, { /* % */ punctuator }, { /* & */ punctuator }, { /* ' */ delimiter },
 							{ /* ( */ punctuator }, { /* ) */ punctuator }, { /* * */ punctuator }, { /* + */ unknown },
-							{ /* , */ separator },	{ /* - */ punctuator }, { /* . */ separator },	{ /* / */ punctuator },
+							{ /* , */ separator },	{ /* - */ punctuator }, { /* . */ identifier },	{ /* / */ punctuator },
 				/* 30-3F */	{ /* 0 */ number },		{ /* 1 */ number },		{ /* 2 */ number },		{ /* 3 */ number },
 							{ /* 4 */ number },		{ /* 5 */ number },		{ /* 6 */ number },		{ /* 7 */ number },
 							{ /* 8 */ number },		{ /* 9 */ number },		{ /* : */ punctuator }, { /* ; */ punctuator },
@@ -104,6 +104,18 @@ namespace SCRambl
 		inline char GetChar() const			{ return m_Character; }
 		inline Type GetType() const			{ return m_Type; }
 		inline operator char() const		{ return GetChar(); }
+		inline bool IsIgnorable() const		{ return m_Type == whitespace; }
+		inline bool IsSeparating() const {
+			switch (m_Type)
+			{
+			case whitespace:
+			case separator:
+			case delimiter:
+			case eol:
+				return true;
+			}
+			return false;
+		}
 	};
 
 	class CodeLine
@@ -119,6 +131,12 @@ namespace SCRambl
 	public:
 		inline std::vector<Symbol> & Symbols() { return m_Symbols; }
 		inline const std::vector<Symbol> & Symbols() const { return m_Symbols; }
+		inline std::string String() const {
+			std::string r;
+			for (char c : m_Symbols) r += c;
+			return r;
+		}
+
 		inline CodeLine & operator=(const std::string & str) {
 			m_Symbols.clear();
 			if (!str.empty())

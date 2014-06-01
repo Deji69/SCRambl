@@ -2,7 +2,7 @@
 /??/
 *aaaa
 */#include\
-"build.xml"
+"include.sch"
 #define FALSE (-5+1)
 
 #if FALSE

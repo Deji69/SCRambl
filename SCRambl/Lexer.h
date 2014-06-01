@@ -17,7 +17,7 @@ namespace SCRambl
 {
 	namespace Lexer
 	{
-		enum ScanResult {
+		enum Result {
 			found_nothing,
 			found_token,
 			still_scanning
@@ -43,11 +43,13 @@ namespace SCRambl
 
 			TokenIDType						m_Type;
 			Script::Position				m_Start;
+			Script::Position				m_Middle;
 			Script::Position				m_End;
 
-			inline void operator ()(TokenIDType type, Script::Position start, Script::Position end) {
+			inline void operator ()(TokenIDType type, Script::Position start, Script::Position mid, Script::Position end) {
 				m_Type = type;
 				m_Start = start;
+				m_Middle = mid;
 				m_End = end;
 			}
 
@@ -56,7 +58,12 @@ namespace SCRambl
 			{}
 
 			inline TokenIDType				GetType() const			{ return m_Type; }
+
+			// get the position of the token before any prefix
 			inline Script::Position			Begin() const			{ return m_Start; }
+			// get the position of the token after any prefix
+			inline Script::Position			Inside() const			{ return m_Middle; }
+			// get the position of the token at the very end
 			inline Script::Position			End() const				{ return m_End; }
 
 			inline operator TokenIDType &()							{ return m_Type; }
@@ -134,7 +141,7 @@ namespace SCRambl
 		class Lexer
 		{
 		private:
-			typedef std::pair</*const */TokenIDType, Scanner&> TokenScanner;
+			typedef std::pair<TokenIDType, Scanner&> TokenScanner;
 			typedef std::vector<TokenScanner> ScannerList;
 			typedef std::vector<std::pair<State, TokenScanner&>> ScannerStates;
 
@@ -157,7 +164,7 @@ namespace SCRambl
 			/*\
 			 - Give it the current Script::Position, let magic happen
 			\*/
-			ScanResult Scan(const Script::Position & pos, Token<TokenIDType> & token)
+			Result Scan(const Script::Position & pos, Token<TokenIDType> & token)
 			{
 				ASSERT(!m_Scanners.empty());		// you need to add some scanners first!
 
@@ -207,7 +214,7 @@ namespace SCRambl
 						// as soon as the quickest scanner finishes, call the race
 						if (last)
 						{
-							token(scit->second.first, state.Before(), state.After());
+							token(scit->second.first, state.Before(), state.Inside(), state.After());
 							m_ScannerStates.clear();
 							return found_token;
 						}

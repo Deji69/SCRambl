@@ -70,24 +70,74 @@ namespace SCRambl
 			case Lexer::State::before:
 				if (*pos == '#')
 				{
-					state = Lexer::State::inside;
 					++pos;
+					state = Lexer::State::inside;
 					return true;
 				}
 				break;
 
 				// check for first unfitting character
 			case Lexer::State::inside:
-				if (pos->GetType() == Symbol::identifier || pos->GetType() == Symbol::number)
-					state = Lexer::State::after;
-				++pos;
+				if (!pos || pos->GetType() != Symbol::identifier) return false;
+				while (++pos && pos->GetType() == Symbol::identifier || pos->GetType() == Symbol::number);
+				state = Lexer::State::after;
 				return true;
 
 				// no suffix? no problem.
 			case Lexer::State::after:
-				if (pos->GetType() == Symbol::whitespace || pos->GetType() == Symbol::separator)
+				if(pos->IsSeparating())
 				{
+					return true;
 				}
+				//else throw "Invalid symbol in directive"
+				return false;
+			}
+			return false;
+		}
+	};
+
+	class StringLiteralScanner : public Lexer::Scanner
+	{
+	public:
+		bool Scan(Lexer::State & state, Script::Position & pos) override
+		{
+			switch (state)
+			{
+			case Lexer::State::before:
+				if (*pos == '"')
+				{
+					++pos;
+					state = Lexer::State::inside;
+					return true;
+				}
+				return false;
+
+			case Lexer::State::inside:
+				while (pos)
+				{
+					// escaped? just skip it :)
+					if (*pos == '\\')
+					{
+						if (++pos) ++pos;
+						continue;
+					}
+					else if (pos->GetType() == Symbol::eol)
+					{
+						// throw("unterminated string");
+						break;
+					}
+					else if (*pos == '"')
+					{
+						*pos = '\0';
+						++pos;
+						state = Lexer::State::after;
+						return true;
+					}
+					else ++pos;
+				}
+				return false;
+
+			case Lexer::State::after:
 				return true;
 			}
 			return false;
@@ -109,7 +159,7 @@ namespace SCRambl
 					state = Lexer::State::inside;
 					return true;
 				}
-				break;
+				return false;
 
 				// run to the end of the line, quick!
 			case Lexer::State::inside:
@@ -144,7 +194,7 @@ namespace SCRambl
 					state = Lexer::State::inside;
 					return true;
 				}
-				break;
+				return false;
 
 				// check for nested comments and closing comment
 			case Lexer::State::inside:
@@ -201,14 +251,15 @@ namespace SCRambl
 			token_directive,
 			token_comment,
 			token_block_comment,
+			token_string,
 			token_invalid,
 			token_max = token_invalid
 		};
 		enum Directive
 		{
+			directive_invalid,
 			directive_include,
 			directive_define,
-			directive_invalid,
 		};
 
 		using DirectiveMap = std::unordered_map<std::string, Directive>;
@@ -216,15 +267,17 @@ namespace SCRambl
 		Engine									&	m_Engine;
 
 		//IdentifierScanner							m_IdentifierScanner;
-		DirectiveScanner							m_DirectiveScanner;
-		CommentScanner								m_CommentScanner;
 		BlockCommentScanner							m_BlockCommentScanner;
+		CommentScanner								m_CommentScanner;
+		DirectiveScanner							m_DirectiveScanner;
+		StringLiteralScanner						m_StringLiteralScanner;
 		WhitespaceScanner							m_WhitespaceScanner;
 
 		Lexer::Lexer<Token>							m_Lexer;
 		Lexer::Token<Token>							m_Token;
 		DirectiveMap								m_Directives;
-		Directive									m_Directive;
+		Directive									m_Directive = directive_invalid;
+		std::string									m_String;
 		MacroMap									m_Macros;
 
 	public:
@@ -246,7 +299,7 @@ namespace SCRambl
 		void Reset();
 
 	private:
-		State					m_State;
+		State					m_State = init;
 		Script				&	m_Script;
 		Script::Position		m_CodePos;
 		bool					m_bScriptIsLoaded;		// if so, we only need to add-in any #include's
@@ -256,6 +309,8 @@ namespace SCRambl
 
 		void HandleDirective();
 		void HandleComment();
+
+		Lexer::Result Lex();
 
 		inline long GetLineNumber() const			{ return m_CodePos.GetLine(); }
 		inline CodeLine & GetLineCode()				{ return m_CodePos.GetLine().GetCode(); }

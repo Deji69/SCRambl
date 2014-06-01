@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
 			std::cerr << "FATAL ERROR: failed to open file \'" << path << "\'\n";
 		}
 
-		std::cout << "Loaded. " << script.GetCode().NumLines() << " lines, " << script.GetCode().NumSymbols() << " symbols.";
+		std::cout << "Loaded. " << script.GetCode().NumLines() << " lines, " << script.GetCode().NumSymbols() << " symbols.\n";
 
 		try
 		{
