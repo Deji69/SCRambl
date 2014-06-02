@@ -56,7 +56,7 @@ namespace SCRambl
 		template<class ID>
 		bool RemoveTask(ID id)
 		{
-			if (!std::is_empty(Tasks))
+			if (!Tasks.empty())
 			{
 				auto it = std::find(std::begin(Tasks), std::end(Tasks), id);
 				if (it != std::end(Tasks))
@@ -64,7 +64,7 @@ namespace SCRambl
 					delete it->second;
 					Tasks.erase(it);
 
-					if (std::is_empty(Tasks))
+					if (Tasks.empty())
 					{
 						HaveTask = false;
 						CurrentTask = std::end(Tasks);

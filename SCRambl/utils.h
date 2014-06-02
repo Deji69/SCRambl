@@ -16,7 +16,11 @@ namespace SCRambl
 }
 
 #define ASSERT(expr) do{assert(expr);}while(0)
-#define BREAK() do{__debugbreak();}while(0)
+#ifdef _WIN32
+	#define BREAK() do{__debugbreak();}while(0)
+#else
+	#define BREAK() do{}while(0)
+#endif
 
 #include "utils/hash.h"
 #include "utils/utf8.h"
@@ -69,6 +73,7 @@ namespace SCRambl
 		return out;
 	}
 
+#ifdef _WIN32
 	inline uint64_t JoinInt32(uint32_t high, uint32_t low)
 	{
 		ULARGE_INTEGER li;
@@ -99,4 +104,5 @@ namespace SCRambl
 		GetFileAttributesEx(widen(szPath).c_str(), GetFileExInfoStandard, &fi);
 		return JoinInt32(fi.ftLastWriteTime.dwHighDateTime, fi.ftLastWriteTime.dwLowDateTime);
 	}
+#endif
 }

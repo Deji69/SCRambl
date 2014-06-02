@@ -36,7 +36,7 @@ namespace SCRambl
 
 		static Type GetCharSymbolType(char character)
 		{
-			static const std::vector<const Type> character_set = {
+			static const std::vector<Type> character_set = {
 				// Control chars
 				/* 00 */	{ /*NUL*/ eol },
 				/* 01-08 */	{ /*SOH*/ unknown },	{ /*STX*/ unknown },	{ /*ETX*/ unknown },	{ /*EOT*/ unknown },
