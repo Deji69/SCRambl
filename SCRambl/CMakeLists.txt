@@ -18,12 +18,11 @@ SET(Files
 	ProjectManager.cpp
 	Reporting.cpp
 	Scripts.cpp
-	States.cpp
 )
 
 #SET(CXX_FLAGS "")
 IF(CMAKE_COMPILER_IS_GNUCXX)
-    SET(CXX_FLAGS "${CXX_FLAGS} -std=gnu++11")
+    SET(CXX_FLAGS "${CXX_FLAGS} -std=c++11")
 ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_FLAGS}")
