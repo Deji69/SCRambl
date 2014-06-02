@@ -1,4 +1,4 @@
-﻿/**********************************************************/
+/**********************************************************/
 // SCRambl Advanced SCR Compiler/Assembler
 // This program is distributed freely under the MIT license
 // (See the LICENSE file provided
@@ -53,10 +53,13 @@ namespace SCRambl
 		}
 		return dest;
 	}
+#ifdef _WIN32
 	inline bool FileCopy(const char *szSrcPath, const char * szDestPath, bool bOverwrite)
 	{
 		return CopyFileW(widen(szSrcPath).c_str(), widen(szDestPath).c_str(), bOverwrite != true) != false;
 	}
+#endif
+
 	inline long FileGetCursorPos(FILE *hFile)
 	{
 		return ftell(hFile);

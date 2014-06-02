@@ -45,6 +45,7 @@ namespace SCRambl
 		return out;
 	}*/
 
+#ifdef _WIN32
 	inline std::wstring widen(const char * str)
 	{
 		size_t n = MultiByteToWideChar(CP_UTF8, 0, str, -1, nullptr, 0);
@@ -80,4 +81,46 @@ namespace SCRambl
 		WideCharToMultiByte(CP_UTF8, 0, str.c_str(), str.size(), &out[0], n, NULL, nullptr);
 		return out;
 	}
+	
+#else
+
+	static wchar_t wchar_buffer[5000];
+	static char char_buffer[5000];
+
+	inline std::wstring widen(const char * str)
+	{
+		size_t n = mbstowcs(wchar_buffer, str, sizeof(wchar_buffer));
+		std::wstring out;
+		out.resize(n);
+		mbstowcs(&out[0], str, n);
+		return out;
+	}
+
+	inline std::string narrow(const wchar_t * str)
+	{
+		size_t n = wcstombs(char_buffer, str, sizeof(char_buffer));
+		std::string out;
+		out.resize(n);
+		wcstombs(&out[0], str, n);
+		return out;
+	}
+
+	inline std::wstring widen(const std::string& str)
+	{
+		size_t n = mbstowcs(wchar_buffer, str.c_str(), sizeof(char_buffer));
+		std::wstring out;
+		out.resize(n);
+		mbstowcs(&out[0], str.c_str(), str.size());
+		return out;
+	}
+
+	inline std::string narrow(const std::wstring& str)
+	{
+		size_t n = wcstombs(char_buffer, str.c_str(), str.size());
+		std::string out;
+		out.resize(n);
+		wcstombs(&out[0], str.c_str(), str.size());
+		return out;
+	}
+#endif
 }

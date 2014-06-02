@@ -36,7 +36,7 @@ namespace SCRambl
 		// slow success, slow fail (100% accurate)
 		inline bool IsNamed(const char *szName) const				{ return strncmp(szName, m_sName.c_str(), m_sName.length()) == 0; }
 		// slow success, fast fail (100% accurate)
-		inline bool IsNamed(const char *szName, DWORD dwHash) const	{ return dwHash == GetHash() && IsNamed(szName); }
+		inline bool IsNamed(const char *szName, uint_fast32_t dwHash) const	{ return dwHash == GetHash() && IsNamed(szName); }
 		// fast success, fast fail (~98% accurate)
 		//inline bool IsNamed(DWORD dwHash) const					{return dwHash == GetHash();}
 		// fast success, fast fail (~99.9% accurate)

@@ -10,14 +10,14 @@
 #include <vector>
 #include <map>
 
-#include "Parser.h"
+//#include "Parser.h"
 #include "Lexer.h"
 
 namespace SCRambl
 {
 	typedef std::string Identifier;
 
-	class IdentifierComp : std::binary_function<Identifier, Identifier, bool>
+	/*class IdentifierComp : std::binary_function<Identifier, Identifier, bool>
 	{
 		class identifier_pred : public std::binary_function<unsigned char, unsigned char, bool>
 		{
@@ -37,7 +37,7 @@ namespace SCRambl
 	typedef std::vector<std::string> IdentifierVec;
 
 	template<class T>
-	using IdentifierMap = std::map<Identifier, T, IdentifierComp>;
+	using IdentifierMap = std::map<Identifier, T, IdentifierComp>;*/
 
 	/*class IdentifierScanner : public Lexer::Scanner
 	{

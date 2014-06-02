@@ -9,6 +9,8 @@
 
 #ifdef _WIN32
 #include <Windows.h>
+#else
+#define DWORD unsigned long
 #endif
 
 #include <stdio.h>
