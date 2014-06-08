@@ -10,6 +10,7 @@
 #include "SCRambl/Scripts.h"
 #include "SCRambl/Preparser.h"
 #include "SCRambl/Preprocessor.h"
+#include "SCRambl/Parser.h"
 
 namespace SCRambl
 {

@@ -13,16 +13,7 @@ namespace SCRambl
 	class Exception : virtual public std::exception
 	{
 	public:
-		Exception()
-		{
-		}
-		Exception(const char * msg) : std::exception(msg)
-		{
-		}
-		Exception(const std::string & str) : std::exception(str.c_str())
-		{
-		}
-		Exception(const std::exception & excep) : std::exception(excep.what())
+		Exception() : std::exception()
 		{
 		}
 

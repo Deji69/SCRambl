@@ -14,12 +14,11 @@
 
 namespace SCRambl
 {
-	class CProjectFile : public CKey
+	class ProjectFile
 	{
 		CXMLFile			m_XMLFile;
 
-
-		CProjectFile(const char * szName, const char * szFilePath) : CKey(szName), m_XMLFile(szFilePath)
+		ProjectFile(const char * szName, const char * szFilePath) : m_XMLFile(szFilePath)
 		{
 		}
 	};
@@ -29,11 +28,11 @@ namespace SCRambl
 
 	};*/
 
-	class CProject
+	class Project
 	{
-		std::list<CProjectFile*>		m_Files;
+		std::list<ProjectFile*>		m_Files;
 	};
 
-	CProject					*	s_pProject;
+	Project					*	s_pProject;
 
 } // namespace SCRambl

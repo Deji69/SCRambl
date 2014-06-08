@@ -6,7 +6,8 @@
 
 namespace SCRambl
 {
-	class CKey
+	// OLD
+	/*class CKey
 	{
 		// stolen from CIdentifier
 		std::string			m_sName;
@@ -41,5 +42,5 @@ namespace SCRambl
 		//inline bool IsNamed(DWORD dwHash) const					{return dwHash == GetHash();}
 		// fast success, fast fail (~99.9% accurate)
 		inline bool IsNamed(const CKey &v) const						{ return GetHash() == v.GetHash() && GetNameLength() == v.GetNameLength(); }
-	};
+	};*/
 }

@@ -9,35 +9,49 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <hash_map>
 
 //#include "Parser.h"
-#include "Lexer.h"
+//#include "Lexer.h"
+#include "Symbols.h"
 
 namespace SCRambl
 {
-	typedef std::string Identifier;
+	//typedef std::string Identifier;
 
-	/*class IdentifierComp : std::binary_function<Identifier, Identifier, bool>
+	class Identifier
 	{
-		class identifier_pred : public std::binary_function<unsigned char, unsigned char, bool>
+		static std::hash<std::string>	g_Hasher;
+
+		std::string						m_Name;
+		size_t							m_Hash;
+
+		class Hasher
 		{
 		public:
-			bool operator() (const unsigned char& a, const unsigned char& b) const
-			{
-				return tolower(a) < tolower(b);
-			}
+			size_t operator()(const Identifier& k) const		{ return g_Hasher(k.Name()); }
 		};
+
 	public:
-		bool operator() (const Identifier & a, const Identifier & b) const
+		template<class T>
+		using Map = std::unordered_map<Identifier, T, Hasher>;
+
+		Identifier(std::string name) : m_Name(name), m_Hash(g_Hasher(name))
 		{
-			return std::lexicographical_compare(a.begin(), a.end(), b.begin(), b.end(),	identifier_pred());
+		}
+
+		inline const std::string& Name() const		{ return m_Name; }
+		inline size_t Hash() const					{ return m_Hash; }
+		inline bool operator==(const Identifier & rhs) const {
+			return (Hash() == rhs.Hash() && Name() == rhs.Name());
 		}
 	};
 
-	typedef std::vector<std::string> IdentifierVec;
+	/*typedef std::vector<std::string> IdentifierVec;*/
 
-	template<class T>
-	using IdentifierMap = std::map<Identifier, T, IdentifierComp>;*/
+	//template<class T>
+	//using Identifier = std::unordered_map<
+	//using IdentifierMap = std::map<Identifier, T, IdentifierComp>;
 
 	/*class IdentifierScanner : public Lexer::Scanner
 	{

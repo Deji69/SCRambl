@@ -5,40 +5,43 @@
 //	 or copy at http://opensource.org/licenses/MIT)
 /**********************************************************/
 #pragma once
+#include <string>
 #include "utils.h"
+#include "Engine.h"
+#include "Scripts.h"
 
 namespace SCRambl
 {
-	int IsDirectivePrefix(int);
-	int IsIdentifierStart(int);
-	int IsIdentifier(int);
-	//int IsSpace(int);
-	int BothAreSpaces(int, int);
-	int IsSeparator(int);
-	int BothAreSeparators(int, int);
-	int IsUselessSeparator(int, int);
-
-	int ExprToChar(const std::string& str, size_t * pos = nullptr);
-
-	template<class T>
-	T ExprToInt(const std::string& str, size_t * pos = nullptr, int base = 0);
-
-	template<> inline long long ExprToInt<long long>(const std::string& str, size_t * pos, int base)
+	class Parser
 	{
-		return std::stoll(widen(str), pos, base);
-	}
+	public:
+		enum State {
+			init, parsing, finished,
+			bad_state,
+			max_state = bad_state,
+		};
 
-	template<> inline unsigned long long ExprToInt<unsigned long long>(const std::string& str, size_t * pos, int base)
-	{
-		return std::stoull(widen(str), pos, base);
-	}
+		Parser(Engine & engine, Script & script);
 
-	template<class T>
-	T ExprToFlt(const std::string& str, size_t * pos = nullptr);
-	
-	inline std::string GetIdentifier(std::string & src)
+		inline bool IsFinished()				{ return m_State == finished; }
+		void Run();
+		void Reset();
+
+	private:
+		State					m_State = init;
+		Engine				&	m_Engine;
+		Script				&	m_Script;
+	};
+
+	class ParserTask : public Task, public Parser
 	{
-		std::string str(std::find_if(src.begin(), src.end(), std::not1(std::function<int(int)>(IsSpace))), src.end());
-		return std::string(str.begin(), std::find_if(str.begin(), str.end(), std::not1(std::function<int(int)>(IsIdentifier))));
-	}
+	public:
+		ParserTask(Engine & engine, Script & script) : Parser(engine, script)
+		{ }
+
+	protected:
+		bool IsTaskFinished() final override	{ return Parser::IsFinished(); }
+		void RunTask() final override			{ Parser::Run(); }
+		void ResetTask() final override			{ Parser::Reset(); }
+	};
 }

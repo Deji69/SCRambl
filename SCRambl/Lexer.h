@@ -46,13 +46,6 @@ namespace SCRambl
 			Script::Position				m_Middle;
 			Script::Position				m_End;
 
-			inline void operator ()(TokenIDType type, Script::Position start, Script::Position mid, Script::Position end) {
-				m_Type = type;
-				m_Start = start;
-				m_Middle = mid;
-				m_End = end;
-			}
-
 		public:
 			Token()
 			{}
@@ -68,6 +61,13 @@ namespace SCRambl
 
 			inline operator TokenIDType &()							{ return m_Type; }
 			inline operator TokenIDType () const					{ return m_Type; }
+
+			inline void operator ()(TokenIDType type, Script::Position start, Script::Position mid, Script::Position end) {
+				m_Type = type;
+				m_Start = start;
+				m_Middle = mid;
+				m_End = end;
+			}
 		};
 
 		/*\
@@ -112,7 +112,7 @@ namespace SCRambl
 		public:
 			inline void ChangeState(state_t val)
 			{
-				switch (m_State = val)
+				switch (val)
 				{
 				case before:
 					m_CodeBefore = m_CodeCur;
@@ -121,10 +121,13 @@ namespace SCRambl
 					m_CodeInside = m_CodeCur;
 					break;
 				case after:
+					if (m_State == before) m_CodeInside = m_CodeBefore;
 					m_CodeAfter = m_CodeCur;
 					break;
 				default: BREAK();
 				}
+				
+				m_State = val;
 			}
 
 			//inline operator State &()			{ return m_State; }
@@ -143,7 +146,7 @@ namespace SCRambl
 		private:
 			typedef std::pair<TokenIDType, Scanner&> TokenScanner;
 			typedef std::vector<TokenScanner> ScannerList;
-			typedef std::vector<std::pair<State, TokenScanner&>> ScannerStates;
+			typedef std::list<std::pair<State, TokenScanner&>> ScannerStates;
 
 			enum Status { init, scanning }	m_State = init;
 			
@@ -162,7 +165,7 @@ namespace SCRambl
 			}
 
 			/*\
-			 - Give it the current Script::Position, let magic happen
+			 - Give it the current Script::Position and a Token<> to write to, let magic happen
 			\*/
 			Result Scan(const Script::Position & pos, Token<TokenIDType> & token)
 			{
@@ -215,8 +218,16 @@ namespace SCRambl
 						if (last)
 						{
 							token(scit->second.first, state.Before(), state.Inside(), state.After());
-							m_ScannerStates.clear();
-							return found_token;
+							if (m_ScannerStates.size() <= 1)
+							{
+								m_ScannerStates.clear();
+								return found_token;
+							}
+							else
+							{
+								scit = m_ScannerStates.erase(scit);
+								continue;
+							}
 						}
 
 						++scit;

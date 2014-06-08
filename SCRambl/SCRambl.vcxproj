@@ -81,6 +81,8 @@
     <ClInclude Include="..\SCRambl.h" />
     <ClInclude Include="ansi.h" />
     <ClInclude Include="Builder.h" />
+    <ClInclude Include="Numbers.h" />
+    <ClInclude Include="Operators.h" />
     <ClInclude Include="Symbols.h" />
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="Engine.h" />
@@ -101,13 +103,13 @@
     <ClInclude Include="Preparser.h" />
     <ClInclude Include="Preprocessor.h" />
     <ClInclude Include="ProjectManager.h" />
-    <ClInclude Include="key.h" />
     <ClInclude Include="Reporting.h" />
     <ClInclude Include="Scripts.h" />
     <ClInclude Include="Tasks.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="utils\hash.h" />
+    <ClInclude Include="utils\key.h" />
     <ClInclude Include="utils\MurmurHash3.h" />
     <ClInclude Include="utils\utf8.h" />
     <ClInclude Include="utils\xml.h" />
@@ -119,8 +121,8 @@
     <ClCompile Include="Exception.cpp" />
     <ClCompile Include="FileSystem.cpp" />
     <ClCompile Include="Identifiers.cpp" />
-    <ClCompile Include="Literals.cpp" />
     <ClCompile Include="Macros.cpp" />
+    <ClCompile Include="Operators.cpp" />
     <ClCompile Include="Parser.cpp" />
     <ClCompile Include="Preparser.cpp" />
     <ClCompile Include="Preprocessor.cpp" />

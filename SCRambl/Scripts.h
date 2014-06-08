@@ -119,7 +119,13 @@ namespace SCRambl
 			 - Insert code from elsewhere onto the next line
 			 - Returns the beginning position of the inserted code
 			\*/
-			Position & Insert(Position &, Code &);
+			Position & Insert(Position &, const Code &);
+
+			/*\
+			- Insert code symbols into the line at Position
+			- Returns the beginning position of the inserted code
+			\*/
+			Position & Insert(Position &, const CodeLine::vector &);
 
 			/*\
 			 - Erase the code from Position A to (and including) Position B
@@ -200,6 +206,13 @@ namespace SCRambl
 				return m_pCode == pos.m_pCode && m_LineIt == pos.m_LineIt && m_CodeIt == pos.m_CodeIt;
 			}
 
+			/*\
+			 - Returns true if the Position points to the same character
+			\*/
+			inline bool Compare(const char c) const {
+				return !IsEnd() ? *m_CodeIt == c : false;
+			}
+
 			// Get the current line of this position
 			inline ScriptLine & GetLine()					{ return *m_LineIt; }
 			inline const ScriptLine & GetLine()	const		{ return *m_LineIt; }
@@ -231,6 +244,12 @@ namespace SCRambl
 				return *this;
 			}
 
+			inline Position operator[](int i) {
+				Position new_pos = *this;
+				for (i; i > 0; --i) if (!new_pos.Forward()) break;
+				return new_pos;
+			}
+
 			// Forward()
 			inline Position & operator++() {
 				Forward();
@@ -240,6 +259,20 @@ namespace SCRambl
 				auto pos = *this;
 				Forward();
 				return pos;
+			}
+
+			inline Position operator+(int n) const {
+				Position new_pos = *this;
+				for (n; n > 0; --n)
+				{
+					if (!new_pos.Forward()) break;
+				}
+				return new_pos;
+			}
+
+			inline Position & operator+=(int n) {
+				for (n; n > 0; --n) if (!Forward()) break;
+				return *this;
 			}
 
 			// Backward()
@@ -253,12 +286,34 @@ namespace SCRambl
 				return pos;
 			}
 
+			inline Position operator-(int n) const {
+				Position new_pos = *this;
+				for (n; n > 0; --n)
+				{
+					if (!new_pos.Backward()) break;
+				}
+				return new_pos;
+			}
+
+			inline Position & operator-=(int n) {
+				for (n; n > 0; --n) if (!Backward()) break;
+				return *this;
+			}
+
 			// Compare()
 			inline bool operator==(const Position & pos) const {
 				return Compare(pos);
 			}
 			inline bool operator!=(const Position & pos) const {
 				return !(*this == pos);
+			}
+
+			// CompareChar()
+			inline bool operator==(const char c) const {
+				return Compare(c);
+			}
+			inline bool operator!=(const char c) const {
+				return !(*this == c);
 			}
 		};
 		

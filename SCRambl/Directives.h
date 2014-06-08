@@ -11,19 +11,28 @@
 
 namespace SCRambl
 {
-	enum eDirective : int
+	class Directive
 	{
-		BAD_DIRECTIVE,
-		DIRECTIVE_DEFINE,
-		DIRECTIVE_IF,
-		DIRECTIVE_ELSE,
-		DIRECTIVE_ELIF,
-		DIRECTIVE_ENDIF,
-		DIRECTIVE_IFDEF,
-		DIRECTIVE_INCLUDE,
+	public:
+		enum ID : int
+		{
+			INVALID,
+			DEFINE,
+			IF,
+			IFDEF,
+			ELSE,
+			ELIF,
+			ENDIF,
+			INCLUDE,
+		}	m_ID;
+
+		Directive(ID id) : m_ID(id)
+		{}
+
+		inline operator ID() const			{ return m_ID; }
 	};
 	
-	typedef IdentifierMap<eDirective> DirectiveMap;
+	typedef Identifier::Map<Directive> DirectiveMap;
 
-	eDirective GetDirective(const std::string &);
+	const Directive & GetDirective(const std::string &);
 }

@@ -9,11 +9,9 @@ SET(Files
 	Directives.cpp
 	Engine.cpp
 	Exception.cpp
-	FileSystem.cpp
 	Identifiers.cpp
 	Literals.cpp
 	Macros.cpp
-	Parser.cpp
 	Preprocessor.cpp
 	ProjectManager.cpp
 	Reporting.cpp

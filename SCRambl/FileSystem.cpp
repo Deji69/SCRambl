@@ -222,7 +222,7 @@ namespace SCRambl
 			m_pFile = nullptr;
 			m_nSize = -1;
 #else
-#error "wrong compiler"
+//#error "wrong compiler"
 #endif
 			return;
 		}

@@ -129,7 +129,7 @@ namespace SCRambl
 	Script::Script(const CodeList & code) : m_Code(code)
 	{ }
 
-	Script::Position & Script::Code::Insert(Position & at, Code & code)
+	Script::Position & Script::Code::Insert(Position & at, const Code & code)
 	{
 		auto lnit = at.GetLineIt();
 		++lnit;
@@ -139,6 +139,24 @@ namespace SCRambl
 			++lnit;
 		}
 		at.NextLine();
+		return at;
+	}
+
+	Script::Position & Script::Code::Insert(Position & at, const CodeLine::vector & code)
+	{
+		// keep a count of how many characters is added so we can fix the pointer
+		int i = 0;
+
+		for (auto ch : code)
+		{
+			at.Insert(ch);
+			++at;
+			++i;
+		}
+
+		// revert to the old position
+		at.m_CodeIt -= i;
+
 		return at;
 	}
 

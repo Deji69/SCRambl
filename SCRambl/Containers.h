@@ -493,7 +493,7 @@ namespace SCRambl
 		}
 		T GetLowest(K min)
 		{
-			m_pCurrentNode = min ? SearchForHighest(max, m_pBase) : SearchForHighest(m_pBase);
+			m_pCurrentNode = min ? SearchForHighest(min, m_pBase) : SearchForHighest(m_pBase);
 			return m_pCurrentNode ? m_pCurrentNode->m_pObject : nullptr;
 		}
 		T Next()

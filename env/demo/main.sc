@@ -45,7 +45,7 @@
 		[x] Code macros
 		[*] Macros with args	
 		[*] Preprocessor logic
-		[*] Preprocessor blocks
+		[x] Preprocessor blocks
 		[*] Hex input
 		[*] ASM input
 	[*] Miscellaneous
@@ -55,13 +55,13 @@
 		[*] STRICT/BASIC/NONE type matching
 		[*] Console
 		[*] Optimisations
-	1/48
+	4/48
 #endif
 
 #define HEY
 #undef HEY
 #if defined(HEY)
-	WAIT 1000
+	WAIT (1000 + 500)
 #endif
 
 #register_command 0FFF SUM_COMMAND(i,=f)

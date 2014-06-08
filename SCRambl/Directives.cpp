@@ -4,17 +4,18 @@
 namespace SCRambl
 {
 	const DirectiveMap g_Directives = {
-		{ "define", DIRECTIVE_DEFINE },
-		{ "if", DIRECTIVE_IF },
-		{ "else", DIRECTIVE_ELSE },
-		{ "elif", DIRECTIVE_ELIF },
-		{ "endif", DIRECTIVE_ENDIF },
-		{ "include", DIRECTIVE_INCLUDE },
+		{ { "define" },		Directive::DEFINE },
+		{ { "if" },			Directive::IF },
+		{ { "ifdef" },		Directive::IFDEF },
+		{ { "else" },		Directive::ELSE },
+		{ { "elif" },		Directive::ELIF },
+		{ { "endif" },		Directive::ENDIF },
+		{ { "include" },	Directive::INCLUDE }
 	};
 
-	eDirective GetDirective(const std::string & str)
+	const Directive & GetDirective(const std::string & str)
 	{
 		auto it = g_Directives.find(str);
-		return it != g_Directives.end() ? it->second : BAD_DIRECTIVE;
+		return it != g_Directives.end() ? it->second : Directive::INVALID;
 	}
 }

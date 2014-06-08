@@ -82,11 +82,14 @@ int main(int argc, char* argv[])
 
 		try
 		{
-			// Add a preparser task to read the script into a simpler format
+			// Add the preparser task to read the script into a simpler format
 			//engine.AddTask<Task, SCRambl::PreparserTask, SCRambl::Script>(preparser, script, path);
 
-			// Add a preprocessor task to preprocess the script - give it our 'preprocessor' ID so we can identify it later
+			// Add the preprocessor task to preprocess the script - give it our 'preprocessor' ID so we can identify it later
 			engine.AddTask<Task, SCRambl::PreprocessorTask, SCRambl::Script>(preprocessor, script);
+
+			// Add the parser task to parse the code symbols to tokens
+			engine.AddTask<Task, SCRambl::ParserTask, SCRambl::Script>(parser, script);
 
 			//
 			bool bRunning = true;
