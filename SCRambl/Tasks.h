@@ -8,7 +8,7 @@
 
 namespace SCRambl
 {
-	class Task
+	class TaskBase
 	{
 		friend class Engine;
 
@@ -28,11 +28,12 @@ namespace SCRambl
 	public:
 		inline State GetState()	const		{ return m_State; }
 
-		Task() : m_State(running)
+	protected:
+		TaskBase() : m_State(running)
 		{ }
-		virtual ~Task() { };
+		virtual ~TaskBase() { };
 
-		const Task & Run()
+		const TaskBase & Run()
 		{
 			do
 			{

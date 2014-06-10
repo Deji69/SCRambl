@@ -61,7 +61,7 @@ namespace SCRambl
 		static char GetTrigraphChar(char c);
 	};
 
-	class PreparserTask : public Task, public Preparser
+	class PreparserTask : public TaskBase, public Preparser
 	{
 	public:
 		PreparserTask(Engine & engine, Script & script, const std::string & path) : Preparser(engine, script, path)

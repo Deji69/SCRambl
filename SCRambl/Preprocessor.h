@@ -375,9 +375,21 @@ namespace SCRambl
 		{
 
 		};
+
+		class Task : public TaskBase, public Preprocessor
+		{
+		public:
+			Task(Engine & engine, Script & script) : Preprocessor(engine, script)
+			{ }
+
+		protected:
+			bool IsTaskFinished() final override	{ return Preprocessor::IsFinished(); }
+			void RunTask() final override			{ Preprocessor::Run(); }
+			void ResetTask() final override			{ Preprocessor::Reset(); }
+		};
 	}
 
-	class PreprocessorTask : public Task, public Preprocessor::Preprocessor
+	/*class PreprocessorTask : public Task, public Preprocessor::Preprocessor
 	{
 	public:
 		PreprocessorTask(Engine & engine, Script & script) : Preprocessor(engine, script)
@@ -387,5 +399,5 @@ namespace SCRambl
 		bool IsTaskFinished() final override	{ return Preprocessor::IsFinished(); }
 		void RunTask() final override			{ Preprocessor::Run(); }
 		void ResetTask() final override			{ Preprocessor::Reset(); }
-	};
+	};*/
 }

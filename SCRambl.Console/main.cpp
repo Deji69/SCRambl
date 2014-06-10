@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
 			//engine.AddTask<Task, SCRambl::PreparserTask, SCRambl::Script>(preparser, script, path);
 
 			// Add the preprocessor task to preprocess the script - give it our 'preprocessor' ID so we can identify it later
-			engine.AddTask<Task, SCRambl::PreprocessorTask, SCRambl::Script>(preprocessor, script);
+			engine.AddTask<Task, SCRambl::Preprocessor::Task, SCRambl::Script>(preprocessor, script);
 
 			// Add the parser task to parse the code symbols to tokens
 			engine.AddTask<Task, SCRambl::ParserTask, SCRambl::Script>(parser, script);
@@ -96,38 +96,38 @@ int main(int argc, char* argv[])
 			bool bPreprocessorStarted = false;
 			do
 			{
-				using SCRambl::Task;
+				using SCRambl::TaskBase;
 				switch (engine.Run().GetState())
 				{
-				case Task::running:
+				case TaskBase::running:
 					// output errors, warnings and status
 					switch (engine.GetCurrentTaskID())
 					{
 					case preprocessor:
-						switch (engine.GetCurrentTask<SCRambl::PreprocessorTask>().GetState())
+						switch (engine.GetCurrentTask<SCRambl::Preprocessor::Task>().GetState())
 						{
-						case Task::running:
+						case TaskBase::running:
 							if (!bPreprocessorStarted)
 							{
 								std::cout << "Preprocessing..." << "\n";
 								bPreprocessorStarted = true;
 							}
 							break;
-						case Task::finished:
+						case TaskBase::finished:
 							break;
-						case Task::error:
+						case TaskBase::error:
 							std::cerr << "ERROR (Preprocessor) : " << "\n";
 							break;
 						}
 						break;
 					}
 					break;
-				case Task::finished:
+				case TaskBase::finished:
 					//
 					std::cout << "Finished." << "\n";
 					bRunning = false;
 					break;
-				case Task::error:
+				case TaskBase::error:
 					std::cerr << "FATAL ERROR: " << "\n";
 					bRunning = false;
 					break;
