@@ -265,6 +265,7 @@ namespace SCRambl
 				{
 				case token_open_paren:
 					val = ProcessExpression(true);
+					got_val = true;
 					break;
 
 				case token_close_paren:
@@ -351,8 +352,10 @@ namespace SCRambl
 				}
 
 				if (got_val) {
+					// The ABC's...
 					switch (op)
 					{
+						// arithmetic
 					default:
 						result = val;
 						break;
@@ -368,10 +371,53 @@ namespace SCRambl
 					case Operator::div:
 						result /= val;
 						break;
+					case Operator::mod:
+						result %= val;
+						break;
+
+						// bitwise
+					case Operator::bit_and:
+						result &= val;
+						break;
+					case Operator::bit_or:
+						result |= val;
+						break;
+					case Operator::bit_xor:
+						result ^= val;
+						break;
+					case Operator::bit_not:
+						result = ~val;
+						break;
+					case Operator::bit_shl:
+						result <<= val;
+						break;
+					case Operator::bit_shr:
+						result >>= val;
+						break;
+
+						// comparison
+					case Operator::eq:
+						result = result == val;
+						break;
+					case Operator::neq:
+						result = result != val;
+						break;
+					case Operator::leq:
+						result = result <= val;
+						break;
+					case Operator::geq:
+						result = result >= val;
+						break;
+					case Operator::lt:
+						result = result < val;
+						break;
+					case Operator::gt:
+						result = result > val;
+						break;
 					}
 				}
 			}
-			return val;
+			return result;
 		}
 
 		Lexer::Result Preprocessor::Lex()

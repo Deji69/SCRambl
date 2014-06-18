@@ -132,7 +132,8 @@ namespace SCRambl
 
 			//inline operator State &()			{ return m_State; }
 			inline State & operator=(state_t op)		{ ChangeState(op); return *this; }
-			inline bool operator!=(state_t op) const	{ return m_State == op; }
+			inline bool operator==(state_t op) const	{ return m_State == op; }
+			inline bool operator!=(state_t op) const	{ return !(*this == op); }
 			inline operator state_t () const			{ return m_State; }
 		};
 
@@ -147,8 +148,6 @@ namespace SCRambl
 			typedef std::pair<TokenIDType, Scanner&> TokenScanner;
 			typedef std::vector<TokenScanner> ScannerList;
 			typedef std::list<std::pair<State, TokenScanner&>> ScannerStates;
-
-			enum Status { init, scanning }	m_State = init;
 			
 			ScannerList							m_Scanners;
 			ScannerStates						m_ScannerStates;
@@ -158,6 +157,8 @@ namespace SCRambl
 			 - Adds a token scanner to this Lexer, causing Scan to attempt more detections on input
 			 - The token ID will be used by the lexer to represent which scanner detected a token
 			 - Scanners override the 'Scan' method of 'Lexer::Scanner' with state-dependent lexeme rules
+			 - They must change state manually, and return true while valid
+			 - Usually each scanner only requires one call per the 3 states (before/inside/after)
 			\*/
 			template<class Scanner> void AddTokenScanner(TokenIDType tokenid, Scanner & scanner)
 			{
@@ -194,8 +195,11 @@ namespace SCRambl
 				}
 				else
 				{
+					bool first = true;
+					long longest = 0;
+
 					// go through those scanners we found
-					for (auto scit = m_ScannerStates.begin(); scit != m_ScannerStates.end(); )
+					for (auto scit = m_ScannerStates.begin(); scit != m_ScannerStates.end(); first = false)
 					{
 						// restore the scanners state
 						State & state = scit->first;
@@ -204,27 +208,34 @@ namespace SCRambl
 						// all scanners finishing first qualify for the major league
 						bool last = state == State::after;
 
-						if (!scanner.Scan(state, state.Current()))
+						// skip inactive scanners
+						if (state != State::before)
 						{
-							// failed? do away with this scanner, then...
-							scit = m_ScannerStates.erase(scit);
+							if (!scanner.Scan(state, state.Current()))
+							{
+								// failed? do away with this scanner, then...
+								scit = m_ScannerStates.erase(scit);
 
-							// if we've got more scanners, let them continue - otherwise give up
-							if (!m_ScannerStates.empty()) continue;
-							return found_nothing;
+								// if we've got more scanners, let them continue - otherwise give up
+								if (!m_ScannerStates.empty()) continue;
+								return found_nothing;
+							}
 						}
 						
 						// as soon as the quickest scanner finishes, call the race
 						if (last)
 						{
 							token(scit->second.first, state.Before(), state.Inside(), state.After());
-							if (m_ScannerStates.size() <= 1)
+
+							// if it's the only one, we're a success
+							if (m_ScannerStates.size() <= 1 || scit == m_ScannerStates.begin())
 							{
 								m_ScannerStates.clear();
 								return found_token;
 							}
 							else
 							{
+								// 
 								scit = m_ScannerStates.erase(scit);
 								continue;
 							}
@@ -234,6 +245,40 @@ namespace SCRambl
 					}
 					return still_scanning;
 				}
+			}
+
+			/*\
+			 - ScanFor something specific - will initiate similarly to 'Scan' except for a specific token type
+			 - After the first successful call, further calls made to this simply redirect to 'Scan'
+			\*/
+			Result ScanFor(TokenIDType type, const Script::Position & pos, Token<TokenIDType> & token)
+			{
+				ASSERT(!m_Scanners.empty());			// better add a scanner
+
+				// if we haven't any active scanners, start trying to activate them
+				if (m_ScannerStates.empty())
+				{
+					// the callee is picky, so only use the the scanner of the token type they specified
+					for (auto scit = m_Scanners.begin(); scit != m_Scanners.end(); ++scit)
+					{
+						// no? continue;
+						if (scit->first != type) continue;
+
+						// initialise the state
+						State state(pos);
+
+						// scan beginning token symbol
+						if (scit->second.Scan(state, state.Current()))
+						{
+							// matched! aaand we're done...
+							m_ScannerStates.emplace_back(state, *scit);
+							return still_scanning;
+						}
+					}
+				}
+				else return Scan(pos, token);
+
+				return found_nothing;
 			}
 		};
 	}

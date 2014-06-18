@@ -33,7 +33,7 @@ namespace SCRambl
 		Script				&	m_Script;
 	};
 
-	class ParserTask : public Task, public Parser
+	class ParserTask : public TaskBase, public Parser
 	{
 	public:
 		ParserTask(Engine & engine, Script & script) : Parser(engine, script)
