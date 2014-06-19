@@ -273,11 +273,11 @@ namespace SCRambl
 					return val;
 
 				case token_number:
-					// if(m_NumericScanner.IsFloat()) throw("blah blah");
+					// if(m_NumericScanner.Is<float>()) throw("blah blah");
 					if (got_val) {
 						// error
 					}
-					val = negate_val ? -m_NumericScanner.GetValue<int>() : m_NumericScanner.GetValue<int>();
+					val = negate_val ? -m_NumericScanner.Get<int>() : m_NumericScanner.Get<int>();
 					got_val = true;
 					negate_val = false;
 					break;

@@ -61,14 +61,6 @@ namespace SCRambl
 
 	class Script
 	{
-		enum eSCR_Error
-		{
-			SCR_UNKNOWN_ERROR = 1000,			// dummy. no, I mean you're a dummy
-			SCR_BAD_DIRECTIVE_CHAR = 1001,
-			SCR_BAD_CONSTEXPR_OPERATOR = 1002,
-			SCR_BAD_NUMBER_SUFFIX = 1003,
-		};
-
 	public:
 		class Code;
 		class Position;
@@ -100,6 +92,9 @@ namespace SCRambl
 			inline const CodeList & operator *() const		{ return GetLines(); }
 			inline const CodeList * operator ->() const		{ return &**this; }
 
+			/*\
+			 - Add a line of code to the grande list
+			\*/
 			inline void AddLine(const CodeLine & code) {
 				if (!code.Symbols().empty())
 				{
@@ -108,12 +103,15 @@ namespace SCRambl
 				}
 				else ++m_NumLines;
 			}
+
+			/*\
+			 - Make the code vanish completely
+			\*/
 			inline void Clear() {
 				m_Code.clear();
 				m_NumLines = 0;
 				m_NumSymbols = 0;
 			}
-
 
 			/*\
 			 - Insert code from elsewhere onto the next line

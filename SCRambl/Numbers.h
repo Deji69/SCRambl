@@ -21,13 +21,19 @@ namespace SCRambl
 		};
 
 	public:
-		bool Scan(Lexer::State & state, Script::Position & code) override
+		bool Scan(Lexer::State & state, Script::Position & pos) override
 		{
 			switch (state)
 			{
 			case Lexer::State::before:
 				m_Hex = false;
 				m_Float = false;
+
+				// obviously we need to make sure this is a number
+				if (pos->GetType() == Symbol::number)
+				{
+					++pos;
+				}
 				return false;
 
 			case Lexer::State::inside:
@@ -39,12 +45,14 @@ namespace SCRambl
 			return false;
 		}
 
-		template<typename V>
-		V GetValue() const;
+		template<typename T>
+		inline T Get() const					{ return m_Float ? m_FloatVal : m_IntVal; }
+
+		template<typename T> bool Is() const;
 
 		template<>
-		inline int GetValue<int>() const		{ return m_IntVal; }
+		inline bool Is<int>() const				{ return !m_Float; }
 		template<>
-		inline float GetValue<float>() const	{ return m_FloatVal; }
+		inline bool Is<float>() const			{ return m_Float; }
 	};
 }
