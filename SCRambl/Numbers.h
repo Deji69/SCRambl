@@ -12,9 +12,13 @@ namespace SCRambl
 {
 	class NumericScanner : public Lexer::Scanner
 	{
-		bool Float;
-		bool Hex;
-		int Int;
+		bool m_Float;
+		bool m_Hex;
+		
+		union {
+			int		m_IntVal;
+			float	m_FloatVal;
+		};
 
 	public:
 		bool Scan(Lexer::State & state, Script::Position & code) override
@@ -22,7 +26,8 @@ namespace SCRambl
 			switch (state)
 			{
 			case Lexer::State::before:
-				Int = 0;
+				m_Hex = false;
+				m_Float = false;
 				return false;
 
 			case Lexer::State::inside:
@@ -34,6 +39,12 @@ namespace SCRambl
 			return false;
 		}
 
-		inline int GetInt() const		{ return Int; }
+		template<typename V>
+		V GetValue() const;
+
+		template<>
+		inline int GetValue<int>() const		{ return m_IntVal; }
+		template<>
+		inline float GetValue<float>() const	{ return m_FloatVal; }
 	};
 }

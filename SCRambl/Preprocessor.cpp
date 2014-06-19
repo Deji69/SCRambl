@@ -277,7 +277,7 @@ namespace SCRambl
 					if (got_val) {
 						// error
 					}
-					val = negate_val ? -m_NumericScanner.GetInt() : m_NumericScanner.GetInt();
+					val = negate_val ? -m_NumericScanner.GetValue<int>() : m_NumericScanner.GetValue<int>();
 					got_val = true;
 					negate_val = false;
 					break;

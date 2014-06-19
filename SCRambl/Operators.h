@@ -70,47 +70,108 @@ namespace SCRambl
 		template<typename T, T max>
 		class Table
 		{
-			struct Cell
+		public:
+			/*\
+			 - Operator::Table::Cell - If it doesnt store an operator or another non-useless cell, it's useless (recursive)
+			 - Get the first cell via the Operator::Table
+			\*/
+			class Cell
 			{
+				friend class Table;
+
 				T						m_Operator = max;
 				std::vector<Cell>		m_Cells;
+
+			public:
+				// For reservation of cells for any grapheme character - wastes a lot of space, but we can access things quickly :)
+				void ReserveCells()
+				{
+					m_Cells.resize(max);
+				}
+
+				// Obviously doesnt work if theres no way to get an operator by adding that grapheme, of course
+				bool Next(Grapheme graph, const Cell *& next_out) const
+				{
+					// ensure we have a cell for this grapheme
+					if (m_Cells.size() >= (unsigned)graph)
+					{
+						// give it the next cell
+						next_out = &m_Cells[graph];
+						return true;
+					}
+					return false;
+				}
+
+				// A problem shared...
+				inline bool Next(Grapheme graph, Cell *& next_out)
+				{
+					return Next(graph, const_cast<const Cell*&>(next_out));
+				}
+
+				// So you think this Cell has an operator? Good luck...
+				inline T GetOperator() const		{ return m_Operator; }
 			};
 			
+		private:
 			std::vector<Cell>		m_Cells;
 
 		public:
 			Table() : m_Cells(max)
 			{}
 
+			/*\
+			 - Allocates cells for the path of graphemes leading to an operator
+			 - Adding <, << and <=, for example, would allocate one initial cell for '<' and then two cells for '<' and '='
+			 - Each final cell will have the operator type ID assigned to it, which can be retrieved once the cell is obtained
+			\*/
 			void AddOperator(CodeLine code, T type)
 			{
-				std::vector<Cell> * pRow = &m_Cells;
 				Cell * pCell = nullptr;
+				bool got_first_cell = false;
 
 				// use the grapheme from each symbol to walk down the row of cells
 				for (auto c : code.Symbols())
 				{
-					ASSERT(c.HasGrapheme());
-					pCell = &(*pRow)[c.GetGrapheme()];
-					pRow = &pCell->m_Cells;
-					pRow->resize(max);
+					ASSERT(c.HasGrapheme() && "Only symbols with graphemes (specially recognized symbols) can be added as operators");
+					if (!got_first_cell)
+					{
+						pCell = &m_Cells[c.GetGrapheme()];
+						got_first_cell = true;
+					}
+					else
+					{
+						pCell->ReserveCells();
+						pCell->Next(c.GetGrapheme(), pCell);
+					}
+						
 				}
 
-				// assign an operator to that cell
-				pCell->m_Operator = type;
+				ASSERT(got_first_cell && "Use a CodeLine that actually contains Symbols");
+
+				if (got_first_cell)
+				{
+					// assign an operator to that cell
+					pCell->m_Operator = type;
+				}
 			}
 
-			T GetOperator()
+			/*\
+			 - Get the first cell of an operator string
+			 - e.g. if the grapheme was 'plus' (+), there could be two possible following cells: 'plus' (+) or 'equals' (=)
+			 - it all depends on which operators are in this table, of course
+			\*/
+			inline const Cell & GetCell(Grapheme graph) const
 			{
-
+				ASSERT(m_Cells.size() >= (unsigned)graph && "Something went wrong internally - or an out of range grapheme ID was used");
+				return m_Cells[graph];
 			}
 		};
 
 		template<typename T, T max>
 		class Scanner : public Lexer::Scanner
 		{
-			Operator::Table<T, max>		&	m_Table;
-			T								m_Operator;
+							Operator::Table<T, max>			&	m_Table;
+			typename const	Operator::Table<T, max>::Cell	*	m_Cell;
 
 		public:
 			Scanner(Operator::Table<T, max> & table) : m_Table(table)
@@ -120,23 +181,34 @@ namespace SCRambl
 			{
 				switch (state)
 				{
+					// Check, check, check fo da cell dat sells
 				case Lexer::State::before:
-					if (pos->HasGrapheme())
-					{
+					if (!pos->HasGrapheme()) return false;
+					m_Cell = &m_Table.GetCell(pos->GetGrapheme());
+					state = Lexer::State::inside;
+					++pos;
+					return true;
 
+				case Lexer::State::inside:
+					for (; pos && pos->HasGrapheme(); ++pos)
+					{
+						if (!m_Cell->Next(pos->GetGrapheme(), m_Cell))
+							return false;
+					}
+					if (m_Cell->GetOperator() != max)
+					{
+						state = Lexer::State::after;
+						return true;
 					}
 					return false;
 
-				case Lexer::State::inside:
-					return false;
-
 				case Lexer::State::after:
-					return false;
+					return true;
 				}
 				return false;
 			}
 
-			T GetOperator() const			{ return m_Operator; }
+			T GetOperator() const		{ ASSERT(m_Cell && "Can only get the operator after a succesful scan");  return m_Cell->GetOperator(); }
 		};
 	};
 }
