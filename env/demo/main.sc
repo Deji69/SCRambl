@@ -3,7 +3,7 @@
 *aaaa
 */#include\
 "include.sch"
-#define FALSE (5--1)==0
+#define FALSE (-5 - -5)==0
 
 #if FALSE
   ALPHA Checklist:
