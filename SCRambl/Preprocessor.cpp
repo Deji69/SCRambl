@@ -169,8 +169,18 @@ namespace SCRambl
 
 			case directive_ifdef:
 				if (Lex() == Lexer::Result::found_token && m_Token == Token::Identifier)
-				{
 					PushSourceControl(m_Macros.Get(m_Identifier) != nullptr);
+				break;
+
+			case directive_ifndef:
+				if (Lex() == Lexer::Result::found_token && m_Token == Token::Identifier)
+					PushSourceControl(m_Macros.Get(m_Identifier) == nullptr);
+				break;
+
+			case directive_elif:
+				if (!GetSourceControl())
+				{
+					if (ProcessExpression() != 0) InvertSourceControl();
 				}
 				break;
 
@@ -183,15 +193,8 @@ namespace SCRambl
 				break;
 
 			case directive_include:
-				if (Lex() == Lexer::Result::found_token && (m_Token == Token::String || m_Token == Token::Identifier))
+				if (Lex() == Lexer::Result::found_token && m_Token == Token::String)
 				{
-					if (m_Token == Token::Identifier)
-					{
-						if (auto pMacro = m_Macros.Get(m_String))
-						{
-						}
-						//
-					}
 					if (m_Script.Include(m_CodePos, m_String))
 					{
 						m_State = lexing;

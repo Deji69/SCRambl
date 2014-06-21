@@ -256,6 +256,7 @@ namespace SCRambl
 				directive_include,
 				directive_define,
 				directive_ifdef,
+				directive_ifndef,
 				directive_if,
 				directive_elif,
 				directive_else,

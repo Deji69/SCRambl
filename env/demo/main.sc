@@ -43,7 +43,7 @@
 		[*] In-script variable registering
 		[x] Empty macros
 		[x] Code macros
-		[*] Macros with args	
+		[*] Macros with args
 		[x] Preprocessor logic
 		[x] Preprocessor blocks
 		[*] Hex input
