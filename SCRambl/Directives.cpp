@@ -10,7 +10,8 @@ namespace SCRambl
 		{ { "else" },		Directive::ELSE },
 		{ { "elif" },		Directive::ELIF },
 		{ { "endif" },		Directive::ENDIF },
-		{ { "include" },	Directive::INCLUDE }
+		{ { "include" },	Directive::INCLUDE },
+		{ { "undef" },		Directive::UNDEF }
 	};
 
 	const Directive & GetDirective(const std::string & str)

@@ -259,7 +259,8 @@ namespace SCRambl
 				directive_if,
 				directive_elif,
 				directive_else,
-				directive_endif
+				directive_endif,
+				directive_undef,
 			};
 
 			using DirectiveMap = std::unordered_map<std::string, Directive>;
@@ -309,22 +310,24 @@ namespace SCRambl
 			Script				&	m_Script;
 			Script::Position		m_CodePos;
 			bool					m_bScriptIsLoaded;		// if so, we only need to add-in any #include's
+			bool					m_DisableMacroExpansion = false;
+			bool					m_DisableMacroExpansionOnce = false;
 			std::stack<bool>		m_PreprocessorLogic;
 
 			void PushSourceControl(bool b) {
 				m_PreprocessorLogic.push(b);
 			}
 			void PopSourceControl() {
-				ASSERT(!m_PreprocessorLogic.empty());
+				ASSERT(!m_PreprocessorLogic.empty() && "#endif when not in #if/#ifdef/#else?");
 				m_PreprocessorLogic.pop();
 			}
-			void InvertSourceControl() {
-				ASSERT(!m_PreprocessorLogic.empty());
+			inline void InvertSourceControl() {
+				ASSERT(!m_PreprocessorLogic.empty() && "Unmatched #else?");
 				m_PreprocessorLogic.top() = !m_PreprocessorLogic.top();
 			}
-			bool GetSourceControl() const {
-				ASSERT(!m_PreprocessorLogic.empty()); // if this activates, you popped too much!
-				return m_PreprocessorLogic.top();
+			inline bool GetSourceControl() const {
+				//ASSERT(!m_PreprocessorLogic.empty() && "not in #if/#ifdef/#else?");
+				return m_PreprocessorLogic.empty() ? true : m_PreprocessorLogic.top();
 			}
 
 			void RunningState();

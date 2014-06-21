@@ -24,6 +24,7 @@ namespace SCRambl
 			ELIF,
 			ENDIF,
 			INCLUDE,
+			UNDEF,
 		}	m_ID;
 
 		Directive(ID id) : m_ID(id)

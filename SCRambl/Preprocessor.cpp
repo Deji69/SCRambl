@@ -32,6 +32,7 @@ namespace SCRambl
 			m_Directives["if"] = directive_if;
 			m_Directives["ifdef"] = directive_ifdef;
 			m_Directives["include"] = directive_include;
+			m_Directives["undef"] = directive_undef;
 
 			// arithmetic
 			m_Operators.AddOperator({ { '+' } }, Operator::add);
@@ -52,6 +53,7 @@ namespace SCRambl
 			m_Operators.AddOperator({ { '>' } }, Operator::gt);
 			m_Operators.AddOperator({ { '<' } }, Operator::lt);
 			m_Operators.AddOperator({ { '=', '=' } }, Operator::eq);
+			m_Operators.AddOperator({ { '!', '=' } }, Operator::neq);
 			m_Operators.AddOperator({ { '>', '=' } }, Operator::geq);
 			m_Operators.AddOperator({ { '<', '=' } }, Operator::leq);
 
@@ -149,6 +151,16 @@ namespace SCRambl
 					}
 					else m_Macros.Define(name);
 				}
+				break;
+
+			case directive_undef:
+				// make sure we're not handed dirty macro code
+				m_DisableMacroExpansionOnce = true;
+
+				if (Lex() == Lexer::Result::found_token && m_Token == Token::Identifier)
+					m_Macros.Undefine(m_Identifier);
+				else
+					throw;
 				break;
 
 			case directive_if:
@@ -271,9 +283,21 @@ namespace SCRambl
 
 		int Preprocessor::ProcessExpression(bool paren)
 		{
+			// ultimate expression result
 			int result = 0;
+			// last expression value
 			int val = 0;
+			// got an expression value? we'll probably expect an operator...
 			bool got_val = false;
+			// flag for the 'defined' unary operator
+			bool defined_operator = false;
+			// ignore a set of parentheses after the unary operators that are kind of like functions ('defined()')
+			bool ignore_parentheses = false;
+			// if there was a logical operator, this is the logical value of the expression preceeding it
+			bool log_operand;
+
+			// logical operator
+			Operator::Type log_op = Operator::max_operator;
 			Operator::Type last_op = Operator::max_operator;
 			Operator::Type op = Operator::max_operator;
 
@@ -288,12 +312,21 @@ namespace SCRambl
 				switch (m_Token)
 				{
 				case Token::OpenParen:
-					val = ProcessExpression(true);
-					got_val = true;
+					// we may be ignoring parentheses to prevent trying to retrieve a macro as a value (for 'defined(MACRO)')
+					// yes, we hate that stupid wannabe operator/keyword/function
+					if (!ignore_parentheses)
+					{
+						val = ProcessExpression(true);
+						got_val = true;
+					}
 					break;
 
 				case Token::CloseParen:
-					//if (!paren) throw("Unmatched closing parenthesis")
+					if (!ignore_parentheses)
+					{
+						//if (!paren) throw("Unmatched closing parentheses")
+					}
+					else ignore_parentheses = false;
 					return result;
 
 				case Token::Number:
@@ -301,11 +334,6 @@ namespace SCRambl
 					ASSERT(!m_NumericScanner.Is<float>() && "Add error handling");
 
 					val = m_NumericScanner.Get<int>();
-
-					// handle unary / 1-ary operations
-					for (; !unary_operators.empty(); unary_operators.pop())
-						ASSERT(ExpressUnary(unary_operators.top(), val) && "Non-unary operator in unary_operators!!!!");
-					
 					got_val = true;
 					break;
 
@@ -365,6 +393,7 @@ namespace SCRambl
 					case Operator::geq:			// >=
 					case Operator::leq:			// <=
 					case Operator::eq:			// ==
+					case Operator::neq:			// !=
 						got_val = false;
 						break;
 
@@ -378,6 +407,16 @@ namespace SCRambl
 						}
 						break;
 
+					case Operator::and:
+					case Operator::or:
+						// if got
+						if (got_val) {
+							log_operand = result != 0;
+							log_op = op;
+							got_val = false;
+						}
+						break;
+
 					case Operator::cond:		// ?
 					case Operator::condel:		// :
 					default:
@@ -387,11 +426,42 @@ namespace SCRambl
 
 					ASSERT ((!got_val || op != Operator::max_operator) && "Premature error in testing phase (unary used AFTER a value)");
 					break;
+
+				case Token::Identifier:
+					if (defined_operator)
+					{
+						val = m_Macros.Get(m_Identifier) != nullptr;
+						got_val = true;
+						defined_operator = false;
+						m_DisableMacroExpansion = false;
+
+						// in case there were no parentheses
+						ignore_parentheses = false;
+					}
+					else
+					{
+						if (m_Identifier == "defined")
+						{
+							// since it's technically a unary operator (keyword and possible function, IMO),
+							// we need to make sure we dont already have a value
+							if (!got_val)
+							{
+								defined_operator = true;
+								ignore_parentheses = true;
+								m_DisableMacroExpansion = true;
+							}
+						}
+					}
+					break;
 				}
 
-				// binary operators / 2-ary
 				if (got_val) {
-					// The ABC's...
+					// handle unary / 1-ary operations
+					for (; !unary_operators.empty(); unary_operators.pop())
+						ASSERT(ExpressUnary(unary_operators.top(), val) && "Non-unary operator in unary_operators!!!!");
+
+					// binary operators / 2-ary
+					// AKA The ABC's...
 					switch (op)
 					{
 						// Arithmetic
@@ -451,8 +521,26 @@ namespace SCRambl
 						result = result > val;
 						break;
 					}
+
+					// evaluate logical operation
+					if (log_op != Operator::max_operator && op != Operator::and && op != Operator::or)
+					{
+						if (log_op == Operator::and)
+							result = log_operand & (result != 0);
+						else if (log_op == Operator::or)
+							result = log_operand | (result != 0);
+
+						log_op = Operator::max_operator;
+					}
 				}
 			}
+
+			// evaluate logical operation
+			if (log_op == Operator::and)
+				result = log_operand & (result != 0);
+			else if (log_op == Operator::or)
+				result = log_operand | (result != 0);
+
 			return result;
 		}
 
@@ -517,18 +605,23 @@ namespace SCRambl
 						// save the identifier
 						m_Identifier = m_Script.GetCode().Select(m_Token.Begin(), m_Token.End());
 
-						// check for macro
-						if (auto * macro = m_Macros.Get(m_Identifier))
+						// in certain cases we may want the macros actual identifier
+						if (!m_DisableMacroExpansion && !m_DisableMacroExpansionOnce)
 						{
-							// remove the identifier from code
-							m_CodePos = m_Script.GetCode().Erase(m_Token.Begin(), m_Token.End());
+							// check for macro
+							if (auto * macro = m_Macros.Get(m_Identifier))
+							{
+								// remove the identifier from code
+								m_CodePos = m_Script.GetCode().Erase(m_Token.Begin(), m_Token.End());
 
-							// insert the macro code
-							m_CodePos = m_Script.GetCode().Insert(m_CodePos, macro->GetCode().Symbols());
+								// insert the macro code
+								m_CodePos = m_Script.GetCode().Insert(m_CodePos, macro->GetCode().Symbols());
 
-							// continue parsing until we have a REAL token
-							continue;
+								// continue parsing until we have a REAL token
+								continue;
+							}
 						}
+						else m_DisableMacroExpansionOnce = false;
 						break;
 
 					}
