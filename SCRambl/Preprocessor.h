@@ -361,7 +361,7 @@ namespace SCRambl
 			}
 		};
 
-		class Task : public TaskBase, public Preprocessor
+		class Task : public TaskSystem::Task, public Preprocessor
 		{
 		public:
 			Task(Engine & engine, Script & script) : Preprocessor(engine, script)

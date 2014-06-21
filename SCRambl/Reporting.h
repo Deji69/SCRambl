@@ -7,6 +7,8 @@
 #pragma once
 #include <vector>
 #include <string>
+#include "Scripts.h"
+#include "Tasks.h"
 
 namespace SCRambl
 {
@@ -14,22 +16,30 @@ namespace SCRambl
 	{
 		class Report
 		{
+		public:
 			enum Type {
 				notice, warning, error, fatal
 			};
+
+		private:
+			Type			m_Type;
+
+		protected:
+			Report(Type type) : m_Type(type)
+			{}
+
+		public:
+			inline Type		GetType() const			{ return m_Type; }
 		};
 
-		class Error : Report
+		template<typename IDType>
+		class Error : public Report
 		{
+			IDType			m_ID;
 
+		public:
+			Error() : Report(error)
+			{ }
 		};
 	}
-	class Error
-	{
-		unsigned long				m_nCode;
-		std::vector<std::string>	m_Params;
-
-	public:
-		Error(unsigned long code, std::vector<std::string> params);
-	};
 }

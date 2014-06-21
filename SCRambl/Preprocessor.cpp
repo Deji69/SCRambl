@@ -2,6 +2,7 @@
 #include "Directives.h"
 #include "Preprocessor.h"
 #include "Lexer.h"
+#include "Reporting.h"
 
 namespace SCRambl
 {
@@ -624,6 +625,7 @@ namespace SCRambl
 						if (!GetSourceControl() && m_Directive != directive_endif)
 							continue;
 
+						//throw(Reporting::Error<>());
 						ASSERT(m_Directive != directive_invalid);
 						break;
 

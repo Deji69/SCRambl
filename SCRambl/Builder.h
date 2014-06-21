@@ -9,7 +9,7 @@
 
 namespace SCRambl
 {
-	class Builder : public TaskBase
+	class Builder : public TaskSystem::Task
 	{
 	public:
 		enum State {

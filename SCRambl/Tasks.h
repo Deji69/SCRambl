@@ -8,59 +8,64 @@
 
 namespace SCRambl
 {
-	class TaskBase
+	class Engine;
+	
+	namespace TaskSystem
 	{
-		friend class Engine;
-
-	public:
-		enum State { running, error, finished };
-
-	private:
-		State		m_State;
-
-	protected:
-		virtual void ResetTask() = 0;
-		virtual void RunTask() = 0;
-		virtual bool IsTaskFinished() = 0;
-
-		inline State & TaskState()			{ return m_State; }
-
-	public:
-		inline State GetState()	const		{ return m_State; }
-
-	protected:
-		TaskBase() : m_State(running)
-		{ }
-		virtual ~TaskBase() { };
-
-		const TaskBase & Run()
+		class Task
 		{
-			do
+			friend class SCRambl::Engine;
+
+		public:
+			enum State { running, error, finished };
+
+		private:
+			State		m_State;
+
+		protected:
+			virtual void ResetTask() = 0;
+			virtual void RunTask() = 0;
+			virtual bool IsTaskFinished() = 0;
+
+			inline State & TaskState()			{ return m_State; }
+
+		public:
+			inline State GetState()	const		{ return m_State; }
+
+		protected:
+			Task() : m_State(running)
+			{ }
+			virtual ~Task() { };
+
+			const Task & Run()
 			{
-				switch (m_State)
+				do
 				{
-				case error:
-					m_State = running;
-				case running:
-					try
+					switch (m_State)
 					{
-						RunTask();
+					case error:
+						m_State = running;
+					case running:
+						try
+						{
+							RunTask();
 
-						if (IsTaskFinished()) m_State = finished;
+							if (IsTaskFinished()) m_State = finished;
+						}
+						catch (...)
+						{
+							m_State = error;
+						}
+						break;
+					case finished:
+						ResetTask();
+						if (!IsTaskFinished()) m_State = running;
+						continue;
 					}
-					catch (...)
-					{
-						m_State = error;
-					}
-					break;
-				case finished:
-					ResetTask();
-					if (!IsTaskFinished()) m_State = running;
-					continue;
-				}
-			} while (false);
+				} while (false);
 
-			return *this;
+				return *this;
+			};
 		};
-	};
+	}
 }

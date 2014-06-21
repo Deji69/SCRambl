@@ -96,38 +96,38 @@ int main(int argc, char* argv[])
 			bool bPreprocessorStarted = false;
 			do
 			{
-				using SCRambl::TaskBase;
+				using SCRambl::TaskSystem::Task;
 				switch (engine.Run().GetState())
 				{
-				case TaskBase::running:
+				case Task::running:
 					// output errors, warnings and status
 					switch (engine.GetCurrentTaskID())
 					{
 					case preprocessor:
 						switch (engine.GetCurrentTask<SCRambl::Preprocessor::Task>().GetState())
 						{
-						case TaskBase::running:
+						case Task::running:
 							if (!bPreprocessorStarted)
 							{
 								std::cout << "Preprocessing..." << "\n";
 								bPreprocessorStarted = true;
 							}
 							break;
-						case TaskBase::finished:
+						case Task::finished:
 							break;
-						case TaskBase::error:
+						case Task::error:
 							std::cerr << "ERROR (Preprocessor) : " << "\n";
 							break;
 						}
 						break;
 					}
 					break;
-				case TaskBase::finished:
+				case Task::finished:
 					//
 					std::cout << "Finished." << "\n";
 					bRunning = false;
 					break;
-				case TaskBase::error:
+				case Task::error:
 					std::cerr << "FATAL ERROR: " << "\n";
 					bRunning = false;
 					break;

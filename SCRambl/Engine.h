@@ -11,16 +11,16 @@
 
 namespace SCRambl
 {
-	class Engine : protected TaskBase
+	class Engine : protected TaskSystem::Task
 	{
-		using TaskEntry = std::pair<int, TaskBase*>;
-		using TaskMap = std::map<int, TaskBase*>;
+		using TaskEntry = std::pair<int, Engine::Task*>;
+		using TaskMap = std::map<int, Engine::Task*>;
 		//std::list<TaskEntry>							Tasks;
 		//std::list<TaskEntry>::iterator					CurrentTask;
-		TaskMap					Tasks;
-		TaskMap::iterator		CurrentTask;
-		TaskBase::State			LastTaskState;
-		bool					HaveTask;
+		TaskMap						Tasks;
+		TaskMap::iterator			CurrentTask;
+		TaskSystem::Task::State		LastTaskState;
+		bool						HaveTask;
 
 		void Init()
 		{
@@ -81,7 +81,7 @@ namespace SCRambl
 		inline size_t GetNumTasks() const			{ return Tasks.size(); }
 		inline void ClearTasks()					{ Tasks.clear(); }
 
-		const TaskBase & Run();
+		const TaskSystem::Task & Run();
 
 	protected:
 		bool IsTaskFinished() override				{ return CurrentTask == std::end(Tasks); }
