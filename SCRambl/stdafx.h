@@ -32,3 +32,4 @@
 #include <assert.h>
 #include <functional>
 #include <cctype>
+#include <stack>

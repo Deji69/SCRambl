@@ -26,24 +26,7 @@ namespace SCRambl
 			int		m_IntVal;
 			float	m_FloatVal;
 		};
-
-		int NumToInt(char c) const {
-			if (c >= '0' && c <= '9') return c - '0';
-
-			if (m_Hex)
-			{
-				c = std::tolower(c);
-				
-				if (c >= 'a' && c <= 'f') return c - 'a' + 0x10;
-				throw(error_invalid_hex_char);
-			}
-			
-			throw(error_invalid_decimal_char);
-		}
-		inline bool IsDigitValid(char c) const {
-			if (c >= '0' && c <= '9') return true;
-			return m_Hex && ((c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'));
-		}
+		
 		static inline bool IsHexPrefix(char c) {
 			return c == 'x' || c == 'X';
 		}
@@ -109,8 +92,11 @@ namespace SCRambl
 			return false;
 		}
 
-		template<typename T>
-		inline T Get() const					{ return m_Float ? m_FloatVal : m_IntVal; }
+		template<typename T> inline T Get() const;
+		template<>
+		inline int Get<int>() const				{ return m_Float ? (int)m_FloatVal : m_IntVal; }
+		template<>
+		inline float Get<float>() const			{ return m_Float ? m_FloatVal : (float)m_IntVal; }
 
 		template<typename T> bool Is() const;
 

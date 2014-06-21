@@ -44,7 +44,7 @@
 		[x] Empty macros
 		[x] Code macros
 		[*] Macros with args	
-		[*] Preprocessor logic
+		[x] Preprocessor logic
 		[x] Preprocessor blocks
 		[*] Hex input
 		[*] ASM input

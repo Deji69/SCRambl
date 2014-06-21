@@ -107,6 +107,7 @@
     <ClInclude Include="Scripts.h" />
     <ClInclude Include="Tasks.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="Tokens.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="utils\hash.h" />
     <ClInclude Include="utils\key.h" />

@@ -16,14 +16,14 @@ namespace SCRambl
 			m_OperatorScanner(m_Operators)
 		{
 			Reset();
-			m_Lexer.AddTokenScanner(token_none, m_WhitespaceScanner);
-			m_Lexer.AddTokenScanner(token_block_comment, m_BlockCommentScanner);
-			m_Lexer.AddTokenScanner(token_comment, m_CommentScanner);
-			m_Lexer.AddTokenScanner(token_directive, m_DirectiveScanner);
-			m_Lexer.AddTokenScanner(token_string, m_StringLiteralScanner);
-			m_Lexer.AddTokenScanner(token_identifier, m_IdentifierScanner);
-			m_Lexer.AddTokenScanner(token_number, m_NumericScanner);
-			m_Lexer.AddTokenScanner(token_operator, m_OperatorScanner);
+			m_Lexer.AddTokenScanner(Token::None, m_WhitespaceScanner);
+			m_Lexer.AddTokenScanner(Token::BlockComment, m_BlockCommentScanner);
+			m_Lexer.AddTokenScanner(Token::Comment, m_CommentScanner);
+			m_Lexer.AddTokenScanner(Token::Directive, m_DirectiveScanner);
+			m_Lexer.AddTokenScanner(Token::String, m_StringLiteralScanner);
+			m_Lexer.AddTokenScanner(Token::Identifier, m_IdentifierScanner);
+			m_Lexer.AddTokenScanner(Token::Number, m_NumericScanner);
+			m_Lexer.AddTokenScanner(Token::Operator, m_OperatorScanner);
 
 			m_Directives["define"] = directive_define;
 			m_Directives["elif"] = directive_elif;
@@ -129,7 +129,7 @@ namespace SCRambl
 			switch (m_Directive)
 			{
 			case directive_define:
-				if (Lex() == Lexer::Result::found_token && m_Token == token_identifier)
+				if (Lex() == Lexer::Result::found_token && m_Token == Token::Identifier)
 				{
 					Macro::Name name = m_Identifier;
 
@@ -156,7 +156,7 @@ namespace SCRambl
 				break;
 
 			case directive_ifdef:
-				if (Lex() == Lexer::Result::found_token && m_Token == token_identifier)
+				if (Lex() == Lexer::Result::found_token && m_Token == Token::Identifier)
 				{
 					PushSourceControl(m_Macros.Get(m_Identifier) != nullptr);
 				}
@@ -171,9 +171,9 @@ namespace SCRambl
 				break;
 
 			case directive_include:
-				if (Lex() == Lexer::Result::found_token && (m_Token == token_string || m_Token == token_identifier))
+				if (Lex() == Lexer::Result::found_token && (m_Token == Token::String || m_Token == Token::Identifier))
 				{
-					if (m_Token == token_identifier)
+					if (m_Token == Token::Identifier)
 					{
 						if (auto pMacro = m_Macros.Get(m_String))
 						{
@@ -232,7 +232,7 @@ namespace SCRambl
 				// handle state-changing token types
 				switch (m_Token)
 				{
-				case token_directive:
+				case Token::Directive:
 					m_State = found_directive;
 					return;
 				}
@@ -287,18 +287,18 @@ namespace SCRambl
 				// Do stuff
 				switch (m_Token)
 				{
-				case token_open_paren:
+				case Token::OpenParen:
 					val = ProcessExpression(true);
 					got_val = true;
 					break;
 
-				case token_close_paren:
+				case Token::CloseParen:
 					//if (!paren) throw("Unmatched closing parenthesis")
 					return result;
 
-				case token_number:
-					ASSERT(got_val && "Add error handling");
-					ASSERT(m_NumericScanner.Is<float>() && "Add error handling");
+				case Token::Number:
+					ASSERT(!got_val && "Add error handling");
+					ASSERT(!m_NumericScanner.Is<float>() && "Add error handling");
 
 					val = m_NumericScanner.Get<int>();
 
@@ -309,7 +309,7 @@ namespace SCRambl
 					got_val = true;
 					break;
 
-				case token_operator:
+				case Token::Operator:
 					//if (op == Operator::max_operator) throw;
 					last_op = op;
 					switch (op = m_OperatorScanner.GetOperator())
@@ -471,7 +471,7 @@ namespace SCRambl
 					{
 					case '(':
 					case ')':
-						m_Token(c == '(' ? token_open_paren : token_close_paren, m_CodePos, m_CodePos, m_CodePos + 1);
+						m_Token(c == '(' ? Token::OpenParen : Token::CloseParen, m_CodePos, m_CodePos, m_CodePos + 1);
 						m_CodePos = m_Token.End();
 						return Lexer::Result::found_token;
 					default:
@@ -493,8 +493,8 @@ namespace SCRambl
 						/*\
 						 | Take care of these directly and continue until there's some real code...
 						 \*/
-					case token_comment:
-					case token_block_comment:
+					case Token::Comment:
+					case Token::BlockComment:
 						// handle comments immediately - get rid o' that ol' waste o' space
 						HandleComment();
 						continue;
@@ -502,18 +502,18 @@ namespace SCRambl
 						/*\
 						 | These will be handled by the callee
 						 \*/
-					case token_directive:
+					case Token::Directive:
 						// get the directive identifier and look up its ID
 						m_Directive = GetDirective(m_Script.GetCode().Select(m_Token.Inside(), m_Token.End()));
 						ASSERT(m_Directive != directive_invalid);
 						break;
 
-					case token_string:
+					case Token::String:
 						// save the string
 						m_String = m_Script.GetCode().Select(m_Token.Inside(), m_Token.End());
 						break;
 
-					case token_identifier:
+					case Token::Identifier:
 						// save the identifier
 						m_Identifier = m_Script.GetCode().Select(m_Token.Begin(), m_Token.End());
 
@@ -545,7 +545,7 @@ namespace SCRambl
 		{
 			if (Lex() == Lexer::Result::found_token)
 			{
-				if (m_Token == token_number)
+				if (m_Token == Token::Number)
 					return true;
 			}
 			return false;

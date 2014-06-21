@@ -13,6 +13,7 @@
 #include "Identifiers.h"
 #include "Operators.h"
 #include "Numbers.h"
+#include "Tokens.h"
 
 namespace SCRambl
 {
@@ -249,23 +250,6 @@ namespace SCRambl
 
 		class Preprocessor
 		{
-			enum Token
-			{
-				token_none,
-				token_whitespace,					// we'll be trimming whitespace, tabs, comments, etc. down to one single white space character for easier parsing
-				token_eol,
-				token_identifier,
-				token_directive,
-				token_open_paren,
-				token_close_paren,
-				token_comment,
-				token_block_comment,
-				token_number,
-				token_operator,
-				token_string,
-				token_invalid,
-				token_max = token_invalid
-			};
 			enum Directive
 			{
 				directive_invalid,
@@ -294,8 +278,8 @@ namespace SCRambl
 			Operator::Table	< Operator::Type, Operator::max_operator >		m_Operators;
 			Operator::Scanner < Operator::Type, Operator::max_operator >	m_OperatorScanner;
 
-			Lexer::Lexer<Token>							m_Lexer;
-			Lexer::Token<Token>							m_Token;
+			Lexer::Lexer<Token::Type>					m_Lexer;
+			Lexer::Token<Token::Type>					m_Token;
 			DirectiveMap								m_Directives;
 			Directive									m_Directive = directive_invalid;
 			std::string									m_String;
@@ -368,11 +352,6 @@ namespace SCRambl
 				DirectiveMap::const_iterator it;
 				return it = m_Directives.find(str), it != m_Directives.end() ? (*it).second : directive_invalid;
 			}
-		};
-		
-		class Token
-		{
-
 		};
 
 		class Task : public TaskBase, public Preprocessor

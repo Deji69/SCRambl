@@ -15,7 +15,8 @@ namespace SCRambl
 
 	const Directive & GetDirective(const std::string & str)
 	{
+		static Directive invalid = Directive::INVALID;
 		auto it = g_Directives.find(str);
-		return it != g_Directives.end() ? it->second : Directive::INVALID;
+		return it != g_Directives.end() ? it->second : invalid;
 	}
 }
