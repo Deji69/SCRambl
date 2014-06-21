@@ -247,13 +247,37 @@ namespace SCRambl
 			}
 		}
 
+		bool Preprocessor::ExpressUnary(Operator::Type op, int & val)
+		{
+			switch (op)
+			{
+			default: return false;
+
+			case Operator::not:
+				val = !val;
+				break;
+			case Operator::bit_not:
+				val = ~val;
+				break;
+			case Operator::sub:
+				val = -val;
+				break;
+			case Operator::add:
+				val = +val;			// lol
+				break;
+			}
+			return true;
+		}
+
 		int Preprocessor::ProcessExpression(bool paren)
 		{
 			int result = 0;
 			int val = 0;
 			bool got_val = false;
-			bool negate_val = false;
+			Operator::Type last_op = Operator::max_operator;
 			Operator::Type op = Operator::max_operator;
+
+			std::stack<Operator::Type>	unary_operators;
 
 			while (true)
 			{
@@ -270,92 +294,107 @@ namespace SCRambl
 
 				case token_close_paren:
 					//if (!paren) throw("Unmatched closing parenthesis")
-					return val;
+					return result;
 
 				case token_number:
-					// if(m_NumericScanner.Is<float>()) throw("blah blah");
-					if (got_val) {
-						// error
-					}
-					val = negate_val ? -m_NumericScanner.Get<int>() : m_NumericScanner.Get<int>();
+					ASSERT(got_val && "Add error handling");
+					ASSERT(m_NumericScanner.Is<float>() && "Add error handling");
+
+					val = m_NumericScanner.Get<int>();
+
+					// handle unary / 1-ary operations
+					for (; !unary_operators.empty(); unary_operators.pop())
+						ASSERT(ExpressUnary(unary_operators.top(), val) && "Non-unary operator in unary_operators!!!!");
+					
 					got_val = true;
-					negate_val = false;
 					break;
 
 				case token_operator:
 					//if (op == Operator::max_operator) throw;
+					last_op = op;
 					switch (op = m_OperatorScanner.GetOperator())
 					{
 						// Arithmetic
 					case Operator::add:			// +
-						if (!got_val)
-						{
-							if (negate_val) negate_val = false;
-							// else throw("Unexpected operator")
-							op = Operator::max_operator;
+						// if not, do the binary operation instead
+						if (!got_val) {
+							// this is unary, correct things
+							unary_operators.push(Operator::add);
+							op = last_op;
 						}
-						else {
-							got_val = false;
-						}
-						// else throw("Expected operand");
+						else got_val = false;
 						break;
+
 					case Operator::sub:			// -
-						// negate?
-						if (!got_val)
-						{
-							if (!negate_val) negate_val = true;
-							//else error
-							op = Operator::max_operator;
+						// if not, do the binary operation instead
+						if (!got_val) {
+							// this is unary, correct things
+							unary_operators.push(Operator::sub);
+							op = last_op;
 						}
-						else {
-							got_val = false;
-						}
+						else got_val = false;
 						break;
-					case Operator::mult:
-						break;
-					case Operator::div:
-						break;
-					case Operator::mod:
+
+					case Operator::mult:		// *
+					case Operator::div:			// /
+					case Operator::mod:			// %
+						got_val = false;
 						break;
 
 						// Bitwise
 					case Operator::bit_and:
-						break;
 					case Operator::bit_or:
-						break;
 					case Operator::bit_xor:
-						break;
 					case Operator::bit_shl:
-						break;
 					case Operator::bit_shr:
+						got_val = false;
+						break;
+
+					case Operator::bit_not:
+						// if not, wait, this IS not!
+						if (!got_val) {
+							// this is unary, correct things
+							unary_operators.push(Operator::bit_not);
+							op = last_op;
+						}
 						break;
 
 						// Comparison
 					case Operator::gt:			// >
-						break;
 					case Operator::lt:			// <
-						break;
 					case Operator::geq:			// >=
-						break;
 					case Operator::leq:			// <=
-						break;
 					case Operator::eq:			// ==
+						got_val = false;
 						break;
 
 						// Logical
-					case Operator::cond:		// ?
+					case Operator::not:			// !
+						// if not, wait, THIS IS NOT TOOO!!!
+						if (!got_val) {
+							// this is unary, correct things
+							unary_operators.push(Operator::not);
+							op = last_op;
+						}
 						break;
+
+					case Operator::cond:		// ?
 					case Operator::condel:		// :
+					default:
+						got_val = false;
 						break;
 					}
+
+					ASSERT ((!got_val || op != Operator::max_operator) && "Premature error in testing phase (unary used AFTER a value)");
 					break;
 				}
 
+				// binary operators / 2-ary
 				if (got_val) {
 					// The ABC's...
 					switch (op)
 					{
-						// arithmetic
+						// Arithmetic
 					default:
 						result = val;
 						break;
@@ -375,7 +414,7 @@ namespace SCRambl
 						result %= val;
 						break;
 
-						// bitwise
+						// Bitwise
 					case Operator::bit_and:
 						result &= val;
 						break;
@@ -385,9 +424,6 @@ namespace SCRambl
 					case Operator::bit_xor:
 						result ^= val;
 						break;
-					case Operator::bit_not:
-						result = ~val;
-						break;
 					case Operator::bit_shl:
 						result <<= val;
 						break;
@@ -395,7 +431,7 @@ namespace SCRambl
 						result >>= val;
 						break;
 
-						// comparison
+						// Comparison
 					case Operator::eq:
 						result = result == val;
 						break;

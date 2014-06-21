@@ -85,7 +85,7 @@ namespace SCRambl
 				{
 					// check prefix
 				case Lexer::State::before:
-					if (pos == '#')
+					if (pos->GetGrapheme() == Grapheme::hash)		// #
 					{
 						++pos;
 						state = Lexer::State::inside;
@@ -102,10 +102,7 @@ namespace SCRambl
 
 					// no suffix? no problem.
 				case Lexer::State::after:
-					if (pos->IsSeparating())
-					{
-						return true;
-					}
+					if (pos->IsSeparating()) return true;
 					//else throw "Invalid symbol in directive"
 					return false;
 				}
@@ -359,6 +356,8 @@ namespace SCRambl
 
 			// Handle expressions
 			int ProcessExpression(bool paren = false);
+			// Perform unary operation on passed value - returns false if no change could be made as the operator was unsupported
+			static bool ExpressUnary(Operator::Type op, int & val);
 
 			inline long GetLineNumber() const			{ return m_CodePos.GetLine(); }
 			inline CodeLine & GetLineCode()				{ return m_CodePos.GetLine().GetCode(); }
