@@ -250,6 +250,7 @@ namespace SCRambl
 
 		class Preprocessor
 		{
+		private:
 			enum Directive
 			{
 				directive_invalid,
@@ -293,8 +294,9 @@ namespace SCRambl
 				init,
 				//begin_line, during_line, end_of_line,
 				lexing,
-				found_directive, during_directive,
-				found_comment, inside_comment,
+				found_directive,
+				found_comment,
+				found_token,
 				finished,
 				bad_state,
 				max_state = bad_state,
@@ -334,6 +336,7 @@ namespace SCRambl
 			void RunningState();
 			void LexerPhase();
 
+			void HandleToken();
 			void HandleDirective();
 			void HandleComment();
 

@@ -14,6 +14,7 @@
 //#include "FileSystem.h"
 #include "Errors.h"
 #include "Symbols.h"
+#include "Tokens.h"
 
 namespace SCRambl
 {
@@ -317,8 +318,8 @@ namespace SCRambl
 		
 	private:
 		Code								m_Code;
+		Tokens								m_Tokens;
 		StringList							m_Warnings;
-
 
 		// Initialise script for parsing with current code
 		void Init();
@@ -343,9 +344,13 @@ namespace SCRambl
 		// Include file in specific code line
 		Position & Include(Position & pos, const std::string & path);
 
-		inline bool OK() const { return true; }
-		inline size_t GetNumLines() const { return m_Code.NumLines(); }
-
-		inline Code & GetCode() { return m_Code; }
+		// OK?
+		inline bool OK() const				{ return true; }
+		// Number of source lines
+		inline size_t GetNumLines() const	{ return m_Code.NumLines(); }
+		// Get the almighty source code list
+		inline Code & GetCode()				{ return m_Code; }
+		// Get the informative token list
+		inline Tokens & GetTokens()			{ return m_Tokens; }
 	};
 }

@@ -21,6 +21,7 @@ namespace SCRambl
 			m_Lexer.AddTokenScanner(Token::Comment, m_CommentScanner);
 			m_Lexer.AddTokenScanner(Token::Directive, m_DirectiveScanner);
 			m_Lexer.AddTokenScanner(Token::String, m_StringLiteralScanner);
+			//m_Lexer.AddTokenScanner(Token::Label, m_LabelScanner);
 			m_Lexer.AddTokenScanner(Token::Identifier, m_IdentifierScanner);
 			m_Lexer.AddTokenScanner(Token::Number, m_NumericScanner);
 			m_Lexer.AddTokenScanner(Token::Operator, m_OperatorScanner);
@@ -123,7 +124,15 @@ namespace SCRambl
 			case found_directive:
 				HandleDirective();
 				break;
+			case found_token:
+				HandleToken();
+				break;
 			}
+		}
+
+		void Preprocessor::HandleToken()
+		{
+
 		}
 
 		void Preprocessor::HandleDirective()
@@ -250,6 +259,9 @@ namespace SCRambl
 				case Token::Directive:
 					m_State = found_directive;
 					return;
+				default:
+					m_State = found_token;
+					return;
 				}
 
 				m_State = lexing;
@@ -373,11 +385,11 @@ namespace SCRambl
 						break;
 
 						// Bitwise
-					case Operator::bit_and:
-					case Operator::bit_or:
-					case Operator::bit_xor:
-					case Operator::bit_shl:
-					case Operator::bit_shr:
+					case Operator::bit_and:		// &
+					case Operator::bit_or:		// |
+					case Operator::bit_xor:		// ^
+					case Operator::bit_shl:		// <<
+					case Operator::bit_shr:		// >>
 						got_val = false;
 						break;
 
@@ -410,8 +422,8 @@ namespace SCRambl
 						}
 						break;
 
-					case Operator::and:
-					case Operator::or:
+					case Operator::and:			// &&
+					case Operator::or:			// ||
 						// if got
 						if (got_val) {
 							log_operand = result != 0;
@@ -422,8 +434,15 @@ namespace SCRambl
 
 					case Operator::cond:		// ?
 					case Operator::condel:		// :
-					default:
 						got_val = false;
+						break;
+
+					case Operator::max_operator:
+						throw;
+						break;
+
+					default:
+						throw;
 						break;
 					}
 
@@ -579,11 +598,15 @@ namespace SCRambl
 					// we found one, we found one!
 					m_CodePos = m_Token.End();
 
+					// only try to handle directives and comments if we're skipping source
+					if (!GetSourceControl() && (m_Token != Token::Directive || m_Token != Token::Comment || m_Token != Token::BlockComment))
+						continue;
+
 					switch (m_Token)
 					{
 						/*\
-						 | Take care of these directly and continue until there's some real code...
-						 \*/
+						 - Take care of these directly and continue until there's some real code...
+						\*/
 					case Token::Comment:
 					case Token::BlockComment:
 						// handle comments immediately - get rid o' that ol' waste o' space
@@ -591,11 +614,16 @@ namespace SCRambl
 						continue;
 
 						/*\
-						 | These will be handled by the callee
-						 \*/
+						 - These will be handled by the callee
+						\*/
 					case Token::Directive:
 						// get the directive identifier and look up its ID
 						m_Directive = GetDirective(m_Script.GetCode().Select(m_Token.Inside(), m_Token.End()));
+
+						// if the source is being skipped, wait until we have an #endif directive
+						if (!GetSourceControl() && m_Directive != directive_endif)
+							continue;
+
 						ASSERT(m_Directive != directive_invalid);
 						break;
 

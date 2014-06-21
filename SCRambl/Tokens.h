@@ -18,6 +18,7 @@ namespace SCRambl
 			Whitespace,
 			Eol,
 			Identifier,
+			Label,
 			Directive,
 			OpenParen,
 			CloseParen,
@@ -35,9 +36,7 @@ namespace SCRambl
 
 	};
 
-	template<typename T>
 	class Tokens
 	{
-		
 	};
 }
