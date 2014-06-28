@@ -7,6 +7,7 @@
 #pragma once
 #include <stack>
 #include "Tasks.h"
+#include "Engine.h"
 #include "Scripts.h"
 #include "Lexer.h"
 #include "Macros.h"
@@ -248,6 +249,32 @@ namespace SCRambl
 			}
 		};
 
+		class Task;
+
+		/*class Event
+		{
+		public:
+			enum Type
+			{
+				directive_not_found,
+				unknown,
+			};
+			enum class Severity
+			{
+				notice, warning, error
+			};
+
+		private:
+			Type			m_Type;
+			Severity		m_Severity;
+
+		public:
+			inline Type			GetType() const				{ return m_Type; }
+			inline Severity		GetSeverity() const			{ return m_Severity; }
+
+			inline operator Type() const					{ return GetType(); }
+		};*/
+
 		class Preprocessor
 		{
 		private:
@@ -267,7 +294,8 @@ namespace SCRambl
 
 			using DirectiveMap = std::unordered_map<std::string, Directive>;
 
-			Engine									&	m_Engine;
+			//Engine									&	m_Engine;
+			Task									&	m_Task;
 
 			//IdentifierScanner							m_IdentifierScanner;
 			BlockCommentScanner							m_BlockCommentScanner;
@@ -302,9 +330,9 @@ namespace SCRambl
 				max_state = bad_state,
 			};
 
-			Preprocessor(Engine &, Script &);
+			Preprocessor(Task &, Script &);
 
-			inline bool IsFinished()				{ return m_State == finished; }
+			inline bool IsFinished() const			{ return m_State == finished; }
 			void Run();
 			void Reset();
 
@@ -350,7 +378,10 @@ namespace SCRambl
 			// Perform unary operation on passed value - returns false if no change could be made as the operator was unsupported
 			static bool ExpressUnary(Operator::Type op, int & val);
 
+			// Get current line number
 			inline long GetLineNumber() const			{ return m_CodePos.GetLine(); }
+
+			// Get code of the current line
 			inline CodeLine & GetLineCode()				{ return m_CodePos.GetLine().GetCode(); }
 
 			// Returns directive_invalid if it didnt exist
@@ -361,11 +392,50 @@ namespace SCRambl
 			}
 		};
 
-		class Task : public TaskSystem::Task, public Preprocessor
+		class Event// : public TaskSystem::Event
 		{
+			friend Preprocessor;
+
 		public:
-			Task(Engine & engine, Script & script) : Preprocessor(engine, script)
-			{ }
+			enum Type {
+				test_event,
+			};
+
+		private:
+			Type		m_Type;
+
+		public:
+			Event(Type type) : m_Type(type)
+			{
+			}
+
+			inline bool operator()(std::less<Event>& l, std::less<Event>& r) const {
+				return 0 < 0;
+			}
+		};
+
+		/*\
+		 * The Preprocessor and Task become one
+		\*/
+		class Task : public TaskSystem::Task<Event::Type>, private Preprocessor
+		{
+			friend Preprocessor;
+			Engine			&	m_Engine;
+
+			inline Engine	&	GetEngine()			{ return m_Engine; }
+
+			class EventHandler
+			{
+
+			};
+
+		public:
+			Task(Engine & engine, Script & script):
+				Preprocessor(*this, script),
+				m_Engine(engine)
+			{
+				TaskSystem::Task<Event::Type>::AddEvent<Event::test_event>();
+			}
 
 		protected:
 			bool IsTaskFinished() final override	{ return Preprocessor::IsFinished(); }

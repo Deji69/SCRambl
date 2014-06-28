@@ -31,5 +31,8 @@
 #include <list>
 #include <assert.h>
 #include <functional>
+#include <typeinfo>
+#include <typeindex>
 #include <cctype>
 #include <stack>
+#include <queue>

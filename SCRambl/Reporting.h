@@ -23,9 +23,10 @@ namespace SCRambl
 
 		private:
 			Type			m_Type;
+			std::string		m_Message;
 
 		protected:
-			Report(Type type) : m_Type(type)
+			Report(Type type, std::string msg) : m_Type(type), m_Message(msg)
 			{}
 
 		public:
@@ -38,7 +39,7 @@ namespace SCRambl
 			IDType			m_ID;
 
 		public:
-			Error() : Report(error)
+			Error(std::string msg) : Report(error, msg)
 			{ }
 		};
 	}

@@ -9,7 +9,12 @@
 
 namespace SCRambl
 {
-	class Builder : public TaskSystem::Task
+	enum class BuildEvent
+	{
+
+	};
+
+	class Builder : public TaskSystem::Task<BuildEvent>
 	{
 	public:
 		enum State {

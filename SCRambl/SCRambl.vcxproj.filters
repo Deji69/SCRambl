@@ -1,0 +1,180 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="utils.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Builder.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Directives.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Exception.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSystem.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Identifiers.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Macros.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\MurmurHash3.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Operators.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Parser.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Preparser.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Preprocessor.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="ProjectManager.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\pugixml\pugixml.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Reporting.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Scripts.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Builder.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="BuildSystem.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Configuration.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Containers.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Directives.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Environment.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Errors.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Exception.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Expressions.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystem.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Identifiers.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Language.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Lexer.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Literals.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Macros.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\MurmurHash3.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Numbers.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Tasks.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Symbols.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Scripts.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SCRambl.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Preprocessor.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="ProjectManager.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Preparser.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Parser.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Operators.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Tokens.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\hash.h">
+      <Filter>Header\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\xml.h">
+      <Filter>Header\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="utils.h">
+      <Filter>Header\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\utf8.h">
+      <Filter>Header\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\key.h">
+      <Filter>Header\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="ansi.h">
+      <Filter>Header\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Reporting.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header">
+      <UniqueIdentifier>{c9103579-b420-43fa-9eca-0fc5561abbf6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{5fb670e4-d08d-489b-bbf4-bbdb6ac3e27e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header\utils">
+      <UniqueIdentifier>{ebe23baf-b978-4c7c-a27f-681fab90b6ce}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

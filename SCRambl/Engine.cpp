@@ -8,7 +8,7 @@ Engine::Engine() : HaveTask(false)
 	//CurrentTask = Tasks.end();
 }
 
-const TaskSystem::Task & Engine::Run()
+const TaskSystem::Task<EngineEvent> & Engine::Run()
 {
 	if(CurrentTask == std::end(Tasks)) CurrentTask = std::begin(Tasks);
 	auto & it = CurrentTask;
@@ -17,14 +17,14 @@ const TaskSystem::Task & Engine::Run()
 	{
 		auto task = it->second;
 		
-		while (task->GetState() == TaskSystem::Task::finished)
+		while (task->IsTaskFinished())
 		{
 			++it;
 			if (it == std::end(Tasks)) return *this;
 			task = it->second;
 		}
 
-		LastTaskState = task->Run().GetState();
+		task->RunTask();
 	}
 
 	return *this;

@@ -33,7 +33,12 @@ namespace SCRambl
 		Script				&	m_Script;
 	};
 
-	class ParserTask : public TaskSystem::Task, public Parser
+	enum class ParserEvent
+	{
+
+	};
+
+	class ParserTask : public TaskSystem::Task<ParserEvent>, public Parser
 	{
 	public:
 		ParserTask(Engine & engine, Script & script) : Parser(engine, script)

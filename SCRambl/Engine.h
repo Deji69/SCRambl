@@ -5,22 +5,27 @@
 //	 or copy at http://opensource.org/licenses/MIT)
 /**********************************************************/
 #pragma once
+#include <list>
+#include <memory>
 #include "Builder.h"
 #include "Tasks.h"
-#include <list>
 
 namespace SCRambl
 {
-	class Engine : protected TaskSystem::Task
+	enum class EngineEvent
 	{
-		using TaskEntry = std::pair<int, Engine::Task*>;
-		using TaskMap = std::map<int, Engine::Task*>;
-		//std::list<TaskEntry>							Tasks;
-		//std::list<TaskEntry>::iterator					CurrentTask;
-		TaskMap						Tasks;
-		TaskMap::iterator			CurrentTask;
-		TaskSystem::Task::State		LastTaskState;
-		bool						HaveTask;
+
+	};
+
+	class Engine : protected TaskSystem::Task<EngineEvent>
+	{
+		//using TaskEntry = std::pair<int, TypeSystem::Task>;
+		using TaskMap = std::map<int, std::shared_ptr<TaskSystem::TaskBase>>;
+
+		TaskMap										Tasks;
+		TaskMap::iterator							CurrentTask;
+		//TaskSystem::Task<TaskSystem::Event>::State	LastTaskState;
+		bool										HaveTask;
 
 		void Init()
 		{
@@ -31,7 +36,7 @@ namespace SCRambl
 		Engine();
 		virtual ~Engine()
 		{
-			if (!Tasks.empty())
+			/*if (!Tasks.empty())
 			{
 				for (auto task : Tasks)
 				{
@@ -39,21 +44,24 @@ namespace SCRambl
 				}
 
 				Tasks.clear();
-			}
+			}*/
 		}
 
-		template<class ID, class T, class ... Params>
-		void AddTask(ID id, Params &... prms)
+		template<typename T, typename ID, typename... Params>
+		const std::shared_ptr<T> AddTask(ID id, Params&&... prms)
 		{
-			Tasks.emplace(id, new T(*this, prms...));
+			auto task = std::shared_ptr<T>(new T(*this, std::forward<Params>(prms)...));
+			//Tasks.emplace(id, task);
+			Tasks.emplace(id, task);
 			if (!HaveTask)
 			{
 				Init();
 				HaveTask = true;
 			}
+			return task;
 		}
 
-		template<class ID>
+		template<typename ID>
 		bool RemoveTask(ID id)
 		{
 			if (!Tasks.empty())
@@ -75,13 +83,13 @@ namespace SCRambl
 			return false;
 		}
 
-		template<class T>
-		inline T & GetCurrentTask()					{ return *reinterpret_cast<T*>((*CurrentTask).second); }
-		inline int GetCurrentTaskID() const			{ return (*CurrentTask).first; }
+		template<typename T>
+		inline T & GetCurrentTask()					{ return reinterpret_cast<T&>(*CurrentTask->second); }
+		inline int GetCurrentTaskID() const			{ return std::ref(CurrentTask->first); }
 		inline size_t GetNumTasks() const			{ return Tasks.size(); }
 		inline void ClearTasks()					{ Tasks.clear(); }
 
-		const TaskSystem::Task & Run();
+		const TaskSystem::Task<EngineEvent> & Run();
 
 	protected:
 		bool IsTaskFinished() override				{ return CurrentTask == std::end(Tasks); }

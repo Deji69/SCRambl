@@ -8,14 +8,17 @@ namespace SCRambl
 {
 	namespace Preprocessor
 	{
-		Preprocessor::Preprocessor(Engine & engine, Script & script):
+		Preprocessor::Preprocessor(Task & task, Script & script):
 			m_State(init),
-			m_Engine(engine),
+			m_Task(task),
 			m_Script(script),
 			m_Lexer(),
 			m_CodePos(script.GetCode()),
 			m_OperatorScanner(m_Operators)
 		{
+			// Add events
+			m_Task.AddEvent<Event::test_event>();
+
 			Reset();
 			m_Lexer.AddTokenScanner(Token::None, m_WhitespaceScanner);
 			m_Lexer.AddTokenScanner(Token::BlockComment, m_BlockCommentScanner);
@@ -90,6 +93,8 @@ namespace SCRambl
 		{
 			try
 			{
+				m_Task.CallEventHandler<Event::test_event>();
+
 				switch (m_State)
 				{
 				case init:
@@ -626,6 +631,7 @@ namespace SCRambl
 							continue;
 
 						//throw(Reporting::Error<>());
+						//m_Task.
 						ASSERT(m_Directive != directive_invalid);
 						break;
 

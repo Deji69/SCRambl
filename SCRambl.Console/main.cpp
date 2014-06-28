@@ -82,14 +82,18 @@ int main(int argc, char* argv[])
 
 		try
 		{
-			// Add the preparser task to read the script into a simpler format
-			//engine.AddTask<Task, SCRambl::PreparserTask, SCRambl::Script>(preparser, script, path);
-
 			// Add the preprocessor task to preprocess the script - give it our 'preprocessor' ID so we can identify it later
-			engine.AddTask<Task, SCRambl::Preprocessor::Task, SCRambl::Script>(preprocessor, script);
+			auto task = engine.AddTask<SCRambl::Preprocessor::Task>(preprocessor, std::ref(script));
+			
+			auto gee_handler = [task](){
+				std::cout << "Gee, I hope this works... " << task->GetState();
+				return true;
+			};
+
+			task->AddEventHandler<SCRambl::Preprocessor::Event::test_event>(gee_handler);
 
 			// Add the parser task to parse the code symbols to tokens
-			engine.AddTask<Task, SCRambl::ParserTask, SCRambl::Script>(parser, script);
+			engine.AddTask<SCRambl::ParserTask>(parser, script);
 
 			//
 			bool bRunning = true;
@@ -99,35 +103,35 @@ int main(int argc, char* argv[])
 				using SCRambl::TaskSystem::Task;
 				switch (engine.Run().GetState())
 				{
-				case Task::running:
+				case Task<SCRambl::EngineEvent>::running:
 					// output errors, warnings and status
-					switch (engine.GetCurrentTaskID())
+					/*switch (engine.GetCurrentTaskID())
 					{
 					case preprocessor:
 						switch (engine.GetCurrentTask<SCRambl::Preprocessor::Task>().GetState())
 						{
-						case Task::running:
+						case Task<SCRambl::Preprocessor::Event::Type>::running:
 							if (!bPreprocessorStarted)
 							{
-								std::cout << "Preprocessing..." << "\n";
+								//std::cout << "Preprocessing..." << "\n";
 								bPreprocessorStarted = true;
 							}
 							break;
-						case Task::finished:
+						case Task<SCRambl::Preprocessor::Event::Type>::finished:
 							break;
-						case Task::error:
+						case Task<SCRambl::Preprocessor::Event::Type>::error:
 							std::cerr << "ERROR (Preprocessor) : " << "\n";
 							break;
 						}
 						break;
-					}
+					}*/
 					break;
-				case Task::finished:
+				case Task<SCRambl::Preprocessor::Event::Type>::finished:
 					//
 					std::cout << "Finished." << "\n";
 					bRunning = false;
 					break;
-				case Task::error:
+				case Task<SCRambl::Preprocessor::Event::Type>::error:
 					std::cerr << "FATAL ERROR: " << "\n";
 					bRunning = false;
 					break;
