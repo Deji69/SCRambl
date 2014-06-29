@@ -3,13 +3,14 @@
 Deadline: V?
 
 ## Engine ##
-- [x] Task System
+- [ ] Task System
+	- [x] Event System
+	- [ ] Error Reporting
 - [x] Lexer Engine
 - [x] Preprocessor Tasks
 - [ ] Parser Tasks
 - [ ] Compiler Tasks
 - [ ] Linker Tasks
-- [ ] Report System
 
 ## Lexer ##
 - [x] Scanner Engine
@@ -88,6 +89,10 @@ Deadline: V?
 	- [ ] Operand Type Detection
 - [ ] Other
 	- [ ] Constant Expressions ?
+
+## Compiler ##
+- [ ] Translation
+- [ ] Compilation
 
 ## Linker ##
 - [ ] Linker Formats
