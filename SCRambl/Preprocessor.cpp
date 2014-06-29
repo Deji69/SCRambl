@@ -16,10 +16,9 @@ namespace SCRambl
 			m_CodePos(script.GetCode()),
 			m_OperatorScanner(m_Operators)
 		{
-			// Add events
-			m_Task.AddEvent<Event::test_event>();
-
 			Reset();
+
+			// we need token scanners!
 			m_Lexer.AddTokenScanner(Token::None, m_WhitespaceScanner);
 			m_Lexer.AddTokenScanner(Token::BlockComment, m_BlockCommentScanner);
 			m_Lexer.AddTokenScanner(Token::Comment, m_CommentScanner);
@@ -30,6 +29,7 @@ namespace SCRambl
 			m_Lexer.AddTokenScanner(Token::Number, m_NumericScanner);
 			m_Lexer.AddTokenScanner(Token::Operator, m_OperatorScanner);
 
+			// map directives
 			m_Directives["define"] = directive_define;
 			m_Directives["elif"] = directive_elif;
 			m_Directives["else"] = directive_else;
@@ -39,21 +39,21 @@ namespace SCRambl
 			m_Directives["include"] = directive_include;
 			m_Directives["undef"] = directive_undef;
 
-			// arithmetic
+			// arithmetic operators - add em
 			m_Operators.AddOperator({ { '+' } }, Operator::add);
 			m_Operators.AddOperator({ { '-' } }, Operator::sub);
 			m_Operators.AddOperator({ { '*' } }, Operator::mult);
 			m_Operators.AddOperator({ { '/' } }, Operator::div);
 			m_Operators.AddOperator({ { '%' } }, Operator::mod);
 
-			// bitwise
+			// bitwise operators - add em
 			m_Operators.AddOperator({ { '&' } }, Operator::bit_and);
 			m_Operators.AddOperator({ { '|' } }, Operator::bit_or);
 			m_Operators.AddOperator({ { '^' } }, Operator::bit_xor);
 			m_Operators.AddOperator({ { '<', '<' } }, Operator::bit_shl);
 			m_Operators.AddOperator({ { '>', '>' } }, Operator::bit_shr);
 
-			// comparison
+			// comparison operators - add em
 			//m_Operators.AddOperator({ { '=' } }, Operator::eq);
 			m_Operators.AddOperator({ { '>' } }, Operator::gt);
 			m_Operators.AddOperator({ { '<' } }, Operator::lt);
@@ -62,7 +62,7 @@ namespace SCRambl
 			m_Operators.AddOperator({ { '>', '=' } }, Operator::geq);
 			m_Operators.AddOperator({ { '<', '=' } }, Operator::leq);
 
-			// logical
+			// logical operators - add em
 			m_Operators.AddOperator({ { '!' } }, Operator::not);
 			m_Operators.AddOperator({ { '&', '&' } }, Operator::and);
 			m_Operators.AddOperator({ { '|', '|' } }, Operator::or);
@@ -93,11 +93,10 @@ namespace SCRambl
 		{
 			try
 			{
-				m_Task.CallEventHandler<Event::test_event>();
-
 				switch (m_State)
 				{
 				case init:
+					m_Task(Event::Begin);
 					m_State = lexing;
 					break;
 				default:
@@ -630,8 +629,8 @@ namespace SCRambl
 						if (!GetSourceControl() && m_Directive != directive_endif)
 							continue;
 
-						//throw(Reporting::Error<>());
-						//m_Task.
+						if (m_Directive == directive_invalid)
+							m_Task(Event::Error, Error::invalid_directive);
 						ASSERT(m_Directive != directive_invalid);
 						break;
 

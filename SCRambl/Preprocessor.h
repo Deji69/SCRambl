@@ -392,49 +392,71 @@ namespace SCRambl
 			}
 		};
 
-		class Event// : public TaskSystem::Event
+		// yes, you do
+		class IBaseInformation
 		{
-			friend Preprocessor;
+
+		};
+
+		template<typename... Args>
+		class Information : IBaseInformation
+		{
+			std::tuple<Args...>		m_Info;
 
 		public:
+			inline operator const std::tuple<Args...>&() const			{ return m_Info; }
+		};
+
+		class Error
+		{
+		public:
 			enum Type {
-				test_event,
+				invalid_directive,
 			};
 
 		private:
-			Type		m_Type;
-
+			Type								m_Type;
+			std::shared_ptr<IBaseInformation>	m_Info;
+			
 		public:
-			Event(Type type) : m_Type(type)
+			Error(Type type, std::shared_ptr<IBaseInformation> info) : m_Type(type), m_Info(info)
 			{
 			}
 
-			inline bool operator()(std::less<Event>& l, std::less<Event>& r) const {
-				return 0 < 0;
-			}
+			template<typename... Args>
+			std::shared_ptr<Information<Args...>> const&	Info()		{ return static_cast<Information<Args...>>(m_Info); }
+
+			inline operator Type() const		{ return m_Type; }
+		};
+
+		enum class Event
+		{
+			Begin,
+			Warning,
+			Error,
 		};
 
 		/*\
 		 * The Preprocessor and Task become one
 		\*/
-		class Task : public TaskSystem::Task<Event::Type>, private Preprocessor
+		class Task : public TaskSystem::Task<Event>, private Preprocessor
 		{
 			friend Preprocessor;
 			Engine			&	m_Engine;
 
 			inline Engine	&	GetEngine()			{ return m_Engine; }
 
-			class EventHandler
-			{
-
-			};
+			template<typename... Args>
+			inline bool operator()(Event id, Args&&... args)	{ return CallEventHandler(id, std::forward<Args...>(args)...); }
 
 		public:
 			Task(Engine & engine, Script & script):
 				Preprocessor(*this, script),
 				m_Engine(engine)
 			{
-				TaskSystem::Task<Event::Type>::AddEvent<Event::test_event>();
+				/*AddEvent<Event::Begin>();
+				AddEvent<Event::Warning>();
+				AddEvent<Event::Error>();*/
 			}
 
 		protected:

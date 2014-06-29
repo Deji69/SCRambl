@@ -8,8 +8,8 @@
 #include <queue>
 #include <memory>
 #include <set>
+#include <functional>
 #include <typeinfo>
-#include <typeindex>
 #include "Reporting.h"
 
 namespace SCRambl
@@ -25,11 +25,18 @@ namespace SCRambl
 			struct function_traits : public function_traits<decltype(&Function::operator())>
 			{};
 
+			template <typename ClassType, typename ReturnType>
+			struct function_traits<ReturnType(ClassType::*)() const>
+			{
+				typedef ReturnType(*pointer)();
+				typedef std::function<ReturnType()> function;
+			};
+
 			template <typename ClassType, typename ReturnType, typename... Args>
 			struct function_traits<ReturnType(ClassType::*)(Args...) const>
 			{
-				typedef ReturnType(*pointer)(Args...);
-				typedef std::function<ReturnType(Args...)> function;
+				typedef ReturnType(*pointer)(std::reference_wrapper<Args...>);
+				typedef std::function<ReturnType(std::reference_wrapper<Args...>)> function;
 			};
 
 			template <typename Function>
@@ -45,50 +52,65 @@ namespace SCRambl
 			}
 		}
 		
+		template<typename EventType>
 		class Event
 		{
 			template<typename>
 			friend class Task;
 
-			std::multimap<std::type_index, function_traits<std::function<bool(void)>>::function>	m_Handlers;
+			// imagine if there was a way to store functions by how they need to be called...
+			std::multimap<const std::type_info*, void*>	m_Handlers;
 
 		protected:
-			class Result
-			{
-			};
+			EventType			m_ID;
 
 		public:
 			Event() = default;
+			Event(EventType id) : m_ID(id)
+			{ }
 
+			// Add event handler
 			template<typename Func>
 			void AddHandler(Func handler)
 			{
-				m_Handlers.emplace(typeid(to_function(handler)), handler);
+				// do some weird shit
+				auto function = new decltype(to_function(handler))(to_function(handler));
+				// add the function to the list and associate its type
+				m_Handlers.emplace(&typeid(function), static_cast<void*>(function));
 			}
 
+			// Call capable handlers, returns false if none were called
 			template<typename... Args>
 			bool CallHandler(Args&&... args)
 			{
-				auto it = m_Handlers.find(typeid(std::function<bool(Args...)>));
-				if (it != m_Handlers.end())
-				{
-					static_cast<std::function<bool(Args...)>>(it->second)();
-					return true;
-				}
-				return false;
-			}
+				// this is surely impossible...?
+				if (m_Handlers.empty()) return false;
 
-			template<typename... Args>
-			void operator()(Args&&... args)
-			{
-				for (auto handler : m_Handlers)
+				// try to find some handlers capable of accepting Args
+				auto it_pair = m_Handlers.equal_range(&typeid(std::function<bool(Args...)>*));
+
+				// no? really?
+				if (it_pair.first == m_Handlers.end()) return false;
+
+				// call all handlers, or until the first one that returns 'false'
+				for (auto it = it_pair.first; it != it_pair.second; ++it)
 				{
-					*handler(std::forward<Args>(args)...);
+					// cast it back to the function
+					auto func = static_cast<std::function<bool(Args...)>*>(it->second);
+
+					// if it returns false, abort in case it did something that could screw up future calls
+					if (!(*func)(std::forward<Args...>(args)...)) break;
 				}
+				return true;
 			}
 
 			virtual ~Event()
-			{ }
+			{
+				// delete the function pointers
+				for (auto pair : m_Handlers) {
+					delete static_cast<std::function<bool(void)>*>(pair.second);
+				}
+			}
 		};
 
 		class TaskBase
@@ -110,7 +132,8 @@ namespace SCRambl
 		private:
 			State									m_State;
 
-			std::map<EventType, Event>				m_Events;
+			// events can be handled by the implementor
+			std::map<EventType, Event<EventType>>	m_Events;
 
 		protected:
 			inline State & TaskState()				{ return m_State; }
@@ -118,29 +141,28 @@ namespace SCRambl
 		public:
 			inline State GetState()	const			{ return m_State; }
 
-			template<EventType id>
-			void AddEvent() {
-				m_Events.emplace(id, Event());
+			// don't need this - instead we'll do it when a handler is added which is way more efficient in many ways
+			/*template<EventType id>
+			inline void AddEvent() {
+				m_Events.emplace(id, id);
+			}*/
+
+			// Add an event handler
+			template<EventType id, typename Func>
+			inline void AddEventHandler(Func func) {
+				auto & ev = m_Events[id];
+				ev.AddHandler<Func>(std::forward<Func>(std::ref(func)));
 			}
 
-			template<EventType id, typename Func>
-			bool AddEventHandler(Func func) {
+			template<typename... Args>
+			inline bool CallEventHandler(EventType id, Args&&... args) {
+				// if no event is found, there mustn't be a handler for it anyway
+				if (m_Events.empty()) return false;
 				auto it = m_Events.find(id);
 				if (it != m_Events.end())
 				{
-					it->second.AddHandler(func);
-					return true;
-				}
-				return false;
-			}
-
-			template<EventType id, typename... Args>
-			bool CallEventHandler(Args&&... args) {
-				static EventType s_id = id;
-				auto it = m_Events.find(s_id);
-				if (it != m_Events.end())
-				{
-					if(it->second.CallHandler(std::forward(args)...))
+					// pass the message
+					if(it->second.CallHandler(std::ref(args)...))
 						return true;
 				}
 				return false;
