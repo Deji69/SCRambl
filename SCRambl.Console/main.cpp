@@ -90,20 +90,25 @@ int main(int argc, char* argv[])
 				std::cout << "Preprocessing... \n";
 				return true;
 			};
-			auto Preprocessor_Error = [task](SCRambl::Preprocessor::Error & err){
+			auto Preprocessor_Error = [task](const std::reference_wrapper<SCRambl::Preprocessor::Error> ref_err){
 				using SCRambl::Preprocessor::Error;
+				auto & err = ref_err.get();
 				std::cout << "ERROR: ";
 				std::string msg;
 				switch (err)
 				{
 				case Error::invalid_directive:
-					//msg = "invalid directive '" + (*err.Info()) + "'";
+				{
+					//std::tuple_element<0, std::tuple<std::string>> elm = err.Info<std::string>()->Get();
+					//msg = "invalid directive '" + (err.Info<std::string>()->Get()) + "'";
 					break;
+				}
 				}
 				return true;
 			};
 
 			task->AddEventHandler<SCRambl::Preprocessor::Event::Begin>(Preprocessor_Begin);
+			task->AddEventHandler<SCRambl::Preprocessor::Event::Error>(Preprocessor_Error);
 
 			// Add the parser task to parse the code symbols to tokens
 			engine.AddTask<SCRambl::ParserTask>(parser, script);

@@ -404,6 +404,7 @@ namespace SCRambl
 			std::tuple<Args...>		m_Info;
 
 		public:
+			inline const std::tuple<Args...>& Get() const				{ return m_Info; }
 			inline operator const std::tuple<Args...>&() const			{ return m_Info; }
 		};
 
