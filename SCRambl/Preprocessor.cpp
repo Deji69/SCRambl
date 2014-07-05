@@ -97,6 +97,7 @@ namespace SCRambl
 				{
 				case init:
 					m_Task(Event::Begin);
+					SendError(Error::invalid_directive);
 					m_State = lexing;
 					break;
 				default:
@@ -110,6 +111,15 @@ namespace SCRambl
 			catch (...)
 			{
 				throw;
+			}
+		}
+
+		void Preprocessor::SendError(Error type) const
+		{
+			switch (type)
+			{
+			case Error::invalid_directive:
+				break;
 			}
 		}
 
@@ -133,6 +143,11 @@ namespace SCRambl
 				HandleToken();
 				break;
 			}
+		}
+
+		Information & Preprocessor::BuildInformation(Information & info) const
+		{
+			return info;
 		}
 
 		void Preprocessor::HandleToken()

@@ -113,7 +113,7 @@ namespace SCRambl
 			}
 		};
 
-		class TaskBase
+		class ITask
 		{
 		public:
 			virtual void ResetTask() = 0;
@@ -122,7 +122,7 @@ namespace SCRambl
 		};
 
 		template<typename EventType>
-		class Task : public TaskBase
+		class Task : public ITask
 		{
 			friend class SCRambl::Engine;
 

@@ -20,7 +20,7 @@ namespace SCRambl
 	class Engine : protected TaskSystem::Task<EngineEvent>
 	{
 		//using TaskEntry = std::pair<int, TypeSystem::Task>;
-		using TaskMap = std::map<int, std::shared_ptr<TaskSystem::TaskBase>>;
+		using TaskMap = std::map<int, std::shared_ptr<TaskSystem::ITask>>;
 
 		TaskMap										Tasks;
 		TaskMap::iterator							CurrentTask;

@@ -90,20 +90,21 @@ int main(int argc, char* argv[])
 				std::cout << "Preprocessing... \n";
 				return true;
 			};
-			auto Preprocessor_Error = [task](const std::reference_wrapper<SCRambl::Preprocessor::Error> ref_err){
-				using SCRambl::Preprocessor::Error;
+			auto Preprocessor_Error = [task](std::reference_wrapper<const SCRambl::Error> ref_err){
+				/*using SCRambl::Preprocessor::Error;
 				auto & err = ref_err.get();
 				std::cout << "ERROR: ";
 				std::string msg;
 				switch (err)
 				{
-				case Error::invalid_directive:
-				{
-					//std::tuple_element<0, std::tuple<std::string>> elm = err.Info<std::string>()->Get();
-					//msg = "invalid directive '" + (err.Info<std::string>()->Get()) + "'";
-					break;
-				}
-				}
+					case Error::invalid_directive:
+					{
+						//std::tuple_element<0, std::tuple<std::string>> elm = err.Info<std::string>()->Get();
+						auto tup = err.Info<std::string>();
+						msg = "invalid directive '" + std::get<0>(tup.Get()) + "'";
+						break;
+					}
+				}*/
 				return true;
 			};
 

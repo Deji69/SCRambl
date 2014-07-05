@@ -31,9 +31,15 @@ namespace SCRambl
 			Max = Invalid
 		};
 
+		class Data
+		{
+
+		};
+
 	private:
 		Type				m_Type;
-
+		//Script::Position	m_Inside;
+		//Script::Position	m_After;
 	};
 
 	class Tokens

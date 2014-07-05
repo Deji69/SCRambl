@@ -14,6 +14,7 @@ namespace SCRambl
 {
 	namespace Reporting
 	{
+		// Report script processing stuff
 		class Report
 		{
 		public:
@@ -22,12 +23,14 @@ namespace SCRambl
 			};
 
 		private:
-			Type			m_Type;
-			std::string		m_Message;
+			Type				m_Type;
+			std::string			m_Message;
+			Script::Position	m_Where;
 
 		protected:
 			Report(Type type, std::string msg) : m_Type(type), m_Message(msg)
-			{}
+			{
+			}
 
 		public:
 			inline Type		GetType() const			{ return m_Type; }
@@ -40,7 +43,8 @@ namespace SCRambl
 
 		public:
 			Error(std::string msg) : Report(error, msg)
-			{ }
+			{
+			}
 		};
 	}
 }

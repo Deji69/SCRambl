@@ -6,6 +6,8 @@
 /**********************************************************/
 #pragma once
 #include <stack>
+#include <typeinfo>
+#include <typeindex>
 #include "Tasks.h"
 #include "Engine.h"
 #include "Scripts.h"
@@ -250,33 +252,12 @@ namespace SCRambl
 		};
 
 		class Task;
-
-		/*class Event
-		{
-		public:
-			enum Type
-			{
-				directive_not_found,
-				unknown,
-			};
-			enum class Severity
-			{
-				notice, warning, error
-			};
-
-		private:
-			Type			m_Type;
-			Severity		m_Severity;
-
-		public:
-			inline Type			GetType() const				{ return m_Type; }
-			inline Severity		GetSeverity() const			{ return m_Severity; }
-
-			inline operator Type() const					{ return GetType(); }
-		};*/
+		class Information;
 
 		class Preprocessor
 		{
+			friend class Information;
+
 		private:
 			enum Directive
 			{
@@ -291,31 +272,39 @@ namespace SCRambl
 				directive_endif,
 				directive_undef,
 			};
+			enum class Error
+			{
+				invalid_directive,
+			};
 
-			using DirectiveMap = std::unordered_map<std::string, Directive>;
+			using LexerToken = Lexer::Token < Token::Type >;
+			using LexerMachine = Lexer::Lexer < Token::Type >;
+			using DirectiveMap = std::unordered_map < std::string, Directive >;
+			using OperatorTable = Operator::Table < Operator::Type, Operator::max_operator >;
+			using OperatorScanner = Operator::Scanner < Operator::Type, Operator::max_operator >;
 
-			//Engine									&	m_Engine;
-			Task									&	m_Task;
+			//Engine						&	m_Engine;
+			Task						&	m_Task;
 
-			//IdentifierScanner							m_IdentifierScanner;
-			BlockCommentScanner							m_BlockCommentScanner;
-			CommentScanner								m_CommentScanner;
-			DirectiveScanner							m_DirectiveScanner;
-			IdentifierScanner							m_IdentifierScanner;
-			NumericScanner								m_NumericScanner;
-			StringLiteralScanner						m_StringLiteralScanner;
-			WhitespaceScanner							m_WhitespaceScanner;
+			//IdentifierScanner			m_IdentifierScanner;
+			BlockCommentScanner			m_BlockCommentScanner;
+			CommentScanner				m_CommentScanner;
+			DirectiveScanner			m_DirectiveScanner;
+			IdentifierScanner			m_IdentifierScanner;
+			NumericScanner				m_NumericScanner;
+			StringLiteralScanner		m_StringLiteralScanner;
+			WhitespaceScanner			m_WhitespaceScanner;
 
-			Operator::Table	< Operator::Type, Operator::max_operator >		m_Operators;
-			Operator::Scanner < Operator::Type, Operator::max_operator >	m_OperatorScanner;
+			OperatorTable				m_Operators;
+			OperatorScanner				m_OperatorScanner;
 
-			Lexer::Lexer<Token::Type>					m_Lexer;
-			Lexer::Token<Token::Type>					m_Token;
-			DirectiveMap								m_Directives;
-			Directive									m_Directive = directive_invalid;
-			std::string									m_String;
-			std::string									m_Identifier;
-			MacroMap									m_Macros;
+			LexerMachine				m_Lexer;
+			LexerToken					m_Token;
+			DirectiveMap				m_Directives;
+			Directive					m_Directive = directive_invalid;
+			std::string					m_String;
+			std::string					m_Identifier;
+			MacroMap					m_Macros;
 
 		public:
 			enum State {
@@ -337,13 +326,17 @@ namespace SCRambl
 			void Reset();
 
 		private:
-			State					m_State = init;
-			Script				&	m_Script;
-			Script::Position		m_CodePos;
-			bool					m_bScriptIsLoaded;		// if so, we only need to add-in any #include's
-			bool					m_DisableMacroExpansion = false;
-			bool					m_DisableMacroExpansionOnce = false;
-			std::stack<bool>		m_PreprocessorLogic;
+			State								m_State = init;
+			Script							&	m_Script;
+			Script::Position					m_CodePos;
+			bool								m_bScriptIsLoaded;		// if so, we only need to add-in any #include's
+			bool								m_DisableMacroExpansion = false;
+			bool								m_DisableMacroExpansionOnce = false;
+			std::stack<bool>					m_PreprocessorLogic;
+			std::vector<LexerToken>				m_MessageTokens;		// tokens for a message (e.g. error) back to the host?
+			//std::vector<LexerToken>				m_
+
+			void SendError(Error) const;
 
 			void PushSourceControl(bool b) {
 				m_PreprocessorLogic.push(b);
@@ -367,6 +360,9 @@ namespace SCRambl
 			void HandleToken();
 			void HandleDirective();
 			void HandleComment();
+
+			// Gather information
+			Information & BuildInformation(Information & info) const;
 
 			// Lex main code
 			Lexer::Result Lex();
@@ -392,24 +388,34 @@ namespace SCRambl
 			}
 		};
 
-		// yes, you do
-		class IBaseInformation
+		/*\
+		 * Preprocessor::Information - For preprocessor information (notice/warning/error)
+		\*
+		class Information
 		{
+		public:
+			enum Type {
+				error,
+				warning,
+				notice,
+			};
 
-		};
-
-		template<typename... Args>
-		class Information : IBaseInformation
-		{
-			std::tuple<Args...>		m_Info;
+		private:
+			Type				m_Type;
 
 		public:
-			inline const std::tuple<Args...>& Get() const				{ return m_Info; }
-			inline operator const std::tuple<Args...>&() const			{ return m_Info; }
-		};
+			Information(Type type) : m_Type(type)
+			{ }
+			virtual ~Information()	{ }
+		};*/
 
-		class Error
+		/*\
+		 * Preprocessor::Error - For preprocessor errors
+		\*
+		class Error : public Information
 		{
+			friend class Preprocessor;
+
 		public:
 			enum Type {
 				invalid_directive,
@@ -417,18 +423,25 @@ namespace SCRambl
 
 		private:
 			Type								m_Type;
-			std::shared_ptr<IBaseInformation>	m_Info;
-			
+			Script::Position					m_Position;
+
 		public:
-			Error(Type type, std::shared_ptr<IBaseInformation> info) : m_Type(type), m_Info(info)
+			Error(Type type, Script::Position & pos) : Information(error), m_Type(type), m_Position(pos)
 			{
 			}
 
+			template<Type TType>
+			
+
 			template<typename... Args>
-			std::shared_ptr<Information<Args...>> const&	Info()		{ return static_cast<Information<Args...>>(m_Info); }
+			const Information<Args...> &	Info()		{
+				ASSERT(m_Info.Type() == typeid(Information<Args...>));
+				if (m_Info.Type() != typeid(Information<Args...>)) throw std::invalid_argument("incorrect type");
+				return reinterpret_cast<Information<Args...>&>(m_Info);
+			}
 
 			inline operator Type() const		{ return m_Type; }
-		};
+		};*/
 
 		enum class Event
 		{
@@ -448,16 +461,13 @@ namespace SCRambl
 			inline Engine	&	GetEngine()			{ return m_Engine; }
 
 			template<typename... Args>
-			inline bool operator()(Event id, Args&&... args)	{ return CallEventHandler(id, std::forward<Args...>(args)...); }
+			inline bool operator()(Event id, Args... args)	{ return CallEventHandler(id, std::forward<Args...>(args)...); }
 
 		public:
 			Task(Engine & engine, Script & script):
 				Preprocessor(*this, script),
 				m_Engine(engine)
 			{
-				/*AddEvent<Event::Begin>();
-				AddEvent<Event::Warning>();
-				AddEvent<Event::Error>();*/
 			}
 
 		protected:
