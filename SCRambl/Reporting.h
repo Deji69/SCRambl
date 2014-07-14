@@ -7,14 +7,13 @@
 #pragma once
 #include <vector>
 #include <string>
-#include "Scripts.h"
-#include "Tasks.h"
+#include "utils.h"
 
 namespace SCRambl
 {
 	namespace Reporting
 	{
-		// Report script processing stuff
+		/*// Report script processing stuff
 		class Report
 		{
 		public:
@@ -45,6 +44,6 @@ namespace SCRambl
 			Error(std::string msg) : Report(error, msg)
 			{
 			}
-		};
+		};*/
 	}
 }

@@ -1,4 +1,4 @@
-/**********************************************************/
+//**********************************************************/
 // SCRambl Advanced SCR Compiler/Assembler
 // This program is distributed freely under the MIT license
 // (See the LICENSE file provided
@@ -11,47 +11,15 @@
 #include <functional>
 #include <typeinfo>
 #include "Reporting.h"
+#include "utils\function_traits.h"
 
 namespace SCRambl
 {
 	class Engine;
 	
+	// This was HELL to write...
 	namespace TaskSystem
 	{
-		// secret stash of functionage
-		namespace
-		{
-			template <typename Function>
-			struct function_traits : public function_traits<decltype(&Function::operator())>
-			{};
-
-			template <typename ClassType, typename ReturnType>
-			struct function_traits<ReturnType(ClassType::*)() const>
-			{
-				typedef ReturnType(*pointer)();
-				typedef std::function<ReturnType()> function;
-			};
-
-			template <typename ClassType, typename ReturnType, typename... Args>
-			struct function_traits<ReturnType(ClassType::*)(Args...) const>
-			{
-				typedef ReturnType(*pointer)(std::reference_wrapper<Args>...);
-				typedef std::function<ReturnType(std::reference_wrapper<Args>...)> function;
-			};
-
-			template <typename Function>
-			typename function_traits<Function>::pointer to_function_pointer(Function& lambda)
-			{
-				return static_cast<typename function_traits<Function>::pointer>(lambda);
-			}
-
-			template <typename Function>
-			typename function_traits<Function>::function to_function(Function& lambda)
-			{
-				return static_cast<typename function_traits<Function>::function>(lambda);
-			}
-		}
-		
 		template<typename EventType>
 		class Event
 		{
@@ -73,8 +41,9 @@ namespace SCRambl
 			template<typename Func>
 			void AddHandler(Func handler)
 			{
-				// do some weird shit
+				// do some weird, but very necessary shit
 				auto function = new decltype(to_function(handler))(to_function(handler));
+
 				// add the function to the list and associate its type
 				m_Handlers.emplace(&typeid(function), static_cast<void*>(function));
 			}
@@ -86,7 +55,7 @@ namespace SCRambl
 				// this is surely impossible...?
 				if (m_Handlers.empty()) return false;
 
-				// try to find some handlers capable of accepting Args
+				// try to find some handlers capable of accepting Args...
 				auto it_pair = m_Handlers.equal_range(&typeid(std::function<bool(Args...)>*));
 
 				// no? really?
@@ -99,7 +68,7 @@ namespace SCRambl
 					auto func = static_cast<std::function<bool(Args...)>*>(it->second);
 
 					// if it returns false, abort in case it did something that could screw up future calls
-					if (!(*func)(std::forward<Args...>(args)...)) break;
+					if (!(*func)(std::forward<Args>(args)...)) break;
 				}
 				return true;
 			}
@@ -108,19 +77,27 @@ namespace SCRambl
 			{
 				// delete the function pointers
 				for (auto pair : m_Handlers) {
+					// looks really simple...
 					delete static_cast<std::function<bool(void)>*>(pair.second);
 				}
 			}
 		};
 
+		/*\
+		 * Task interface - Task placeholder
+		\*/
 		class ITask
 		{
 		public:
-			virtual void ResetTask() = 0;
+			// task controllers
 			virtual void RunTask() = 0;
 			virtual bool IsTaskFinished() = 0;
+			virtual void ResetTask() = 0;
 		};
 
+		/*\
+		 * TaskSystem::Task - Kinda the point of this whole file
+		\*/
 		template<typename EventType>
 		class Task : public ITask
 		{
@@ -136,70 +113,84 @@ namespace SCRambl
 			std::map<EventType, Event<EventType>>	m_Events;
 
 		protected:
-			inline State & TaskState()				{ return m_State; }
+			inline State & TaskState()				{ return m_State; }		// unused?
 
 		public:
 			inline State GetState()	const			{ return m_State; }
 
-			// don't need this - instead we'll do it when a handler is added which is way more efficient in many ways
+			// don't need this - instead we'll do it when a handler is added which is way more efficient in so many ways
 			/*template<EventType id>
 			inline void AddEvent() {
 				m_Events.emplace(id, id);
 			}*/
 
-			// Add an event handler
+			// Add an event handler, plus the event if it doesn't exist already
 			template<EventType id, typename Func>
 			inline void AddEventHandler(Func func) {
 				auto & ev = m_Events[id];
 				ev.AddHandler<Func>(std::forward<Func>(std::ref(func)));
 			}
 
+			// Call all handlers for an event
+			// Returns false if none were called
 			template<typename... Args>
 			inline bool CallEventHandler(EventType id, Args&&... args) {
-				// if no event is found, there mustn't be a handler for it anyway
+				// if no event is found, there must not be a handler for it anyway
 				if (m_Events.empty()) return false;
 				auto it = m_Events.find(id);
 				if (it != m_Events.end())
 				{
 					// pass the message
-					if(it->second.CallHandler(std::ref(args)...))
+					if(it->second.CallHandler(std::forward<Args>(args)...))
 						return true;
 				}
+				// nothing called
 				return false;
 			}
 
 		protected:
+			// a running start!
 			Task() : m_State(running)
 			{ }
 			virtual ~Task() { };
 
+			// When you say run, I say go fuck yourself...
 			const Task & Run()
 			{
 				do
 				{
+					// continue from where we left off...
 					switch (m_State)
 					{
 					case error:
+						// error last time? oh well, moving on...
 						m_State = running;
 					case running:
 						try
 						{
+							// great, now redirect to the REAL task
 							RunTask();
 
+							// finished? what d'yeh want, a cookie?
 							if (IsTaskFinished()) m_State = finished;
 						}
 						catch (...)
 						{
+							// I doubt this will ever happen...
 							m_State = error;
 						}
 						break;
 					case finished:
+						// run again (y/n)?
 						ResetTask();
-						if (!IsTaskFinished()) m_State = running;
-						continue;
+						if (!IsTaskFinished())
+						{
+							m_State = running;
+							continue;
+						}
+						break;
 					}
 				} while (false);
-
 				return *this;
 			};
 		};

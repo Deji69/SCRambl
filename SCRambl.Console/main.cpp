@@ -86,30 +86,27 @@ int main(int argc, char* argv[])
 			auto task = engine.AddTask<SCRambl::Preprocessor::Task>(preprocessor, std::ref(script));
 			
 			using SCRambl::Preprocessor::Event;
-			auto Preprocessor_Begin = [task](){
+			/*auto Preprocessor_Warning = [](SCRambl::Preprocessor::Warning id, std::string msg){
+				std::cout << "warning ("<< id <<"): "<< msg;
+				return true;
+			};*/
+
+			task->AddEventHandler<Event::Begin>([](){
 				std::cout << "Preprocessing... \n";
 				return true;
-			};
-			auto Preprocessor_Error = [task](std::reference_wrapper<const SCRambl::Error> ref_err){
-				/*using SCRambl::Preprocessor::Error;
-				auto & err = ref_err.get();
-				std::cout << "ERROR: ";
-				std::string msg;
-				switch (err)
-				{
-					case Error::invalid_directive:
-					{
-						//std::tuple_element<0, std::tuple<std::string>> elm = err.Info<std::string>()->Get();
-						auto tup = err.Info<std::string>();
-						msg = "invalid directive '" + std::get<0>(tup.Get()) + "'";
-						break;
-					}
-				}*/
-				return true;
-			};
+			});
+			//task->AddEventHandler<Event::Warning>(Preprocessor_Warning);
 
-			task->AddEventHandler<SCRambl::Preprocessor::Event::Begin>(Preprocessor_Begin);
-			task->AddEventHandler<SCRambl::Preprocessor::Event::Error>(Preprocessor_Error);
+			task->AddEventHandler<Event::Error>([](SCRambl::Preprocessor::Error id, std::vector<std::string> params){
+				using SCRambl::Preprocessor::Error;
+				std::cerr << "error (" << id << "): ";
+				switch (id) {
+				case Error::invalid_directive:
+					std::cerr << "invalid directive '" << params[0] << "'";
+					break;
+				}
+				return true;
+			});
 
 			// Add the parser task to parse the code symbols to tokens
 			engine.AddTask<SCRambl::ParserTask>(parser, script);
@@ -120,7 +117,7 @@ int main(int argc, char* argv[])
 
 			// main loop
 			using SCRambl::TaskSystem::Task;
-			while (auto state = engine.Run().GetState() != finished)
+			while (engine.Run().GetState() != finished)
 			{
 			}
 		}

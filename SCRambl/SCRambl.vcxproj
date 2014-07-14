@@ -79,8 +79,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\SCRambl.h" />
-    <ClInclude Include="ansi.h" />
     <ClInclude Include="Builder.h" />
+    <ClInclude Include="Formatter.h" />
     <ClInclude Include="Numbers.h" />
     <ClInclude Include="Operators.h" />
     <ClInclude Include="Symbols.h" />
@@ -109,6 +109,8 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Tokens.h" />
     <ClInclude Include="utils.h" />
+    <ClInclude Include="utils\ansi.h" />
+    <ClInclude Include="utils\function_traits.h" />
     <ClInclude Include="utils\hash.h" />
     <ClInclude Include="utils\key.h" />
     <ClInclude Include="utils\MurmurHash3.h" />

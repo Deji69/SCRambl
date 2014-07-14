@@ -11,6 +11,7 @@ namespace SCRambl
 		Preprocessor::Preprocessor(Task & task, Script & script):
 			m_State(init),
 			m_Task(task),
+			m_Engine(task.GetEngine()),
 			m_Script(script),
 			m_Lexer(),
 			m_CodePos(script.GetCode()),
@@ -30,14 +31,14 @@ namespace SCRambl
 			m_Lexer.AddTokenScanner(Token::Operator, m_OperatorScanner);
 
 			// map directives
-			m_Directives["define"] = directive_define;
-			m_Directives["elif"] = directive_elif;
-			m_Directives["else"] = directive_else;
-			m_Directives["endif"] = directive_endif;
-			m_Directives["if"] = directive_if;
-			m_Directives["ifdef"] = directive_ifdef;
-			m_Directives["include"] = directive_include;
-			m_Directives["undef"] = directive_undef;
+			m_Directives["define"] = Directive::DEFINE;
+			m_Directives["elif"] = Directive::ELIF;
+			m_Directives["else"] = Directive::ELSE;
+			m_Directives["end"] = Directive::ENDIF;
+			m_Directives["if"] = Directive::IF;
+			m_Directives["ifdef"] = Directive::IFDEF;
+			m_Directives["include"] = Directive::INCLUDE;
+			m_Directives["undef"] = Directive::UNDEF;
 
 			// arithmetic operators - add em
 			m_Operators.AddOperator({ { '+' } }, Operator::add);
@@ -68,6 +69,9 @@ namespace SCRambl
 			m_Operators.AddOperator({ { '|', '|' } }, Operator::or);
 			m_Operators.AddOperator({ { '?' } }, Operator::cond);
 			m_Operators.AddOperator({ { ':' } }, Operator::condel);
+
+			// add formatters for messages
+			m_Engine.SetFormatter<Directive>(Directive::Formatter);
 		}
 
 		void Preprocessor::Reset()
@@ -97,7 +101,6 @@ namespace SCRambl
 				{
 				case init:
 					m_Task(Event::Begin);
-					SendError(Error::invalid_directive);
 					m_State = lexing;
 					break;
 				default:
@@ -114,13 +117,32 @@ namespace SCRambl
 			}
 		}
 
-		void Preprocessor::SendError(Error type) const
+		// Printf-styled error reporting
+		template<typename First, typename... Args>
+		void Preprocessor::SendError(Error type, First&& first, Args&&... args)
 		{
-			switch (type)
-			{
-			case Error::invalid_directive:
-				break;
-			}
+			// storage for error parameters
+			std::vector<std::string> params;
+			// format the error parameters to the vector
+			FormatError(params, first, args...);
+			// send
+			m_Task(Event::Error, type, params);
+		}
+
+		template<typename First, typename... Args>
+		void Preprocessor::FormatError(std::vector<std::string> & out, First&& first, Args&&... args)
+		{
+			// do one
+			out.push_back(m_Engine.Format(first));
+			// continue
+			FormatError(out, args...);
+		}
+
+		template<typename Last>
+		void Preprocessor::FormatError(std::vector<std::string> & out, Last&& last)
+		{
+			// finale
+			out.push_back(m_Engine.Format(std::forward<Last>(last)));
 		}
 
 		void Preprocessor::RunningState()
@@ -159,7 +181,7 @@ namespace SCRambl
 		{
 			switch (m_Directive)
 			{
-			case directive_define:
+			case Directive::DEFINE:
 				if (Lex() == Lexer::Result::found_token && m_Token == Token::Identifier)
 				{
 					Macro::Name name = m_Identifier;
@@ -182,7 +204,7 @@ namespace SCRambl
 				}
 				break;
 
-			case directive_undef:
+			case Directive::UNDEF:
 				// make sure we're not handed dirty macro code
 				m_DisableMacroExpansionOnce = true;
 
@@ -192,36 +214,36 @@ namespace SCRambl
 					throw;
 				break;
 
-			case directive_if:
+			case Directive::IF:
 				PushSourceControl(ProcessExpression() != 0);
 				break;
 
-			case directive_ifdef:
+			case Directive::IFDEF:
 				if (Lex() == Lexer::Result::found_token && m_Token == Token::Identifier)
 					PushSourceControl(m_Macros.Get(m_Identifier) != nullptr);
 				break;
 
-			case directive_ifndef:
+			case Directive::IFNDEF:
 				if (Lex() == Lexer::Result::found_token && m_Token == Token::Identifier)
 					PushSourceControl(m_Macros.Get(m_Identifier) == nullptr);
 				break;
 
-			case directive_elif:
+			case Directive::ELIF:
 				if (!GetSourceControl())
 				{
 					if (ProcessExpression() != 0) InvertSourceControl();
 				}
 				break;
 
-			case directive_else:
+			case Directive::ELSE:
 				InvertSourceControl();
 				break;
 
-			case directive_endif:
+			case Directive::ENDIF:
 				PopSourceControl();
 				break;
 
-			case directive_include:
+			case Directive::INCLUDE:
 				if (Lex() == Lexer::Result::found_token && m_Token == Token::String)
 				{
 					if (m_Script.Include(m_CodePos, m_String))
@@ -274,11 +296,12 @@ namespace SCRambl
 			{
 			case Lexer::Result::found_token:
 				// handle state-changing token types
-				switch (m_Token)
+				switch (m_Token.GetType())
 				{
 				case Token::Directive:
 					m_State = found_directive;
 					return;
+
 				default:
 					m_State = found_token;
 					return;
@@ -641,12 +664,13 @@ namespace SCRambl
 						m_Directive = GetDirective(m_Script.GetCode().Select(m_Token.Inside(), m_Token.End()));
 
 						// if the source is being skipped, wait until we have an #endif directive
-						if (!GetSourceControl() && m_Directive != directive_endif)
+						if (!GetSourceControl() && m_Directive != Directive::ENDIF)
 							continue;
 
-						if (m_Directive == directive_invalid)
-							m_Task(Event::Error, Error::invalid_directive);
-						ASSERT(m_Directive != directive_invalid);
+						if (m_Directive == Directive::INVALID)
+							SendError(Error::invalid_directive, m_Directive, m_Token.Inside(), m_Token.End());
+							//m_Task(Event::Error, Error::invalid_directive);
+						ASSERT(m_Directive != Directive::INVALID);
 						break;
 
 					case Token::String:

@@ -159,10 +159,16 @@
     <ClInclude Include="utils\key.h">
       <Filter>Header\utils</Filter>
     </ClInclude>
-    <ClInclude Include="ansi.h">
+    <ClInclude Include="Reporting.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\function_traits.h">
       <Filter>Header\utils</Filter>
     </ClInclude>
-    <ClInclude Include="Reporting.h">
+    <ClInclude Include="utils\ansi.h">
+      <Filter>Header\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Formatter.h">
       <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>

@@ -252,39 +252,99 @@ namespace SCRambl
 		};
 
 		class Task;
-		class Information;
+
+		class Information
+		{
+		public:
+			enum Type {
+				directive_identifier,
+			};
+
+		};
+
+		class Error
+		{
+		public:
+			enum ID {
+				invalid_directive	= 1000,
+			};
+
+			Error(ID id) : m_ID(id)
+			{ }
+			inline operator ID() const			{ return m_ID; }
+
+		private:
+			ID			m_ID;
+		};
+
+		template<int>
+		class ReportInfo
+		{
+		};
+
+		template<>
+		class ReportInfo<Error::invalid_directive>
+		{
+			
+		};
+
+		class Directive
+		{
+		public:
+			enum Type {
+				INVALID,
+				INCLUDE,
+				DEFINE,
+				IFDEF,
+				IFNDEF,
+				IF,
+				ELIF,
+				ELSE,
+				ENDIF,
+				UNDEF,
+			};
+
+		private:
+			Type		m_Type;
+
+		public:
+			Directive() = default;
+			Directive(Type type) : m_Type(type)
+			{ }
+
+			inline operator Type() const		{ return m_Type; }
+
+			static inline std::string Formatter(Directive type) {
+				std::string name = "";
+				switch (type) {
+				default:
+				case INVALID: break;
+				case INCLUDE: name = "include";
+				case DEFINE: name = "define";
+				case IFDEF: name = "ifdef";
+				case IFNDEF: name = "ifndef";
+				case IF: name = "if";
+				case ELIF: name = "elif";
+				case ELSE: name = "else";
+				case ENDIF: name = "endif";
+				}
+				return !name.empty() ? ("#" + name) : "(invalid)";
+			}
+		};
 
 		class Preprocessor
 		{
 			friend class Information;
 
 		private:
-			enum Directive
-			{
-				directive_invalid,
-				directive_include,
-				directive_define,
-				directive_ifdef,
-				directive_ifndef,
-				directive_if,
-				directive_elif,
-				directive_else,
-				directive_endif,
-				directive_undef,
-			};
-			enum class Error
-			{
-				invalid_directive,
-			};
-
-			using LexerToken = Lexer::Token < Token::Type >;
-			using LexerMachine = Lexer::Lexer < Token::Type >;
+			using LexerToken = Lexer::Token < Token >;
+			using LexerMachine = Lexer::Lexer < Token >;
 			using DirectiveMap = std::unordered_map < std::string, Directive >;
 			using OperatorTable = Operator::Table < Operator::Type, Operator::max_operator >;
 			using OperatorScanner = Operator::Scanner < Operator::Type, Operator::max_operator >;
 
-			//Engine						&	m_Engine;
-			Task						&	m_Task;
+			Engine					&	m_Engine;
+			Task					&	m_Task;
 
 			//IdentifierScanner			m_IdentifierScanner;
 			BlockCommentScanner			m_BlockCommentScanner;
@@ -301,7 +361,7 @@ namespace SCRambl
 			LexerMachine				m_Lexer;
 			LexerToken					m_Token;
 			DirectiveMap				m_Directives;
-			Directive					m_Directive = directive_invalid;
+			Directive					m_Directive = Directive::INVALID;
 			std::string					m_String;
 			std::string					m_Identifier;
 			MacroMap					m_Macros;
@@ -329,14 +389,19 @@ namespace SCRambl
 			State								m_State = init;
 			Script							&	m_Script;
 			Script::Position					m_CodePos;
-			bool								m_bScriptIsLoaded;		// if so, we only need to add-in any #include's
+			bool								m_bScriptIsLoaded;						// if so, we only need to add-in any #include's
 			bool								m_DisableMacroExpansion = false;
 			bool								m_DisableMacroExpansionOnce = false;
 			std::stack<bool>					m_PreprocessorLogic;
-			std::vector<LexerToken>				m_MessageTokens;		// tokens for a message (e.g. error) back to the host?
+			std::vector<LexerToken>				m_MessageTokens;						// tokens for a message (e.g. error) back to the host?
 			//std::vector<LexerToken>				m_
 
-			void SendError(Error) const;
+			template<typename First, typename... Args>
+			void SendError(Error, First&&, Args&&...);
+			template<typename First, typename... Args>
+			void FormatError(std::vector<std::string> &, First&&, Args&&...);
+			template<typename Last>
+			void FormatError(std::vector<std::string> &, Last&&);
 
 			void PushSourceControl(bool b) {
 				m_PreprocessorLogic.push(b);
@@ -384,7 +449,7 @@ namespace SCRambl
 			inline Directive GetDirective(const std::string & str) const
 			{
 				DirectiveMap::const_iterator it;
-				return it = m_Directives.find(str), it != m_Directives.end() ? (*it).second : directive_invalid;
+				return it = m_Directives.find(str), it != m_Directives.end() ? (*it).second : Directive::INVALID;
 			}
 		};
 
@@ -458,10 +523,12 @@ namespace SCRambl
 			friend Preprocessor;
 			Engine			&	m_Engine;
 
-			inline Engine	&	GetEngine()			{ return m_Engine; }
+			inline Engine	&	GetEngine()				{ return m_Engine; }
+
+			inline bool operator()(Event id)			{ return CallEventHandler(id); }
 
 			template<typename... Args>
-			inline bool operator()(Event id, Args... args)	{ return CallEventHandler(id, std::forward<Args...>(args)...); }
+			inline bool operator()(Event id, Args&&... args)	{ return CallEventHandler(id, std::forward<Args>(args)...); }
 
 		public:
 			Task(Engine & engine, Script & script):

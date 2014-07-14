@@ -9,37 +9,50 @@
 
 namespace SCRambl
 {
-	class Token
+	enum class Token
+	{
+		None,
+		Whitespace,
+		Eol,
+		Identifier,
+		Label,
+		Directive,
+		OpenParen,
+		CloseParen,
+		Comment,
+		BlockComment,
+		Number,
+		Operator,
+		String,
+		Invalid,
+		Max = Invalid
+	};
+
+	class TokenBase
+	{
+		Token		m_Type;
+
+	public:
+		TokenBase(Token id) : m_Type(id)
+		{ }
+	};
+
+	template<Token TokType>
+	class TokenInfo
 	{
 	public:
-		enum Type
-		{
-			None,
-			Whitespace,
-			Eol,
-			Identifier,
-			Label,
-			Directive,
-			OpenParen,
-			CloseParen,
-			Comment,
-			BlockComment,
-			Number,
-			Operator,
-			String,
-			Invalid,
-			Max = Invalid
-		};
-
 		class Data
 		{
 
 		};
 
 	private:
-		Type				m_Type;
+		//TokType				m_Type;
 		//Script::Position	m_Inside;
 		//Script::Position	m_After;
+
+	public:
+		inline Token		GetType() const		{ return TokType; }
 	};
 
 	class Tokens
