@@ -379,7 +379,7 @@ namespace SCRambl
 				max_state = bad_state,
 			};
 
-			Preprocessor(Task &, Script &);
+			Preprocessor(Task &, Engine &, Script &);
 
 			inline bool IsFinished() const			{ return m_State == finished; }
 			void Run();
@@ -532,7 +532,7 @@ namespace SCRambl
 
 		public:
 			Task(Engine & engine, Script & script):
-				Preprocessor(*this, script),
+				Preprocessor(*this, engine, script),
 				m_Engine(engine)
 			{
 			}

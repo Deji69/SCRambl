@@ -8,10 +8,10 @@ namespace SCRambl
 {
 	namespace Preprocessor
 	{
-		Preprocessor::Preprocessor(Task & task, Script & script):
+		Preprocessor::Preprocessor(Task & task, Engine & engine, Script & script):
 			m_State(init),
 			m_Task(task),
-			m_Engine(task.GetEngine()),
+			m_Engine(engine),
 			m_Script(script),
 			m_Lexer(),
 			m_CodePos(script.GetCode()),

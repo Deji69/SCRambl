@@ -7,6 +7,7 @@
 #pragma once
 #include <list>
 #include <memory>
+#include <map>
 #include "Builder.h"
 #include "Tasks.h"
 #include "Formatter.h"
@@ -57,7 +58,7 @@ namespace SCRambl
 		 - Set, override or cancel the override of a string formatter
 		\*/
 		template<typename T, typename F>
-		inline void SetFormatter(F &func)
+		void SetFormatter(F &func)
 		{
 			Formatters[&typeid(T)] = std::make_shared<Formatter<T>>(func);
 		}
@@ -76,7 +77,6 @@ namespace SCRambl
 					return it->second->Qualify<T>()(param);
 				}
 			}
-
 
 			return "";
 		}
