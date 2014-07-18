@@ -369,7 +369,6 @@ namespace SCRambl
 		public:
 			enum State {
 				init,
-				//begin_line, during_line, end_of_line,
 				lexing,
 				found_directive,
 				found_comment,
@@ -452,61 +451,6 @@ namespace SCRambl
 				return it = m_Directives.find(str), it != m_Directives.end() ? (*it).second : Directive::INVALID;
 			}
 		};
-
-		/*\
-		 * Preprocessor::Information - For preprocessor information (notice/warning/error)
-		\*
-		class Information
-		{
-		public:
-			enum Type {
-				error,
-				warning,
-				notice,
-			};
-
-		private:
-			Type				m_Type;
-
-		public:
-			Information(Type type) : m_Type(type)
-			{ }
-			virtual ~Information()	{ }
-		};*/
-
-		/*\
-		 * Preprocessor::Error - For preprocessor errors
-		\*
-		class Error : public Information
-		{
-			friend class Preprocessor;
-
-		public:
-			enum Type {
-				invalid_directive,
-			};
-
-		private:
-			Type								m_Type;
-			Script::Position					m_Position;
-
-		public:
-			Error(Type type, Script::Position & pos) : Information(error), m_Type(type), m_Position(pos)
-			{
-			}
-
-			template<Type TType>
-			
-
-			template<typename... Args>
-			const Information<Args...> &	Info()		{
-				ASSERT(m_Info.Type() == typeid(Information<Args...>));
-				if (m_Info.Type() != typeid(Information<Args...>)) throw std::invalid_argument("incorrect type");
-				return reinterpret_cast<Information<Args...>&>(m_Info);
-			}
-
-			inline operator Type() const		{ return m_Type; }
-		};*/
 
 		enum class Event
 		{

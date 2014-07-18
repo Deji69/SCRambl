@@ -34,7 +34,7 @@ namespace SCRambl
 			m_Directives["define"] = Directive::DEFINE;
 			m_Directives["elif"] = Directive::ELIF;
 			m_Directives["else"] = Directive::ELSE;
-			m_Directives["end"] = Directive::ENDIF;
+			m_Directives["endif"] = Directive::ENDIF;
 			m_Directives["if"] = Directive::IF;
 			m_Directives["ifdef"] = Directive::IFDEF;
 			m_Directives["include"] = Directive::INCLUDE;

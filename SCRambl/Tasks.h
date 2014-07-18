@@ -56,7 +56,8 @@ namespace SCRambl
 				if (m_Handlers.empty()) return false;
 
 				// try to find some handlers capable of accepting Args...
-				auto it_pair = m_Handlers.equal_range(&typeid(std::function<bool(Args...)>*));
+				static auto s_p = &typeid(std::function<bool(Args...)>*);
+				auto it_pair = m_Handlers.equal_range(s_p);
 
 				// no? really?
 				if (it_pair.first == m_Handlers.end()) return false;
