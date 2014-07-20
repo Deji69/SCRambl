@@ -97,10 +97,10 @@ int main(int argc, char* argv[])
 			});
 			//task->AddEventHandler<Event::Warning>(Preprocessor_Warning);
 
-			task->AddEventHandler<Event::Error>([](SCRambl::Preprocessor::Error id, std::vector<std::string> params){
+			task->AddEventHandler<Event::Error>([](SCRambl::Basic::Error id, std::vector<std::string>& params){
 				using SCRambl::Preprocessor::Error;
-				std::cerr << "error (" << id << "): ";
-				switch (id) {
+				std::cerr << "error (" << id.Get<SCRambl::Preprocessor::Error>() << "): ";
+				switch (id.Get<SCRambl::Preprocessor::Error>()) {
 				case Error::invalid_directive:
 					std::cerr << "invalid directive '" << params[0] << "'";
 					break;

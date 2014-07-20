@@ -171,6 +171,9 @@
     <ClInclude Include="Formatter.h">
       <Filter>Header</Filter>
     </ClInclude>
+    <ClInclude Include="Standard.h">
+      <Filter>Header</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header">

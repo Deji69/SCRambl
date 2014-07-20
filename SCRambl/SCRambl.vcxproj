@@ -80,6 +80,7 @@
   <ItemGroup>
     <ClInclude Include="..\SCRambl.h" />
     <ClInclude Include="Builder.h" />
+    <ClInclude Include="Standard.h" />
     <ClInclude Include="Formatter.h" />
     <ClInclude Include="Numbers.h" />
     <ClInclude Include="Operators.h" />

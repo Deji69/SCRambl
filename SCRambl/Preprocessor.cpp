@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "Standard.h"
 #include "Directives.h"
 #include "Preprocessor.h"
 #include "Lexer.h"
@@ -126,7 +127,7 @@ namespace SCRambl
 			// format the error parameters to the vector
 			FormatError(params, first, args...);
 			// send
-			m_Task(Event::Error, type, params);
+			m_Task(Event::Error, Basic::Error(type), params);
 		}
 
 		template<typename First, typename... Args>

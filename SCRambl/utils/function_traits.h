@@ -24,8 +24,8 @@ struct function_traits<ReturnType(ClassType::*)() const>
 template <typename ClassType, typename ReturnType, typename... Args>
 struct function_traits<ReturnType(ClassType::*)(Args...) const>
 {
-	typedef ReturnType(*pointer)(std::reference_wrapper<Args>...);
-	typedef std::function<ReturnType(std::reference_wrapper<Args>...)> function;
+	typedef ReturnType(*pointer)(Args...);
+	typedef std::function<ReturnType(Args...)> function;
 };
 
 // convert a lambda to a function pointer
