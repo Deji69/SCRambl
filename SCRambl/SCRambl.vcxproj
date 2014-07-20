@@ -97,7 +97,6 @@
     <ClInclude Include="Identifiers.h" />
     <ClInclude Include="Language.h" />
     <ClInclude Include="Lexer.h" />
-    <ClInclude Include="Containers.h" />
     <ClInclude Include="Literals.h" />
     <ClInclude Include="Macros.h" />
     <ClInclude Include="Parser.h" />

@@ -5,7 +5,8 @@
 //	 or copy at http://opensource.org/licenses/MIT)
 /**********************************************************/
 #pragma once
-#include "Containers.h"
+#if 0
+//#include "Containers.h"
 
 namespace SCRambl
 {
@@ -286,3 +287,4 @@ namespace SCRambl
 	extern CDirectoryManager DirManager;
 
 } // namespace SCRambl
+#endif

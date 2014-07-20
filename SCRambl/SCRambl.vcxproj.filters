@@ -66,9 +66,6 @@
     <ClInclude Include="Configuration.h">
       <Filter>Header</Filter>
     </ClInclude>
-    <ClInclude Include="Containers.h">
-      <Filter>Header</Filter>
-    </ClInclude>
     <ClInclude Include="Directives.h">
       <Filter>Header</Filter>
     </ClInclude>

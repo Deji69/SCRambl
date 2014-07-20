@@ -2,6 +2,7 @@
 #include "utils.h"
 #include "FileSystem.h"
 
+#if 0
 namespace SCRambl
 {
 	CDirectoryManager		DirManager;
@@ -369,3 +370,4 @@ namespace SCRambl
 			++m_szFileExt;
 	}
 } // namespace SCRambl
+#endif

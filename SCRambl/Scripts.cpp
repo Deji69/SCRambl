@@ -101,18 +101,18 @@ namespace SCRambl
 	{
 		if (m_Code.NumLines()) m_Code.Clear();
 		
-		std::ifstream file(path, std::ios::in);
-
-		if (file.is_open()) ReadFile(file, m_Code);
-		//else throw;
-
-		//std::copy(std::istream_iterator<ScriptLine>(file), std::istream_iterator<ScriptLine>(), std::back_inserter(m_Code));
+		m_File = std::make_shared<File>(path, m_Code, nullptr);
 
 		Init();
 	}
 
 	Script::Position & Script::Include(Script::Position & pos, const std::string & path)
 	{
+		ASSERT(m_File);
+		auto file = m_File->IncludeFile(pos, path);
+
+		return pos;
+		/*
 		std::ifstream file(path, std::ios::in);
 		if (file.is_open())
 		{
@@ -123,7 +123,7 @@ namespace SCRambl
 				pos = m_Code.Insert(pos, code);
 			}
 		}
-		return pos;
+		return pos;*/
 	}
 
 	Script::Script(const CodeList & code) : m_Code(code)
@@ -144,12 +144,12 @@ namespace SCRambl
 
 	Script::Position & Script::Code::Insert(Position & at, const CodeLine::vector & code)
 	{
-		// keep a count of how many characters is added so we can fix the pointer
+		// keep a count of how many characters are added so we can fix the pointer
 		int i = 0;
 
 		for (auto ch : code)
 		{
-			at.Insert(ch);
+			at << ch;
 			++at;
 			++i;
 		}
@@ -188,7 +188,6 @@ namespace SCRambl
 
 	std::string Script::Code::Select(const Position & beg, const Position & end) const
 	{
-		// so elegant, so simple
 		std::string r;
 		for (auto cur = beg; cur != end; ++cur)
 			r += *cur;
@@ -207,23 +206,98 @@ namespace SCRambl
 	Script::Code::Code(const CodeList & code) : m_Code(code)
 	{ }
 
-	ScriptFile::ScriptFile(std::string path, CodeList & code, const ScriptFile * parent) :
-		m_FilePath(path), m_Parent(parent), m_NumLines(0)
+	void Script::File::ReadFile(std::ifstream & file)
+	{
+		std::string code;
+
+		// use this flag to prevent multiple concurrent eol's and escape new lines
+		bool eol = false;
+
+		m_Code.SetFile(this);
+
+		while (std::getline(file, code))
+		{
+			CodeLine line;
+
+			if (!code.empty())
+			{
+				for (auto it = code.begin(); it != code.end();)
+				{
+					char c = *it;
+					++it;
+
+					switch (c)
+					{
+					case '?':
+						if (it == code.end()) break;
+						if (*it != '?') break;
+						if (++it == code.end()) continue;
+						if (auto t = GetTrigraphChar(*it))
+						{
+							++it;
+							c = t;
+						}
+						else
+						{
+							--it;
+							break;
+						}
+
+						if (c == '\\')
+						{
+					case '\\':
+						if (it == code.end())
+						{
+							eol = false;
+							continue;
+						}
+						}
+						break;
+					}
+
+					line.Symbols().emplace_back(c);
+					eol = true;
+				}
+			}
+
+			if (eol)
+			{
+				line.Symbols().emplace_back(Symbol::eol);
+				eol = false;
+			}
+
+			m_End << line;
+			if (!m_NumLines) m_Begin = m_End;
+			++m_NumLines;
+		}
+
+		m_Code.SetFile(m_Parent);
+	}
+
+	Script::File & Script::File::IncludeFile(Position & pos, const std::string & path)
 	{
 		std::ifstream file(path, std::ios::in);
 		if (file)
 		{
-			std::string line;
-			while (std::getline(file, line))
-			{
-				//code.emplace_back(++m_NumLines, line, this);
-			}
+			m_Code.SetFile(this);
+			ReadFile(file);
+			m_Code.SetFile(m_Parent);
 		}
+	}
+
+	Script::File::File(std::string path, Code & code, Position pos, const File * parent): m_Code(code),
+		m_Begin(code.End()), m_End(code.End()),
+		m_Path(path),
+		m_Parent(parent),
+		m_NumLines(0)
+	{
+		std::ifstream file(path, std::ios::in);
+		if (file) ReadFile(file);
 	}
 
 	void Script::Position::GetCodeLine()
 	{
-		if (m_LineIt != m_pCode->GetLines().end())
+		if (!m_pCode->IsEmpty() && m_LineIt != m_pCode->GetLines().end())
 		{
 			m_CodeIt = m_LineIt->GetCode().Symbols().begin();
 		}
@@ -270,7 +344,7 @@ namespace SCRambl
 		return false;
 	}
 
-	Script::Position & Script::Position::Insert(Symbol sym)
+	Script::Position & Script::Position::Insert(const Symbol & sym)
 	{
 		// insert a single character
 		if (!IsEnd()) m_CodeIt = m_LineIt->GetCode().Symbols().insert(m_CodeIt, sym);
@@ -291,11 +365,14 @@ namespace SCRambl
 
 	Script::Position::Position()
 	{ }
-
-	Script::Position::Position(Code & code):
-		m_pCode(&code)
+	Script::Position::Position(Code & code) : m_pCode(&code)
 	{
 		m_LineIt = m_pCode->GetLines().begin();
+		GetCodeLine();
+	}
+	Script::Position::Position(Code & code, CodeList::iterator & it) : m_pCode(&code)
+	{
+		m_LineIt = it;
 		GetCodeLine();
 	}
 }

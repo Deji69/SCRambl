@@ -669,9 +669,9 @@ namespace SCRambl
 							continue;
 
 						if (m_Directive == Directive::INVALID)
-							SendError(Error::invalid_directive, m_Directive, m_Token.Inside(), m_Token.End());
+							SendError(Error::invalid_directive, m_Token.Inside(), m_Token.End());
 							//m_Task(Event::Error, Error::invalid_directive);
-						ASSERT(m_Directive != Directive::INVALID);
+						//ASSERT(m_Directive != Directive::INVALID);
 						break;
 
 					case Token::String:

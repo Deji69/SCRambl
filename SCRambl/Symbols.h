@@ -52,7 +52,7 @@ namespace SCRambl
 		};
 
 	private:
-		Type		m_Type;				// type of symbol
+		Type		m_Type = unknown;	// type of symbol
 		//int		m_Column;			// column on source line		// TODO: implement later - too lazy now
 		char		m_Character;		// symbol character
 		Grapheme	m_Grapheme;			// grapheme
@@ -139,6 +139,7 @@ namespace SCRambl
 		}
 
 	public:
+		//Symbol() = default;
 		Symbol(char character):
 			m_Character(character)
 		{
@@ -183,6 +184,8 @@ namespace SCRambl
 		CodeLine() = default;
 		CodeLine(const vector symbols) : m_Symbols(symbols)
 		{}
+		/*CodeLine(const Symbol& v) : m_Symbols(vector(v))
+		{}*/
 
 		inline vector & Symbols() { return m_Symbols; }
 		inline const vector & Symbols() const { return m_Symbols; }

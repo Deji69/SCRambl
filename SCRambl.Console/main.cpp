@@ -97,7 +97,7 @@ int main(int argc, char* argv[])
 			});
 			//task->AddEventHandler<Event::Warning>(Preprocessor_Warning);
 
-			task->AddEventHandler<Event::Error>([](SCRambl::Basic::Error id, std::vector<std::string>& params){
+			task->AddEventHandler<Event::Error>([script](SCRambl::Basic::Error id, std::vector<std::string>& params){
 				using SCRambl::Preprocessor::Error;
 				std::cerr << "error (" << id.Get<SCRambl::Preprocessor::Error>() << "): ";
 				switch (id.Get<SCRambl::Preprocessor::Error>()) {

@@ -18,53 +18,43 @@
 
 namespace SCRambl
 {
-	class Script;
-
-	typedef std::vector<class ScriptFile> ScriptFiles;
-	typedef std::list<class ScriptLine> CodeList;
+	//typedef std::list<class Script::Line> CodeList;
 	typedef std::vector<std::string> StringList;
-
-	class ScriptFile
-	{
-		const ScriptFile				*	m_Parent = nullptr;
-		long								m_NumLines = 0;
-		std::string							m_FilePath;
-		ScriptFiles							m_Includes;
-
-	public:
-		ScriptFile(std::string path, CodeList & code, const ScriptFile * parent = nullptr);
-
-		inline long GetNumLines() const { return m_NumLines; }
-		inline const std::string & GetPath() const { return m_FilePath; }
-	};
-
-	class ScriptLine
-	{
-		const ScriptFile	*	File = nullptr;
-		long					Line = -1;
-		CodeLine				Code;
-
-	public:
-		ScriptLine(long line, CodeLine code, const ScriptFile * file) : Line(line), Code(code), File(file)
-		{ }
-
-		ScriptLine() { }
-
-		inline const ScriptFile * GetFile() const	{ return File; }
-		inline long GetLine() const					{ return Line; }
-		inline CodeLine & GetCode()					{ return Code; }
-		inline const CodeLine & GetCode() const		{ return Code; }
-
-		operator const CodeLine &() const	{ return GetCode(); }
-		operator CodeLine &()				{ return GetCode(); }
-		operator long() const				{ return Line; }
-	};
 
 	class Script
 	{
 	public:
 		class Code;
+		class File;
+		class Line;
 		class Position;
+
+		typedef std::list<Line> CodeList;
+		typedef std::vector<File> Files;
+
+		/*\
+		 - Script::Line - 
+		\*/
+		class Line
+		{
+			const File		*	m_File = nullptr;
+			long				m_Line = -1;
+			CodeLine			m_Code;
+
+		public:
+			Line() = default;
+			Line(long line, CodeLine code, const File * file) : m_Line(line), m_Code(code), m_File(file)
+			{ }
+
+			inline const File * GetFile() const			{ return m_File; }
+			inline long GetLine() const					{ return m_Line; }
+			inline CodeLine & GetCode()					{ return m_Code; }
+			inline const CodeLine & GetCode() const		{ return GetCode(); }
+
+			operator const CodeLine &() const	{ return GetCode(); }
+			operator CodeLine &()				{ return GetCode(); }
+			operator long() const				{ return GetLine(); }
+		};
 
 		/*\
 		 - Script::Code - where symbolic data lives in peaceful bliss
@@ -74,6 +64,7 @@ namespace SCRambl
 			friend class Script::Position;
 
 			CodeList				m_Code;
+			const File			*	m_CurrentFile;
 			long					m_NumSymbols = 0;
 			long					m_NumLines = 0;
 
@@ -85,6 +76,7 @@ namespace SCRambl
 			Code();
 			Code(const CodeList & code);
 
+			inline void	SetFile(const File * file)			{ m_CurrentFile = file; }
 			inline const CodeList	&	GetLines() const	{ return m_Code; }
 			inline long 				NumSymbols() const	{ return m_NumSymbols; }
 			inline long 				NumLines() const	{ return m_NumLines; }
@@ -94,15 +86,42 @@ namespace SCRambl
 			inline const CodeList * operator ->() const		{ return &**this; }
 
 			/*\
+			 - Get begin line Position
+			\*/
+			inline Position Begin() {
+				return{ *this };
+			}
+
+			/*\
+			 - Get end line Position
+			\*/
+			inline Position End() {
+				Position pos{ *this };
+				pos.m_LineIt = m_Code.empty() ? m_Code.begin() : m_Code.end();
+				pos.GetCodeLine();
+				return pos;
+			}
+
+			/*\
 			 - Add a line of code to the grande list
 			\*/
 			inline void AddLine(const CodeLine & code) {
 				if (!code.Symbols().empty())
 				{
-					m_Code.emplace_back(++m_NumLines, code, nullptr);
+					m_Code.emplace_back(++m_NumLines, code, m_CurrentFile);
 					m_NumSymbols += code.Symbols().size();
 				}
 				else ++m_NumLines;
+			}
+			inline Position & AddLine(Position & pos, const CodeLine & code) {
+				if (!code.Symbols().empty())
+				{
+					pos.m_LineIt = m_Code.emplace(pos.GetLineIt(), ++m_NumLines, code, m_CurrentFile);
+					pos.GetCodeLine();
+					m_NumSymbols += code.Symbols().size();
+				}
+				else ++m_NumLines;
+				return pos;
 			}
 
 			/*\
@@ -125,6 +144,7 @@ namespace SCRambl
 			- Returns the beginning position of the inserted code
 			\*/
 			Position & Insert(Position &, const CodeLine::vector &);
+			inline Position & Insert(Position & pos, const CodeLine & line)		{ return Insert(pos, line.Symbols()); }
 
 			/*\
 			 - Erase the code from Position A to (and including) Position B
@@ -155,17 +175,21 @@ namespace SCRambl
 			CodeList::iterator			m_LineIt;		// (x)
 			CodeLine::iterator			m_CodeIt;		// (y)
 
-			inline CodeList::iterator	GetLineIt()		{ return m_LineIt; }
-			inline CodeLine::iterator	GetSymbolIt()	{ return m_CodeIt; }
-			inline Code				&	GetCode()		{ ASSERT(m_pCode); return *m_pCode; }
-			inline const Code		&	GetCode() const	{ ASSERT(m_pCode); return *m_pCode; }
+			inline CodeList::iterator		GetLineIt()			{ return m_LineIt; }
+			inline CodeLine::iterator		GetSymbolIt()		{ return m_CodeIt; }
+			inline Code					&	GetCode()			{ ASSERT(m_pCode); return *m_pCode; }
+			inline const Code			&	GetCode() const		{ ASSERT(m_pCode); return *m_pCode; }
 
 			void GetCodeLine();
 			bool NextLine();
 
 		public:
+			// construct invalid thing
 			Position();
-			Position(Code & code);
+			// beginning of code
+			Position(Code &);
+			// specified line of code
+			Position(Code &, CodeList::iterator &);
 
 			/*\
 			 - Attempt to set this position at the next symbol
@@ -189,13 +213,19 @@ namespace SCRambl
 			 - Attempt to insert a symbol at the current position
 			 - Returns a reference to this position at the inserted symbol
 			\*/
-			Position & Insert(Symbol sym);
+			Position & Insert(const Symbol &);
+
+			/*\
+			- Attempt to insert multiple symbols at the current position
+			- Returns a reference to this position at the inserted symbol
+			\*/
+			Position & Insert(const CodeLine &);
 
 			/*\
 			 - Returns true if this position is at the end of the symbol list
 			\*/
 			inline bool IsEnd() const {
-				return m_LineIt == GetCode()->end() || m_CodeIt == m_LineIt->GetCode().Symbols().end();
+				return GetCode().IsEmpty() || m_LineIt == GetCode()->end() || m_CodeIt == m_LineIt->GetCode().Symbols().end();
 			}
 
 			/*\
@@ -213,8 +243,8 @@ namespace SCRambl
 			}
 
 			// Get the current line of this position
-			inline ScriptLine & GetLine()					{ return *m_LineIt; }
-			inline const ScriptLine & GetLine()	const		{ return *m_LineIt; }
+			inline Line & GetLine()							{ return *m_LineIt; }
+			inline const Line & GetLine()	const			{ return *m_LineIt; }
 
 			// Get the current line code of this position
 			inline CodeLine & GetLineCode()					{ return m_LineIt->GetCode(); }
@@ -234,6 +264,17 @@ namespace SCRambl
 
 			// !IsEnd()
 			inline operator bool() const				{ return !IsEnd(); }
+
+			// Insert Symbol
+			inline Position & operator<<(const Symbol & sym) {
+				return Insert(sym);
+			}
+
+			// Insert Line
+			inline Position & operator<<(const CodeLine & line) {
+				m_pCode->AddLine(*this, line);
+				return *this;
+			}
 
 			// 
 			inline Position & operator=(const Position & pos) {
@@ -315,8 +356,34 @@ namespace SCRambl
 				return !(*this == c);
 			}
 		};
+
+		class File
+		{
+			typedef std::vector<Files> Includes;
+
+			const File		*	m_Parent = nullptr;
+			Code			&	m_Code;					// code source
+			Position			m_Begin;				// beginning of this file in code source
+			Position			m_End;					// end of this file in code source
+			Includes			m_Include;				// included files
+			
+			long				m_NumLines = 0;
+			std::string			m_Path;
+			//Files				m_Includes;
+
+		public:
+			File(std::string, Code &);
+			File(std::string, Code &, Position, const File *);
+
+			inline long GetNumLines() const { return m_NumLines; }
+			inline const std::string & GetPath() const { return m_Path; }
+
+			void ReadFile(std::ifstream &);
+			File & IncludeFile(Position &, const std::string &);
+		};
 		
 	private:
+		std::shared_ptr<File>				m_File;
 		Code								m_Code;
 		Tokens								m_Tokens;
 		StringList							m_Warnings;
@@ -324,25 +391,25 @@ namespace SCRambl
 		// Initialise script for parsing with current code
 		void Init();
 
-		void Error(int code, const std::string & msg);
+		void Error(int code, const std::string &);
 
-		void ReadFile(std::ifstream & file, Code & code);
+		void ReadFile(std::ifstream &, Code &);
 
 	public:
 		Script()
 		{ }
 
 		// Construct script parser with code from memory
-		Script(const CodeList & code);
+		Script(const CodeList &);
 
 		~Script()
 		{ }
 
 		// Load file into code lines
-		void LoadFile(const std::string & path);
+		void LoadFile(const std::string &);
 		
 		// Include file in specific code line
-		Position & Include(Position & pos, const std::string & path);
+		Position & Include(Position &, const std::string &);
 
 		// OK?
 		inline bool OK() const				{ return true; }
