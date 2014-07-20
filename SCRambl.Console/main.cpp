@@ -97,9 +97,11 @@ int main(int argc, char* argv[])
 			});
 			//task->AddEventHandler<Event::Warning>(Preprocessor_Warning);
 
-			task->AddEventHandler<Event::Error>([script](SCRambl::Basic::Error id, std::vector<std::string>& params){
+			task->AddEventHandler<Event::Error>([script,task](SCRambl::Basic::Error id, std::vector<std::string>& params){
 				using SCRambl::Preprocessor::Error;
-				std::cerr << "error (" << id.Get<SCRambl::Preprocessor::Error>() << "): ";
+				auto & pos = task->Info().GetScriptPos();
+				auto script_file = pos.GetLine().GetFile();
+				std::cerr << script_file->GetPath() << "(" << pos.GetLine() << ")> error (" << id.Get<SCRambl::Preprocessor::Error>() << "): ";
 				switch (id.Get<SCRambl::Preprocessor::Error>()) {
 				case Error::invalid_directive:
 					std::cerr << "invalid directive '" << params[0] << "'";

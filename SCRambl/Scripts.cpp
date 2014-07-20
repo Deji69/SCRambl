@@ -3,7 +3,6 @@
 #include "Scripts.h"
 #include "Directives.h"
 #include "Literals.h"
-#include "Expressions.h"
 #include "Symbols.h"
 
 namespace SCRambl
@@ -99,9 +98,9 @@ namespace SCRambl
 
 	void Script::LoadFile(const std::string & path)
 	{
-		if (m_Code.NumLines()) m_Code.Clear();
+		if (!m_Code.IsEmpty()) m_Code.Clear();
 		
-		m_File = std::make_shared<File>(path, m_Code, nullptr);
+		m_File = std::make_shared<File>(path, m_Code);
 
 		Init();
 	}
@@ -268,6 +267,7 @@ namespace SCRambl
 
 			m_End << line;
 			if (!m_NumLines) m_Begin = m_End;
+			m_End.NextLine();
 			++m_NumLines;
 		}
 
@@ -276,17 +276,24 @@ namespace SCRambl
 
 	Script::File & Script::File::IncludeFile(Position & pos, const std::string & path)
 	{
+		m_Includes.emplace_back(path, m_Code, pos, this);
+		pos.NextLine();
+		return m_Includes.back();
+	}
+
+	Script::File::File(std::string path, Code & code): m_Code(code),
+		m_Begin(code.End()), m_End(code.End()),
+		m_Path(path),
+		m_Parent(nullptr),
+		m_NumLines(0)
+	{
 		std::ifstream file(path, std::ios::in);
-		if (file)
-		{
-			m_Code.SetFile(this);
-			ReadFile(file);
-			m_Code.SetFile(m_Parent);
-		}
+		if (file) ReadFile(file);
+		code.SetFile(this);
 	}
 
 	Script::File::File(std::string path, Code & code, Position pos, const File * parent): m_Code(code),
-		m_Begin(code.End()), m_End(code.End()),
+		m_Begin(pos.NextLine()), m_End(pos),
 		m_Path(path),
 		m_Parent(parent),
 		m_NumLines(0)
@@ -303,15 +310,18 @@ namespace SCRambl
 		}
 	}
 
-	bool Script::Position::NextLine()
+	Script::Position & Script::Position::NextLine()
 	{
-		while (++m_LineIt != m_pCode->GetLines().end())
+		if (m_LineIt != m_pCode->GetLines().end())
 		{
-			m_CodeIt = m_LineIt->GetCode().Symbols().begin();
-			if (m_CodeIt != m_LineIt->GetCode().Symbols().end())
-				return true;
+			while (++m_LineIt != m_pCode->GetLines().end())
+			{
+				m_CodeIt = m_LineIt->GetCode().Symbols().begin();
+				if (m_CodeIt != m_LineIt->GetCode().Symbols().end())
+					break;
+			}
 		}
-		return false;
+		return *this;
 	}
 
 	bool Script::Position::Forward()

@@ -27,18 +27,19 @@ namespace SCRambl
 		class Code;
 		class File;
 		class Line;
+		class Range;
 		class Position;
 
 		typedef std::list<Line> CodeList;
 		typedef std::vector<File> Files;
 
 		/*\
-		 - Script::Line - 
+		 - Script::Line - this is one
 		\*/
 		class Line
 		{
 			const File		*	m_File = nullptr;
-			long				m_Line = -1;
+			long				m_Line = 0;
 			CodeLine			m_Code;
 
 		public:
@@ -47,13 +48,14 @@ namespace SCRambl
 			{ }
 
 			inline const File * GetFile() const			{ return m_File; }
-			inline long GetLine() const					{ return m_Line; }
 			inline CodeLine & GetCode()					{ return m_Code; }
 			inline const CodeLine & GetCode() const		{ return GetCode(); }
 
-			operator const CodeLine &() const	{ return GetCode(); }
-			operator CodeLine &()				{ return GetCode(); }
-			operator long() const				{ return GetLine(); }
+			inline long GetLine() const					{ return m_Line; }
+
+			inline operator const CodeLine &() const	{ return GetCode(); }
+			inline operator CodeLine &()				{ return GetCode(); }
+			inline operator long() const				{ return GetLine(); }
 		};
 
 		/*\
@@ -79,7 +81,7 @@ namespace SCRambl
 			inline void	SetFile(const File * file)			{ m_CurrentFile = file; }
 			inline const CodeList	&	GetLines() const	{ return m_Code; }
 			inline long 				NumSymbols() const	{ return m_NumSymbols; }
-			inline long 				NumLines() const	{ return m_NumLines; }
+			inline long 				NumLines() const	{ return /*m_NumLines*/m_CurrentFile->GetNumLines(); }
 			inline bool					IsEmpty() const		{ return m_Code.empty(); }
 
 			inline const CodeList & operator *() const		{ return GetLines(); }
@@ -108,19 +110,17 @@ namespace SCRambl
 			inline void AddLine(const CodeLine & code) {
 				if (!code.Symbols().empty())
 				{
-					m_Code.emplace_back(++m_NumLines, code, m_CurrentFile);
+					m_Code.emplace_back(NumLines() + 1, code, m_CurrentFile);
 					m_NumSymbols += code.Symbols().size();
 				}
-				else ++m_NumLines;
 			}
 			inline Position & AddLine(Position & pos, const CodeLine & code) {
 				if (!code.Symbols().empty())
 				{
-					pos.m_LineIt = m_Code.emplace(pos.GetLineIt(), ++m_NumLines, code, m_CurrentFile);
+					pos.m_LineIt = m_Code.emplace(pos.GetLineIt(), NumLines() + 1, code, m_CurrentFile);
 					pos.GetCodeLine();
 					m_NumSymbols += code.Symbols().size();
 				}
-				else ++m_NumLines;
 				return pos;
 			}
 
@@ -177,11 +177,8 @@ namespace SCRambl
 
 			inline CodeList::iterator		GetLineIt()			{ return m_LineIt; }
 			inline CodeLine::iterator		GetSymbolIt()		{ return m_CodeIt; }
-			inline Code					&	GetCode()			{ ASSERT(m_pCode); return *m_pCode; }
-			inline const Code			&	GetCode() const		{ ASSERT(m_pCode); return *m_pCode; }
 
 			void GetCodeLine();
-			bool NextLine();
 
 		public:
 			// construct invalid thing
@@ -190,6 +187,11 @@ namespace SCRambl
 			Position(Code &);
 			// specified line of code
 			Position(Code &, CodeList::iterator &);
+
+			/*\
+			- Attempt to set this position at the next line
+			\*/
+			Position & NextLine();
 
 			/*\
 			 - Attempt to set this position at the next symbol
@@ -216,16 +218,23 @@ namespace SCRambl
 			Position & Insert(const Symbol &);
 
 			/*\
-			- Attempt to insert multiple symbols at the current position
-			- Returns a reference to this position at the inserted symbol
+			 - Attempt to insert multiple symbols at the current position
+			 - Returns a reference to this position at the inserted symbol
 			\*/
 			Position & Insert(const CodeLine &);
+
+			/*\
+			 - Select a string from this position to the specified one
+			\*/
+			inline std::string Select(const Position & end) const {
+				return GetCode().Select(*this, end);
+			}
 
 			/*\
 			 - Returns true if this position is at the end of the symbol list
 			\*/
 			inline bool IsEnd() const {
-				return GetCode().IsEmpty() || m_LineIt == GetCode()->end() || m_CodeIt == m_LineIt->GetCode().Symbols().end();
+				return !m_pCode || GetCode().IsEmpty() || m_LineIt == GetCode()->end() || m_CodeIt == m_LineIt->GetCode().Symbols().end();
 			}
 
 			/*\
@@ -241,6 +250,10 @@ namespace SCRambl
 			inline bool Compare(const char c) const {
 				return !IsEnd() ? *m_CodeIt == c : false;
 			}
+
+			// Get teh code
+			inline Code	& GetCode()						{ ASSERT(m_pCode); return *m_pCode; }
+			inline const Code & GetCode() const			{ ASSERT(m_pCode); return *m_pCode; }
 
 			// Get the current line of this position
 			inline Line & GetLine()							{ return *m_LineIt; }
@@ -357,19 +370,44 @@ namespace SCRambl
 			}
 		};
 
+		/*\
+		 * Script::Range - Range of Position's in the script
+		\*/
+		class Range
+		{
+			std::pair<Position, Position>	m_Pair;
+
+		public:
+			Range(Position a, Position b) : m_Pair(std::make_pair(a, b))
+			{
+			}
+			Range(std::pair<Position, Position> pair) : m_Pair(pair)
+			{
+			}
+
+			inline operator const std::pair<Position, Position>() const	{ return Get(); }
+			inline const std::pair<Position, Position> & Get() const	{ return m_Pair; }
+			inline const Position & Begin() const		{ return m_Pair.first; }
+			inline const Position & End() const			{ return m_Pair.second; }
+
+			static inline std::string Formatter(const Range & range) {
+				return range.Begin().Select(range.End());
+			}
+		};
+
+		/*\
+		 * Script::File - Script files and includes
+		\*/
 		class File
 		{
-			typedef std::vector<Files> Includes;
-
 			const File		*	m_Parent = nullptr;
 			Code			&	m_Code;					// code source
 			Position			m_Begin;				// beginning of this file in code source
 			Position			m_End;					// end of this file in code source
-			Includes			m_Include;				// included files
+			Files				m_Includes;				// included files
 			
 			long				m_NumLines = 0;
 			std::string			m_Path;
-			//Files				m_Includes;
 
 		public:
 			File(std::string, Code &);
@@ -394,6 +432,23 @@ namespace SCRambl
 		void Error(int code, const std::string &);
 
 		void ReadFile(std::ifstream &, Code &);
+
+		// DEBUG
+#ifdef _DEBUG
+	public:
+#endif
+		void OutputFile() {
+			std::ofstream file("script.txt");
+			if (file)
+			{
+				for (Script::Position pos(m_Code); pos; ++pos)
+				{
+					char c = *pos;
+					file << (c ? c : '\n');
+				}
+			}
+			file.flush();
+		}
 
 	public:
 		Script()

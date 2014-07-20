@@ -16,7 +16,10 @@ namespace SCRambl
 			m_Script(script),
 			m_Lexer(),
 			m_CodePos(script.GetCode()),
-			m_OperatorScanner(m_Operators)
+			m_OperatorScanner(m_Operators),
+			m_Information(
+				m_CodePos
+			)
 		{
 			Reset();
 
@@ -72,6 +75,7 @@ namespace SCRambl
 			m_Operators.AddOperator({ { ':' } }, Operator::condel);
 
 			// add formatters for messages
+			m_Engine.SetFormatter<Script::Range>(Script::Range::Formatter);
 			m_Engine.SetFormatter<Directive>(Directive::Formatter);
 		}
 
@@ -288,6 +292,8 @@ namespace SCRambl
 			// ya, we're done here...
 			if (!m_CodePos)
 			{
+				// (debug) output file
+				m_Script.OutputFile();
 				m_State = finished;
 				return;
 			}
@@ -669,7 +675,7 @@ namespace SCRambl
 							continue;
 
 						if (m_Directive == Directive::INVALID)
-							SendError(Error::invalid_directive, m_Token.Inside(), m_Token.End());
+							SendError(Error::invalid_directive, Script::Range(m_Token.Inside(), m_Token.End()));
 							//m_Task(Event::Error, Error::invalid_directive);
 						//ASSERT(m_Directive != Directive::INVALID);
 						break;

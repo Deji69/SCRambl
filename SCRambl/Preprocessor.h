@@ -255,11 +255,14 @@ namespace SCRambl
 
 		class Information
 		{
-		public:
-			enum Type {
-				directive_identifier,
-			};
+			const Script::Position		&	m_ScriptPosition;
 
+		public:
+			Information(const Script::Position & pos):
+				m_ScriptPosition(pos)
+			{}
+
+			const Script::Position &	GetScriptPos() const	{ return m_ScriptPosition; }
 		};
 
 		class Error
@@ -345,6 +348,7 @@ namespace SCRambl
 
 			Engine					&	m_Engine;
 			Task					&	m_Task;
+			Information					m_Information;
 
 			//IdentifierScanner			m_IdentifierScanner;
 			BlockCommentScanner			m_BlockCommentScanner;
@@ -383,6 +387,9 @@ namespace SCRambl
 			inline bool IsFinished() const			{ return m_State == finished; }
 			void Run();
 			void Reset();
+
+		protected:
+			const Information & GetInfo() const		{ return m_Information; }
 
 		private:
 			State								m_State = init;
@@ -465,7 +472,8 @@ namespace SCRambl
 		class Task : public TaskSystem::Task<Event>, private Preprocessor
 		{
 			friend Preprocessor;
-			Engine			&	m_Engine;
+			Engine				&	m_Engine;
+			const Information	&	m_Info;
 
 			inline Engine	&	GetEngine()				{ return m_Engine; }
 
@@ -477,9 +485,11 @@ namespace SCRambl
 		public:
 			Task(Engine & engine, Script & script):
 				Preprocessor(*this, engine, script),
-				m_Engine(engine)
+				m_Engine(engine), m_Info(GetInfo())
 			{
 			}
+
+			const Information & Info() const		{ return m_Info; }
 
 		protected:
 			bool IsTaskFinished() final override	{ return Preprocessor::IsFinished(); }

@@ -16,9 +16,6 @@
     <ClCompile Include="Exception.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="FileSystem.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Identifiers.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -79,12 +76,6 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="Exception.h">
-      <Filter>Header</Filter>
-    </ClInclude>
-    <ClInclude Include="Expressions.h">
-      <Filter>Header</Filter>
-    </ClInclude>
-    <ClInclude Include="FileSystem.h">
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="Identifiers.h">
