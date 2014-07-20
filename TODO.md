@@ -3,9 +3,10 @@
 Deadline: V?
 
 ## Engine ##
-- [ ] Task System
+- [x] Task System
 	- [x] Event System
-	- [ ] Error Reporting
+	- [x] Error Reporting
+	- [x] Message Formatting
 - [x] Lexer Engine
 - [x] Preprocessor Tasks
 - [ ] Parser Tasks

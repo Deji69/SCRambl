@@ -173,5 +173,13 @@
     <Filter Include="Header\utils">
       <UniqueIdentifier>{ebe23baf-b978-4c7c-a27f-681fab90b6ce}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource">
+      <UniqueIdentifier>{0e3d8892-ab8c-46ee-8143-3f9c9e97a799}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\TODO.md">
+      <Filter>Resource</Filter>
+    </None>
   </ItemGroup>
 </Project>
