@@ -99,14 +99,20 @@ int main(int argc, char* argv[])
 
 			task->AddEventHandler<Event::Error>([script,task](SCRambl::Basic::Error id, std::vector<std::string>& params){
 				using SCRambl::Preprocessor::Error;
+
+				// get some much needed info, display the file, line number and error ID
 				auto & pos = task->Info().GetScriptPos();
 				auto script_file = pos.GetLine().GetFile();
 				std::cerr << script_file->GetPath() << "(" << pos.GetLine() << ")> error (" << id.Get<SCRambl::Preprocessor::Error>() << "): ";
+
+				// 
 				switch (id.Get<SCRambl::Preprocessor::Error>()) {
 				case Error::invalid_directive:
 					std::cerr << "invalid directive '" << params[0] << "'";
 					break;
 				}
+
+				std::cerr << "\n";
 				return true;
 			});
 

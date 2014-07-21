@@ -251,6 +251,7 @@ namespace SCRambl
 			case Directive::INCLUDE:
 				if (Lex() == Lexer::Result::found_token && m_Token == Token::String)
 				{
+					m_String = rtrim(m_String);
 					if (m_Script.Include(m_CodePos, m_String))
 					{
 						m_State = lexing;
@@ -674,15 +675,15 @@ namespace SCRambl
 						if (!GetSourceControl() && m_Directive != Directive::ENDIF)
 							continue;
 
+						// if the directive is invalid, send an error with the range of the identifier
 						if (m_Directive == Directive::INVALID)
 							SendError(Error::invalid_directive, Script::Range(m_Token.Inside(), m_Token.End()));
-							//m_Task(Event::Error, Error::invalid_directive);
-						//ASSERT(m_Directive != Directive::INVALID);
 						break;
 
 					case Token::String:
 						// save the string
 						m_String = m_Script.GetCode().Select(m_Token.Inside(), m_Token.End());
+						m_String.erase(std::find_if(m_String.rbegin(), m_String.rend(), std::not1(std::function<bool(int)>([](int c){ return c == '\0'; }))).base(), m_String.end());
 						break;
 
 					case Token::Identifier:
