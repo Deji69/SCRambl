@@ -97,6 +97,7 @@ int main(int argc, char* argv[])
 			});
 			//task->AddEventHandler<Event::Warning>(Preprocessor_Warning);
 
+			// Add event handler for preprocessor errors
 			task->AddEventHandler<Event::Error>([script,task](SCRambl::Basic::Error id, std::vector<std::string>& params){
 				using SCRambl::Preprocessor::Error;
 
@@ -107,12 +108,30 @@ int main(int argc, char* argv[])
 
 				// 
 				switch (id.Get<SCRambl::Preprocessor::Error>()) {
+				default:
+				{
+					bool b = false;
+					for (auto p : params) {
+						if (!p.empty())
+						{
+							if (b) std::cerr << ", ";
+							else b = true;
+							std::cerr << p;
+						}
+					}
+					break;
+				}
 				case Error::invalid_directive:
 					std::cerr << "invalid directive '" << params[0] << "'";
 					break;
 				}
 
 				std::cerr << "\n";
+				return true;
+			});
+
+			task->AddEventHandler<Event::FoundToken>([](SCRambl::Script::Range range){
+				std::cerr << ">>>" << range.Formatter(range) << "\n";
 				return true;
 			});
 

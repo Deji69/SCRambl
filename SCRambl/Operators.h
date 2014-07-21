@@ -14,6 +14,9 @@ namespace SCRambl
 	class Operator
 	{
 	public:
+		/*\
+		 - Operator::Type - built-in operator types
+		\*/
 		enum Type
 		{
 			add,					// +
@@ -84,8 +87,7 @@ namespace SCRambl
 
 			public:
 				// For reservation of cells for any grapheme character - wastes a lot of space, but we can access things quickly :)
-				void ReserveCells()
-				{
+				void ReserveCells() {
 					m_Cells.resize(max);
 				}
 
@@ -103,8 +105,7 @@ namespace SCRambl
 				}
 
 				// A problem shared...
-				inline bool Next(Grapheme graph, Cell *& next_out)
-				{
+				inline bool Next(Grapheme graph, Cell *& next_out) {
 					return Next(graph, const_cast<const Cell*&>(next_out));
 				}
 
@@ -167,6 +168,9 @@ namespace SCRambl
 			}
 		};
 
+		/*\
+		 - Operator::Scanner - Operator scanner for lexage
+		\*/
 		template<typename T, T max>
 		class Scanner : public Lexer::Scanner
 		{

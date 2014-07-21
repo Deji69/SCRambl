@@ -269,7 +269,11 @@ namespace SCRambl
 		{
 		public:
 			enum ID {
-				invalid_directive	= 1000,
+				// involuntary errors (errors that should be impossible)
+				invalid_unary_operator		= 500,
+
+				// normal errors
+				invalid_directive			= 1000,
 			};
 
 			Error(ID id) : m_ID(id)
@@ -340,8 +344,8 @@ namespace SCRambl
 			friend class Information;
 
 		private:
-			using LexerToken = Lexer::Token < Token >;
-			using LexerMachine = Lexer::Lexer < Token >;
+			using LexerToken = Lexer::Token < Token::Type >;
+			using LexerMachine = Lexer::Lexer < Token::Type >;
 			using DirectiveMap = std::unordered_map < std::string, Directive >;
 			using OperatorTable = Operator::Table < Operator::Type, Operator::max_operator >;
 			using OperatorScanner = Operator::Scanner < Operator::Type, Operator::max_operator >;
@@ -464,10 +468,11 @@ namespace SCRambl
 			Begin,
 			Warning,
 			Error,
+			FoundToken,
 		};
 
 		/*\
-		 * The Preprocessor and Task become one
+		 * Preprocessor::Task - The Preprocessor and Task become one
 		\*/
 		class Task : public TaskSystem::Task<Event>, private Preprocessor
 		{
@@ -497,16 +502,4 @@ namespace SCRambl
 			void ResetTask() final override			{ Preprocessor::Reset(); }
 		};
 	}
-
-	/*class PreprocessorTask : public Task, public Preprocessor::Preprocessor
-	{
-	public:
-		PreprocessorTask(Engine & engine, Script & script) : Preprocessor(engine, script)
-		{ }
-
-	protected:
-		bool IsTaskFinished() final override	{ return Preprocessor::IsFinished(); }
-		void RunTask() final override			{ Preprocessor::Run(); }
-		void ResetTask() final override			{ Preprocessor::Reset(); }
-	};*/
 }

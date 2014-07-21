@@ -3,23 +3,28 @@
 *aaaa
 */#include\
 "include.sch"
+//#define FALSE !0==0
 #define FALSE !0==0
 
 /* error handling */
-#invalid_directive
+//#invalid_directive		// works (r55)
 
+//#if FALSE
 #if FALSE
   Blabadadooo!
 #endif
 
+//#define HEY
 #define HEY
 #undef HEY
-#if defined(HEY)
-	WAIT (1000 + 500)
-#endif
+//#if defined(HEY)
+	//WAIT (1000 + 500)
+//#endif
 
+//WAIT 0
 WAIT 0
 
+//#if 0
 #if 0
 	#register_command 0FFF SUM_COMMAND(i,=f)
 

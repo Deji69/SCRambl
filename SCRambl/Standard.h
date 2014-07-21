@@ -5,6 +5,7 @@
 //	 or copy at http://opensource.org/licenses/MIT)
 /**********************************************************/
 #pragma once
+namespace Basic { class Error; };
 #include "Preprocessor.h"
 
 namespace SCRambl

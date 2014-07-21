@@ -75,7 +75,7 @@ namespace SCRambl
 			m_Operators.AddOperator({ { '?' } }, Operator::cond);
 			m_Operators.AddOperator({ { ':' } }, Operator::condel);
 
-			// add formatters for messages
+			// formatters for messages - set defaults
 			m_Engine.SetFormatter<Script::Range>(Script::Range::Formatter);
 			m_Engine.SetFormatter<Directive>(Directive::Formatter);
 		}
@@ -368,7 +368,8 @@ namespace SCRambl
 			Operator::Type last_op = Operator::max_operator;
 			Operator::Type op = Operator::max_operator;
 
-			std::stack<Operator::Type>	unary_operators;
+			// storage of chained (unary operations, operator code range)
+			std::stack<std::pair<Operator::Type,Script::Range>>	unary_operators;
 
 			while (true)
 			{
@@ -414,7 +415,7 @@ namespace SCRambl
 						// if not, do the binary operation instead
 						if (!got_val) {
 							// this is unary, correct things
-							unary_operators.push(Operator::add);
+							unary_operators.emplace(Operator::add, std::make_pair(m_Token.Begin(), m_Token.End()));
 							op = last_op;
 						}
 						else got_val = false;
@@ -424,7 +425,7 @@ namespace SCRambl
 						// if not, do the binary operation instead
 						if (!got_val) {
 							// this is unary, correct things
-							unary_operators.push(Operator::sub);
+							unary_operators.emplace(Operator::sub, std::make_pair(m_Token.Begin(), m_Token.End()));
 							op = last_op;
 						}
 						else got_val = false;
@@ -449,7 +450,7 @@ namespace SCRambl
 						// if not, wait, this IS not!
 						if (!got_val) {
 							// this is unary, correct things
-							unary_operators.push(Operator::bit_not);
+							unary_operators.emplace(Operator::bit_not, std::make_pair(m_Token.Begin(), m_Token.End()));
 							op = last_op;
 						}
 						break;
@@ -469,7 +470,7 @@ namespace SCRambl
 						// if not, wait, THIS IS NOT TOOO!!!
 						if (!got_val) {
 							// this is unary, correct things
-							unary_operators.push(Operator::not);
+							unary_operators.emplace(Operator::not, std::make_pair(m_Token.Begin(), m_Token.End()));
 							op = last_op;
 						}
 						break;
@@ -529,10 +530,17 @@ namespace SCRambl
 					break;
 				}
 
+				// if we've got a value, we've probably got an operation to do!
 				if (got_val) {
 					// handle unary / 1-ary operations
 					for (; !unary_operators.empty(); unary_operators.pop())
-						ASSERT(ExpressUnary(unary_operators.top(), val) && "Non-unary operator in unary_operators!!!!");
+					{
+						bool b = ExpressUnary(unary_operators.top().first, val);
+						if (!b) {
+							SendError(Error::invalid_unary_operator, unary_operators.top().first, unary_operators.top().second);
+						}
+						ASSERT(b && "Non-unary operator in unary_operators!!!!");
+					}
 
 					// binary operators / 2-ary
 					// AKA The ABC's...
@@ -651,8 +659,11 @@ namespace SCRambl
 					m_CodePos = m_Token.End();
 
 					// only try to handle directives and comments if we're skipping source
-					if (!GetSourceControl() && (m_Token != Token::Directive || m_Token != Token::Comment || m_Token != Token::BlockComment))
+					if (!GetSourceControl() && (m_Token != Token::Directive/* && m_Token != Token::Comment && m_Token != Token::BlockComment*/))
 						continue;
+
+					// tell brother
+					m_Task(Event::FoundToken, Script::Range(m_Token.Begin(), m_Token.End()));
 
 					switch (m_Token)
 					{
@@ -702,7 +713,6 @@ namespace SCRambl
 
 								// insert the macro code
 								m_CodePos = m_Script.GetCode().Insert(m_CodePos, macro->GetCode().Symbols());
-
 								// continue parsing until we have a REAL token
 								continue;
 							}
@@ -728,6 +738,12 @@ namespace SCRambl
 					return true;
 			}
 			return false;
+		}
+		
+		template<>
+		inline bool Task::operator() < Event::Error, Error, std::vector<std::string> > (Event id, Error&& err, std::vector<std::string>&& vec)
+		{
+			return CallEventHandler(Event::Error, Basic::Error(err), vec);
 		}
 	}
 }
