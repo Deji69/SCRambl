@@ -3,7 +3,7 @@
 *aaaa
 */#include\
 "include.sch"
-#define FALSE !0=!=0
+#define FALSE !0==0
 
 /* error handling */
 #invalid_directive

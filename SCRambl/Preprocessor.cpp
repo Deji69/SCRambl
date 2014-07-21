@@ -41,6 +41,7 @@ namespace SCRambl
 			m_Directives["endif"] = Directive::ENDIF;
 			m_Directives["if"] = Directive::IF;
 			m_Directives["ifdef"] = Directive::IFDEF;
+			m_Directives["ifndef"] = Directive::IFNDEF;
 			m_Directives["include"] = Directive::INCLUDE;
 			m_Directives["undef"] = Directive::UNDEF;
 
@@ -251,7 +252,6 @@ namespace SCRambl
 			case Directive::INCLUDE:
 				if (Lex() == Lexer::Result::found_token && m_Token == Token::String)
 				{
-					m_String = rtrim(m_String);
 					if (m_Script.Include(m_CodePos, m_String))
 					{
 						m_State = lexing;
@@ -263,7 +263,8 @@ namespace SCRambl
 				break;
 
 			default:
-				BREAK();
+				BREAK();		// invalid directive - should've alredy reported - now the preprocessor can continue
+				break;
 			}
 
 			m_State = lexing;
