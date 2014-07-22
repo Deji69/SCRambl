@@ -129,6 +129,11 @@ namespace SCRambl
 		class StringLiteralScanner : public Lexer::Scanner
 		{
 		public:
+			enum class Error
+			{
+				unterminated
+			};
+
 			bool Scan(Lexer::State & state, Script::Position & pos) override
 			{
 				switch (state)
@@ -153,8 +158,7 @@ namespace SCRambl
 						}
 						else if (pos->GetType() == Symbol::eol)
 						{
-							// throw("unterminated string");
-							break;
+							throw(Error::unterminated);
 						}
 						else if (pos == '"')
 						{
@@ -303,8 +307,9 @@ namespace SCRambl
 				invalid_unary_operator		= 500,
 
 				// normal errors
-				invalid_directive			= 1000,
-				comment_at_eof,				// 1001
+				invalid_directive				= 1000,
+				unterminated_block_comment,		// 1001
+				unterminated_string_literal,	// 1002
 			};
 
 			Error(ID id) : m_ID(id)

@@ -44,41 +44,41 @@ namespace SCRambl
 			friend class Macro;
 			CodeLine				m_Code;
 
-			inline CodeLine::vector & Symbols()				{ return m_Code.Symbols(); }
+			inline CodeLine & Symbols()				{ return m_Code; }
 
-			inline CodeLine::vector & operator*()			{ return Symbols(); }
-			inline CodeLine::vector * operator->()			{ return &**this; }
+			inline CodeLine & operator*()			{ return Symbols(); }
+			inline CodeLine * operator->()			{ return &**this; }
 
-			inline void CopyCode(const CodeLine::vector & code)
+			inline void CopyCode(const CodeLine & code)
 			{
-				auto & symbols = m_Code.Symbols();
+				auto & symbols = Symbols();
 				for (const auto & c : code)
 				{
 					// skip any whitespace at the beginning or consecutive
-					if (c.GetType() == Symbol::whitespace)
+					if (c->GetType() == Symbol::whitespace)
 					{
-						if (symbols.empty() || symbols.back().GetType() == Symbol::whitespace)
+						if (symbols.Empty() || symbols.Back()->GetType() == Symbol::whitespace)
 							continue;
 					}
 
-					if (c.GetType() != Symbol::eol) symbols.push_back(c);
+					if (c->GetType() != Symbol::eol) symbols.Append(c);
 				}
 			}
 
 		public:
 			Code() = default;
-			Code(const CodeLine::vector & code)
+			Code(const CodeLine & code)
 			{
 				CopyCode(code);
 			}
 
-			inline const CodeLine::vector & Symbols() const		{ return m_Code.Symbols(); }
+			inline const CodeLine & Symbols() const				{ return m_Code; }
 			inline std::string String() const					{ return m_Code.String(); }
 
-			inline operator CodeLine::vector()					{ return Symbols(); }
-			inline const CodeLine::vector & operator*() const	{ return Symbols(); }
-			inline const CodeLine::vector * operator->() const	{ return &**this; }
-			inline operator const CodeLine::vector &() const	{ return Symbols(); }
+			inline operator CodeLine()							{ return Symbols(); }
+			inline const CodeLine & operator*() const			{ return Symbols(); }
+			inline const CodeLine * operator->() const			{ return &**this; }
+			inline operator const CodeLine &() const			{ return Symbols(); }
 		};
 
 	private:

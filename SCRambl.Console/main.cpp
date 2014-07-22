@@ -104,7 +104,7 @@ int main(int argc, char* argv[])
 				// get some much needed info, display the file, line number and error ID
 				auto & pos = task->Info().GetScriptPos();
 				auto script_file = pos.GetLine().GetFile();
-				std::cerr << script_file->GetPath() << "(" << pos.GetLine() << ")> error (" << id.Get<SCRambl::Preprocessor::Error>() << "): ";
+				std::cerr << script_file->GetPath() << "(" << pos.GetLine() << "," << pos.GetColumn() << ")> error (" << id.Get<SCRambl::Preprocessor::Error>() << "): ";
 
 				// 
 				switch (id.Get<SCRambl::Preprocessor::Error>()) {
@@ -121,8 +121,12 @@ int main(int argc, char* argv[])
 					}
 					break;
 				}
-				case Error::invalid_directive: std::cerr << "invalid directive '" << params[0] << "'"; break;
-				case Error::comment_at_eof: std::cerr << "unterminated block comment";
+				case Error::invalid_directive: std::cerr << "invalid directive '" << params[0] << "'";
+					break;
+				case Error::unterminated_block_comment: std::cerr << "unterminated block comment";
+					break;
+				case Error::unterminated_string_literal: std::cerr << "unterminated string literal";
+					break;
 				}
 
 				std::cerr << "\n";

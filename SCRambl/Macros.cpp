@@ -20,7 +20,7 @@ namespace SCRambl
 
 	Macro::Macro(const Macro::Name & name, const Macro::Code & code) : m_Name(name), m_Code(code)
 	{
-		m_Code->erase(std::remove(m_Code->begin(), m_Code->end(), '\n'), m_Code->end());
+		m_Code->Erase(std::remove(m_Code->Begin(), m_Code->End(), '\n'), m_Code->End());
 	}
 
 	Macro::~Macro()

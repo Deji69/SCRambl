@@ -128,7 +128,8 @@ namespace SCRambl
 		void Preprocessor::SendError(Error type)
 		{
 			// send
-			m_Task(Event::Error, Basic::Error(type));
+			std::vector<std::string> params;
+			m_Task(Event::Error, Basic::Error(type), params);
 		}
 		template<typename First, typename... Args>
 		void Preprocessor::SendError(Error type, First&& first, Args&&... args)
@@ -188,7 +189,7 @@ namespace SCRambl
 					// gather up thy symbols
 					if (m_CodePos && m_CodePos->GetType() != Symbol::eol)
 					{
-						CodeLine::vector code;
+						CodeLine code;
 
 						auto start_pos = m_CodePos;
 						while (m_CodePos && m_CodePos->GetType() != Symbol::eol)
@@ -639,17 +640,31 @@ namespace SCRambl
 					}
 				}
 				
-				// try to lex something
+				// try to lex something - catch and handle any thrown scanner errors
 				try
 				{
 					result = m_CodePos ? m_Lexer.Scan(m_CodePos, m_Token) : Lexer::Result::found_nothing;
+				}
+				catch (const StringLiteralScanner::Error & err)
+				{
+					switch (err) {
+						// unterminated string literal
+					case StringLiteralScanner::Error::unterminated:
+
+						// recovery method: skip to end of this line
+						while (m_CodePos->GetType() != Symbol::eol)
+							++m_CodePos;
+						SendError(Error::unterminated_string_literal);
+						break;
+					}
+					continue;
 				}
 				catch (const BlockCommentScanner::Error & err)
 				{
 					switch (err) {
 						// unterminated block comment
 					case BlockCommentScanner::Error::end_of_file_reached:
-						SendError(Error::comment_at_eof);
+						SendError(Error::unterminated_block_comment);
 
 						// recovery method: skip to end of this line (attempt to treat like a single line comment)
 						while (m_CodePos->GetType() != Symbol::eol)
@@ -669,7 +684,7 @@ namespace SCRambl
 					m_CodePos = m_Token.End();
 
 					// only try to handle directives and comments if we're skipping source
-					if (!GetSourceControl() && (m_Token != Token::Directive/* && m_Token != Token::Comment && m_Token != Token::BlockComment*/))
+					if (!GetSourceControl() && (m_Token != Token::Directive))
 						continue;
 
 					// tell brother

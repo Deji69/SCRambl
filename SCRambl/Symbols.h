@@ -53,7 +53,6 @@ namespace SCRambl
 
 	private:
 		Type		m_Type = unknown;	// type of symbol
-		//int		m_Column;			// column on source line		// TODO: implement later - too lazy now
 		char		m_Character;		// symbol character
 		Grapheme	m_Grapheme;			// grapheme
 
@@ -140,12 +139,12 @@ namespace SCRambl
 
 	public:
 		//Symbol() = default;
-		Symbol(char character):
+		Symbol(char character) :
 			m_Character(character)
 		{
 			GetCharSymbolType(character);
 		}
-		Symbol(Type generic_type):
+		Symbol(Type generic_type) :
 			m_Type(generic_type),
 			m_Character(GetGenericTypeChar(generic_type))
 		{}
@@ -170,28 +169,99 @@ namespace SCRambl
 		}
 	};
 
+	class Column
+	{
+	public:
+		typedef std::pair<int, Symbol> pair;
+
+	private:
+		pair			m_Column;
+
+	public:
+		Column(const pair & col) : m_Column(col) {
+		}
+		Column(int col, Symbol sym) : m_Column(std::make_pair(col, sym)) {
+		}
+
+		inline int Number() const					{ return m_Column.first; }
+		inline Symbol & operator*()					{ return m_Column.second; }
+		inline const Symbol & operator*() const		{ return m_Column.second; }
+		inline Symbol * operator->()				{ return &m_Column.second; }
+		inline const Symbol * operator->() const	{ return &m_Column.second; }
+		inline operator Symbol&()					{ return m_Column.second; }
+		inline operator const Symbol&() const		{ return m_Column.second; }
+		inline operator char()						{ return m_Column.second; }
+	};
+
 	class CodeLine
 	{
 	public:
-		typedef std::vector<Symbol> vector;
+		//typedef std::vector<std::pair<int,Symbol>> vector;
+		typedef std::vector<Column> vector;
 		typedef vector::iterator iterator;
 		typedef vector::const_iterator const_iterator;
 
 	private:
-		std::vector<Symbol>			m_Symbols;
+		vector			m_Symbols;
+		int				m_NumCols = 0;
 
 	public:
 		CodeLine() = default;
-		CodeLine(const vector symbols) : m_Symbols(symbols)
-		{}
-		/*CodeLine(const Symbol& v) : m_Symbols(vector(v))
-		{}*/
+		CodeLine(const vector vec) : m_Symbols(vec) {
+		}
+		CodeLine(const std::vector<Symbol> symbols) {
+			for (auto c : symbols) {
+				if (c == '\t') m_NumCols += 3;
+				m_Symbols.emplace_back(++m_NumCols, c);
+			}
+		}
 
-		inline vector & Symbols() { return m_Symbols; }
-		inline const vector & Symbols() const { return m_Symbols; }
+		//inline vector & Symbols() { return m_Symbols; }
+		//inline const vector & Symbols() const { return m_Symbols; }
+
+		inline void Clear()								{ return m_Symbols.clear(); }
+		inline bool Empty() const						{ return m_Symbols.empty(); }
+		inline vector::size_type Size() const			{ return m_Symbols.size(); }
+		inline vector::iterator Begin()					{ return m_Symbols.begin(); }
+		inline vector::const_iterator Begin() const		{ return m_Symbols.cbegin(); }
+		inline vector::iterator End()					{ return m_Symbols.end(); }
+		inline vector::const_iterator End() const		{ return m_Symbols.cend(); }
+		inline vector::reference Back()					{ return m_Symbols.back(); }
+		inline vector::const_reference Back() const		{ return m_Symbols.back(); }
+
+		// stupid STL
+		inline vector::iterator begin()					{ return Begin(); }
+		inline vector::iterator end()					{ return End(); }
+		inline vector::const_iterator begin() const		{ return Begin(); }
+		inline vector::const_iterator end() const		{ return End(); }
+
+		template<typename... Val>
+		inline void Append(Val&&... v) {
+			m_Symbols.emplace_back(++m_NumCols, std::forward<Val>(v)...);
+		}
+		template<>
+		inline void Append(char&& v) {
+			if (v == '\t') m_NumCols += 3;									// a tab takes up 4 columns - make sure we know
+			m_Symbols.emplace_back(++m_NumCols, std::forward<char>(v));
+		}
+		template<>
+		inline void Append(Symbol&& v) {
+			if (v.GetChar() == '\t') m_NumCols += 3;						// a tab takes up 4 columns - make sure we know
+			m_Symbols.emplace_back(++m_NumCols, std::forward<Symbol>(v));
+		}
+		inline vector::iterator Insert(vector::const_iterator it, const Symbol & sym) {
+			return m_Symbols.emplace(it, ++m_NumCols, sym);
+		}
+		inline vector::iterator Erase(vector::const_iterator it) {
+			return m_Symbols.erase(it);
+		}
+		inline vector::iterator Erase(vector::const_iterator itA, vector::const_iterator itB) {
+			return m_Symbols.erase(itA, itB);
+		}
+
 		inline std::string String() const {
 			std::string r;
-			for (char c : m_Symbols) r += c;
+			for (auto p : m_Symbols) r += p;
 			return r;
 		}
 
@@ -200,7 +270,8 @@ namespace SCRambl
 			if (!str.empty())
 			{
 				for (auto c : str) {
-					m_Symbols.emplace_back(c);
+					if (c == '\t') m_NumCols += 3;
+					m_Symbols.emplace_back(++m_NumCols, c);
 				}
 			}
 			return *this;

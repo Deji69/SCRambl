@@ -27,6 +27,7 @@ namespace SCRambl
 		class Code;
 		class File;
 		class Line;
+		class Column;
 		class Range;
 		class Position;
 
@@ -108,18 +109,18 @@ namespace SCRambl
 			 - Add a line of code to the grande list
 			\*/
 			inline void AddLine(const CodeLine & code) {
-				if (!code.Symbols().empty())
+				if (!code.Empty())
 				{
 					m_Code.emplace_back(NumLines() + 1, code, m_CurrentFile);
-					m_NumSymbols += code.Symbols().size();
+					m_NumSymbols += code.Size();
 				}
 			}
 			inline Position & AddLine(Position & pos, const CodeLine & code) {
-				if (!code.Symbols().empty())
+				if (!code.Empty())
 				{
 					pos.m_LineIt = m_Code.emplace(pos.GetLineIt(), NumLines() + 1, code, m_CurrentFile);
 					pos.GetCodeLine();
-					m_NumSymbols += code.Symbols().size();
+					m_NumSymbols += code.Size();
 				}
 				return pos;
 			}
@@ -143,8 +144,8 @@ namespace SCRambl
 			- Insert code symbols into the line at Position
 			- Returns the beginning position of the inserted code
 			\*/
-			Position & Insert(Position &, const CodeLine::vector &);
-			inline Position & Insert(Position & pos, const CodeLine & line)		{ return Insert(pos, line.Symbols()); }
+			Position & Insert(Position &, const CodeLine/*::vector*/ &);
+			//inline Position & Insert(Position & pos, const CodeLine & line)		{ return Insert(pos, line.Symbols()); }
 
 			/*\
 			 - Erase the code from Position A to (and including) Position B
@@ -161,7 +162,7 @@ namespace SCRambl
 			 - Copy the symbols from Position A to Position B
 			 - Returns the vector of collected symbols
 			\*/
-			CodeLine::vector & Copy(const Position &, const Position &, CodeLine::vector &) const;
+			CodeLine & Copy(const Position &, const Position &, CodeLine &) const;
 		};
 
 		/*\
@@ -234,7 +235,7 @@ namespace SCRambl
 			 - Returns true if this position is at the end of the symbol list
 			\*/
 			inline bool IsEnd() const {
-				return !m_pCode || GetCode().IsEmpty() || m_LineIt == GetCode()->end() || m_CodeIt == m_LineIt->GetCode().Symbols().end();
+				return !m_pCode || GetCode().IsEmpty() || m_LineIt == GetCode()->end() || m_CodeIt == m_LineIt->GetCode().End();
 			}
 
 			/*\
@@ -258,6 +259,9 @@ namespace SCRambl
 			// Get the current line of this position
 			inline Line & GetLine()							{ return *m_LineIt; }
 			inline const Line & GetLine()	const			{ return *m_LineIt; }
+
+			// Get the current number of the column at this position
+			inline int GetColumn() const					{ return m_CodeIt->Number(); }
 
 			// Get the current line code of this position
 			inline CodeLine & GetLineCode()					{ return m_LineIt->GetCode(); }

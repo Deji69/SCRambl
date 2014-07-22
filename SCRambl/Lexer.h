@@ -211,14 +211,23 @@ namespace SCRambl
 						// skip inactive scanners
 						if (state != State::before)
 						{
-							if (!scanner.Scan(state, state.Current()))
-							{
-								// failed? do away with this scanner, then...
-								scit = m_ScannerStates.erase(scit);
+							// if a scanner throws an error, remove it from the active scanner list and pass the error along
+							try{
+								if (!scanner.Scan(state, state.Current()))
+								{
+									// failed? do away with this scanner, then...
+									scit = m_ScannerStates.erase(scit);
 
-								// if we've got more scanners, let them continue - otherwise give up
-								if (!m_ScannerStates.empty()) continue;
-								return found_nothing;
+									// if we've got more scanners, let them continue - otherwise give up
+									if (!m_ScannerStates.empty()) continue;
+									return found_nothing;
+								}
+							}
+							catch (...) {
+								// remove it
+								scit = m_ScannerStates.erase(scit);
+								// pass the error 
+								throw;
 							}
 						}
 						

@@ -131,18 +131,18 @@ namespace SCRambl
 				bool got_first_cell = false;
 
 				// use the grapheme from each symbol to walk down the row of cells
-				for (auto c : code.Symbols())
+				for (auto c : code)
 				{
-					ASSERT(c.HasGrapheme() && "Only symbols with graphemes (specially recognized symbols) can be added as operators");
+					ASSERT(c->HasGrapheme() && "Only symbols with graphemes (specially recognized symbols) can be added as operators");
 					if (!got_first_cell)
 					{
-						pCell = &m_Cells[c.GetGrapheme()];
+						pCell = &m_Cells[c->GetGrapheme()];
 						got_first_cell = true;
 					}
 					else
 					{
 						pCell->ReserveCells();
-						pCell->Next(c.GetGrapheme(), pCell);
+						pCell->Next(c->GetGrapheme(), pCell);
 					}
 						
 				}

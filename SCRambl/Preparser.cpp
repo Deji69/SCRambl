@@ -38,10 +38,10 @@ namespace SCRambl
 
 		case end_of_line:
 		case continue_next_line:
-			if (!m_ParsedCode.Symbols().empty())
+			if (!m_ParsedCode.Empty())
 			{
 				m_Script.GetCode().AddLine(m_ParsedCode);
-				m_ParsedCode.Symbols().clear();
+				m_ParsedCode.Clear();
 			}
 			m_State = reading;
 			return;
@@ -54,13 +54,13 @@ namespace SCRambl
 
 	void Preparser::Parse()
 	{
-		auto& symbols = m_ParsedCode.Symbols();
+		auto& symbols = m_ParsedCode;
 
 		while (true)
 		{
 			if (m_LineIt == m_Line.end())
 			{
-				symbols.emplace_back(Symbol::eol);
+				symbols.Append(Symbol::eol);
 				m_State = end_of_line;
 				return;
 			}
@@ -87,7 +87,7 @@ namespace SCRambl
 				break;
 			}
 
-			symbols.emplace_back(c);
+			symbols.Append(c);
 		}
 	}
 

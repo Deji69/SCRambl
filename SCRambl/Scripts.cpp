@@ -45,9 +45,11 @@ namespace SCRambl
 		{
 			CodeLine line;
 
+			int col = 1;
+
 			if (!code.empty())
 			{
-				for (auto it = code.begin(); it != code.end();)
+				for (auto it = code.begin(); it != code.end(); ++col)
 				{
 					char c = *it;
 					++it;
@@ -72,23 +74,23 @@ namespace SCRambl
 						if (c == '\\')
 						{
 					case '\\':
-						if (it == code.end())
-						{
-							eol = false;
-							continue;
-						}
+							if (it == code.end())
+							{
+								eol = false;
+								continue;
+							}
 						}
 						break;
 					}
 
-					line.Symbols().emplace_back(c);
+					line.Append(c);
 					eol = true;
 				}
 			}
 
 			if (eol)
 			{
-				line.Symbols().emplace_back(Symbol::eol);
+				line.Append(Symbol::eol);
 				eol = false;
 			}
 
@@ -141,7 +143,7 @@ namespace SCRambl
 		return at;
 	}
 
-	Script::Position & Script::Code::Insert(Position & at, const CodeLine::vector & code)
+	Script::Position & Script::Code::Insert(Position & at, const CodeLine & code)
 	{
 		// keep a count of how many characters are added so we can fix the pointer
 		int i = 0;
@@ -169,16 +171,16 @@ namespace SCRambl
 		if (beg.GetLineIt() != end.GetLineIt())
 		{
 			do {
-				auto & symbols = beg.GetLineCode().Symbols();
+				auto & symbols = beg.GetLineCode();
 				auto beg_it = beg.GetSymbolIt();
 				beg.NextLine();
-				symbols.erase(beg_it, symbols.end());
+				symbols.Erase(beg_it, symbols.End());
 			} while (beg.GetLineIt() != end.GetLineIt());
 		}
 		
 		// bye-bye
-		end.m_CodeIt = beg.GetLineCode().Symbols().erase(beg.GetSymbolIt(), end.GetSymbolIt());
-		if (end.m_CodeIt == end.GetLineCode().Symbols().end())
+		end.m_CodeIt = beg.GetLineCode().Erase(beg.GetSymbolIt(), end.GetSymbolIt());
+		if (end.m_CodeIt == end.GetLineCode().End())
 			end.NextLine();
 
 		// return the updated beginning position
@@ -193,10 +195,10 @@ namespace SCRambl
 		return r;
 	}
 
-	CodeLine::vector & Script::Code::Copy(const Position & beg, const Position & end, CodeLine::vector & vec) const
+	CodeLine & Script::Code::Copy(const Position & beg, const Position & end, CodeLine & vec) const
 	{
 		for (auto cur = beg; cur != end; ++cur)
-			vec.emplace_back(*cur);
+			vec.Append(*cur);
 		return vec;
 	}
 
@@ -216,11 +218,12 @@ namespace SCRambl
 
 		while (std::getline(file, code))
 		{
+			int col = 1;
 			CodeLine line;
 
 			if (!code.empty())
 			{
-				for (auto it = code.begin(); it != code.end();)
+				for (auto it = code.begin(); it != code.end(); ++col)
 				{
 					char c = *it;
 					++it;
@@ -254,14 +257,14 @@ namespace SCRambl
 						break;
 					}
 
-					line.Symbols().emplace_back(c);
+					line.Append(c);
 					eol = true;
 				}
 			}
 
 			if (eol)
 			{
-				line.Symbols().emplace_back(Symbol::eol);
+				line.Append(Symbol::eol);
 				eol = false;
 			}
 
@@ -306,7 +309,7 @@ namespace SCRambl
 	{
 		if (!m_pCode->IsEmpty() && m_LineIt != m_pCode->GetLines().end())
 		{
-			m_CodeIt = m_LineIt->GetCode().Symbols().begin();
+			m_CodeIt = m_LineIt->GetCode().Begin();
 		}
 	}
 
@@ -316,8 +319,8 @@ namespace SCRambl
 		{
 			while (++m_LineIt != m_pCode->GetLines().end())
 			{
-				m_CodeIt = m_LineIt->GetCode().Symbols().begin();
-				if (m_CodeIt != m_LineIt->GetCode().Symbols().end())
+				m_CodeIt = m_LineIt->GetCode().Begin();
+				if (m_CodeIt != m_LineIt->GetCode().End())
 					break;
 			}
 		}
@@ -326,9 +329,9 @@ namespace SCRambl
 
 	bool Script::Position::Forward()
 	{
-		if (m_CodeIt != m_LineIt->GetCode().Symbols().end())
+		if (m_CodeIt != m_LineIt->GetCode().End())
 		{
-			if (++m_CodeIt != m_LineIt->GetCode().Symbols().end())
+			if (++m_CodeIt != m_LineIt->GetCode().End())
 				return true;
 		}
 
@@ -338,7 +341,7 @@ namespace SCRambl
 
 	bool Script::Position::Backward()
 	{
-		if (m_CodeIt != m_LineIt->GetCode().Symbols().begin())
+		if (m_CodeIt != m_LineIt->GetCode().Begin())
 		{
 			--m_CodeIt;
 			return true;
@@ -347,8 +350,8 @@ namespace SCRambl
 		while (m_LineIt != m_pCode->GetLines().begin())
 		{
 			--m_LineIt;
-			m_CodeIt = m_LineIt->GetCode().Symbols().end();
-			if (m_CodeIt != m_LineIt->GetCode().Symbols().begin())
+			m_CodeIt = m_LineIt->GetCode().End();
+			if (m_CodeIt != m_LineIt->GetCode().Begin())
 				return true;
 		}
 		return false;
@@ -357,7 +360,7 @@ namespace SCRambl
 	Script::Position & Script::Position::Insert(const Symbol & sym)
 	{
 		// insert a single character
-		if (!IsEnd()) m_CodeIt = m_LineIt->GetCode().Symbols().insert(m_CodeIt, sym);
+		if (!IsEnd()) m_CodeIt = m_LineIt->GetCode().Insert(m_CodeIt, sym);
 		return *this;
 	}
 
@@ -366,8 +369,8 @@ namespace SCRambl
 		// erase a single character
 		if (!IsEnd())
 		{
-			m_CodeIt = m_LineIt->GetCode().Symbols().erase(m_CodeIt);
-			if (m_CodeIt == GetLine().GetCode().Symbols().end())
+			m_CodeIt = m_LineIt->GetCode().Erase(m_CodeIt);
+			if (m_CodeIt == GetLine().GetCode().End())
 				Forward();
 		}
 		return *this;
