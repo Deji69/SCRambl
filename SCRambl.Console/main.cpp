@@ -121,9 +121,8 @@ int main(int argc, char* argv[])
 					}
 					break;
 				}
-				case Error::invalid_directive:
-					std::cerr << "invalid directive '" << params[0] << "'";
-					break;
+				case Error::invalid_directive: std::cerr << "invalid directive '" << params[0] << "'"; break;
+				case Error::comment_at_eof: std::cerr << "unterminated block comment";
 				}
 
 				std::cerr << "\n";

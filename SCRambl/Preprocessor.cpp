@@ -76,6 +76,7 @@ namespace SCRambl
 			m_Operators.AddOperator({ { ':' } }, Operator::condel);
 
 			// formatters for messages - set defaults
+			m_Engine.SetFormatter<Script::Position>(Script::Position::Formatter);
 			m_Engine.SetFormatter<Script::Range>(Script::Range::Formatter);
 			m_Engine.SetFormatter<Directive>(Directive::Formatter);
 		}
@@ -124,31 +125,20 @@ namespace SCRambl
 		}
 
 		// Printf-styled error reporting
+		void Preprocessor::SendError(Error type)
+		{
+			// send
+			m_Task(Event::Error, Basic::Error(type));
+		}
 		template<typename First, typename... Args>
 		void Preprocessor::SendError(Error type, First&& first, Args&&... args)
 		{
 			// storage for error parameters
 			std::vector<std::string> params;
 			// format the error parameters to the vector
-			FormatError(params, first, args...);
+			m_Engine.Format(params, first, args...);
 			// send
 			m_Task(Event::Error, Basic::Error(type), params);
-		}
-
-		template<typename First, typename... Args>
-		void Preprocessor::FormatError(std::vector<std::string> & out, First&& first, Args&&... args)
-		{
-			// do one
-			out.push_back(m_Engine.Format(first));
-			// continue
-			FormatError(out, args...);
-		}
-
-		template<typename Last>
-		void Preprocessor::FormatError(std::vector<std::string> & out, Last&& last)
-		{
-			// finale
-			out.push_back(m_Engine.Format(std::forward<Last>(last)));
 		}
 
 		void Preprocessor::RunningState()
@@ -648,8 +638,28 @@ namespace SCRambl
 						break;
 					}
 				}
+				
+				// try to lex something
+				try
+				{
+					result = m_CodePos ? m_Lexer.Scan(m_CodePos, m_Token) : Lexer::Result::found_nothing;
+				}
+				catch (const BlockCommentScanner::Error & err)
+				{
+					switch (err) {
+						// unterminated block comment
+					case BlockCommentScanner::Error::end_of_file_reached:
+						SendError(Error::comment_at_eof);
 
-				switch (result = m_CodePos ? m_Lexer.Scan(m_CodePos, m_Token) : Lexer::Result::found_nothing)
+						// recovery method: skip to end of this line (attempt to treat like a single line comment)
+						while (m_CodePos->GetType() != Symbol::eol)
+							++m_CodePos;
+						break;
+					}
+					continue;
+				}
+
+				switch (result)
 				{
 				case Lexer::Result::still_scanning: continue;
 				case Lexer::Result::found_nothing: break;
@@ -689,7 +699,12 @@ namespace SCRambl
 
 						// if the directive is invalid, send an error with the range of the identifier
 						if (m_Directive == Directive::INVALID)
+						{
 							SendError(Error::invalid_directive, Script::Range(m_Token.Inside(), m_Token.End()));
+
+							// to recover, skip to the eol
+							while (m_CodePos->GetType() != Symbol::eol) ++m_CodePos;
+						}
 						break;
 
 					case Token::String:
@@ -738,12 +753,6 @@ namespace SCRambl
 					return true;
 			}
 			return false;
-		}
-		
-		template<>
-		inline bool Task::operator() < Event::Error, Error, std::vector<std::string> > (Event id, Error&& err, std::vector<std::string>&& vec)
-		{
-			return CallEventHandler(Event::Error, Basic::Error(err), vec);
 		}
 	}
 }

@@ -6,7 +6,9 @@
 //#define FALSE !0==0
 #define FALSE !0==0
 
-/* error handling */
+// unterminated block comments will be treated like single line comments
+///* error handling /		// works (r
+// lines beginning with invalid directives are completely skipped
 //#invalid_directive		// works (r55)
 
 //#if FALSE

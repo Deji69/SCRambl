@@ -368,6 +368,11 @@ namespace SCRambl
 			inline bool operator!=(const char c) const {
 				return !(*this == c);
 			}
+
+			// String formatter
+			static inline std::string Formatter(const Position & pos) {
+				return std::to_string(pos.GetLine().GetLine());
+			}
 		};
 
 		/*\
@@ -390,6 +395,7 @@ namespace SCRambl
 			inline const Position & Begin() const		{ return m_Pair.first; }
 			inline const Position & End() const			{ return m_Pair.second; }
 
+			// String formatter
 			static inline std::string Formatter(const Range & range) {
 				return range.Begin().Select(range.End());
 			}

@@ -22,6 +22,9 @@ namespace SCRambl
 {
 	namespace Preprocessor
 	{
+		/*\
+		 * WhitespaceScanner - Lexer::Scanner for nothingness
+		\*/
 		class WhitespaceScanner : public Lexer::Scanner
 		{
 		public:
@@ -31,7 +34,7 @@ namespace SCRambl
 				{
 					if (code->GetType() == Symbol::whitespace)
 					{
-						// remove excess whitespace
+						// remove excess whitespace (?)
 						auto next = code;
 						++next;
 						while (next && next->GetType() == Symbol::whitespace)
@@ -43,6 +46,9 @@ namespace SCRambl
 			}
 		};
 
+		/*\
+		 * IdentifierScanner - Lexer::Scanner for identifiers
+		\*/
 		class IdentifierScanner : public Lexer::Scanner
 		{
 		public:
@@ -80,6 +86,9 @@ namespace SCRambl
 			}
 		};
 
+		/*\
+		 * DirectiveScanner - Lexer::Scanner for directives
+		\*/
 		class DirectiveScanner : public Lexer::Scanner
 		{
 		public:
@@ -114,6 +123,9 @@ namespace SCRambl
 			}
 		};
 
+		/*\
+		 * StringLiteralScanner - Lexer::Scanner for string literals
+		\*/
 		class StringLiteralScanner : public Lexer::Scanner
 		{
 		public:
@@ -162,6 +174,9 @@ namespace SCRambl
 			}
 		};
 
+		/*\
+		 * CommentScanner - Lexer::Scanner for line comments
+		\*/
 		class CommentScanner : public Lexer::Scanner
 		{
 		public:
@@ -193,11 +208,18 @@ namespace SCRambl
 			}
 		};
 
+		/*\
+		 * BlockCommentScanner - Lexer::Scanner for block comments
+		\*/
 		class BlockCommentScanner : public Lexer::Scanner
 		{
 			int				depth = 0;
 
 		public:
+			enum class Error {
+				end_of_file_reached,
+			};
+
 			bool Scan(Lexer::State & state, Script::Position & pos) override
 			{
 				char last_char = '\0';
@@ -240,6 +262,8 @@ namespace SCRambl
 							last_char = *pos;
 						}
 					} while (++pos);
+					
+					if (depth) throw(Error::end_of_file_reached);
 					ASSERT(!depth);			// TODO: throw error "still in comment at end-of-file"
 					return true;
 
@@ -253,18 +277,24 @@ namespace SCRambl
 
 		class Task;
 
+		/*\
+		 * Preprocessor::Information - Externally accessible info about the preprocessors current state
+		\*/
 		class Information
 		{
-			const Script::Position		&	m_ScriptPosition;
+			Script::Position		&	m_ScriptPosition;
 
 		public:
-			Information(const Script::Position & pos):
+			Information(Script::Position & pos):
 				m_ScriptPosition(pos)
 			{}
 
 			const Script::Position &	GetScriptPos() const	{ return m_ScriptPosition; }
 		};
 
+		/*\
+		 * Preprocessor::Error - Errors that can happen while preprocessing
+		\*/
 		class Error
 		{
 		public:
@@ -274,6 +304,7 @@ namespace SCRambl
 
 				// normal errors
 				invalid_directive			= 1000,
+				comment_at_eof,				// 1001
 			};
 
 			Error(ID id) : m_ID(id)
@@ -284,17 +315,9 @@ namespace SCRambl
 			ID			m_ID;
 		};
 
-		template<int>
-		class ReportInfo
-		{
-		};
-
-		template<>
-		class ReportInfo<Error::invalid_directive>
-		{
-			
-		};
-
+		/*\
+		 * Preprocessor::Directive - Preprocessor directive stuff
+		\*/
 		class Directive
 		{
 		public:
@@ -339,6 +362,9 @@ namespace SCRambl
 			}
 		};
 
+		/*\
+		 - Preprocessor::Preprocessor - Main Preprocessor task routine
+		\*/
 		class Preprocessor
 		{
 			friend class Information;
@@ -354,7 +380,6 @@ namespace SCRambl
 			Task					&	m_Task;
 			Information					m_Information;
 
-			//IdentifierScanner			m_IdentifierScanner;
 			BlockCommentScanner			m_BlockCommentScanner;
 			CommentScanner				m_CommentScanner;
 			DirectiveScanner			m_DirectiveScanner;
@@ -404,36 +429,40 @@ namespace SCRambl
 			bool								m_DisableMacroExpansionOnce = false;
 			std::stack<bool>					m_PreprocessorLogic;
 			std::vector<LexerToken>				m_MessageTokens;						// tokens for a message (e.g. error) back to the host?
-			//std::vector<LexerToken>				m_
+			
+			// Send an error event
+			void SendError(Error);
+			template<typename First, typename... Args> void SendError(Error, First&&, Args&&...);
 
-			template<typename First, typename... Args>
-			void SendError(Error, First&&, Args&&...);
-			template<typename First, typename... Args>
-			void FormatError(std::vector<std::string> &, First&&, Args&&...);
-			template<typename Last>
-			void FormatError(std::vector<std::string> &, Last&&);
-
+			// Enter conditional source compilation
 			void PushSourceControl(bool b) {
 				m_PreprocessorLogic.push(b);
 			}
+			// Return from conditional source compilation
 			void PopSourceControl() {
 				ASSERT(!m_PreprocessorLogic.empty() && "#endif when not in #if/#ifdef/#else?");
 				m_PreprocessorLogic.pop();
 			}
+			// Invert conditional source compilation state
 			inline void InvertSourceControl() {
 				ASSERT(!m_PreprocessorLogic.empty() && "Unmatched #else?");
 				m_PreprocessorLogic.top() = !m_PreprocessorLogic.top();
 			}
+			// Get conditional source compilation state
 			inline bool GetSourceControl() const {
-				//ASSERT(!m_PreprocessorLogic.empty() && "not in #if/#ifdef/#else?");
 				return m_PreprocessorLogic.empty() ? true : m_PreprocessorLogic.top();
 			}
 
+			// Runs while running
 			void RunningState();
+			// Runs while lexing
 			void LexerPhase();
 
+			// Build preprocessing token from lex token
 			void HandleToken();
+			// Process preprocessor directive
 			void HandleDirective();
+			// Strips comments
 			void HandleComment();
 
 			// Gather information
@@ -446,6 +475,7 @@ namespace SCRambl
 
 			// Handle expressions
 			int ProcessExpression(bool paren = false);
+
 			// Perform unary operation on passed value - returns false if no change could be made as the operator was unsupported
 			static bool ExpressUnary(Operator::Type op, int & val);
 
@@ -456,13 +486,15 @@ namespace SCRambl
 			inline CodeLine & GetLineCode()				{ return m_CodePos.GetLine().GetCode(); }
 
 			// Returns directive_invalid if it didnt exist
-			inline Directive GetDirective(const std::string & str) const
-			{
+			inline Directive GetDirective(const std::string & str) const {
 				DirectiveMap::const_iterator it;
 				return it = m_Directives.find(str), it != m_Directives.end() ? (*it).second : Directive::INVALID;
 			}
 		};
 
+		/*\
+		 * Preprocessor::Event - Interesting stuff that the Preprocessor does
+		\*/
 		enum class Event
 		{
 			Begin,

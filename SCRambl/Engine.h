@@ -63,24 +63,6 @@ namespace SCRambl
 			Formatters[&typeid(T)] = std::make_shared<Formatter<T>>(func);
 		}
 
-		/*\
-		 - String format a SCRambl type
-		\*/
-		template<typename T>
-		inline std::string Format(const T& param) const
-		{
-			if (!Formatters.empty())
-			{
-				auto it = Formatters.find(&typeid(T));
-				if (it != Formatters.end())
-				{
-					return it->second->Qualify<T>()(param);
-				}
-			}
-
-			return "";
-		}
-
 		template<typename T, typename ID, typename... Params>
 		const std::shared_ptr<T> AddTask(ID id, Params&&... prms)
 		{
@@ -116,6 +98,47 @@ namespace SCRambl
 			return false;
 		}
 
+		/*\
+		 * Engine::Format<> - String format a SCRambl type
+		\*/
+		template<typename T>
+		inline std::string Format(const T& param) const
+		{
+			if (!Formatters.empty())
+			{
+				auto it = Formatters.find(&typeid(T));
+				if (it != Formatters.end())
+				{
+					return it->second->Qualify<T>()(param);
+				}
+			}
+
+			return "";
+		}
+
+		/*\
+		 * Engine::Format<T, T, ...> - String format multiple types
+		\*/
+		template<typename First, typename... Args>
+		void Format(std::vector<std::string> & out, First&& first, Args&&... args)
+		{
+			// do one
+			out.push_back(Format(first));
+			// continue
+			Format(out, args...);
+		}
+
+		/*\
+		 * Engine::Format<T> - String format multiple types
+		\*/
+		template<typename Last>
+		inline void Format(std::vector<std::string> & out, Last&& last)
+		{
+			// finale
+			out.push_back(Format(std::forward<Last>(last)));
+		}
+
+	public:
 		template<typename T>
 		inline T & GetCurrentTask()					{ return reinterpret_cast<T&>(*CurrentTask->second); }
 		inline int GetCurrentTaskID() const			{ return std::ref(CurrentTask->first); }
