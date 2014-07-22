@@ -715,7 +715,10 @@ namespace SCRambl
 						// if the directive is invalid, send an error with the range of the identifier
 						if (m_Directive == Directive::INVALID)
 						{
+							// ensure any report is at the beginning of the directive, not the end where we currently are
+							m_Information.SetScriptPos(m_Token.Begin());
 							SendError(Error::invalid_directive, Script::Range(m_Token.Inside(), m_Token.End()));
+							m_Information.SetScriptPos(m_CodePos);
 
 							// to recover, skip to the eol
 							while (m_CodePos->GetType() != Symbol::eol) ++m_CodePos;

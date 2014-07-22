@@ -1,16 +1,18 @@
 // comments, trigraph, newline escaping, #include directive
 /??/
 *aaaa
-*/#include\
+*/
+// #include(\\n)"include.sch"
+#include\
 "include.sch		// removal of the closing quote will result in 'unterminated string literal' - SCRambl will ignore the include and proceed
 					// (TODO: make SCRambl automatically detect the string termination and successfully include the file, while still noting an error)
 //#define FALSE !0==0
 #define FALSE !0==0
 
 // unterminated block comments will be treated like single line comments
-///(*) error handling (!*)/		// works (095f1ad9)
+/* error handling /		// works (095f1ad9)
 // lines beginning with invalid directives are completely skipped
-//#invalid_directive		// works (r55)
+#invalid_directive		// works (r55)
 
 //#if FALSE
 #if FALSE

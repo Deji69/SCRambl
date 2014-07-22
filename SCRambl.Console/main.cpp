@@ -97,9 +97,13 @@ int main(int argc, char* argv[])
 			});
 			//task->AddEventHandler<Event::Warning>(Preprocessor_Warning);
 
+			bool print_nl;
+
 			// Add event handler for preprocessor errors
-			task->AddEventHandler<Event::Error>([script,task](SCRambl::Basic::Error id, std::vector<std::string>& params){
+			task->AddEventHandler<Event::Error>([&print_nl,script,task](SCRambl::Basic::Error id, std::vector<std::string>& params){
 				using SCRambl::Preprocessor::Error;
+
+				if (print_nl) std::cerr << "\n";
 
 				// get some much needed info, display the file, line number and error ID
 				auto & pos = task->Info().GetScriptPos();
@@ -133,8 +137,9 @@ int main(int argc, char* argv[])
 				return true;
 			});
 
-			task->AddEventHandler<Event::FoundToken>([](SCRambl::Script::Range range){
+			task->AddEventHandler<Event::FoundToken>([&print_nl](SCRambl::Script::Range range){
 				std::cerr << ">>>" << range.Formatter(range) << "\n";
+				print_nl = true;
 				return true;
 			});
 

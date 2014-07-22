@@ -286,14 +286,17 @@ namespace SCRambl
 		\*/
 		class Information
 		{
+			friend class Preprocessor;
 			Script::Position		&	m_ScriptPosition;
+
+			void SetScriptPos(Script::Position & pos)				{ m_ScriptPosition = pos; }
 
 		public:
 			Information(Script::Position & pos):
 				m_ScriptPosition(pos)
 			{}
 
-			const Script::Position &	GetScriptPos() const	{ return m_ScriptPosition; }
+			inline const Script::Position &	GetScriptPos() const	{ return m_ScriptPosition; }
 		};
 
 		/*\

@@ -350,8 +350,8 @@ namespace SCRambl
 		while (m_LineIt != m_pCode->GetLines().begin())
 		{
 			--m_LineIt;
-			m_CodeIt = m_LineIt->GetCode().End();
-			if (m_CodeIt != m_LineIt->GetCode().Begin())
+			m_CodeIt = GetLine().GetCode().End();
+			if (m_CodeIt != GetLine().GetCode().Begin())
 				return true;
 		}
 		return false;
@@ -360,7 +360,7 @@ namespace SCRambl
 	Script::Position & Script::Position::Insert(const Symbol & sym)
 	{
 		// insert a single character
-		if (!IsEnd()) m_CodeIt = m_LineIt->GetCode().Insert(m_CodeIt, sym);
+		if (!IsEnd()) m_CodeIt = GetLine().GetCode().Insert(m_CodeIt, sym);
 		return *this;
 	}
 
@@ -369,7 +369,7 @@ namespace SCRambl
 		// erase a single character
 		if (!IsEnd())
 		{
-			m_CodeIt = m_LineIt->GetCode().Erase(m_CodeIt);
+			m_CodeIt = GetLine().GetCode().Erase(m_CodeIt);
 			if (m_CodeIt == GetLine().GetCode().End())
 				Forward();
 		}

@@ -229,26 +229,29 @@ namespace SCRambl
 		inline vector::reference Back()					{ return m_Symbols.back(); }
 		inline vector::const_reference Back() const		{ return m_Symbols.back(); }
 
-		// stupid STL
+		// (stupid STL)
 		inline vector::iterator begin()					{ return Begin(); }
 		inline vector::iterator end()					{ return End(); }
 		inline vector::const_iterator begin() const		{ return Begin(); }
 		inline vector::const_iterator end() const		{ return End(); }
 
 		template<typename... Val>
-		inline void Append(Val&&... v) {
+		inline void Append(Val... v) {
 			m_Symbols.emplace_back(++m_NumCols, std::forward<Val>(v)...);
 		}
 		template<>
-		inline void Append(char&& v) {
-			if (v == '\t') m_NumCols += 3;									// a tab takes up 4 columns - make sure we know
-			m_Symbols.emplace_back(++m_NumCols, std::forward<char>(v));
+		inline void Append(char v) {
+			if (v == '\t') m_NumCols += 4 - (m_NumCols % 4);				// a tab takes up to 4 columns - make sure we know
+			else ++m_NumCols;
+			m_Symbols.emplace_back(m_NumCols, std::forward<char>(v));
 		}
 		template<>
-		inline void Append(Symbol&& v) {
-			if (v.GetChar() == '\t') m_NumCols += 3;						// a tab takes up 4 columns - make sure we know
-			m_Symbols.emplace_back(++m_NumCols, std::forward<Symbol>(v));
+		inline void Append(Symbol v) {
+			if (v.GetChar() == '\t') m_NumCols += 4 - (m_NumCols % 4);		// a tab takes up to 4 columns - make sure we know
+			else ++m_NumCols;
+			m_Symbols.emplace_back(m_NumCols, std::forward<Symbol>(v));
 		}
+
 		inline vector::iterator Insert(vector::const_iterator it, const Symbol & sym) {
 			return m_Symbols.emplace(it, ++m_NumCols, sym);
 		}
