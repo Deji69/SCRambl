@@ -126,5 +126,5 @@ Total: 10
 Done: 0
 
 
-## Completed: 33 / 93 ##
-## 35% Complete ##
+Completed: 33 / 93
+35% Complete
