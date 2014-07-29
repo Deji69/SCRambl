@@ -69,7 +69,7 @@ namespace SCRambl
 			CodeList				m_Code;
 			const File			*	m_CurrentFile;
 			long					m_NumSymbols = 0;
-			long					m_NumLines = 0;
+			//long					m_NumLines = 0;
 
 			inline CodeList	& GetLines()		{ return m_Code; }
 			inline CodeList & operator *()		{ return GetLines(); }
@@ -130,7 +130,7 @@ namespace SCRambl
 			\*/
 			inline void Clear() {
 				m_Code.clear();
-				m_NumLines = 0;
+				//m_NumLines = 0;
 				m_NumSymbols = 0;
 			}
 

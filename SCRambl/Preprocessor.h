@@ -23,27 +23,12 @@ namespace SCRambl
 	namespace Preprocessor
 	{
 		/*\
-		 * WhitespaceScanner - Lexer::Scanner for nothingness
+		 * WhitespaceScanner - Lexer::Scanner for nothingness (useless?)
 		\*/
 		class WhitespaceScanner : public Lexer::Scanner
 		{
 		public:
-			bool Scan(Lexer::State & state, Script::Position & code) override
-			{
-				if (state == Lexer::State::before)
-				{
-					if (code->GetType() == Symbol::whitespace)
-					{
-						// remove excess whitespace (?)
-						auto next = code;
-						++next;
-						while (next && next->GetType() == Symbol::whitespace)
-							next.Delete();
-						return true;
-					}
-				}
-				return false;
-			}
+			bool Scan(Lexer::State & state, Script::Position & code) override;
 		};
 
 		/*\
@@ -52,38 +37,7 @@ namespace SCRambl
 		class IdentifierScanner : public Lexer::Scanner
 		{
 		public:
-			bool Scan(Lexer::State & state, Script::Position & pos) override
-			{
-				switch (state)
-				{
-					// return true if the symbol can only be an identifier
-				case Lexer::State::before:
-					if (pos->GetType() == Symbol::identifier)
-					{
-						++pos;
-						state = Lexer::State::inside;
-						return true;
-					}
-					return false;
-
-					// return true once we've read all of the identifier characters
-				case Lexer::State::inside:
-					while (pos && (pos->GetType() == Symbol::identifier || pos->GetType() == Symbol::number))
-						++pos;
-					state = Lexer::State::after;
-					return true;
-
-					// make sure that a separator followed the identifier chars - else throw a tantrum
-				case Lexer::State::after:
-					if (!pos || pos->IsSeparating())
-					{
-						return true;
-					}
-					// throw()
-					return false;
-				}
-				return false;
-			}
+			bool Scan(Lexer::State & state, Script::Position & pos) override;
 		};
 
 		/*\
@@ -92,35 +46,7 @@ namespace SCRambl
 		class DirectiveScanner : public Lexer::Scanner
 		{
 		public:
-			bool Scan(Lexer::State & state, Script::Position & pos) override
-			{
-				switch (state)
-				{
-					// check prefix
-				case Lexer::State::before:
-					if (pos->GetGrapheme() == Grapheme::hash)		// #
-					{
-						++pos;
-						state = Lexer::State::inside;
-						return true;
-					}
-					break;
-
-					// check for first unfitting character
-				case Lexer::State::inside:
-					if (!pos || pos->GetType() != Symbol::identifier) return false;
-					while (++pos && (pos->GetType() == Symbol::identifier || pos->GetType() == Symbol::number));
-					state = Lexer::State::after;
-					return true;
-
-					// no suffix? no problem.
-				case Lexer::State::after:
-					if (pos->IsSeparating()) return true;
-					//else throw "Invalid symbol in directive"
-					return false;
-				}
-				return false;
-			}
+			bool Scan(Lexer::State & state, Script::Position & pos) override;
 		};
 
 		/*\
@@ -129,53 +55,11 @@ namespace SCRambl
 		class StringLiteralScanner : public Lexer::Scanner
 		{
 		public:
-			enum class Error
-			{
+			enum class Error {
 				unterminated
 			};
 
-			bool Scan(Lexer::State & state, Script::Position & pos) override
-			{
-				switch (state)
-				{
-				case Lexer::State::before:
-					if (pos == '"')
-					{
-						++pos;
-						state = Lexer::State::inside;
-						return true;
-					}
-					return false;
-
-				case Lexer::State::inside:
-					while (pos)
-					{
-						// escaped? just skip it :)
-						if (pos == '\\')
-						{
-							if (++pos) ++pos;
-							continue;
-						}
-						else if (pos->GetType() == Symbol::eol)
-						{
-							throw(Error::unterminated);
-						}
-						else if (pos == '"')
-						{
-							*pos = '\0';
-							++pos;
-							state = Lexer::State::after;
-							return true;
-						}
-						else ++pos;
-					}
-					return false;
-
-				case Lexer::State::after:
-					return true;
-				}
-				return false;
-			}
+			bool Scan(Lexer::State & state, Script::Position & pos) override;
 		};
 
 		/*\
@@ -184,32 +68,7 @@ namespace SCRambl
 		class CommentScanner : public Lexer::Scanner
 		{
 		public:
-			bool Scan(Lexer::State & state, Script::Position & pos) override
-			{
-				switch (state)
-				{
-					// return number of matched prefix chars
-				case Lexer::State::before:
-					if (pos == '/' && ++pos == '/')
-					{
-						++pos;
-						state = Lexer::State::inside;
-						return true;
-					}
-					return false;
-
-					// run to the end of the line, quick!
-				case Lexer::State::inside:
-					while (pos && pos->GetType() != Symbol::eol) ++pos;
-					state = Lexer::State::after;
-					return true;
-
-					// yeah, k
-				case Lexer::State::after:
-					return true;
-				}
-				return false;
-			}
+			bool Scan(Lexer::State & state, Script::Position & pos) override;
 		};
 
 		/*\
@@ -224,59 +83,7 @@ namespace SCRambl
 				end_of_file_reached,
 			};
 
-			bool Scan(Lexer::State & state, Script::Position & pos) override
-			{
-				char last_char = '\0';
-				switch (state)
-				{
-					// check for opening of block comment sequence
-				case Lexer::State::before:
-					// check for opening
-					if (pos == '/' && ++pos == '*')
-					{
-						++pos;
-						++depth;
-						state = Lexer::State::inside;
-						return true;
-					}
-					return false;
-
-					// check for nested comments and closing comment
-				case Lexer::State::inside:
-					do {
-						if (pos->GetType() == Symbol::punctuator)
-						{
-							if (pos == '/')
-							{
-								if (last_char == '*')
-								{
-									++pos;
-									if (!--depth)
-									{
-										state = Lexer::State::after;
-										return true;
-									}
-								}
-							}
-							else if (last_char == '/' && pos == '*')
-							{
-								++depth;
-							}
-
-							last_char = *pos;
-						}
-					} while (++pos);
-					
-					if (depth) throw(Error::end_of_file_reached);
-					ASSERT(!depth);			// TODO: throw error "still in comment at end-of-file"
-					return true;
-
-				case Lexer::State::after:
-					return true;
-				}
-
-				return false;
-			}
+			bool Scan(Lexer::State & state, Script::Position & pos) override;
 		};
 
 		class Task;
@@ -444,7 +251,6 @@ namespace SCRambl
 			bool								m_DisableMacroExpansion = false;
 			bool								m_DisableMacroExpansionOnce = false;
 			std::stack<bool>					m_PreprocessorLogic;
-			std::vector<LexerToken>				m_MessageTokens;						// tokens for a message (e.g. error) back to the host?
 			
 			// Send an error event
 			void SendError(Error);

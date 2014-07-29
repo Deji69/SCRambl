@@ -83,7 +83,7 @@ int main(int argc, char* argv[])
 		try
 		{
 			// Add the preprocessor task to preprocess the script - give it our 'preprocessor' ID so we can identify it later
-			auto task = engine.AddTask<SCRambl::Preprocessor::Task>(preprocessor, std::ref(script));
+			auto preprocessor_task = engine.AddTask<SCRambl::Preprocessor::Task>(preprocessor, std::ref(script));
 			
 			using SCRambl::Preprocessor::Event;
 			/*auto Preprocessor_Warning = [](SCRambl::Preprocessor::Warning id, std::string msg){
@@ -91,22 +91,21 @@ int main(int argc, char* argv[])
 				return true;
 			};*/
 
-			task->AddEventHandler<Event::Begin>([](){
-				std::cout << "Preprocessing... \n";
+			preprocessor_task->AddEventHandler<Event::Begin>([](){
+				std::cout << "Preprocessing started\n";
 				return true;
 			});
-			//task->AddEventHandler<Event::Warning>(Preprocessor_Warning);
 
 			bool print_nl;
 
 			// Add event handler for preprocessor errors
-			task->AddEventHandler<Event::Error>([&print_nl,script,task](SCRambl::Basic::Error id, std::vector<std::string>& params){
+			preprocessor_task->AddEventHandler<Event::Error>([&print_nl, script, preprocessor_task](SCRambl::Basic::Error id, std::vector<std::string>& params){
 				using SCRambl::Preprocessor::Error;
 
 				if (print_nl) std::cerr << "\n";
 
 				// get some much needed info, display the file, line number and error ID
-				auto & pos = task->Info().GetScriptPos();
+				auto & pos = preprocessor_task->Info().GetScriptPos();
 				auto script_file = pos.GetLine().GetFile();
 				std::cerr << script_file->GetPath() << "(" << pos.GetLine() << "," << pos.GetColumn() << ")> error (" << id.Get<SCRambl::Preprocessor::Error>() << "): ";
 
@@ -114,6 +113,7 @@ int main(int argc, char* argv[])
 				switch (id.Get<SCRambl::Preprocessor::Error>()) {
 				default:
 				{
+					// unknown error? print all available params
 					bool b = false;
 					for (auto p : params) {
 						if (!p.empty())
@@ -153,8 +153,8 @@ int main(int argc, char* argv[])
 				return true;
 			});
 
-			task->AddEventHandler<Event::FoundToken>([&print_nl](SCRambl::Script::Range range){
-				std::cerr << ">>>" << range.Formatter(range) << "\n";
+			preprocessor_task->AddEventHandler<Event::FoundToken>([&print_nl](SCRambl::Script::Range range){
+				//std::cerr << ">>>" << range.Formatter(range) << "\n";
 				print_nl = true;
 				return true;
 			});
@@ -168,8 +168,23 @@ int main(int argc, char* argv[])
 
 			// main loop
 			using SCRambl::TaskSystem::Task;
+			float fNumLines = script.GetCode().NumLines();
 			while (engine.Run().GetState() != finished)
 			{
+				switch (engine.GetCurrentTaskID()) {
+				case preprocessor: {
+					auto& task = engine.GetCurrentTask<SCRambl::Preprocessor::Task>();
+					std::cout << "Preprocessing...";
+					std::cout << std::floor(((float)task.Info().GetScriptPos().GetLine() / fNumLines) * 100.0) << "%" << "\r";
+					break;
+				}
+				case parser: {
+					auto& task = engine.GetCurrentTask<SCRambl::Parser>();
+					std::cout << "Parsing...\r";
+					//std::cout << std::floor(((float)task.->Info().GetScriptPos().GetLine() / (float)script.GetCode().NumLines()) * 100.0) << "%" << "\r";
+					break;
+				}
+				}
 			}
 		}
 		catch (const std::exception & ex)

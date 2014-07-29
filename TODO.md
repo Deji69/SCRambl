@@ -12,17 +12,21 @@ Deadline: V?
 - [ ] Parser Tasks
 - [ ] Compiler Tasks
 - [ ] Linker Tasks
+Total: 9
+Done: 6
 
 ## Lexer ##
 - [x] Scanner Engine
-- [ ] Numeric Scanner
+- [x] Numeric Scanner
 	- [x] Integer Scanning
-	- [ ] Float Scanning
+	- [x] Float Scanning
 - [x] Identifier Scanner
 - [x] Directive Scanner
 - [x] Operator Scanner
 - [x] String Literal Scanner
 - [x] Comment Scanner
+Total: 9
+Done: 9
 
 ## Preprocessor ##
 - [ ] Preprocessor Features
@@ -56,6 +60,8 @@ Deadline: V?
 	- [x] Line Splicing
 	- [x] Character Mapping
 	- [ ] Tokenization
+Total: 31
+Done: 18
 
 ## Parser ##
 - [ ] SCR Elements
@@ -90,10 +96,14 @@ Deadline: V?
 	- [ ] Operand Type Detection
 - [ ] Other
 	- [ ] Constant Expressions ?
+Total: 32
+Done: 0
 
 ## Compiler ##
 - [ ] Translation
 - [ ] Compilation
+Total: 2
+Done: 0
 
 ## Linker ##
 - [ ] Linker Formats
@@ -106,3 +116,9 @@ Deadline: V?
 	- [ ] Functions <> CLEO Scripts
 	- [ ] Text Labels <> GXT ?
 	- [ ] Library ?
+Total: 10
+Done: 0
+
+
+## Completed: 33 / 93 ##
+## 35% Complete ##

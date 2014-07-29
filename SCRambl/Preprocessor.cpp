@@ -126,24 +126,6 @@ namespace SCRambl
 			}
 		}
 
-		// Printf-styled error reporting
-		void Preprocessor::SendError(Error type)
-		{
-			// send
-			std::vector<std::string> params;
-			m_Task(Event::Error, Basic::Error(type), params);
-		}
-		template<typename First, typename... Args>
-		void Preprocessor::SendError(Error type, First&& first, Args&&... args)
-		{
-			// storage for error parameters
-			std::vector<std::string> params;
-			// format the error parameters to the vector
-			m_Engine.Format(params, first, args...);
-			// send
-			m_Task(Event::Error, Basic::Error(type), params);
-		}
-
 		void Preprocessor::RunningState()
 		{
 			auto old_state = m_State;
@@ -173,7 +155,13 @@ namespace SCRambl
 
 		void Preprocessor::HandleToken()
 		{
+			switch (m_Token) {
+			case Token::Identifier:
 
+				break;
+			}
+
+			m_State = lexing;
 		}
 
 		void Preprocessor::HandleDirective()
@@ -759,7 +747,7 @@ namespace SCRambl
 					}
 
 					// tell brother
-					m_Task(Event::FoundToken, Script::Range(m_Token.Begin(), m_Token.End()));
+					m_Task(Event::FoundToken, m_Token.Range());
 
 					switch (m_Token)
 					{
@@ -841,6 +829,231 @@ namespace SCRambl
 				if (m_Token == Token::Number)
 					return true;
 			}
+			return false;
+		}
+
+		// Printf-styled error reporting
+		void Preprocessor::SendError(Error type)
+		{
+			// send
+			std::vector<std::string> params;
+			m_Task(Event::Error, Basic::Error(type), params);
+		}
+		template<typename First, typename... Args>
+		void Preprocessor::SendError(Error type, First&& first, Args&&... args)
+		{
+			// storage for error parameters
+			std::vector<std::string> params;
+			// format the error parameters to the vector
+			m_Engine.Format(params, first, args...);
+			// send
+			m_Task(Event::Error, Basic::Error(type), params);
+		}
+
+		// Scanners - BORING! ;)
+
+		// Scan nothing (as useless as it sounds)
+		bool WhitespaceScanner::Scan(Lexer::State & state, Script::Position & code)
+		{
+			if (state == Lexer::State::before)
+			{
+				if (code->GetType() == Symbol::whitespace)
+				{
+					// remove excess whitespace (?)
+					auto next = code;
+					++next;
+					while (next && next->GetType() == Symbol::whitespace)
+						next.Delete();
+					return true;
+				}
+			}
+			return false;
+		}
+		// Scan identifiers
+		bool IdentifierScanner::Scan(Lexer::State & state, Script::Position & pos)
+		{
+			switch (state)
+			{
+				// return true if the symbol can only be an identifier
+			case Lexer::State::before:
+				if (pos->GetType() == Symbol::identifier)
+				{
+					++pos;
+					state = Lexer::State::inside;
+					return true;
+				}
+				return false;
+
+				// return true once we've read all of the identifier characters
+			case Lexer::State::inside:
+				while (pos && (pos->GetType() == Symbol::identifier || pos->GetType() == Symbol::number))
+					++pos;
+				state = Lexer::State::after;
+				return true;
+
+				// make sure that a separator followed the identifier chars - else throw a tantrum
+			case Lexer::State::after:
+				if (!pos || pos->IsSeparating())
+				{
+					return true;
+				}
+				// throw()
+				return false;
+			}
+			return false;
+		}
+		// Scan directives
+		bool DirectiveScanner::Scan(Lexer::State & state, Script::Position & pos)
+		{
+			switch (state)
+			{
+				// check prefix
+			case Lexer::State::before:
+				if (pos->GetGrapheme() == Grapheme::hash)		// #
+				{
+					++pos;
+					state = Lexer::State::inside;
+					return true;
+				}
+				break;
+
+				// check for first unfitting character
+			case Lexer::State::inside:
+				if (!pos || pos->GetType() != Symbol::identifier) return false;
+				while (++pos && (pos->GetType() == Symbol::identifier || pos->GetType() == Symbol::number));
+				state = Lexer::State::after;
+				return true;
+
+				// no suffix? no problem.
+			case Lexer::State::after:
+				if (pos->IsSeparating()) return true;
+				//else throw "Invalid symbol in directive"
+				return false;
+			}
+			return false;
+		}
+		// Scan string literals
+		bool StringLiteralScanner::Scan(Lexer::State & state, Script::Position & pos)
+		{
+			switch (state)
+			{
+			case Lexer::State::before:
+				if (pos == '"')
+				{
+					++pos;
+					state = Lexer::State::inside;
+					return true;
+				}
+				return false;
+
+			case Lexer::State::inside:
+				while (pos)
+				{
+					// escaped? just skip it :)
+					if (pos == '\\')
+					{
+						if (++pos) ++pos;
+						continue;
+					}
+					else if (pos->GetType() == Symbol::eol)
+					{
+						throw(Error::unterminated);
+					}
+					else if (pos == '"')
+					{
+						*pos = '\0';
+						++pos;
+						state = Lexer::State::after;
+						return true;
+					}
+					else ++pos;
+				}
+				return false;
+
+			case Lexer::State::after:
+				return true;
+			}
+			return false;
+		}
+		// Scan line comments
+		bool CommentScanner::Scan(Lexer::State & state, Script::Position & pos)
+		{
+			switch (state)
+			{
+				// return number of matched prefix chars
+			case Lexer::State::before:
+				if (pos == '/' && ++pos == '/')
+				{
+					++pos;
+					state = Lexer::State::inside;
+					return true;
+				}
+				return false;
+
+				// run to the end of the line, quick!
+			case Lexer::State::inside:
+				while (pos && pos->GetType() != Symbol::eol) ++pos;
+				state = Lexer::State::after;
+				return true;
+
+				// yeah, k
+			case Lexer::State::after:
+				return true;
+			}
+			return false;
+		}
+		// Scan block comments
+		bool BlockCommentScanner::Scan(Lexer::State & state, Script::Position & pos)
+		{
+			char last_char = '\0';
+			switch (state)
+			{
+				// check for opening of block comment sequence
+			case Lexer::State::before:
+				// check for opening
+				if (pos == '/' && ++pos == '*')
+				{
+					++pos;
+					++depth;
+					state = Lexer::State::inside;
+					return true;
+				}
+				return false;
+
+				// check for nested comments and closing comment
+			case Lexer::State::inside:
+				do {
+					if (pos->GetType() == Symbol::punctuator)
+					{
+						if (pos == '/')
+						{
+							if (last_char == '*')
+							{
+								++pos;
+								if (!--depth)
+								{
+									state = Lexer::State::after;
+									return true;
+								}
+							}
+						}
+						else if (last_char == '/' && pos == '*')
+						{
+							++depth;
+						}
+
+						last_char = *pos;
+					}
+				} while (++pos);
+
+				if (depth) throw(Error::end_of_file_reached);
+				ASSERT(!depth);			// TODO: throw error "still in comment at end-of-file"
+				return true;
+
+			case Lexer::State::after:
+				return true;
+			}
+
 			return false;
 		}
 	}

@@ -15,9 +15,9 @@
 //#invalid_directive		// works (r55)
 
 // #if defined(FALSE) && 0
-// error handling complient	()
-#if defined(FALSE) && ++0
-// #elif * 1
+// error handling complient	(19e7c2d5)
+#if defined(FALSE) && 0
+// (skip me) #elif * 1
 #elif 1
 // this is preprocessed
 #endif
