@@ -12,6 +12,7 @@ Deadline: V?
 - [ ] Parser Tasks
 - [ ] Compiler Tasks
 - [ ] Linker Tasks
+
 Total: 9
 Done: 6
 
@@ -25,6 +26,7 @@ Done: 6
 - [x] Operator Scanner
 - [x] String Literal Scanner
 - [x] Comment Scanner
+
 Total: 9
 Done: 9
 
@@ -60,6 +62,7 @@ Done: 9
 	- [x] Line Splicing
 	- [x] Character Mapping
 	- [ ] Tokenization
+
 Total: 31
 Done: 18
 
@@ -96,12 +99,14 @@ Done: 18
 	- [ ] Operand Type Detection
 - [ ] Other
 	- [ ] Constant Expressions ?
+
 Total: 32
 Done: 0
 
 ## Compiler ##
 - [ ] Translation
 - [ ] Compilation
+
 Total: 2
 Done: 0
 
@@ -116,6 +121,7 @@ Done: 0
 	- [ ] Functions <> CLEO Scripts
 	- [ ] Text Labels <> GXT ?
 	- [ ] Library ?
+
 Total: 10
 Done: 0
 
