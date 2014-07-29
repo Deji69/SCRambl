@@ -131,6 +131,22 @@ int main(int argc, char* argv[])
 					break;
 				case Error::unterminated_string_literal: std::cerr << "unterminated string literal";
 					break;
+				case Error::expr_expected_operator: std::cerr << "expected an operator (found '" << params[0] << "')";
+					break;
+				case Error::expr_unexpected_float: std::cerr << "float in integer constant expression '" << params[0] << "'";
+					break;
+				case Error::expr_unmatched_closing_parenthesis: std::cerr << "unmatched closing parenthesis '" << params[0] << "'";
+					break;
+				case Error::expr_invalid_operator: std::cerr << "forbidden operator '" << params[0] << "' in constant expression";
+					break;
+				case Error::expected_expression: std::cerr << "expected an expression";
+					break;
+				case Error::expected_identifier: std::cerr << "expected an identifier (found '" << params[0] << "')";
+					break;
+				case Error::invalid_unary_operator: std::cerr << "invalid unary operator '" << params[0] << "'";
+					break;
+				case Error::invalid_unary_operator_use: std::cerr << "invalid use of unary operator '" << params[0] << "'";
+					break;
 				}
 
 				std::cerr << "\n";

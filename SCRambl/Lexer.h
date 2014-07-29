@@ -58,6 +58,8 @@ namespace SCRambl
 			inline Script::Position			Inside() const			{ return m_Middle; }
 			// get the position of the token at the very end
 			inline Script::Position			End() const				{ return m_End; }
+			// get the entire range
+			inline Script::Range			Range() const			{ return{ m_Start, m_End }; }
 
 			inline operator TokenIDType &()							{ return m_Type; }
 			inline operator TokenIDType () const					{ return m_Type; }

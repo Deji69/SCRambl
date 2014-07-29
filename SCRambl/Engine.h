@@ -55,7 +55,7 @@ namespace SCRambl
 		}
 
 		/*\
-		 - Set, override or cancel the override of a string formatter
+		 * Engine::SetFormatter<> - Set, override or cancel the override of a string formatter
 		\*/
 		template<typename T, typename F>
 		void SetFormatter(F &func)
@@ -63,6 +63,9 @@ namespace SCRambl
 			Formatters[&typeid(T)] = std::make_shared<Formatter<T>>(func);
 		}
 
+		/*\
+		 * Engine::AddTask<> - Add task to the running engine
+		\*/
 		template<typename T, typename ID, typename... Params>
 		const std::shared_ptr<T> AddTask(ID id, Params&&... prms)
 		{
@@ -76,6 +79,9 @@ namespace SCRambl
 			return task;
 		}
 
+		/*\
+		 * Engine::RemoveTask<> - Remove task from the running engine
+		\*/
 		template<typename ID>
 		bool RemoveTask(ID id)
 		{
@@ -107,14 +113,25 @@ namespace SCRambl
 			if (!Formatters.empty())
 			{
 				auto it = Formatters.find(&typeid(T));
-				if (it != Formatters.end())
-				{
+				if (it != Formatters.end()) {
 					return it->second->Qualify<T>()(param);
 				}
 			}
-
 			return "";
 		}
+
+		// specialisations for easy non-SCRambl types
+		//template<> inline std::string Format(std::string & param) const				{ return param; }
+		template<> inline std::string Format(const std::string& param) const		{ return param; }
+		template<> inline std::string Format(const int& param) const				{ return std::to_string(param); }
+		template<> inline std::string Format(const unsigned int& param) const		{ return std::to_string(param); }
+		template<> inline std::string Format(const long& param) const				{ return std::to_string(param); }
+		template<> inline std::string Format(const unsigned long& param) const		{ return std::to_string(param); }
+		template<> inline std::string Format(const long long& param) const			{ return std::to_string(param); }
+		template<> inline std::string Format(const unsigned long long& param) const { return std::to_string(param); }
+		template<> inline std::string Format(const float& param) const				{ return std::to_string(param); }
+		template<> inline std::string Format(const double& param) const				{ return std::to_string(param); }
+		template<> inline std::string Format(const long double& param) const		{ return std::to_string(param); }
 
 		/*\
 		 * Engine::Format<T, T, ...> - String format multiple types

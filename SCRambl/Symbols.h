@@ -154,6 +154,7 @@ namespace SCRambl
 		inline Grapheme GetGrapheme() const		{ return m_Grapheme; }
 		inline operator char() const			{ return GetChar(); }
 		inline bool HasGrapheme() const			{ return m_Grapheme != Grapheme::max_type; }
+		inline bool IsEOL() const				{ return m_Type == eol; }
 		inline bool IsIgnorable() const			{ return m_Type == whitespace; }
 		inline bool IsSeparating() const {
 			switch (m_Type)

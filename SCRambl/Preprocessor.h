@@ -109,7 +109,7 @@ namespace SCRambl
 					// check for first unfitting character
 				case Lexer::State::inside:
 					if (!pos || pos->GetType() != Symbol::identifier) return false;
-					while (++pos && pos->GetType() == Symbol::identifier || pos->GetType() == Symbol::number);
+					while (++pos && (pos->GetType() == Symbol::identifier || pos->GetType() == Symbol::number));
 					state = Lexer::State::after;
 					return true;
 
@@ -307,12 +307,20 @@ namespace SCRambl
 		public:
 			enum ID {
 				// involuntary errors (errors that should be impossible)
-				invalid_unary_operator		= 500,
+				internal_invalid_unary_operator		= 500,
 
 				// normal errors
-				invalid_directive				= 1000,
-				unterminated_block_comment,		// 1001
-				unterminated_string_literal,	// 1002
+				invalid_directive						= 1000,
+				unterminated_block_comment,				// 1001
+				unterminated_string_literal,			// 1002
+				expr_expected_operator,					// 1003
+				expr_unexpected_float,					// 1004
+				expr_unmatched_closing_parenthesis,		// 1005
+				expr_invalid_operator,					// 1006
+				expected_identifier,					// 1007
+				expected_expression,					// 1008
+				invalid_unary_operator,					// 1009
+				invalid_unary_operator_use,				// 1010
 			};
 
 			Error(ID id) : m_ID(id)
