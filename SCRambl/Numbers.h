@@ -41,16 +41,12 @@ namespace SCRambl
 				m_Float = false;
 
 				// obviously we need to make sure this is a number
-				if (pos->GetType() == Symbol::number)
-				{
+				if (pos->GetType() == Symbol::number) {
 					// if 0 is first, check for a prefix
-					if (*pos == '0')
-					{
+					if (*pos == '0') {
 						auto pre = pos;
-						if (++pre)
-						{
-							if (IsHexPrefix(*pre))
-							{
+						if (++pre) {
+							if (IsHexPrefix(*pre)) {
 								m_Hex = true;
 								pos = pre;
 								if (!++pos) return false;
@@ -62,26 +58,43 @@ namespace SCRambl
 				}
 				return false;
 
-			case Lexer::State::inside:
-			{
-				int n = 0;
+			case Lexer::State::inside: {
+				// avoid much use of floats
+				unsigned long n = 0;
+				unsigned long d = 1;		// number of decimal places
+				unsigned long f = 0;		// the RHS of the decimal point
 				do
 				{
-					// make numbers?
-					if (pos->GetType() == Symbol::number)
-						n = n * (m_Hex ? 0x10 : 10) + *pos - '0';
-					else if (m_Hex)
-					{
-						if (*pos >= 'A' && *pos <= 'F')
-							n = n * 0x10 + *pos - 'A' + 0xA;
-						else if (*pos >= 'a' && *pos <= 'f')
-							n = n * 0x10 + *pos - 'a' + 0xA;
+					// make numbers, not war?
+					if (!m_Float) {
+						if (pos->GetType() == Symbol::number)
+							n = n * (m_Hex ? 0x10 : 10) + *pos - '0';
+						else if (m_Hex) {
+							if (*pos >= 'A' && *pos <= 'F')
+								n = n * 0x10 + *pos - 'A' + 0xA;
+							else if (*pos >= 'a' && *pos <= 'f')
+								n = n * 0x10 + *pos - 'a' + 0xA;
+							else break;
+						}
+						else if (*pos == '.') {
+							// lets start floating
+							m_Float = true;
+						}
 						else break;
 					}
-					else break;
+					else {
+						if (pos->GetType() == Symbol::number) {
+							f = f * 10 + *pos - '0';
+							d *= 10;
+						}
+						else break;
+					}
 				}
 				while (++pos);
-				m_IntVal = n;
+				if (m_Float) {
+					m_FloatVal = n + ((float)f / (float)d);
+				}
+				else m_IntVal = n;
 				state = Lexer::State::after;
 				return true;
 			}
@@ -93,16 +106,11 @@ namespace SCRambl
 		}
 
 		template<typename T> inline T Get() const;
-		template<>
-		inline int Get<int>() const				{ return m_Float ? (int)m_FloatVal : m_IntVal; }
-		template<>
-		inline float Get<float>() const			{ return m_Float ? m_FloatVal : (float)m_IntVal; }
+		template<> inline int Get<int>() const		{ return m_Float ? (int)m_FloatVal : m_IntVal; }
+		template<> inline float Get<float>() const	{ return m_Float ? m_FloatVal : (float)m_IntVal; }
 
 		template<typename T> bool Is() const;
-
-		template<>
-		inline bool Is<int>() const				{ return !m_Float; }
-		template<>
-		inline bool Is<float>() const			{ return m_Float; }
+		template<> inline bool Is<int>() const		{ return !m_Float; }
+		template<> inline bool Is<float>() const	{ return m_Float; }
 	};
 }
