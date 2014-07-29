@@ -174,8 +174,11 @@ namespace SCRambl
 		template<typename T, T max>
 		class Scanner : public Lexer::Scanner
 		{
-							Operator::Table<T, max>			&	m_Table;
-			typename const	Operator::Table<T, max>::Cell	*	m_Cell;
+			typedef typename Operator::Table<T, max>::Cell OperatorCell;
+			Operator::Table<T, max>		&	m_Table;
+			const OperatorCell			*	m_Cell;
+			Script::Position				m_LastOperatorPos;
+			const OperatorCell			*	m_LastOperatorCell;
 
 		public:
 			Scanner(Operator::Table<T, max> & table) : m_Table(table)
@@ -189,6 +192,11 @@ namespace SCRambl
 				case Lexer::State::before:
 					if (!pos->HasGrapheme()) return false;
 					m_Cell = &m_Table.GetCell(pos->GetGrapheme());
+					if (m_Cell->GetOperator() != max) {
+						m_LastOperatorCell = m_Cell;
+						m_LastOperatorPos = pos;
+					}
+					else m_LastOperatorCell = nullptr;
 					state = Lexer::State::inside;
 					++pos;
 					return true;
@@ -196,11 +204,16 @@ namespace SCRambl
 				case Lexer::State::inside:
 					for (; pos && pos->HasGrapheme(); ++pos)
 					{
-						if (!m_Cell->Next(pos->GetGrapheme(), m_Cell))
-							return false;
+						if (!m_Cell->Next(pos->GetGrapheme(), m_Cell)) break;
+						if (m_Cell->GetOperator() != max) {
+							m_LastOperatorCell = m_Cell;
+							m_LastOperatorPos = pos;
+						}
 					}
-					if (m_Cell->GetOperator() != max)
+					if (m_LastOperatorCell)
 					{
+						m_Cell = m_LastOperatorCell;
+						pos = m_LastOperatorPos + 1;
 						state = Lexer::State::after;
 						return true;
 					}
