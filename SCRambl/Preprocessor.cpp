@@ -24,7 +24,7 @@ namespace SCRambl
 			Reset();
 
 			// we need token scanners!
-			m_Lexer.AddTokenScanner(Token::None, m_WhitespaceScanner);
+			//m_Lexer.AddTokenScanner(Token::None, m_WhitespaceScanner);
 			m_Lexer.AddTokenScanner(Token::BlockComment, m_BlockCommentScanner);
 			m_Lexer.AddTokenScanner(Token::Comment, m_CommentScanner);
 			m_Lexer.AddTokenScanner(Token::Directive, m_DirectiveScanner);
@@ -48,6 +48,8 @@ namespace SCRambl
 			// arithmetic operators - add em
 			m_Operators.AddOperator({ { '+' } }, Operator::add);
 			m_Operators.AddOperator({ { '-' } }, Operator::sub);
+			m_Operators.AddOperator({ { '+', '+' } }, Operator::inc);
+			m_Operators.AddOperator({ { '-', '-' } }, Operator::dec);
 			m_Operators.AddOperator({ { '*' } }, Operator::mult);
 			m_Operators.AddOperator({ { '/' } }, Operator::div);
 			m_Operators.AddOperator({ { '%' } }, Operator::mod);
@@ -362,10 +364,19 @@ namespace SCRambl
 			// storage of chained (unary operations, operator code range)
 			std::stack<std::pair<Operator::Type,Script::Range>>	unary_operators;
 
-			while (true)
+			// end of the line at the very beginning? that may be a problem...
+			if (m_CodePos->IsEOL()) {
+				SendError(Error::expected_expression);
+			}
+
+			while (!m_CodePos->IsEOL())
 			{
 				// Lex
-				if (Lex() == Lexer::Result::found_nothing) break;
+				if (Lex() == Lexer::Result::found_nothing) {
+					// TODO: elaborate
+					SendError(Error::expected_expression);
+					continue;
+				}
 
 				// Do stuff
 				switch (m_Token)
@@ -378,26 +389,70 @@ namespace SCRambl
 						val = ProcessExpression(true);
 						got_val = true;
 					}
+					paren = true;
 					break;
 
 				case Token::CloseParen:
-					if (!ignore_parentheses)
-					{
-						//if (!paren) throw("Unmatched closing parentheses")
+					if (!paren) {
+						SendError(Error::expr_unmatched_closing_parenthesis, std::string(")"));
 					}
-					else ignore_parentheses = false;
+					paren = false;
+					if (ignore_parentheses)
+					{
+						ignore_parentheses = false;
+						got_val = true;
+						break;
+					}
 					return result;
 
 				case Token::Number:
-					ASSERT(!got_val && "Add error handling");
-					ASSERT(!m_NumericScanner.Is<float>() && "Add error handling");
+					//ASSERT(!got_val && "Add error handling");
+					//ASSERT(!m_NumericScanner.Is<float>() && "Add error handling");
+					if (defined_operator) {
+						SendError(Error::expected_identifier, m_Token.Range());
 
-					val = m_NumericScanner.Get<int>();
-					got_val = true;
+						// recover
+						val = 0;
+						defined_operator = false;
+						m_DisableMacroExpansion = false;
+						if (!paren) {
+							ignore_parentheses = false;
+							got_val = true;
+						}
+						break;
+					}
+
+					if (got_val) {
+						SendError(Error::expr_expected_operator, m_Token.Range());
+					}
+					else {
+						if (m_NumericScanner.Is<float>()) {
+							// for recovery we'll simply try to demote the float to an integer and continue
+							// errors during preprocessor expressions may be treated later by completely skipping to #endif (even if an #else is present)
+							SendError(Error::expr_unexpected_float, m_Token.Range());
+						}
+						
+						val = m_NumericScanner.Get<int>();
+						got_val = true;
+					}
 					break;
 
 				case Token::Operator:
 					//if (op == Operator::max_operator) throw;
+					if (defined_operator) {
+						SendError(Error::expected_identifier, m_Token.Range());
+
+						// recover
+						val = 0;
+						defined_operator = false;
+						m_DisableMacroExpansion = false;
+						if (!paren) {
+							ignore_parentheses = false;
+							got_val = true;
+						}
+						break;
+					}
+
 					last_op = op;
 					switch (op = m_OperatorScanner.GetOperator())
 					{
@@ -425,7 +480,13 @@ namespace SCRambl
 					case Operator::mult:		// *
 					case Operator::div:			// /
 					case Operator::mod:			// %
-						got_val = false;
+						if (!got_val) SendError(Error::invalid_unary_operator, m_Token.Range());
+						else got_val = false;
+						break;
+
+					case Operator::inc:			// ++
+					case Operator::dec:			// --
+						SendError(Error::expr_invalid_operator, m_Token.Range());
 						break;
 
 						// Bitwise
@@ -434,7 +495,8 @@ namespace SCRambl
 					case Operator::bit_xor:		// ^
 					case Operator::bit_shl:		// <<
 					case Operator::bit_shr:		// >>
-						got_val = false;
+						if (!got_val) SendError(Error::invalid_unary_operator, m_Token.Range());
+						else got_val = false;
 						break;
 
 					case Operator::bit_not:
@@ -453,7 +515,8 @@ namespace SCRambl
 					case Operator::leq:			// <=
 					case Operator::eq:			// ==
 					case Operator::neq:			// !=
-						got_val = false;
+						if (!got_val) SendError(Error::invalid_unary_operator, m_Token.Range());
+						else got_val = false;
 						break;
 
 						// Logical
@@ -464,6 +527,7 @@ namespace SCRambl
 							unary_operators.emplace(Operator::not, std::make_pair(m_Token.Begin(), m_Token.End()));
 							op = last_op;
 						}
+						else SendError(Error::invalid_unary_operator_use, m_Token.Range());
 						break;
 
 					case Operator::and:			// &&
@@ -474,10 +538,12 @@ namespace SCRambl
 							log_op = op;
 							got_val = false;
 						}
+						else SendError(Error::expected_expression);
 						break;
 
 					case Operator::cond:		// ?
 					case Operator::condel:		// :
+						// (TODO)
 						got_val = false;
 						break;
 
@@ -501,11 +567,12 @@ namespace SCRambl
 						defined_operator = false;
 						m_DisableMacroExpansion = false;
 
-						// in case there were no parentheses
-						ignore_parentheses = false;
+						// if there were no parentheses, quit trying to ignore them
+						if (!paren) ignore_parentheses = false;
 					}
 					else
 					{
+						// TODO: handle such keyword/operators with a system
 						if (m_Identifier == "defined")
 						{
 							// since it's technically a unary operator (keyword and possible function, IMO),
@@ -516,6 +583,7 @@ namespace SCRambl
 								ignore_parentheses = true;
 								m_DisableMacroExpansion = true;
 							}
+							else SendError(Error::expr_expected_operator, m_Token.Range());
 						}
 					}
 					break;
@@ -613,7 +681,7 @@ namespace SCRambl
 				result = log_operand & (result != 0);
 			else if (log_op == Operator::or)
 				result = log_operand | (result != 0);
-
+			
 			return result;
 		}
 
@@ -623,7 +691,8 @@ namespace SCRambl
 
 			while (true)
 			{
-				while (m_CodePos && m_CodePos->IsIgnorable()) ++m_CodePos;
+				while (m_CodePos && m_CodePos->IsIgnorable())
+					++m_CodePos;
 
 				// If we're preprocessing a directive, directly return further directions
 				if (m_State == found_directive && m_CodePos->GetType() == Symbol::punctuator)
@@ -684,8 +753,10 @@ namespace SCRambl
 					m_CodePos = m_Token.End();
 
 					// only try to handle directives and comments if we're skipping source
-					if (!GetSourceControl() && (m_Token != Token::Directive))
-						continue;
+					if (m_Directive != Directive::ELIF) {
+						if (!GetSourceControl() && (m_Token != Token::Directive))
+							continue;
+					}
 
 					// tell brother
 					m_Task(Event::FoundToken, Script::Range(m_Token.Begin(), m_Token.End()));
@@ -708,8 +779,8 @@ namespace SCRambl
 						// get the directive identifier and look up its ID
 						m_Directive = GetDirective(m_Script.GetCode().Select(m_Token.Inside(), m_Token.End()));
 
-						// if the source is being skipped, wait until we have an #endif directive
-						if (!GetSourceControl() && m_Directive != Directive::ENDIF)
+						// if the source is being skipped, wait until we have an #else/#elif/#endif directive
+						if (!GetSourceControl() && m_Directive != Directive::ENDIF && m_Directive != Directive::ELSE && m_Directive != Directive::ELIF)
 							continue;
 
 						// if the directive is invalid, send an error with the range of the identifier
@@ -728,7 +799,7 @@ namespace SCRambl
 					case Token::String:
 						// save the string
 						m_String = m_Script.GetCode().Select(m_Token.Inside(), m_Token.End());
-						m_String.erase(std::find_if(m_String.rbegin(), m_String.rend(), std::not1(std::function<bool(int)>([](int c){ return c == '\0'; }))).base(), m_String.end());
+						m_String = m_String.substr(0, m_String.find_last_not_of('\0') + 1);
 						break;
 
 					case Token::Identifier:
