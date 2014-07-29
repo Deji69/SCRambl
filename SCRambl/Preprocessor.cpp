@@ -148,11 +148,6 @@ namespace SCRambl
 			}
 		}
 
-		Information & Preprocessor::BuildInformation(Information & info) const
-		{
-			return info;
-		}
-
 		void Preprocessor::HandleToken()
 		{
 			switch (m_Token) {
@@ -202,23 +197,24 @@ namespace SCRambl
 				break;
 
 			case Directive::IF:
-				PushSourceControl(ProcessExpression() != 0);
+				PushSourceControl(GetSourceControl() ? ProcessExpression() != 0 : false);
 				break;
 
 			case Directive::IFDEF:
 				if (Lex() == Lexer::Result::found_token && m_Token == Token::Identifier)
-					PushSourceControl(m_Macros.Get(m_Identifier) != nullptr);
+					PushSourceControl(GetSourceControl() ? (m_Macros.Get(m_Identifier) != nullptr) : false);
 				break;
 
 			case Directive::IFNDEF:
 				if (Lex() == Lexer::Result::found_token && m_Token == Token::Identifier)
-					PushSourceControl(m_Macros.Get(m_Identifier) == nullptr);
+					PushSourceControl(GetSourceControl() ? (m_Macros.Get(m_Identifier) == nullptr) : false);
 				break;
 
 			case Directive::ELIF:
 				if (!GetSourceControl())
 				{
-					if (ProcessExpression() != 0) InvertSourceControl();
+					PopSourceControl();
+					PushSourceControl(GetSourceControl() ? (ProcessExpression() != 0) : false);
 				}
 				break;
 
@@ -238,9 +234,9 @@ namespace SCRambl
 						m_State = lexing;
 						return;
 					}
-					//else throw("failed to include file...")
+					else SendError(Error::include_failed, m_String);
 				}
-				// else throw "expected string"
+				else SendError(Error::dir_expected_file_name, m_Directive);
 				break;
 
 			default:
@@ -369,6 +365,11 @@ namespace SCRambl
 				// Do stuff
 				switch (m_Token)
 				{
+				default:
+					// TODO: elaborate
+					SendError(Error::expected_expression);
+					continue;
+
 				case Token::OpenParen:
 					// we may be ignoring parentheses to prevent trying to retrieve a macro as a value (for 'defined(MACRO)')
 					// yes, we hate that stupid wannabe operator/keyword/function
@@ -767,17 +768,17 @@ namespace SCRambl
 						// get the directive identifier and look up its ID
 						m_Directive = GetDirective(m_Script.GetCode().Select(m_Token.Inside(), m_Token.End()));
 
-						// if the source is being skipped, wait until we have an #else/#elif/#endif directive
-						if (!GetSourceControl() && m_Directive != Directive::ENDIF && m_Directive != Directive::ELSE && m_Directive != Directive::ELIF)
+						// if the source is being skipped, wait until we have a related directive
+						if (!GetSourceControl() && !DoesDirectiveIgnoreSourceControl(m_Directive))
 							continue;
-
+						
 						// if the directive is invalid, send an error with the range of the identifier
 						if (m_Directive == Directive::INVALID)
 						{
 							// ensure any report is at the beginning of the directive, not the end where we currently are
-							m_Information.SetScriptPos(m_Token.Begin());
+							//m_Information.SetScriptPos(m_Token.Begin());
 							SendError(Error::invalid_directive, Script::Range(m_Token.Inside(), m_Token.End()));
-							m_Information.SetScriptPos(m_CodePos);
+							//m_Information.SetScriptPos(m_CodePos);
 
 							// to recover, skip to the eol
 							while (m_CodePos->GetType() != Symbol::eol) ++m_CodePos;

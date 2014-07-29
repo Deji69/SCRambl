@@ -474,7 +474,7 @@ namespace SCRambl
 		void LoadFile(const std::string &);
 		
 		// Include file in specific code line
-		Position & Include(Position &, const std::string &);
+		Position Include(Position &, const std::string &);
 
 		// OK?
 		inline bool OK() const				{ return true; }

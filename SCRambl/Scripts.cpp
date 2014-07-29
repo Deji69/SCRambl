@@ -107,12 +107,17 @@ namespace SCRambl
 		Init();
 	}
 
-	Script::Position & Script::Include(Script::Position & pos, const std::string & path)
+	Script::Position Script::Include(Script::Position & pos, const std::string & path)
 	{
 		ASSERT(m_File);
-		auto file = m_File->IncludeFile(pos, path);
-
+		try {
+			auto file = m_File->IncludeFile(pos, path);
+		}
+		catch (const Script::File & file) {
+			return m_Code.End();
+		}
 		return pos;
+
 		/*
 		std::ifstream file(path, std::ios::in);
 		if (file.is_open())
@@ -292,6 +297,7 @@ namespace SCRambl
 	{
 		std::ifstream file(path, std::ios::in);
 		if (file) ReadFile(file);
+		else throw *this;
 		code.SetFile(this);
 	}
 
@@ -303,6 +309,7 @@ namespace SCRambl
 	{
 		std::ifstream file(path, std::ios::in);
 		if (file) ReadFile(file);
+		else throw *this;
 	}
 
 	void Script::Position::GetCodeLine()

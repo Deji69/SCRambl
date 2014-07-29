@@ -128,6 +128,12 @@ namespace SCRambl
 				expected_expression,					// 1008
 				invalid_unary_operator,					// 1009
 				invalid_unary_operator_use,				// 1010
+				dir_expected_file_name,					// 1011
+
+				// fatal errors
+				fatal_begin								= 4000,
+				include_failed							= 4000,
+				fatal_end,
 			};
 
 			Error(ID id) : m_ID(id)
@@ -173,13 +179,21 @@ namespace SCRambl
 				default:
 				case INVALID: break;
 				case INCLUDE: name = "include";
+					break;
 				case DEFINE: name = "define";
+					break;
 				case IFDEF: name = "ifdef";
+					break;
 				case IFNDEF: name = "ifndef";
+					break;
 				case IF: name = "if";
+					break;
 				case ELIF: name = "elif";
+					break;
 				case ELSE: name = "else";
+					break;
 				case ENDIF: name = "endif";
+					break;
 				}
 				return !name.empty() ? ("#" + name) : "(invalid)";
 			}
@@ -251,6 +265,7 @@ namespace SCRambl
 			bool								m_DisableMacroExpansion = false;
 			bool								m_DisableMacroExpansionOnce = false;
 			std::stack<bool>					m_PreprocessorLogic;
+			unsigned long						m_FalseLogicDepth = 0;					// for #if..#endif's ocurring within "#if FALSE"
 			
 			// Send an error event
 			void SendError(Error);
@@ -258,7 +273,8 @@ namespace SCRambl
 
 			// Enter conditional source compilation
 			void PushSourceControl(bool b) {
-				m_PreprocessorLogic.push(b);
+				// if source is already deactivated, override b and deactivate again
+				m_PreprocessorLogic.push(GetSourceControl() ? b : false);
 			}
 			// Return from conditional source compilation
 			void PopSourceControl() {
@@ -266,9 +282,15 @@ namespace SCRambl
 				m_PreprocessorLogic.pop();
 			}
 			// Invert conditional source compilation state
-			inline void InvertSourceControl() {
+			void InvertSourceControl() {
 				ASSERT(!m_PreprocessorLogic.empty() && "Unmatched #else?");
-				m_PreprocessorLogic.top() = !m_PreprocessorLogic.top();
+				
+				// don't invert if we're within an #if which is within an "#if FALSE"
+				if (!GetSourceControl()) {
+					PopSourceControl();
+					PushSourceControl(GetSourceControl() ? true : false);
+				}
+				else m_PreprocessorLogic.top() = false;
 			}
 			// Get conditional source compilation state
 			inline bool GetSourceControl() const {
@@ -286,9 +308,6 @@ namespace SCRambl
 			void HandleDirective();
 			// Strips comments
 			void HandleComment();
-
-			// Gather information
-			Information & BuildInformation(Information & info) const;
 
 			// Lex main code
 			Lexer::Result Lex();
@@ -311,6 +330,20 @@ namespace SCRambl
 			inline Directive GetDirective(const std::string & str) const {
 				DirectiveMap::const_iterator it;
 				return it = m_Directives.find(str), it != m_Directives.end() ? (*it).second : Directive::INVALID;
+			}
+
+			// Returns true if the directive should be processed in a false #if
+			inline bool DoesDirectiveIgnoreSourceControl(Directive::Type dir) {
+				switch (dir) {
+				case Directive::IF:
+				case Directive::IFDEF:
+				case Directive::IFNDEF:
+				case Directive::ELIF:
+				case Directive::ELSE:
+				case Directive::ENDIF:
+					return false;
+				}
+				return false;
 			}
 		};
 

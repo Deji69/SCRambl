@@ -92,14 +92,14 @@ int main(int argc, char* argv[])
 			};*/
 
 			preprocessor_task->AddEventHandler<Event::Begin>([](){
-				std::cout << "Preprocessing started\n";
+				std::cout << "\nPreprocessing started.\n";
 				return true;
 			});
 
 			bool print_nl;
 
 			// Add event handler for preprocessor errors
-			preprocessor_task->AddEventHandler<Event::Error>([&print_nl, script, preprocessor_task](SCRambl::Basic::Error id, std::vector<std::string>& params){
+			preprocessor_task->AddEventHandler<Event::Error>([&print_nl, &script, &preprocessor_task](SCRambl::Basic::Error id, std::vector<std::string>& params){
 				using SCRambl::Preprocessor::Error;
 
 				if (print_nl) std::cerr << "\n";
@@ -107,7 +107,9 @@ int main(int argc, char* argv[])
 				// get some much needed info, display the file, line number and error ID
 				auto & pos = preprocessor_task->Info().GetScriptPos();
 				auto script_file = pos.GetLine().GetFile();
-				std::cerr << script_file->GetPath() << "(" << pos.GetLine() << "," << pos.GetColumn() << ")> error (" << id.Get<SCRambl::Preprocessor::Error>() << "): ";
+				auto error_id = id.Get<SCRambl::Preprocessor::Error>();
+				bool fatal = error_id >= Error::fatal_begin && error_id <= Error::fatal_end;
+				std::cerr << script_file->GetPath() << "(" << pos.GetLine() << "," << pos.GetColumn() << ")> " << (fatal ? "error" : "fatal error") << "(" << error_id << ") : ";
 
 				// 
 				switch (id.Get<SCRambl::Preprocessor::Error>()) {
@@ -125,6 +127,11 @@ int main(int argc, char* argv[])
 					}
 					break;
 				}
+					// fatal errors
+				case Error::include_failed: std::cerr << "failed to include file '" << params[0] << "'";
+					break;
+
+					// errors
 				case Error::invalid_directive: std::cerr << "invalid directive '" << params[0] << "'";
 					break;
 				case Error::unterminated_block_comment: std::cerr << "unterminated block comment";
@@ -147,6 +154,7 @@ int main(int argc, char* argv[])
 					break;
 				case Error::invalid_unary_operator_use: std::cerr << "invalid use of unary operator '" << params[0] << "'";
 					break;
+				case Error::dir_expected_file_name: std::cerr << "'" << params[0] << "' expected a file name";
 				}
 
 				std::cerr << "\n";
