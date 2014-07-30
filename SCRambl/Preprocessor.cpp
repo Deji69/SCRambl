@@ -150,9 +150,11 @@ namespace SCRambl
 
 		void Preprocessor::HandleToken()
 		{
+			auto & tokens = m_Script.GetTokens();
+
 			switch (m_Token) {
 			case Token::Identifier:
-
+				
 				break;
 			}
 

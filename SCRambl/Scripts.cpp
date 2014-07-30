@@ -111,9 +111,9 @@ namespace SCRambl
 	{
 		ASSERT(m_File);
 		try {
-			auto file = m_File->IncludeFile(pos, path);
+			/*auto & file = */m_File->IncludeFile(pos, path);
 		}
-		catch (const Script::File & file) {
+		catch (const Script::File &) {
 			return m_Code.End();
 		}
 		return pos;

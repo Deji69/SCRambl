@@ -12,7 +12,6 @@
 #include <assert.h>
 #include "utils.h"
 //#include "FileSystem.h"
-#include "Errors.h"
 #include "Symbols.h"
 #include "Tokens.h"
 
@@ -394,15 +393,16 @@ namespace SCRambl
 			{
 			}
 
-			inline operator const std::pair<Position, Position>() const	{ return Get(); }
-			inline const std::pair<Position, Position> & Get() const	{ return m_Pair; }
-			inline const Position & Begin() const		{ return m_Pair.first; }
-			inline const Position & End() const			{ return m_Pair.second; }
-
 			// String formatter
 			static inline std::string Formatter(const Range & range) {
 				return range.Begin().Select(range.End());
 			}
+
+			inline operator const std::pair<Position, Position>() const	{ return Get(); }
+			inline const std::pair<Position, Position> & Get() const	{ return m_Pair; }
+			inline const Position & Begin() const		{ return m_Pair.first; }
+			inline const Position & End() const			{ return m_Pair.second; }
+			inline std::string Format() const			{ return Formatter(*this); }
 		};
 
 		/*\
@@ -434,7 +434,6 @@ namespace SCRambl
 		std::shared_ptr<File>				m_File;
 		Code								m_Code;
 		Tokens								m_Tokens;
-		StringList							m_Warnings;
 
 		// Initialise script for parsing with current code
 		void Init();

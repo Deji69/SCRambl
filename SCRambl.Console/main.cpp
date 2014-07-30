@@ -82,10 +82,11 @@ int main(int argc, char* argv[])
 
 		try
 		{
+			using SCRambl::Preprocessor::Event;
+
 			// Add the preprocessor task to preprocess the script - give it our 'preprocessor' ID so we can identify it later
 			auto preprocessor_task = engine.AddTask<SCRambl::Preprocessor::Task>(preprocessor, std::ref(script));
 			
-			using SCRambl::Preprocessor::Event;
 			/*auto Preprocessor_Warning = [](SCRambl::Preprocessor::Warning id, std::string msg){
 				std::cout << "warning ("<< id <<"): "<< msg;
 				return true;
@@ -109,14 +110,18 @@ int main(int argc, char* argv[])
 				auto script_file = pos.GetLine().GetFile();
 				auto error_id = id.Get<SCRambl::Preprocessor::Error>();
 				bool fatal = error_id >= Error::fatal_begin && error_id <= Error::fatal_end;
-				std::cerr << script_file->GetPath() << "(" << pos.GetLine() << "," << pos.GetColumn() << ")> " << (fatal ? "error" : "fatal error") << "(" << error_id << ") : ";
+
+				// "  %s(%d,%d)> {fatal} error(%d) : "
+				// e.g. "  file.sc(6,9)> fatal error(4001) : "
+				std::cerr	<< "  " << script_file->GetPath() << "(" << pos.GetLine() << "," << pos.GetColumn()
+							<< ")> " << (fatal ? "fatal error" : "error") << "(" << error_id << ") : ";
 
 				// 
 				switch (id.Get<SCRambl::Preprocessor::Error>()) {
 				default:
-				{
 					// unknown error? print all available params
-					bool b = false;
+					bool b;
+					b = false;
 					for (auto p : params) {
 						if (!p.empty())
 						{
@@ -126,7 +131,6 @@ int main(int argc, char* argv[])
 						}
 					}
 					break;
-				}
 					// fatal errors
 				case Error::include_failed: std::cerr << "failed to include file '" << params[0] << "'";
 					break;
@@ -155,6 +159,7 @@ int main(int argc, char* argv[])
 				case Error::invalid_unary_operator_use: std::cerr << "invalid use of unary operator '" << params[0] << "'";
 					break;
 				case Error::dir_expected_file_name: std::cerr << "'" << params[0] << "' expected a file name";
+					break;
 				}
 
 				std::cerr << "\n";
@@ -176,7 +181,7 @@ int main(int argc, char* argv[])
 
 			// main loop
 			using SCRambl::TaskSystem::Task;
-			float fNumLines = script.GetCode().NumLines();
+			float fNumLines = (float)script.GetCode().NumLines();
 			while (engine.Run().GetState() != finished)
 			{
 				switch (engine.GetCurrentTaskID()) {

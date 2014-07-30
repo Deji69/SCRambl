@@ -87,7 +87,6 @@
     <ClInclude Include="Symbols.h" />
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="Engine.h" />
-    <ClInclude Include="Errors.h" />
     <ClInclude Include="BuildSystem.h" />
     <ClInclude Include="Directives.h" />
     <ClInclude Include="Environment.h" />

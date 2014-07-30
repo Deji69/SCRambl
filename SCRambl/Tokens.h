@@ -50,25 +50,31 @@ namespace SCRambl
 		{ }
 	};
 
-	template<Token::Type TokType>
+	//template<Token::Type TokType>
 	class TokenInfo
 	{
 	public:
+		enum Type {
+			Identifier, Label,
+		};
+
 		class Data
 		{
 
 		};
 
 	private:
-		//TokType				m_Type;
-		//Script::Position		m_Inside;
-		//Script::Position		m_After;
+		Type					m_Type;
+		Script::Range			m_Code;				// source code range in Script
 
 	public:
-		inline Token::Type		GetType() const		{ return TokType; }
+		inline const Script::Range &	GetRange() const			{ return m_Code; }
+		inline std::string				GetSource() const			{ return m_Code.Format(); }
+		inline Type						GetType() const				{ return m_Type; }
 	};
 
 	class Tokens
 	{
+		std::vector<TokenInfo>			m_Tokens;
 	};
 }

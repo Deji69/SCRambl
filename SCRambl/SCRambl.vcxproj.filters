@@ -72,9 +72,6 @@
     <ClInclude Include="Environment.h">
       <Filter>Header</Filter>
     </ClInclude>
-    <ClInclude Include="Errors.h">
-      <Filter>Header</Filter>
-    </ClInclude>
     <ClInclude Include="Exception.h">
       <Filter>Header</Filter>
     </ClInclude>
