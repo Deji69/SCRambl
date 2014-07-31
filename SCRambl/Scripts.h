@@ -455,7 +455,11 @@ namespace SCRambl
 
 			// Insert
 			template<typename TToken, typename... TArgs>
-			inline void Add(TArgs&&... args)		{ return m_Tokens.emplace_back(std::make_shared<TToken, TArgs&&...>(std::forward<TArgs>(args)...)); }
+			inline std::shared_ptr<TToken> Add(TArgs&&... args)		{
+				auto ptr = std::make_shared<TToken, TArgs&&...>(std::forward<TArgs>(args)...);
+				m_Tokens.push_back(ptr);
+				return ptr;
+			}
 
 			/* Navigation */
 

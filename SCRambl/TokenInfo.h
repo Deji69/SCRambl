@@ -9,38 +9,6 @@
 
 namespace SCRambl
 {
-	namespace Token
-	{
-		enum Type
-		{
-			None,
-			Whitespace,
-			Eol,
-			Identifier,
-			Label,
-			Directive,
-			OpenParen,
-			CloseParen,
-			Comment,
-			BlockComment,
-			Number,
-			Operator,
-			String,
-			Invalid,
-			Max = Invalid
-		};
-
-		template<typename T = Type>
-		class Data
-		{
-			T					m_Type;
-
-		public:
-			Data(T type) : m_Type(type)
-			{ }
-		};
-	}
-	
 	enum class PreprocessingToken {
 		None, Directive, Identifier, Label, Number, Operator, String
 	};
@@ -77,5 +45,23 @@ namespace SCRambl
 
 		inline std::tuple<TValueType...> &			GetValue()					{ return m_Value; }
 		inline const std::tuple <TValueType...> &	GetValue() const			{ return m_Value; }
+	};
+	
+	enum class TokenType {
+		None,
+		Whitespace,
+		Eol,
+		Identifier,
+		Label,
+		Directive,
+		OpenParen,
+		CloseParen,
+		Comment,
+		BlockComment,
+		Number,
+		Operator,
+		String,
+		Invalid,
+		Max = Invalid
 	};
 }

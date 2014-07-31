@@ -25,15 +25,15 @@ namespace SCRambl
 			Reset();
 
 			// we need token scanners!
-			//m_Lexer.AddTokenScanner(Token::None, m_WhitespaceScanner);
-			m_Lexer.AddTokenScanner(Token::BlockComment, m_BlockCommentScanner);
-			m_Lexer.AddTokenScanner(Token::Comment, m_CommentScanner);
-			m_Lexer.AddTokenScanner(Token::Directive, m_DirectiveScanner);
-			m_Lexer.AddTokenScanner(Token::String, m_StringLiteralScanner);
-			//m_Lexer.AddTokenScanner(Token::Label, m_LabelScanner);
-			m_Lexer.AddTokenScanner(Token::Identifier, m_IdentifierScanner);
-			m_Lexer.AddTokenScanner(Token::Number, m_NumericScanner);
-			m_Lexer.AddTokenScanner(Token::Operator, m_OperatorScanner);
+			//m_Lexer.AddTokenScanner(TokenType::None, m_WhitespaceScanner);
+			m_Lexer.AddTokenScanner(TokenType::BlockComment, m_BlockCommentScanner);
+			m_Lexer.AddTokenScanner(TokenType::Comment, m_CommentScanner);
+			m_Lexer.AddTokenScanner(TokenType::Directive, m_DirectiveScanner);
+			m_Lexer.AddTokenScanner(TokenType::String, m_StringLiteralScanner);
+			//m_Lexer.AddTokenScanner(TokenType::Label, m_LabelScanner);
+			m_Lexer.AddTokenScanner(TokenType::Identifier, m_IdentifierScanner);
+			m_Lexer.AddTokenScanner(TokenType::Number, m_NumericScanner);
+			m_Lexer.AddTokenScanner(TokenType::Operator, m_OperatorScanner);
 
 			// map directives
 			m_Directives["define"] = Directive::DEFINE;
@@ -151,14 +151,15 @@ namespace SCRambl
 
 		void Preprocessor::HandleToken()
 		{
-			auto & tokens = m_Script.GetTokens();
-
 			switch (m_Token) {
-			case Token::Identifier:
+			case TokenType::Identifier:
 				AddToken(PreprocessingToken::Identifier, m_Token.Range());
 				break;
-			case Token::Number:
-				AddToken(PreprocessingToken::Number, m_Token.Range(), m_NumericScanner.Is<int>() ? m_NumericScanner.Get<int>() : m_NumericScanner.Get<float>());
+			case TokenType::Number:
+				if (m_NumericScanner.Is<int>())
+					AddToken(PreprocessingToken::Number, m_Token.Range(), NumberType::Integer, m_NumericScanner.Get<int>());
+				else
+					AddToken(PreprocessingToken::Number, m_Token.Range(), NumberType::Float, m_NumericScanner.Get<float>());
 				break;
 			}
 
@@ -170,7 +171,7 @@ namespace SCRambl
 			switch (m_Directive)
 			{
 			case Directive::DEFINE:
-				if (Lex() == Lexer::Result::found_token && m_Token == Token::Identifier)
+				if (Lex() == Lexer::Result::found_token && m_Token == TokenType::Identifier)
 				{
 					Macro::Name name = m_Identifier;
 
@@ -196,7 +197,7 @@ namespace SCRambl
 				// make sure we're not handed dirty macro code
 				m_DisableMacroExpansionOnce = true;
 
-				if (Lex() == Lexer::Result::found_token && m_Token == Token::Identifier)
+				if (Lex() == Lexer::Result::found_token && m_Token == TokenType::Identifier)
 					m_Macros.Undefine(m_Identifier);
 				else
 					throw;
@@ -207,12 +208,12 @@ namespace SCRambl
 				break;
 
 			case Directive::IFDEF:
-				if (Lex() == Lexer::Result::found_token && m_Token == Token::Identifier)
+				if (Lex() == Lexer::Result::found_token && m_Token == TokenType::Identifier)
 					PushSourceControl(GetSourceControl() ? (m_Macros.Get(m_Identifier) != nullptr) : false);
 				break;
 
 			case Directive::IFNDEF:
-				if (Lex() == Lexer::Result::found_token && m_Token == Token::Identifier)
+				if (Lex() == Lexer::Result::found_token && m_Token == TokenType::Identifier)
 					PushSourceControl(GetSourceControl() ? (m_Macros.Get(m_Identifier) == nullptr) : false);
 				break;
 
@@ -233,7 +234,7 @@ namespace SCRambl
 				break;
 
 			case Directive::INCLUDE:
-				if (Lex() == Lexer::Result::found_token && m_Token == Token::String)
+				if (Lex() == Lexer::Result::found_token && m_Token == TokenType::String)
 				{
 					if (m_Script.Include(m_CodePos, m_String))
 					{
@@ -290,7 +291,7 @@ namespace SCRambl
 				// handle state-changing token types
 				switch (m_Token.GetType())
 				{
-				case Token::Directive:
+				case TokenType::Directive:
 					m_State = found_directive;
 					return;
 
@@ -376,7 +377,7 @@ namespace SCRambl
 					SendError(Error::expected_expression);
 					continue;
 
-				case Token::OpenParen:
+				case TokenType::OpenParen:
 					// we may be ignoring parentheses to prevent trying to retrieve a macro as a value (for 'defined(MACRO)')
 					// yes, we hate that stupid wannabe operator/keyword/function
 					if (!ignore_parentheses)
@@ -387,7 +388,7 @@ namespace SCRambl
 					paren = true;
 					break;
 
-				case Token::CloseParen:
+				case TokenType::CloseParen:
 					if (!paren) {
 						SendError(Error::expr_unmatched_closing_parenthesis, std::string(")"));
 					}
@@ -400,7 +401,7 @@ namespace SCRambl
 					}
 					return result;
 
-				case Token::Number:
+				case TokenType::Number:
 					//ASSERT(!got_val && "Add error handling");
 					//ASSERT(!m_NumericScanner.Is<float>() && "Add error handling");
 					if (defined_operator) {
@@ -432,7 +433,7 @@ namespace SCRambl
 					}
 					break;
 
-				case Token::Operator:
+				case TokenType::Operator:
 					//if (op == Operator::max_operator) throw;
 					if (defined_operator) {
 						SendError(Error::expected_identifier, m_Token.Range());
@@ -554,7 +555,7 @@ namespace SCRambl
 					ASSERT ((!got_val || op != Operator::max_operator) && "Premature error in testing phase (unary used AFTER a value)");
 					break;
 
-				case Token::Identifier:
+				case TokenType::Identifier:
 					if (defined_operator)
 					{
 						val = m_Macros.Get(m_Identifier) != nullptr;
@@ -696,7 +697,7 @@ namespace SCRambl
 					{
 					case '(':
 					case ')':
-						m_Token(c == '(' ? Token::OpenParen : Token::CloseParen, m_CodePos, m_CodePos, m_CodePos + 1);
+						m_Token(c == '(' ? TokenType::OpenParen : TokenType::CloseParen, m_CodePos, m_CodePos, m_CodePos + 1);
 						m_CodePos = m_Token.End();
 						return Lexer::Result::found_token;
 					default:
@@ -749,7 +750,7 @@ namespace SCRambl
 
 					// only try to handle directives and comments if we're skipping source
 					//if (m_Directive != Directive::ELIF) {
-						if (!GetSourceControl() && (m_Token != Token::Directive))
+					if (!GetSourceControl() && (m_Token != TokenType::Directive))
 							continue;
 					//}
 
@@ -761,8 +762,8 @@ namespace SCRambl
 						/*\
 						 - Take care of these directly and continue until there's some real code...
 						\*/
-					case Token::Comment:
-					case Token::BlockComment:
+					case TokenType::Comment:
+					case TokenType::BlockComment:
 						// handle comments immediately - get rid o' that ol' waste o' space
 						HandleComment();
 						continue;
@@ -770,7 +771,7 @@ namespace SCRambl
 						/*\
 						 - These will be handled by the callee
 						\*/
-					case Token::Directive:
+					case TokenType::Directive:
 						// get the directive identifier and look up its ID
 						m_Directive = GetDirective(m_Script.GetCode().Select(m_Token.Inside(), m_Token.End()));
 
@@ -791,13 +792,13 @@ namespace SCRambl
 						}
 						break;
 
-					case Token::String:
+					case TokenType::String:
 						// save the string
 						m_String = m_Script.GetCode().Select(m_Token.Inside(), m_Token.End());
 						m_String = m_String.substr(0, m_String.find_last_not_of('\0') + 1);
 						break;
 
-					case Token::Identifier:
+					case TokenType::Identifier:
 						// save the identifier
 						m_Identifier = m_Script.GetCode().Select(m_Token.Begin(), m_Token.End());
 
@@ -833,7 +834,7 @@ namespace SCRambl
 		{
 			if (Lex() == Lexer::Result::found_token)
 			{
-				if (m_Token == Token::Number)
+				if (m_Token == TokenType::Number)
 					return true;
 			}
 			return false;

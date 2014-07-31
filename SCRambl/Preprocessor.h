@@ -207,11 +207,13 @@ namespace SCRambl
 			friend class Information;
 
 		private:
-			using LexerToken = Lexer::Token < Token::Type >;
-			using LexerMachine = Lexer::Lexer < Token::Type >;
+			using LexerToken = Lexer::Token < TokenType >;
+			using LexerMachine = Lexer::Lexer < TokenType >;
 			using DirectiveMap = std::unordered_map < std::string, Directive >;
 			using OperatorTable = Operator::Table < Operator::Type, Operator::max_operator >;
 			using OperatorScanner = Operator::Scanner < Operator::Type, Operator::max_operator >;
+			template<typename... T>
+			using Token = TokenInfo < PreprocessingToken, T... > ;
 
 			Engine					&	m_Engine;
 			Task					&	m_Task;
@@ -317,9 +319,9 @@ namespace SCRambl
 
 			// Add a preprocessing token
 			template<typename... TArgs>
-			inline void AddToken(PreprocessingToken token, TArgs&&... args)
+			inline std::shared_ptr<Token<TArgs...>> AddToken(PreprocessingToken token, TArgs&&... args)
 			{
-				m_Tokens.Add < TokenInfo<PreprocessingToken, TArgs...> >(token, std::forward<TArgs>(args)...);
+				return m_Tokens.Add < Token<TArgs...> >(token, std::forward<TArgs>(args)...);
 			}
 
 			// Handle expressions

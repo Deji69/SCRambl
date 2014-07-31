@@ -10,6 +10,10 @@
 
 namespace SCRambl
 {
+	enum class NumberType {
+		Integer, Float, Byte, Word, DWord
+	};
+
 	class NumericScanner : public Lexer::Scanner
 	{
 	public:
