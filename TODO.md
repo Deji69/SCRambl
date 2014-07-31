@@ -2,6 +2,10 @@
 
 Deadline: V?
 
+**Completed: 33 / 93**
+
+est. 35% Complete
+
 ## Engine ##
 - [x] Task System
 	- [x] Event System
@@ -14,6 +18,7 @@ Deadline: V?
 - [ ] Linker Tasks
 
 Total: 9
+
 Done: 6
 
 ## Lexer ##
@@ -28,6 +33,7 @@ Done: 6
 - [x] Comment Scanner
 
 Total: 9
+
 Done: 9
 
 ## Preprocessor ##
@@ -64,6 +70,7 @@ Done: 9
 	- [ ] Tokenization
 
 Total: 31
+
 Done: 18
 
 ## Parser ##
@@ -101,6 +108,7 @@ Done: 18
 	- [ ] Constant Expressions ?
 
 Total: 32
+
 Done: 0
 
 ## Compiler ##
@@ -108,6 +116,7 @@ Done: 0
 - [ ] Compilation
 
 Total: 2
+
 Done: 0
 
 ## Linker ##
@@ -123,8 +132,5 @@ Done: 0
 	- [ ] Library ?
 
 Total: 10
+
 Done: 0
-
-
-Completed: 33 / 93
-35% Complete

@@ -75,6 +75,19 @@ namespace SCRambl
 
 	class Tokens
 	{
-		std::vector<TokenInfo>			m_Tokens;
+		typedef std::vector<TokenInfo> Vector;
+		Vector			m_Tokens;
+
+	public:
+		class Iterator
+		{
+			Vector::iterator		m_It;
+
+		public:
+			Iterator() = default;
+			Iterator(Vector & vec) : m_It(vec.begin()) { }
+		};
+
+		Tokens() = default;
 	};
 }
