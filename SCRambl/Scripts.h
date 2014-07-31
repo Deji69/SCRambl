@@ -13,12 +13,11 @@
 #include "utils.h"
 //#include "FileSystem.h"
 #include "Symbols.h"
-#include "Tokens.h"
+#include "TokenInfo.h"
 
 namespace SCRambl
 {
 	//typedef std::list<class Script::Line> CodeList;
-	typedef std::vector<std::string> StringList;
 
 	class Script
 	{
@@ -29,6 +28,7 @@ namespace SCRambl
 		class Column;
 		class Range;
 		class Position;
+		class Tokens;
 
 		typedef std::list<Line> CodeList;
 		typedef std::vector<File> Files;
@@ -429,11 +429,50 @@ namespace SCRambl
 			void ReadFile(std::ifstream &);
 			File & IncludeFile(Position &, const std::string &);
 		};
+
+		/*\
+		 * Script::Tokens - Preprocessing token container
+		\*/
+		class Tokens
+		{
+			typedef std::vector<std::shared_ptr<IToken>> Vector;
+			Vector			m_Tokens;
+
+		public:
+			class Iterator
+			{
+				Vector::iterator		m_It;
+
+			public:
+				Iterator() = default;
+				Iterator(Vector::iterator it) : m_It(it) { }
+			};
+
+			Tokens() = default;
+			Tokens(const Vector & vec) : m_Tokens(vec) { }
+
+			/* Manipulation */
+
+			// Insert
+			template<typename TToken, typename... TArgs>
+			inline void Add(TArgs&&... args)		{ return m_Tokens.emplace_back(std::make_shared<TToken, TArgs&&...>(std::forward<TArgs>(args)...)); }
+
+			/* Navigation */
+
+			// Begin
+			inline Iterator Begin()					{ return m_Tokens.begin(); }
+			// End
+			inline Iterator End()					{ return m_Tokens.end(); }
+
+			// STL hates my style
+			inline Iterator begin()					{ return Begin(); }
+			inline Iterator end()					{ return End(); }
+		};
 		
 	private:
 		std::shared_ptr<File>				m_File;
-		Code								m_Code;
 		Tokens								m_Tokens;
+		Code								m_Code;
 
 		// Initialise script for parsing with current code
 		void Init();
@@ -460,14 +499,12 @@ namespace SCRambl
 		}
 
 	public:
-		Script()
-		{ }
-
+		// Default construction
+		Script();
 		// Construct script parser with code from memory
 		Script(const CodeList &);
 
-		~Script()
-		{ }
+		~Script();
 
 		// Load file into code lines
 		void LoadFile(const std::string &);
@@ -476,12 +513,13 @@ namespace SCRambl
 		Position Include(Position &, const std::string &);
 
 		// OK?
-		inline bool OK() const				{ return true; }
+		inline bool OK() const						{ return true; }
 		// Number of source lines
-		inline size_t GetNumLines() const	{ return m_Code.NumLines(); }
+		inline size_t GetNumLines() const			{ return m_Code.NumLines(); }
 		// Get the almighty source code list
-		inline Code & GetCode()				{ return m_Code; }
+		inline Code & GetCode()						{ return m_Code; }
 		// Get the informative token list
-		inline Tokens & GetTokens()			{ return m_Tokens; }
+		inline Tokens & GetTokens()					{ return m_Tokens; }
+		inline const Tokens & GetTokens() const		{ return m_Tokens; }
 	};
 }

@@ -132,8 +132,11 @@ namespace SCRambl
 		return pos;*/
 	}
 
+	Script::Script()
+	{ }
 	Script::Script(const CodeList & code) : m_Code(code)
 	{ }
+	Script::~Script() { }
 
 	Script::Position & Script::Code::Insert(Position & at, const Code & code)
 	{

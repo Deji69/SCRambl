@@ -14,6 +14,7 @@ namespace SCRambl
 			m_Task(task),
 			m_Engine(engine),
 			m_Script(script),
+			m_Tokens(script.GetTokens()),
 			m_Lexer(),
 			m_CodePos(script.GetCode()),
 			m_OperatorScanner(m_Operators),
@@ -154,7 +155,10 @@ namespace SCRambl
 
 			switch (m_Token) {
 			case Token::Identifier:
-				
+				AddToken(PreprocessingToken::Identifier, m_Token.Range());
+				break;
+			case Token::Number:
+				AddToken(PreprocessingToken::Number, m_Token.Range(), m_NumericScanner.Is<int>() ? m_NumericScanner.Get<int>() : m_NumericScanner.Get<float>());
 				break;
 			}
 
@@ -744,10 +748,10 @@ namespace SCRambl
 					m_CodePos = m_Token.End();
 
 					// only try to handle directives and comments if we're skipping source
-					if (m_Directive != Directive::ELIF) {
+					//if (m_Directive != Directive::ELIF) {
 						if (!GetSourceControl() && (m_Token != Token::Directive))
 							continue;
-					}
+					//}
 
 					// tell brother
 					m_Task(Event::FoundToken, m_Token.Range());

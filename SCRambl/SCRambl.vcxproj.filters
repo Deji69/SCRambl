@@ -96,9 +96,6 @@
     <ClInclude Include="Numbers.h">
       <Filter>Header</Filter>
     </ClInclude>
-    <ClInclude Include="Tasks.h">
-      <Filter>Header</Filter>
-    </ClInclude>
     <ClInclude Include="Symbols.h">
       <Filter>Header</Filter>
     </ClInclude>
@@ -124,9 +121,6 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="Operators.h">
-      <Filter>Header</Filter>
-    </ClInclude>
-    <ClInclude Include="Tokens.h">
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="utils\hash.h">
@@ -157,6 +151,12 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="Standard.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Tasks.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="TokenInfo.h">
       <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>

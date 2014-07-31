@@ -16,7 +16,7 @@
 #include "Identifiers.h"
 #include "Operators.h"
 #include "Numbers.h"
-#include "Tokens.h"
+#include "TokenInfo.h"
 
 namespace SCRambl
 {
@@ -260,6 +260,7 @@ namespace SCRambl
 		private:
 			State								m_State = init;
 			Script							&	m_Script;
+			Script::Tokens					&	m_Tokens;
 			Script::Position					m_CodePos;
 			bool								m_bScriptIsLoaded;						// if so, we only need to add-in any #include's
 			bool								m_DisableMacroExpansion = false;
@@ -314,6 +315,13 @@ namespace SCRambl
 			// Lex around for a number
 			bool LexNumber();
 
+			// Add a preprocessing token
+			template<typename... TArgs>
+			inline void AddToken(PreprocessingToken token, TArgs&&... args)
+			{
+				m_Tokens.Add < TokenInfo<PreprocessingToken, TArgs...> >(token, std::forward<TArgs>(args)...);
+			}
+
 			// Handle expressions
 			int ProcessExpression(bool paren = false);
 
@@ -341,7 +349,7 @@ namespace SCRambl
 				case Directive::ELIF:
 				case Directive::ELSE:
 				case Directive::ENDIF:
-					return false;
+					return true;
 				}
 				return false;
 			}

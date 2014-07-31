@@ -17,9 +17,7 @@ est. 35% Complete
 - [ ] Compiler Tasks
 - [ ] Linker Tasks
 
-Total: 9
-
-Done: 6
+Completed: 6 / 9
 
 ## Lexer ##
 - [x] Scanner Engine
@@ -32,9 +30,7 @@ Done: 6
 - [x] String Literal Scanner
 - [x] Comment Scanner
 
-Total: 9
-
-Done: 9
+Completed: 9 / 9
 
 ## Preprocessor ##
 - [ ] Preprocessor Features
@@ -69,9 +65,7 @@ Done: 9
 	- [x] Character Mapping
 	- [ ] Tokenization
 
-Total: 31
-
-Done: 18
+Completed: 31 / 18
 
 ## Parser ##
 - [ ] SCR Elements
@@ -107,17 +101,13 @@ Done: 18
 - [ ] Other
 	- [ ] Constant Expressions ?
 
-Total: 32
-
-Done: 0
+Completed: 32 / 0
 
 ## Compiler ##
 - [ ] Translation
 - [ ] Compilation
 
-Total: 2
-
-Done: 0
+Completed: 2 / 0
 
 ## Linker ##
 - [ ] Linker Formats
@@ -131,6 +121,4 @@ Done: 0
 	- [ ] Text Labels <> GXT ?
 	- [ ] Library ?
 
-Total: 10
-
-Done: 0
+Completed: 10 / 0
