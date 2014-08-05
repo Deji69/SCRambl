@@ -15,10 +15,11 @@ namespace SCRambl
 {
 	class ProjectFile
 	{
-		CXMLFile			m_XMLFile;
+		pugi::xml_document			m_XML;
 
-		ProjectFile(const char * szName, const char * szFilePath) : m_XMLFile(szFilePath)
+		ProjectFile(const char * szName, const char * szFilePath)
 		{
+			m_XML.load_file(szFilePath);
 		}
 	};
 

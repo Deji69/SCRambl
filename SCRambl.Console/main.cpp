@@ -52,6 +52,10 @@ int main(int argc, char* argv[])
 	// Initiate SCRambl engine
 	SCRambl::Engine engine;
 
+	// Load configuration
+	std::cout << "Loading configuration...\n";
+	engine.LoadConfigFile("config\\gtasa\\commands.xml");
+
 	enum Task
 	{
 		//preparser,

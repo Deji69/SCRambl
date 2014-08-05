@@ -8,10 +8,13 @@
 #include <list>
 #include <memory>
 #include <map>
+#include "utils.h"
 #include "Builder.h"
 #include "Tasks.h"
 #include "Formatter.h"
 #include "Reporting.h"
+#include "Configuration.h"
+#include "Commands.h"
 
 namespace SCRambl
 {
@@ -25,6 +28,10 @@ namespace SCRambl
 		//using TaskEntry = std::pair<int, TypeSystem::Task>;
 		using TaskMap = std::map<int, std::shared_ptr<TaskSystem::ITask>>;
 		using FormatMap = std::map<const std::type_info*, std::shared_ptr<IFormatter>>;
+		using ConfigMap = std::map < std::string, std::shared_ptr<Configuration> >;
+
+		// Configuration
+		ConfigMap				m_Config;
 
 		// Tasks
 		TaskMap					Tasks;
@@ -39,19 +46,57 @@ namespace SCRambl
 			CurrentTask = std::begin(Tasks);
 		}
 
+		Commands				m_Commands;
+
 	public:
 		Engine();
 		virtual ~Engine()
 		{
-			/*if (!Tasks.empty())
-			{
-				for (auto task : Tasks)
-				{
-					delete task.second;
-				}
+		}
 
-				Tasks.clear();
-			}*/
+		/*\
+		 * Engine::AddConfig - Returns shared Configuration element
+		\*/
+		std::shared_ptr<Configuration> AddConfig(const std::string & name)
+		{
+			if (name.empty()) return nullptr;
+			if (m_Config.find(name) != m_Config.end()) return nullptr;
+			auto config = std::make_shared<Configuration>(name);
+			m_Config.emplace(name, config);
+			return config;
+		}
+
+		/*\
+		 * Engine::LoadConfigFile
+		\*/
+		bool LoadConfigFile(const std::string & path)
+		{
+			pugi::xml_document xml;
+			auto status = xml.load_file(widen(path).c_str());
+			if (status) {
+				// find our element
+				auto scrambl = xml.child("SCRambl");
+				if (scrambl) {
+					// load configurations
+					if (m_Config.size()) {
+						for (auto node : scrambl.children()) {
+							if (*node.name()) {
+								// find configuration
+								auto it = m_Config.find(node.name());
+								if (it != m_Config.end()) {
+									// load from node
+									it->second->LoadXML(node);
+								}
+							}
+						}
+					}
+				}
+				return true;
+			}
+			else {
+				
+			}
+			return false;
 		}
 
 		/*\

@@ -3,9 +3,9 @@
 
 using namespace SCRambl;
 
-Engine::Engine() : HaveTask(false)
+Engine::Engine() : HaveTask(false), m_Commands(*this)
 {
-	//CurrentTask = Tasks.end();
+	m_Commands.Init();
 }
 
 const TaskSystem::Task<EngineEvent> & Engine::Run()

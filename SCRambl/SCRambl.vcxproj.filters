@@ -52,6 +52,9 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Commands.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Builder.h">
@@ -159,6 +162,21 @@
     <ClInclude Include="TokenInfo.h">
       <Filter>Header</Filter>
     </ClInclude>
+    <ClInclude Include="Commands.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Types.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="SCR\Commands.h">
+      <Filter>Header\SCR</Filter>
+    </ClInclude>
+    <ClInclude Include="SCR.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="SCR\Types.h">
+      <Filter>Header\SCR</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header">
@@ -172,6 +190,9 @@
     </Filter>
     <Filter Include="Resource">
       <UniqueIdentifier>{0e3d8892-ab8c-46ee-8143-3f9c9e97a799}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header\SCR">
+      <UniqueIdentifier>{0c9e9f5d-ec9f-49d1-b0cd-3609917f40e7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
