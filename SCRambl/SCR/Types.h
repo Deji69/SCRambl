@@ -26,5 +26,9 @@ namespace SCR
 	{
 		unsigned long long			m_ID;
 		std::string					m_Name;
+
+	public:
+		Type(unsigned long long id, std::string name) : m_ID(id), m_Name(name)
+		{ }
 	};
 }

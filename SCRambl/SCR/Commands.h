@@ -28,17 +28,31 @@ namespace SCR
 	public:
 		class Arg
 		{
-			Type				m_Type;
+			Type			&	m_Type;
+			//std::string			m_Description;
+			bool				m_IsReturn : 1;
+
+
+		public:
+			Arg(Type type) : m_Type(type)
+			{ }
 		};
 
 	private:
 		//uint64_t				m_Index;
 		unsigned long long		m_Index;				// unique index/hash
 		std::string				m_Name;					// command name/id
+		std::vector<Arg>		m_Args;
 
 	public:
 		Command(std::string name, unsigned long long index) : m_Name(name), m_Index(index)
 		{
 		}
+
+		void AddArg() {
+
+		}
+
+		inline const std::string &		GetName() const			{ return m_Name; }
 	};
 }

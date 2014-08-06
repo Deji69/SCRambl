@@ -6,6 +6,7 @@
 /**********************************************************/
 #pragma once
 
+#include <assert.h>
 #include <algorithm>
 #include <functional>
 
