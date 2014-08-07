@@ -40,31 +40,31 @@
 				/> - End array type specification
 			</Type> - End Type declaration
 		-->
-		<Type Name="NONE" Hash="Name"></Type>
+		<Type Name="NONE" Hash="Name" />
 		<Type Name="INT" Hash="Name">
-			<Value Type="Number">
+			<Value>
 				<Size>1</Size>
 				<Size>2</Size>
 				<Size>4</Size>
 			</Value>
 		</Type>
 		<Type Name="FLOAT" Hash="Name">
-			<Value Type="Number">
+			<Value>
 				<Float />
 				<Size>4</Size>
 			</Value>
 			<!--
-			<Value Type="Number">
+			<Value>
 				<Float />
 				<Packed />
 				<Size>2</Size>
 			</Value>
-			<Value Type="Number">
+			<Value>
 				<Float />
 				<Packed />
 				<Size>3</Size>
 			</Value>
-			<Value Type="Number">
+			<Value>
 				<Float />
 				<Fixed />
 				<Size>16</Size>
@@ -72,18 +72,18 @@
 			-->
 		</Type>
 		<Type Name="TEXT_LABEL" Hash="Name">
-			<Value Type="String">
+			<String>
 				<Size>8</Size>
 				<Size>16</Size>
-			</Value>
+			</String>
 		</Type>
 		<Type Name="STRING" Hash="Name">
-			<Value Type="String">
+			<String>
 				<Size Variable="true">255</Size>
-			</Value>
+			</String>
 		</Type>
 		<Type Name="CONST" Hash="Name">
-			<Value Type="Number">
+			<Value>
 				<Size>4</Size>
 			</Value>
 		</Type>
@@ -144,7 +144,9 @@
 	-->
 	<ExtendedTypes>
 		<Type Name="LABEL" Basic="INT" Hash="Name">
-			<Size>4</Size>
+			<Label>
+				<Size>4</Size>
+			</Label>
 		</Type>
 		<Type Name="MODEL" Basic="INT" Hash="Name">
 			<Size>2</Size>
@@ -155,6 +157,13 @@
 	</ExtendedTypes>
 	
 	<Translations>
+		<Translate Type="LABEL">
+			<Data>
+				<Int8>1</Int8>
+				<Int32 Source="Label.Offset" />
+			</Data>
+		</Translate>
+	
 		<Translate Type="NONE" Size="0">
 			<Data>
 				<Int8>0</Int8>

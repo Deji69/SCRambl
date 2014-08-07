@@ -2,9 +2,9 @@
 
 Deadline: V?
 
-**Completed: 33 / 93**
+**Completed: 35 / 95**
 
-est. 35% Complete
+est. 36% Complete
 
 ## Engine ##
 - [x] Task System
@@ -65,7 +65,7 @@ Completed: 9 / 9
 	- [x] Character Mapping
 	- [ ] Tokenization
 
-Completed: 31 / 18
+Completed: 18 / 31
 
 ## Parser ##
 - [ ] SCR Elements
@@ -79,6 +79,8 @@ Completed: 31 / 18
 	- [ ] Types
 		- [ ] Basic Types
 		- [ ] Extended Types
+	- [x] XML Loading
+	- [x] XML Syntax
 - [ ] Control Structures
 	- [ ] IF..ENDIF
 	- [ ] WHILE..ENDWHILE
@@ -101,13 +103,13 @@ Completed: 31 / 18
 - [ ] Other
 	- [ ] Constant Expressions ?
 
-Completed: 32 / 0
+Completed: 2 / 34
 
 ## Compiler ##
 - [ ] Translation
 - [ ] Compilation
 
-Completed: 2 / 0
+Completed: 0 / 2
 
 ## Linker ##
 - [ ] Linker Formats
@@ -121,4 +123,4 @@ Completed: 2 / 0
 	- [ ] Text Labels <> GXT ?
 	- [ ] Library ?
 
-Completed: 10 / 0
+Completed: 0 / 10

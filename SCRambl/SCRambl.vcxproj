@@ -83,6 +83,7 @@
     <ClInclude Include="Commands.h" />
     <ClInclude Include="SCR.h" />
     <ClInclude Include="SCR\Commands.h" />
+    <ClInclude Include="SCR\Constants.h" />
     <ClInclude Include="SCR\Types.h" />
     <ClInclude Include="Standard.h" />
     <ClInclude Include="Formatter.h" />

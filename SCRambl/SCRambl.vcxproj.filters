@@ -180,6 +180,9 @@
     <ClInclude Include="SCR\Types.h">
       <Filter>Header\SCR</Filter>
     </ClInclude>
+    <ClInclude Include="SCR\Constants.h">
+      <Filter>Header\SCR</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header">

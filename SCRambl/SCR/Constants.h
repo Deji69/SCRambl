@@ -16,45 +16,44 @@
 /**********************************************************/
 #pragma once
 #include <string>
-#include "Types.h"
 
 namespace SCR
 {
 	/*\
-	 * Command - SCR command
+	 * SCR::Constant - SCR constant
 	\*/
-	class Command
+	template<typename T>
+	class Constant
 	{
-	public:
-		class Arg
-		{
-			const Type			&	m_Type;
-			int						m_Index;				// nth arg
-			//std::string			m_Description;
-			bool					m_IsReturn = true;
-
-
-		public:
-			Arg(const Type & type) : m_Type(type)
-			{ }
-
-			inline bool			IsReturn() const		{ return m_IsReturn; }
-		};
-
-	private:
-		//uint64_t				m_Index;
-		unsigned long long		m_Index;				// unique index/hash
-		std::string				m_Name;					// command name/id
-		std::vector<Arg>		m_Args;
+		unsigned long long		m_ID;
+		std::string				m_Name;
+		T						m_Value;
 
 	public:
-		Command(std::string name, unsigned long long index) : m_Name(name), m_Index(index)
+		Constant(std::string name) : m_Name(name)
 		{
+			std::hash<std::string> hasher;
+			m_ID = hasher(name);
 		}
-
-		void AddArg() {
-		}
+		virtual ~Constant() { }
 
 		inline std::string		GetName() const			{ return m_Name; }
+		inline const T &		GetValue() const		{ return m_Value; }
+	};
+
+	/*\
+	 * SCR::Enumerator - SCR Enumerator
+	\*/
+	class Enumerator : public Constant < int >
+	{
+	public:
+	};
+
+	/*\
+	 * SCR::Enum - SCR Enum
+	\*/
+	class Enum
+	{
+
 	};
 }
