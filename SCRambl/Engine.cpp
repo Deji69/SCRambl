@@ -3,7 +3,7 @@
 
 using namespace SCRambl;
 
-Engine::Engine() : HaveTask(false), m_Commands(*this)
+Engine::Engine() : HaveTask(false), m_Commands(*this), m_Types(*this)
 {
 	m_Commands.Init();
 }

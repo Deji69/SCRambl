@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<SCRambl Version="1.0" FileVersion="0.0.0.0">
+	<VariableTypes>
+		<Type Name="LVAR" Scope="local">
+			<Size>2</Size>
+			<Limit What="Index">32</Limit>
+		</Type>
+		<Type Name="VAR" Scope="global">
+			<Size>2</Size>
+			<Limit What="Index">9216</Limit>
+		</Type>
+		<Type Name="LVAR_ARRAY" Type="LVAR">
+			<Array />
+			<Size>2</Size>
+			<Limit What="Index">255</Limit>
+		</Type>
+		<Type Name="VAR_ARRAY" Type="VAR">
+			<Array />
+			<Size>2</Size>
+			<Limit What="Index">255</Limit>
+		</Type>
+	</VariableTypes>
+	<Types>
+		<!--
+		Value Types:
+			<Type - Begin type declaration
+			Name="" - Name of type
+			| ID=""	- ID of type
+			|| Hash="" - Attribute to use as hash ID
+			>
+				<Variable - Begin variable type specification
+				Type="" - Basic variable type
+				Value="" - Basic value type
+				/> - End variable type specification
+				
+				<Array - Begin array type specification
+				Type="" - Basic variable array type
+				Value="" - Basic value type
+				/> - End array type specification
+			</Type> - End Type declaration
+		-->
+		<Type Name="NONE" Hash="Name"></Type>
+		<Type Name="INT" Hash="Name">
+			<Value Type="Number">
+				<Size>1</Size>
+				<Size>2</Size>
+				<Size>4</Size>
+			</Value>
+		</Type>
+		<Type Name="FLOAT" Hash="Name">
+			<Value Type="Number">
+				<Float />
+				<Size>4</Size>
+			</Value>
+			<!--
+			<Value Type="Number">
+				<Float />
+				<Packed />
+				<Size>2</Size>
+			</Value>
+			<Value Type="Number">
+				<Float />
+				<Packed />
+				<Size>3</Size>
+			</Value>
+			<Value Type="Number">
+				<Float />
+				<Fixed />
+				<Size>16</Size>
+			</Value>
+			-->
+		</Type>
+		<Type Name="TEXT_LABEL" Hash="Name">
+			<Value Type="String">
+				<Size>8</Size>
+				<Size>16</Size>
+			</Value>
+		</Type>
+		<Type Name="STRING" Hash="Name">
+			<Value Type="String">
+				<Size Variable="true">255</Size>
+			</Value>
+		</Type>
+		<Type Name="CONST" Hash="Name">
+			<Value Type="Number">
+				<Size>4</Size>
+			</Value>
+		</Type>
+		
+		<!--
+		Variable Types:
+			<Type - Begin type declaration
+			Name="" - Name of type
+			>
+				<Variable - Begin variable type specification
+				Type="" - Basic variable type
+				Value="" - Basic value type
+				/ > - End variable type specification
+				
+				<Array - Begin array type specification
+				Type="" - Basic variable array type
+				Value="" - Basic value type
+				/> - End array type specification
+			</Type> - End Type declaration
+		-->
+		<Type Name="VAR_INT" Hash="Name">
+			<Variable Type="VAR" Value="INT" />
+			<Array Type="VAR_ARRAY" Value="INT" />
+		</Type>
+		<Type Name="VAR_FLOAT" Hash="Name">
+			<Variable Type="VAR" Value="FLOAT" />
+			<Array Type="VAR_ARRAY" Value="FLOAT" />
+		</Type>
+		<Type Name="VAR_TEXT_LABEL" Hash="Name">
+			<Variable Type="VAR" Value="TEXT_LABEL" />
+			<Array Type="VAR_ARRAY" Value="TEXT_LABEL" />
+		</Type>
+		<Type Name="VAR_STRING" Hash="Name">
+			<Variable Type="VAR" Value="STRING" />
+			<Array Type="VAR_ARRAY" Value="STRING" />
+		</Type>
+		<Type Name="LVAR_INT" Hash="Name">
+			<Variable Type="LVAR" Value="INT" />
+			<Array Type="LVAR_ARRAY" Value="INT" />
+		</Type>
+		<Type Name="LVAR_FLOAT" Hash="Name">
+			<Variable Type="LVAR" Value="FLOAT" />
+			<Array Type="LVAR_ARRAY" Value="FLOAT" />
+		</Type>
+		<Type Name="LVAR_TEXT_LABEL" Hash="Name">
+			<Variable Type="LVAR" Value="TEXT_LABEL" />
+			<Array Type="LVAR_ARRAY" Value="TEXT_LABEL" />
+		</Type>
+		<Type Name="LVAR_STRING" Hash="Name">
+			<Variable Type="LVAR" Value="STRING" />
+			<Array Type="LVAR_ARRAY" Value="STRING" />
+		</Type>
+	</Types>
+	
+	<!--
+	Extended Types:
+		Each Type needs a 'Basic' value representing an already declared type
+	-->
+	<ExtendedTypes>
+		<Type Name="LABEL" Basic="INT" Hash="Name">
+			<Size>4</Size>
+		</Type>
+		<Type Name="MODEL" Basic="INT" Hash="Name">
+			<Size>2</Size>
+		</Type>
+		<Type Name="BUFFER" Basic="STRING" Hash="Name">
+			<Size>128</Size>
+		</Type>
+	</ExtendedTypes>
+	
+	<Translations>
+		<Translate Type="NONE" Size="0">
+			<Data>
+				<Int8>0</Int8>
+			</Data>
+		</Translate>
+		
+		<Translate Type="INT" Size="1">
+			<Data>
+				<Int8>4</Int8>
+				<Int8 Source="Value" />
+			</Data>
+		</Translate>
+		
+		<Translate Type="INT" Size="2">
+			<Data>
+				<Int8>5</Int8>
+				<Int16 Source="Value" />
+			</Data>
+		</Translate>
+		
+		<Translate Type="INT" Size="4">
+			<Data>
+				<Int8>1</Int8>
+				<Int32 Source="Value" />
+			</Data>
+		</Translate>
+		
+		<Translate Type="INT" Size="2">
+			<Data>
+				<Int8>5</Int8>
+				<Int16 Source="Value" />
+			</Data>
+		</Translate>
+		
+		<Translate Type="FLOAT" Size="4">
+			<Data>
+				<Int8>6</Int8>
+				<Float32 Source="Value" />
+			</Data>
+		</Translate>
+		
+		<!--
+		<Translate Type="FLOAT" Size="2">
+			<Data>
+				<Int8>6</Int8>
+				<Fixed16 Source="Value" />
+			</Data>
+		</Translate>
+		
+		<Translate Type="FLOAT" Size="2">
+			<Data>
+				<Int8>6</Int8>
+				<Float16 Source="Value" />
+			</Data>
+		</Translate>
+		
+		<Translate Type="FLOAT" Size="3">
+			<Data>
+				<Int8>6</Int8>
+				<Float24 Source="Value" />
+			</Data>
+		</Translate>
+		-->
+		
+		<Translate Type="CONST" Size="4">
+			<Data>
+				<Int8>1</Int8>
+				<Int32 Source="Value" />
+			</Data>
+		</Translate>
+		
+		<Translate Type="TEXT_LABEL" Size="8">
+			<Data>
+				<Int8>9</Int8>
+				<String Size="8" Source="Value" />
+			</Data>
+		</Translate>
+		
+		<Translate Type="TEXT_LABEL" Size="16">
+			<Data>
+				<Int8>15</Int8>
+				<String Size="16" Source="Value" />
+			</Data>
+		</Translate>
+		
+		<Translate Type="STRING" Size="255">
+			<Data>
+				<Int8>14</Int8>
+				<Int8 Source="Value.Size" />
+				<String Source="Value" />
+			</Data>
+		</Translate>
+		
+		<Translate Type="VAR_INT" Size="2">
+			<Data>
+				<Int8>2</Int8>
+				<Int16 Source="Variable.Index" />
+			</Data>
+		</Translate>
+		
+		<Translate Type="VAR_FLOAT" Size="2">
+			<Data>
+				<Int8>2</Int8>
+				<Int16 Source="Variable.Index" />
+			</Data>
+		</Translate>
+		
+		<Translate Type="VAR_TEXT_LABEL" Size="2">
+			<Data>
+				<Int8>10</Int8>
+				<Int16 Source="Variable.Index" />
+			</Data>
+		</Translate>
+		
+		<Translate Type="VAR_STRING" Size="2">
+			<Data>
+				<Int8>16</Int8>
+				<Int16 Source="Variable.Index" />
+			</Data>
+		</Translate>
+		
+		<Translate Type="LVAR_INT" Size="2">
+			<Data>
+				<Int8>3</Int8>
+				<Int16 Source="Variable.Index" />
+			</Data>
+		</Translate>
+		
+		<Translate Type="LVAR_FLOAT" Size="2">
+			<Data>
+				<Int8>3</Int8>
+				<Int16 Source="Variable.Index" />
+			</Data>
+		</Translate>
+		
+		<Translate Type="LVAR_TEXT_LABEL" Size="2">
+			<Data>
+				<Int8>11</Int8>
+				<Int16 Source="Variable.Index" />
+			</Data>
+		</Translate>
+		
+		<Translate Type="LVAR_STRING" Size="2">
+			<Data>
+				<Int8>17</Int8>
+				<Int16 Source="Variable.Index" />
+			</Data>
+		</Translate>
+	</Translations>
+</SCRambl>

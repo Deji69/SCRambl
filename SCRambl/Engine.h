@@ -15,6 +15,7 @@
 #include "Reporting.h"
 #include "Configuration.h"
 #include "Commands.h"
+#include "Types.h"
 
 namespace SCRambl
 {
@@ -47,12 +48,16 @@ namespace SCRambl
 		}
 
 		Commands				m_Commands;
+		Types					m_Types;
 
 	public:
 		Engine();
 		virtual ~Engine()
 		{
 		}
+
+		inline Commands & GetCommands()			{ return m_Commands; }
+		inline Types & GetTypes()				{ return m_Types; }
 
 		/*\
 		 * Engine::AddConfig - Returns shared Configuration element
@@ -94,7 +99,7 @@ namespace SCRambl
 				return true;
 			}
 			else {
-				
+				ASSERT(status);
 			}
 			return false;
 		}
@@ -116,8 +121,7 @@ namespace SCRambl
 		{
 			auto task = std::shared_ptr<T>(new T(*this, std::forward<Params>(prms)...));
 			Tasks.emplace(id, task);
-			if (!HaveTask)
-			{
+			if (!HaveTask) {
 				Init();
 				HaveTask = true;
 			}

@@ -55,6 +55,9 @@
     <ClCompile Include="Commands.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Types.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Builder.h">

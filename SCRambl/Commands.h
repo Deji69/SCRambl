@@ -6,6 +6,7 @@
 /**********************************************************/
 #pragma once
 #include <string>
+#include <unordered_map>
 #include "utils.h"
 #include "Configuration.h"
 #include "SCR.h"
@@ -15,12 +16,12 @@ namespace SCRambl
 	class Engine;
 
 	/*\
-	 * Types - SCR type manager
+	 * Commands - SCR command manager
 	\*/
-	class Types
+	class Commands
 	{
 	public:
-		using Map = std::unordered_map < std::string, std::shared_ptr<SCR::Type> >;
+		using Map = std::unordered_multimap < std::string, std::shared_ptr<SCR::Command> > ;
 
 	private:
 		Engine							&	m_Engine;
@@ -28,20 +29,15 @@ namespace SCRambl
 		Map									m_Map;
 
 	public:
-		Types(Engine & eng);
+		Commands(Engine & engine);
 
-		inline std::shared_ptr<SCR::Type> AddType(std::string name, unsigned long long id)
+		void Init();
+
+		std::shared_ptr<SCR::Command> AddCommand(std::string name, unsigned long long opcode)
 		{
-			auto type = std::make_shared<SCR::Type>(id, name);
-			m_Map.emplace(name, type);
-			return type;
-		}
-		inline std::shared_ptr<SCR::Type> GetType(const std::string & name) const
-		{
-			if (m_Map.empty()) return nullptr;
-			auto it = m_Map.find(name);
-			if (m_Map.end() == it) return nullptr;
-			return it->second;
+			auto command = std::make_shared<SCR::Command>(name, opcode);
+			m_Map.emplace(name, command);
+			return command;
 		}
 	};
 }

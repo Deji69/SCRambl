@@ -50,7 +50,6 @@ namespace SCR
 		}
 
 		void AddArg() {
-
 		}
 
 		inline const std::string &		GetName() const			{ return m_Name; }

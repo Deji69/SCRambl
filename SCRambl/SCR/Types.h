@@ -30,5 +30,8 @@ namespace SCR
 	public:
 		Type(unsigned long long id, std::string name) : m_ID(id), m_Name(name)
 		{ }
+
+		inline unsigned long long	GetID() const		{ return m_ID; }
+		inline const std::string &	GetName() const		{ return m_Name; }
 	};
 }
