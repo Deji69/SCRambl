@@ -81,6 +81,7 @@
     <ClInclude Include="..\SCRambl.h" />
     <ClInclude Include="Builder.h" />
     <ClInclude Include="Commands.h" />
+    <ClInclude Include="Constants.h" />
     <ClInclude Include="SCR.h" />
     <ClInclude Include="SCR\Commands.h" />
     <ClInclude Include="SCR\Constants.h" />
@@ -123,6 +124,7 @@
   <ItemGroup>
     <ClCompile Include="Builder.cpp" />
     <ClCompile Include="Commands.cpp" />
+    <ClCompile Include="Constants.cpp" />
     <ClCompile Include="Directives.cpp" />
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="Exception.cpp" />

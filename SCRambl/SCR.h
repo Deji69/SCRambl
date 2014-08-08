@@ -7,6 +7,7 @@
 #pragma once
 namespace SCRambl
 {
+#include "SCR/Constants.h"
 #include "SCR/Types.h"
 #include "SCR/Commands.h"
 }

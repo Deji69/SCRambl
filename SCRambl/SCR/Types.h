@@ -26,25 +26,8 @@ namespace SCR
 	\*/
 	class Type
 	{
-		unsigned long long			m_ID;
-		std::string					m_Name;
-
 	public:
-		Type(unsigned long long id, std::string name) : m_ID(id), m_Name(name)
-		{ }
-		inline virtual ~Type() { }
-
-		inline unsigned long long	GetID() const		{ return m_ID; }
-		inline std::string			GetName() const		{ return m_Name; }
-	};
-
-	/*\
-	 * SCR::BasicType - SCR basic type
-	\*/
-	class BasicType : public Type
-	{
-	public:
-		enum class ValueType { Value, String, Variable, Label, Enum };
+		enum class ValueType { Null, Value, String, Variable, Label, Enum };
 
 	private:
 		class Size
@@ -53,7 +36,7 @@ namespace SCR
 			bool			m_IsVariable;			// if true, m_Size is a limit. if false, it's exact
 
 		public:
-			Size(size_t size, bool variable = false): m_Size(size), m_IsVariable(variable)
+			Size(size_t size, bool variable = false) : m_Size(size), m_IsVariable(variable)
 			{ }
 
 			inline size_t GetSize() const		{ return m_Size; }
@@ -97,17 +80,19 @@ namespace SCR
 			bool				m_Fixed = false;
 
 		public:
-			Value(): IValue(ValueType::Value)
+			Value() : IValue(ValueType::Value)
 			{ }
 
 			inline void SetFloat(bool b)		{ m_Float = b; }
 			inline void	SetPacked(bool b)		{ m_Packed = b; }
-			inline void	SetPacked(bool b)		{ m_Fixed = b; }
+			inline void	SetFixed(bool b)		{ m_Fixed = b; }
 		};
 
 		class String : public IValue < ValueType >
 		{
 		public:
+			String() : IValue(ValueType::String)
+			{ }
 		};
 
 		class Variable : public IValue < ValueType >
@@ -116,17 +101,38 @@ namespace SCR
 			Type			&	m_VarType;			// VAR/LVAR/etc...
 
 		public:
-			Variable(Type & varType, Type & valType): IValue(ValueType::Variable), m_VarType(varType), m_ValType(valType)
+			Variable(Type & varType, Type & valType) : IValue(ValueType::Variable), m_VarType(varType), m_ValType(valType)
 			{ }
 		};
 
 		class Label : public IValue < ValueType >
 		{
 		public:
-			Label(): IValue(ValueType::Label)
+			Label() : IValue(ValueType::Label)
 			{ }
 		};
 
+	private:
+		unsigned long long			m_ID;
+		std::string					m_Name;
+
+	public:
+		Type(unsigned long long id, std::string name) : m_ID(id), m_Name(name)
+		{ }
+		inline virtual ~Type() { }
+
+		inline unsigned long long	GetID() const		{ return m_ID; }
+		inline std::string			GetName() const		{ return m_Name; }
+	};
+
+	/*\
+	 * SCR::BasicType - SCR basic type
+	\*/
+	class BasicType : public Type
+	{
+
+
+	public:
 		BasicType(unsigned long long id, std::string name) : Type(id, name)
 		{ }
 		inline virtual ~BasicType() { }

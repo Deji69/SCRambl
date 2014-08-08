@@ -16,26 +16,37 @@
 /**********************************************************/
 #pragma once
 #include <string>
+#include <memory>
+#include <unordered_map>
 
 namespace SCR
 {
 	/*\
+	 * SCR::IConstant - SCR type base
+	\*/
+	class IConstant
+	{
+	public:
+		inline virtual ~IConstant() { };
+	};
+
+	/*\
 	 * SCR::Constant - SCR constant
 	\*/
 	template<typename T>
-	class Constant
+	class Constant : public IConstant
 	{
 		unsigned long long		m_ID;
 		std::string				m_Name;
 		T						m_Value;
 
 	public:
-		Constant(std::string name) : m_Name(name)
+		Constant(std::string name, T val) : m_Name(name), m_Value(val)
 		{
 			std::hash<std::string> hasher;
 			m_ID = hasher(name);
 		}
-		virtual ~Constant() { }
+		inline virtual ~Constant() { }
 
 		inline std::string		GetName() const			{ return m_Name; }
 		inline const T &		GetValue() const		{ return m_Value; }
@@ -44,9 +55,12 @@ namespace SCR
 	/*\
 	 * SCR::Enumerator - SCR Enumerator
 	\*/
-	class Enumerator : public Constant < int >
+	class Enumerator : public Constant < long >
 	{
 	public:
+		using Shared = std::shared_ptr < Enumerator > ;
+		Enumerator(std::string name, long val) : Constant(name, val)
+		{ }
 	};
 
 	/*\
@@ -54,6 +68,41 @@ namespace SCR
 	\*/
 	class Enum
 	{
+	public:
+		using Shared = std::shared_ptr < Enum > ;
+		using EnumeratorShared = std::shared_ptr < Enumerator > ;
+		using Map = std::unordered_map < std::string, EnumeratorShared >;
 
+	private:
+		unsigned long long		m_ID;
+		long					m_Count = 0;
+		std::string				m_Name;
+		Map						m_Map;
+
+	public:
+		Enum(std::string name) : m_Name(name)
+		{ }
+		inline virtual ~Enum() { }
+
+		inline unsigned long long GetID() const				{ return m_ID; }
+		inline const std::string & GetName() const			{ return m_Name; }
+		inline EnumeratorShared AddEnumerator(std::string name) {
+			auto ptr = std::make_shared<Enumerator>(name, m_Count++);
+			if(ptr) m_Map[name] = ptr;
+			return ptr;
+		}
+		inline EnumeratorShared AddEnumerator(std::string name, long val) {
+			if (val > m_Count) m_Count = val;
+			auto ptr = std::make_shared<Enumerator>(name, val);
+			if(ptr) m_Map[name] = ptr;
+			return ptr;
+		}
+		inline EnumeratorShared FindEnumerator(std::string name) const {
+			auto it = m_Map.find(name);
+			if (it != m_Map.end()) {
+				return it->second;
+			}
+			return nullptr;
+		}
 	};
 }

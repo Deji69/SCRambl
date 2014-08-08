@@ -31,8 +31,6 @@ namespace SCRambl
 	public:
 		Commands(Engine & engine);
 
-		void Init();
-
 		std::shared_ptr<SCR::Command> AddCommand(std::string name, unsigned long long opcode)
 		{
 			auto command = std::make_shared<SCR::Command>(name, opcode);

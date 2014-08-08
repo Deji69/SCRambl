@@ -58,6 +58,9 @@
     <ClCompile Include="Types.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Constants.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Builder.h">
@@ -182,6 +185,9 @@
     </ClInclude>
     <ClInclude Include="SCR\Constants.h">
       <Filter>Header\SCR</Filter>
+    </ClInclude>
+    <ClInclude Include="Constants.h">
+      <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

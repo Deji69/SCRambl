@@ -16,19 +16,19 @@
 #include "Configuration.h"
 #include "Commands.h"
 #include "Types.h"
+#include "Constants.h"
 
 namespace SCRambl
 {
-	enum class EngineEvent
-	{
-
+	enum class EngineEvent {
+		ConfigurationError,
 	};
 
-	class Engine : protected TaskSystem::Task<EngineEvent>
+	class Engine : public TaskSystem::Task<EngineEvent>
 	{
 		//using TaskEntry = std::pair<int, TypeSystem::Task>;
-		using TaskMap = std::map<int, std::shared_ptr<TaskSystem::ITask>>;
-		using FormatMap = std::map<const std::type_info*, std::shared_ptr<IFormatter>>;
+		using TaskMap = std::map < int, std::shared_ptr<TaskSystem::ITask> >;
+		using FormatMap = std::map < const std::type_info*, std::shared_ptr<IFormatter> >;
 		using ConfigMap = std::map < std::string, std::shared_ptr<Configuration> >;
 
 		// Configuration
@@ -47,16 +47,18 @@ namespace SCRambl
 			CurrentTask = std::begin(Tasks);
 		}
 
+		Constants				m_Constants;
 		Commands				m_Commands;
 		Types					m_Types;
 
 	public:
 		Engine();
 		virtual ~Engine()
-		{
-		}
+		{ }
 
+		// Get SCR Commands
 		inline Commands & GetCommands()			{ return m_Commands; }
+		// Get SCR Types
 		inline Types & GetTypes()				{ return m_Types; }
 
 		/*\

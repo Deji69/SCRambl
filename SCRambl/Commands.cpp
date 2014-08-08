@@ -23,8 +23,4 @@ namespace SCRambl
 				}
 			});
 	}
-	void Commands::Init() {
-		//m_Config = m_Engine.AddConfig("Commands");
-		//m_Config->AddClass("Command", "Name", "Opcode");
-	}
 }

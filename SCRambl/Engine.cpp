@@ -3,9 +3,13 @@
 
 using namespace SCRambl;
 
-Engine::Engine() : HaveTask(false), m_Commands(*this), m_Types(*this)
+Engine::Engine():
+	HaveTask(false),
+	// in that order...
+	m_Constants(*this),
+	m_Types(*this),
+	m_Commands(*this)
 {
-	m_Commands.Init();
 }
 
 const TaskSystem::Task<EngineEvent> & Engine::Run()

@@ -51,11 +51,22 @@ int main(int argc, char* argv[])
 
 	// Initiate SCRambl engine
 	SCRambl::Engine engine;
+	using SCRambl::EngineEvent;
+
+	engine.AddEventHandler<EngineEvent::ConfigurationError>([](SCRambl::Basic::Error id, std::vector<std::string>& params){
+		
+	});
 
 	// Load configuration
 	std::cout << "Loading configuration...\n";
+	
+	std::cout << "Loading constants from \"config\\gtasa\\constants.xml\"...\n";
 	engine.LoadConfigFile("config\\gtasa\\constants.xml");
+	
+	std::cout << "Loading types from \"config\\gtasa\\types.xml\"...\n";
 	engine.LoadConfigFile("config\\gtasa\\types.xml");
+
+	std::cout << "Loading commands from \"config\\gtasa\\commands.xml\"...\n";
 	engine.LoadConfigFile("config\\gtasa\\commands.xml");
 
 	enum Task

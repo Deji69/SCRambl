@@ -2,9 +2,9 @@
 
 Deadline: V?
 
-**Completed: 35 / 95**
+**Completed: 37 / 96**
 
-est. 36% Complete
+est. 38% Complete
 
 ## Engine ##
 - [x] Task System
@@ -70,9 +70,10 @@ Completed: 18 / 31
 ## Parser ##
 - [ ] SCR Elements
 	- [ ] Commands
-	- [ ] Control Structures
 	- [ ] Labels
 	- [ ] Operators
+	- [x] Constants
+	- [x] Enums
 	- [ ] Variables
 		- [ ] Arrays
 		- [ ] Predefined / Timers
@@ -103,7 +104,7 @@ Completed: 18 / 31
 - [ ] Other
 	- [ ] Constant Expressions ?
 
-Completed: 2 / 34
+Completed: 4 / 35
 
 ## Compiler ##
 - [ ] Translation
