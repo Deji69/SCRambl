@@ -28,14 +28,19 @@
 #endif
 
 //#define HEY
-#define HEY
-#undef HEY
+#define YO LO
+#define HEY YO
+#define WOW YAY
+#define YAY WOW
+//#undef HEY
 //#if defined(HEY)
 	//WAIT (1000 + 500)
 //#endif
 
 //WAIT 0
+WOW:
 WAIT 0
+GOTO wait
 
 //#if 0
 #if 0

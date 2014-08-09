@@ -8,6 +8,7 @@
 #include <stack>
 #include <typeinfo>
 #include <typeindex>
+#include <unordered_set>
 #include "Tasks.h"
 #include "Engine.h"
 #include "Scripts.h"
@@ -35,6 +36,15 @@ namespace SCRambl
 		 * IdentifierScanner - Lexer::Scanner for identifiers
 		\*/
 		class IdentifierScanner : public Lexer::Scanner
+		{
+		public:
+			bool Scan(Lexer::State & state, Script::Position & pos) override;
+		};
+
+		/*\
+		 * LabelScanner - Lexer::Scanner for labels
+		\*/
+		class LabelScanner : public Lexer::Scanner
 		{
 		public:
 			bool Scan(Lexer::State & state, Script::Position & pos) override;
@@ -224,6 +234,7 @@ namespace SCRambl
 			DirectiveScanner			m_DirectiveScanner;
 			IdentifierScanner			m_IdentifierScanner;
 			NumericScanner				m_NumericScanner;
+			LabelScanner				m_LabelScanner;
 			StringLiteralScanner		m_StringLiteralScanner;
 			WhitespaceScanner			m_WhitespaceScanner;
 
@@ -269,6 +280,7 @@ namespace SCRambl
 			bool								m_DisableMacroExpansionOnce = false;
 			std::stack<bool>					m_PreprocessorLogic;
 			unsigned long						m_FalseLogicDepth = 0;					// for #if..#endif's ocurring within "#if FALSE"
+			std::unordered_set<std::string>		m_IdentifiersThatAreNotMacros;
 			
 			// Send an error event
 			void SendError(Error);

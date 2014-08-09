@@ -30,7 +30,7 @@ namespace SCRambl
 			m_Lexer.AddTokenScanner(TokenType::Comment, m_CommentScanner);
 			m_Lexer.AddTokenScanner(TokenType::Directive, m_DirectiveScanner);
 			m_Lexer.AddTokenScanner(TokenType::String, m_StringLiteralScanner);
-			//m_Lexer.AddTokenScanner(TokenType::Label, m_LabelScanner);
+			m_Lexer.AddTokenScanner(TokenType::Label, m_LabelScanner);
 			m_Lexer.AddTokenScanner(TokenType::Identifier, m_IdentifierScanner);
 			m_Lexer.AddTokenScanner(TokenType::Number, m_NumericScanner);
 			m_Lexer.AddTokenScanner(TokenType::Operator, m_OperatorScanner);
@@ -152,6 +152,7 @@ namespace SCRambl
 		void Preprocessor::HandleToken()
 		{
 			auto range = m_Token.Range();
+			//auto 
 
 			switch (m_Token) {
 			case TokenType::Identifier:
@@ -162,6 +163,9 @@ namespace SCRambl
 					AddToken(PreprocessingToken::Number, range, NumberType::Integer, m_NumericScanner.Get<int>());
 				else
 					AddToken(PreprocessingToken::Number, range, NumberType::Float, m_NumericScanner.Get<float>());
+				break;
+			case TokenType::Label:
+				AddToken(PreprocessingToken::Label, m_Token.Range());
 				break;
 			}
 
@@ -183,11 +187,42 @@ namespace SCRambl
 					// gather up thy symbols
 					if (m_CodePos && m_CodePos->GetType() != Symbol::eol)
 					{
+						std::set<const Macro*> macrosThatAreNotMacros;
 						CodeLine code;
 
 						auto start_pos = m_CodePos;
-						while (m_CodePos && m_CodePos->GetType() != Symbol::eol)
+						while (m_CodePos && m_CodePos->GetType() != Symbol::eol) {
+							if (m_CodePos->IsIgnorable()) {
+								++m_CodePos;
+								continue;
+							}
+							auto result = m_Lexer.ScanFor(TokenType::Identifier, m_CodePos, m_Token);
+							switch (result)
+							{
+							case Lexer::Result::still_scanning:
+								continue;
+							case Lexer::Result::found_nothing:
+								break;
+							case Lexer::Result::found_token:
+								m_Identifier = m_Token.Range().Format();
+
+								if (auto macro = m_Macros.Get(m_Identifier))
+								{
+									if (macrosThatAreNotMacros.find(macro) == macrosThatAreNotMacros.end())
+									{
+										macrosThatAreNotMacros.emplace(macro);
+										bool b = m_CodePos == start_pos;
+										m_CodePos = m_Script.GetCode().Erase(m_Token.Begin(), m_Token.End());
+										m_CodePos = m_Script.GetCode().Insert(m_CodePos, macro->GetCode());
+										if (b) start_pos = m_CodePos;
+										continue;
+									}
+								}
+								m_CodePos = m_Token.End();
+								continue;
+							}
 							++m_CodePos;
+						}
 
 						m_Macros.Define(name, m_Script.GetCode().Copy(start_pos, m_CodePos, code));
 					}
@@ -687,6 +722,9 @@ namespace SCRambl
 		{
 			Lexer::Result result;
 
+			// it is a crime to consider any of these a macro, under punishment of death via infinite recursion
+			std::unordered_set<std::string> identifiersThatAreNotMacros;
+
 			while (true)
 			{
 				while (m_CodePos && m_CodePos->IsIgnorable())
@@ -802,26 +840,40 @@ namespace SCRambl
 
 					case TokenType::Identifier:
 						// save the identifier
-						m_Identifier = m_Script.GetCode().Select(m_Token.Begin(), m_Token.End());
+						//m_Identifier = m_Script.GetCode().Select(m_Token.Begin(), m_Token.End());
+						m_Identifier = m_Token.Range().Format();
+
+						if (false)
+						{
+					case TokenType::Label:
+						// save the label name
+						m_Identifier = m_Token.Range().Format();
+						}
 
 						// in certain cases we may want the macros actual identifier
 						if (!m_DisableMacroExpansion && !m_DisableMacroExpansionOnce)
 						{
-							// check for macro
-							if (auto * macro = m_Macros.Get(m_Identifier))
+							// ensure this identifier isn't not a macro... double negative, yes, but there's a big difference
+							if (identifiersThatAreNotMacros.find(m_Identifier) == identifiersThatAreNotMacros.end())
 							{
-								// remove the identifier from code
-								m_CodePos = m_Script.GetCode().Erase(m_Token.Begin(), m_Token.End());
+								// check for macro
+								if (auto * macro = m_Macros.Get(m_Identifier))
+								{
+									// NO! you CANNOT be a macro twice, don't be so stupid
+									identifiersThatAreNotMacros.emplace(m_Identifier);
 
-								// insert the macro code
-								m_CodePos = m_Script.GetCode().Insert(m_CodePos, macro->GetCode().Symbols());
-								// continue parsing until we have a REAL token
-								continue;
+									// remove the identifier from code
+									m_CodePos = m_Script.GetCode().Erase(m_Token.Begin(), m_Token.End());
+
+									// insert the macro code
+									m_CodePos = m_Script.GetCode().Insert(m_CodePos, macro->GetCode().Symbols());
+									// continue parsing until we have a REAL token
+									continue;
+								}
 							}
 						}
 						else m_DisableMacroExpansionOnce = false;
 						break;
-
 					}
 					break;
 				}
@@ -908,6 +960,39 @@ namespace SCRambl
 					return true;
 				}
 				// throw()
+				return false;
+			}
+			return false;
+		}
+		// Scan labels
+		bool LabelScanner::Scan(Lexer::State & state, Script::Position & pos)
+		{
+			switch (state)
+			{
+				// return true if the symbol can only be an identifier
+			case Lexer::State::before:
+				if (pos->GetType() == Symbol::identifier)
+				{
+					++pos;
+					state = Lexer::State::inside;
+					return true;
+				}
+				return false;
+
+				// return true once we've read all of the identifier characters
+			case Lexer::State::inside:
+				while (pos && (pos->GetType() == Symbol::identifier || pos->GetType() == Symbol::number))
+					++pos;
+				state = Lexer::State::after;
+				return true;
+
+				// make sure that a : followed the identifier chars
+			case Lexer::State::after:
+				if (pos && pos->GetGrapheme() == Grapheme::colon)
+				{
+					++pos;
+					return true;
+				}
 				return false;
 			}
 			return false;
