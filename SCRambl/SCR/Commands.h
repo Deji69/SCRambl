@@ -26,6 +26,8 @@ namespace SCR
 	class Command
 	{
 	public:
+		using Shared = std::shared_ptr < SCR::Command > ;
+
 		class Arg
 		{
 			const Type			&	m_Type;

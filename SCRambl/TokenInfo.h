@@ -10,7 +10,8 @@
 namespace SCRambl
 {
 	enum class PreprocessingToken {
-		None, Directive, Identifier, Label, Number, Operator, String
+		None, Directive, Identifier, Label, Number, Operator, String,
+		Command, Variable
 	};
 
 	class IToken

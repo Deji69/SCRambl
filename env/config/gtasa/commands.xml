@@ -5,6 +5,30 @@
 
 <SCRambl Version="1.0" FileVersion="0.0.0.0">
     <Commands>
+		<!-- CaseConvert
+			Types:
+			 Casing: none - ignore casing
+					 lowercase - convert to lower-case
+					 uppercase - convert to upper-case
+			Attributes:
+			 Convert (bool): whether to perform case conversions on source code
+				- case conversion will still be used to load the remainder of this configuration.
+			 From (Casing): the casing of commands in this file (can be automatically converted)
+			 To (Casing): the desired default casing of commands
+			Description:
+			 SCRambl can perform case conversions on loaded commands as well as source code.
+			 This element can be re-used within this file. The final values will be applied to parsing.
+			 The 'From' attribute indicates the casing of commands in this file, which may be converted
+			 to the 'To' casing if there is a difference. The 'Name' of all commands should follow the 
+			 casing specified in the 'From' attribute.
+			 The 'To' attribute is used to determine the final desired casing of commands, which could 
+			 be applied to this configuration if 'From' differs.
+			 The 'Convert' attribute is used to toggle case conversion in source code. If true, SCRambl
+			 will be insensitive to casing when looking up commands - note that this may affect its
+			 priority against other identifiers.
+		-->
+		<Case From="lowercase" To="uppercase" Convert="true" />
+		
         <Command Name="wait" ID="0x1">
             <Args>
                 <Arg Type="INT" Desc="Time (ms)" />

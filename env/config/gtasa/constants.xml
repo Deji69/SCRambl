@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<SCRambl Version="1.0" FileVersion="0.0.0.0">
+	<Constants>
+		<Constant Name="ON" Value="1" />
+		<Constant Name="OFF" Value="0" />
+		
+		<Enum Name="BOOLEAN">
+			<Constant Name="FALSE" />
+			<Constant Name="TRUE" />
+		</Enum>
+		<Enum Name="PAD_ID">
+			<Constant Name="PAD1" />
+			<Constant Name="PAD2" />
+		</Enum>
+		<Enum Name="TIMER_DIRECTION">
+			<Constant Name="TIMER_UP" />
+			<Constant Name="TIMER_DOWN" />
+		</Enum>
+		<Enum Name="BUTTON">
+			<Constant Name="LEFTSTICKX" />
+			<Constant Name="LEFTSTICKY" />
+			<Constant Name="RIGHTSTICKX" />
+			<Constant Name="RIGHTSTICKY" />
+			<Constant Name="LEFTSHOULDER1" />
+			<Constant Name="LEFTSHOULDER2" />
+			<Constant Name="RIGHTSHOULDER1" />
+			<Constant Name="RIGHTSHOULDER2" />
+			<Constant Name="DPADUP" />
+			<Constant Name="DPADDOWN" />
+			<Constant Name="DPADLEFT" />
+			<Constant Name="DPADRIGHT" />
+			<Constant Name="START" />
+			<Constant Name="SELECT" />
+			<Constant Name="SQUARE" />
+			<Constant Name="TRIANGLE" />
+			<Constant Name="CROSS" />
+			<Constant Name="CIRCLE" />
+			<Constant Name="LEFTSHOCK" />
+			<Constant Name="RIGHTSHOCK" />
+		</Enum>
+		<Enum Name="FADE_DIRECTION">
+			<Constant Name="FADE_OUT" />
+			<Constant Name="FADE_IN" />
+		</Enum>
+		<Enum Name="CAM_JUMP_MODE">
+			<Constant Name="NEITHER" />
+			<Constant Name="MARKER_ONLY" />
+			<Constant Name="BLIP_ONLY" />
+			<Constant Name="BOTH" />
+		</Enum>
+		<Enum Name="PEDTYPE">
+			<Constant Name="PEDTYPE_PLAYER1" />
+			<Constant Name="PEDTYPE_PLAYER2" />
+			<Constant Name="PEDTYPE_PLAYER_NETWORK" />
+			<Constant Name="PEDTYPE_PLAYER_UNUSED" />
+			<Constant Name="PEDTYPE_CIVMALE" />
+			<Constant Name="PEDTYPE_CIVFEMALE" />
+			<Constant Name="PEDTYPE_COP" />
+			<Constant Name="PEDTYPE_GANG1" />
+			<Constant Name="PEDTYPE_GANG2" />
+			<Constant Name="PEDTYPE_GANG3" />
+			<Constant Name="PEDTYPE_GANG4" />
+			<Constant Name="PEDTYPE_GANG5" />
+			<Constant Name="PEDTYPE_GANG6" />
+			<Constant Name="PEDTYPE_GANG7" />
+			<Constant Name="PEDTYPE_GANG8" />
+			<Constant Name="PEDTYPE_GANG9" />
+			<Constant Name="PEDTYPE_GANG10" />
+			<Constant Name="PEDTYPE_DEALER" />
+			<Constant Name="PEDTYPE_MEDIC" />
+			<Constant Name="PEDTYPE_FIREMAN" />
+			<Constant Name="PEDTYPE_CRIMINAL" />
+			<Constant Name="PEDTYPE_BUM" />
+			<Constant Name="PEDTYPE_PROSTITUTE" />
+			<Constant Name="PEDTYPE_SPECIAL" />
+			<Constant Name="PEDTYPE_MISSION1" />
+			<Constant Name="PEDTYPE_MISSION2" />
+			<Constant Name="PEDTYPE_MISSION3" />
+			<Constant Name="PEDTYPE_MISSION4" />
+			<Constant Name="PEDTYPE_MISSION5" />
+			<Constant Name="PEDTYPE_MISSION6" />
+			<Constant Name="PEDTYPE_MISSION7" />
+			<Constant Name="PEDTYPE_MISSION8" />
+		</Enum>
+		<Enum Name="WEAPONTYPE">
+			<Constant Name="WEAPONTYPE_UNARMED" />
+			<Constant Name="WEAPONTYPE_BRASSKNUCKLE" />
+			<Constant Name="WEAPONTYPE_GOLFCLUB" />
+			<Constant Name="WEAPONTYPE_NIGHTSTICK" />
+			<Constant Name="WEAPONTYPE_KNIFE" />
+			<Constant Name="WEAPONTYPE_BASEBALLBAT" />
+			<Constant Name="WEAPONTYPE_SHOVEL" />
+			<Constant Name="WEAPONTYPE_POOL_CUE" />
+			<Constant Name="WEAPONTYPE_KATANA" />
+			<Constant Name="WEAPONTYPE_CHAINSAW" />
+			<Constant Name="WEAPONTYPE_DILDO1" />
+			<Constant Name="WEAPONTYPE_DILDO2" />
+			<Constant Name="WEAPONTYPE_VIBE1" />
+			<Constant Name="WEAPONTYPE_VIBE2" />
+			<Constant Name="WEAPONTYPE_FLOWERS" />
+			<Constant Name="WEAPONTYPE_CANE" />
+			<Constant Name="WEAPONTYPE_GRENADE" />
+			<Constant Name="WEAPONTYPE_TEARGAS" />
+			<Constant Name="WEAPONTYPE_MOLOTOV" />
+			<Constant Name="WEAPONTYPE_ROCKET" />
+			<Constant Name="WEAPONTYPE_ROCKET_HS" />
+			<Constant Name="WEAPONTYPE_FREEFALL_BOMB" />
+			<Constant Name="WEAPONTYPE_PISTOL" />
+			<Constant Name="WEAPONTYPE_PISTOL_SILENCED" />
+			<Constant Name="WEAPONTYPE_DESERT_EAGLE" />
+			<Constant Name="WEAPONTYPE_SHOTGUN" />
+			<Constant Name="WEAPONTYPE_SAWNOFF_SHOTGUN" />
+			<Constant Name="WEAPONTYPE_SPAS12_SHOTGUN" />
+			<Constant Name="WEAPONTYPE_MICRO_UZI" />
+			<Constant Name="WEAPONTYPE_MP5" />
+			<Constant Name="WEAPONTYPE_AK47" />
+			<Constant Name="WEAPONTYPE_M4" />
+			<Constant Name="WEAPONTYPE_TEC9" />
+			<Constant Name="WEAPONTYPE_COUNTRYRIFLE" />
+			<Constant Name="WEAPONTYPE_SNIPERRIFLE" />
+			<Constant Name="WEAPONTYPE_ROCKETLAUNCHER" />
+			<Constant Name="WEAPONTYPE_ROCKETLAUNCHER_HS" />
+			<Constant Name="WEAPONTYPE_FLAMETHROWER" />
+			<Constant Name="WEAPONTYPE_MINIGUN" />
+			<Constant Name="WEAPONTYPE_REMOTE_SATCHEL_CHARGE" />
+			<Constant Name="WEAPONTYPE_DETONATOR" />
+			<Constant Name="WEAPONTYPE_SPRAYCAN" />
+			<Constant Name="WEAPONTYPE_EXTINGUISHER" />
+			<Constant Name="WEAPONTYPE_CAMERA" />
+			<Constant Name="WEAPONTYPE_NIGHTVISION" />
+			<Constant Name="WEAPONTYPE_INFRARED" />
+			<Constant Name="WEAPONTYPE_PARACHUTE" />
+			<Constant Name="WEAPONTYPE_LAST_WEAPONTYPE" />
+			<Constant Name="WEAPONTYPE_ARMOUR" />
+			<Constant Name="WEAPONTYPE_RAMMEDBYCAR" />
+			<Constant Name="WEAPONTYPE_RUNOVERBYCAR" />
+			<Constant Name="WEAPONTYPE_EXPLOSION" />
+			<Constant Name="WEAPONTYPE_UZI_DRIVEBY" />
+			<Constant Name="WEAPONTYPE_DROWNING" />
+			<Constant Name="WEAPONTYPE_FALL" />
+			<Constant Name="WEAPONTYPE_UNIDENTIFIED" />
+			<Constant Name="WEAPONTYPE_ANYMELEE" />
+			<Constant Name="WEAPONTYPE_ANYWEAPON" />
+			<Constant Name="WEAPONTYPE_FLARE" />
+		</Enum>
+		<Enum Name="CARLOCK_MODE">
+			<Constant Name="CARLOCK_NONE" />
+			<Constant Name="CARLOCK_UNLOCKED" />
+			<Constant Name="CARLOCK_LOCKED" />
+			<Constant Name="CARLOCK_LOCKOUT_PLAYER_ONLY" />
+			<Constant Name="CARLOCK_LOCKED_PLAYER_INSIDE" />
+			<Constant Name="CARLOCK_LOCKED_INITIALLY" />
+			<Constant Name="CARLOCK_FORCE_SHUT_DOORS" />
+			<Constant Name="CARLOCK_LOCKED_BUT_CAN_BE_DAMAGED" />
+		</Enum>
+		<Enum Name="CARLOCK_MODE">
+			<Constant Name="EXTRASUNNY_LA" />
+			<Constant Name="SUNNY_LA" />
+			<Constant Name="EXTRASUNNY_SMOG_LA" />
+			<Constant Name="SUNNY_SMOG_LA" />
+			<Constant Name="CLOUDY_LA" />
+			<Constant Name="SUNNY_SF" />
+			<Constant Name="EXTRASUNNY_SF" />
+			<Constant Name="CLOUDY_SF" />
+			<Constant Name="RAINY_SF" />
+			<Constant Name="FOGGY_SF" />
+			<Constant Name="SUNNY_VEGAS" />
+			<Constant Name="EXTRASUNNY_VEGAS" />
+			<Constant Name="CLOUDY_VEGAS" />
+			<Constant Name="EXTRASUNNY_COUNTRYSIDED" />
+			<Constant Name="SUNNY_COUNTRYSIDE" />
+			<Constant Name="CLOUDY_COUNTRYSIDEF" />
+			<Constant Name="RAINY_COUNTRYSIDE" />
+			<Constant Name="EXTRASUNNY_DESERT" />
+			<Constant Name="SUNNY_DESERT" />
+			<Constant Name="SANDSTORM_DESERT" />
+			<Constant Name="UNDERWATER" />
+			<Constant Name="EXTRACOLOURS_1" />
+			<Constant Name="EXTRACOLOURS_2" />
+		</Enum>
+		<Enum Name="EXPLOSION_ID">
+			<Constant Name="EXPLOSION_GRENADE" />
+			<Constant Name="EXPLOSION_MOLOTOV" />
+			<Constant Name="EXPLOSION_ROCKET" />
+			<Constant Name="EXPLOSION_CAR" />
+			<Constant Name="EXPLOSION_CAR_QUICK" />
+			<Constant Name="EXPLOSION_BOAT" />
+			<Constant Name="EXPLOSION_HELI" />
+			<Constant Name="EXPLOSION_HELI2" />
+			<Constant Name="EXPLOSION_MINE" />
+			<Constant Name="EXPLOSION_BARREL" />
+			<Constant Name="EXPLOSION_TANK_GRENADE" />
+			<Constant Name="EXPLOSION_HELI_BOMB" />
+		</Enum>
+	</Constants>
+</SCRambl>

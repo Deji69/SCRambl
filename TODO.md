@@ -2,7 +2,7 @@
 
 Deadline: V?
 
-**Completed: 37 / 96**
+**Completed: 39 / 96**
 
 est. 38% Complete
 
@@ -59,13 +59,13 @@ Completed: 9 / 9
 		- [ ] #error
 		- [ ] #warning
 		- [ ] # ?
-- [ ] Basic Syntax
+- [x] Basic Syntax
 	- [x] Comment Stripping
 	- [x] Line Splicing
 	- [x] Character Mapping
-	- [ ] Tokenization
+	- [x] Tokenization
 
-Completed: 18 / 31
+Completed: 20 / 31
 
 ## Parser ##
 - [ ] SCR Elements

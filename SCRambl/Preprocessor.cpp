@@ -151,15 +151,17 @@ namespace SCRambl
 
 		void Preprocessor::HandleToken()
 		{
+			auto range = m_Token.Range();
+
 			switch (m_Token) {
 			case TokenType::Identifier:
 				AddToken(PreprocessingToken::Identifier, m_Token.Range());
 				break;
 			case TokenType::Number:
 				if (m_NumericScanner.Is<int>())
-					AddToken(PreprocessingToken::Number, m_Token.Range(), NumberType::Integer, m_NumericScanner.Get<int>());
+					AddToken(PreprocessingToken::Number, range, NumberType::Integer, m_NumericScanner.Get<int>());
 				else
-					AddToken(PreprocessingToken::Number, m_Token.Range(), NumberType::Float, m_NumericScanner.Get<float>());
+					AddToken(PreprocessingToken::Number, range, NumberType::Float, m_NumericScanner.Get<float>());
 				break;
 			}
 

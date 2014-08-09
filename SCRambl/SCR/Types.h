@@ -54,7 +54,7 @@ namespace SCR
 		public:
 			IValue(T type) : m_Type(type), m_SizesSorted(true)
 			{ }
-			virtual ~IValue()
+			inline virtual ~IValue()
 			{ }
 
 			inline T GetType() const			{ return m_Type; }
@@ -123,6 +123,41 @@ namespace SCR
 
 		inline unsigned long long	GetID() const		{ return m_ID; }
 		inline std::string			GetName() const		{ return m_Name; }
+	};
+
+	enum class VarScope {
+		local, global
+	};
+
+	// VarType will use VarScope by default to differentiate between variations of variable types
+	template<typename = VarScope>
+	class VarType;
+	
+	/*\
+	 * SCR::IVarType - Anonymous for SCR::VarType<>
+	\*/
+	class IVarType
+	{
+	public:
+		template<typename TType>
+		inline VarType<TType> & Get()			{ return *static_cast<VarType<TType>>(this); }
+	};
+
+	/*\
+	 * SCR::VarType<> - SCR variable type
+	 * <TType> - Use to override the types of variables - uses local/global scope by default
+	\*/
+	template<typename TType>
+	class VarType : public Type
+	{
+		TType				m_Type;			// usually scope
+
+	public:
+		VarType(unsigned long long id, std::string name, TType type) : Type(id, name), m_Type(type)
+		{ }
+		inline virtual ~VarType() { }
+
+		inline TType GetType() const			{ return m_Type; }
 	};
 
 	/*\
