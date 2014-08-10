@@ -28,9 +28,14 @@ namespace SCRambl
 		void Reset();
 
 	private:
-		State					m_State = init;
-		Engine				&	m_Engine;
-		Script				&	m_Script;
+		State						m_State = init;
+		Engine					&	m_Engine;
+		Script					&	m_Script;
+		Script::Tokens			&	m_Tokens;
+		Script::Tokens::Iterator	m_TokenIt;
+
+		void Init();
+		void Parse();
 	};
 
 	enum class ParserEvent

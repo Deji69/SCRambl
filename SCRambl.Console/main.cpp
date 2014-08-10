@@ -205,7 +205,11 @@ int main(int argc, char* argv[])
 				case preprocessor: {
 					auto& task = engine.GetCurrentTask<SCRambl::Preprocessor::Task>();
 					std::cout << "Preprocessing...";
-					std::cout << std::floor(((float)task.Info().GetScriptPos().GetLine() / fNumLines) * 100.0) << "%" << "\r";
+					if (auto pos = task.Info().GetScriptPos())
+					{
+						auto pc = std::floor(((float)pos.GetLine() / fNumLines) * 100.0);
+						std::cout << pc << "%" << "\r";
+					}
 					break;
 				}
 				case parser: {

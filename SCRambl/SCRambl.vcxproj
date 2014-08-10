@@ -82,6 +82,8 @@
     <ClInclude Include="Builder.h" />
     <ClInclude Include="Commands.h" />
     <ClInclude Include="Constants.h" />
+    <ClInclude Include="Labels.h" />
+    <ClInclude Include="Scope.h" />
     <ClInclude Include="SCR.h" />
     <ClInclude Include="SCR\Commands.h" />
     <ClInclude Include="SCR\Constants.h" />

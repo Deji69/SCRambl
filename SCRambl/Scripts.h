@@ -5,11 +5,11 @@
 //	 or copy at http://opensource.org/licenses/MIT)
 /**********************************************************/
 #pragma once
-
 #include <string>
 #include <vector>
 #include <fstream>
 #include <assert.h>
+#include <unordered_map>
 #include "utils.h"
 //#include "FileSystem.h"
 #include "Symbols.h"
@@ -245,6 +245,41 @@ namespace SCRambl
 			}
 
 			/*\
+			 - Returns true if both Position's are on the same line
+			\*/
+			inline bool IsOnSameLine(const Position & pos) const {
+				return m_LineIt == pos.m_LineIt;
+			}
+
+			/*\
+			 - Returns true if the Position is on an earlier line
+			\*/
+			inline bool IsOnEarlierLine(const Position & pos) const {
+				return GetLine().GetLine() > pos.GetLine().GetLine();
+			}
+
+			/*\
+			 - Returns true if the position is on a later line
+			\*/
+			inline bool IsOnLaterLine(const Position & pos) const {
+				return GetLine().GetLine() < pos.GetLine().GetLine();
+			}
+
+			/*\
+			 - Returns ture if the position is earlier
+			\*/
+			inline bool IsEarlier(const Position & pos) const {
+				return IsOnEarlierLine(pos) || (IsOnSameLine(pos) && GetColumn() < pos.GetColumn());
+			}
+
+			/*\
+			 - Returns ture if the position is later
+			\*/
+			inline bool IsLater(const Position & pos) const {
+				return IsOnLaterLine(pos) || (IsOnSameLine(pos) && GetColumn() > pos.GetColumn());
+			}
+
+			/*\
 			 - Returns true if the Position points to the same character
 			\*/
 			inline bool Compare(const char c) const {
@@ -364,6 +399,24 @@ namespace SCRambl
 				return !(*this == pos);
 			}
 
+			// IsEarlier()
+			inline bool operator<(const Position & pos) const {
+				return IsEarlier(pos);
+			}
+			// IsLater()
+			inline bool operator>(const Position & pos) const {
+				return IsLater(pos);
+			}
+
+			// Compare() || IsEarlier()
+			inline bool operator<=(const Position & pos) const {
+				return Compare(pos) || IsEarlier(pos);
+			}
+			// Compare() || IsLater()
+			inline bool operator>=(const Position & pos) const {
+				return Compare(pos) || IsLater(pos);
+			}
+
 			// CompareChar()
 			inline bool operator==(const char c) const {
 				return Compare(c);
@@ -386,12 +439,10 @@ namespace SCRambl
 			std::pair<Position, Position>	m_Pair;
 
 		public:
-			Range(Position a, Position b) : m_Pair(std::make_pair(a, b))
-			{
-			}
-			Range(std::pair<Position, Position> pair) : m_Pair(pair)
-			{
-			}
+			Range(Position a, Position b) : m_Pair(a < b ? std::make_pair(a, b) : std::make_pair(b, a))
+			{ }
+			Range(std::pair<Position, Position> pair) : m_Pair(pair.first < pair.second ? std::make_pair(pair.first, pair.second) : std::make_pair(pair.second, pair.first))
+			{ }
 
 			// String formatter
 			static inline std::string Formatter(const Range & range) {
@@ -435,17 +486,111 @@ namespace SCRambl
 		\*/
 		class Tokens
 		{
-			typedef std::vector<std::shared_ptr<IToken>> Vector;
+		//public:
+			typedef std::vector<IToken::Shared> Vector;
+
+		private:
 			Vector			m_Tokens;
 
 		public:
+			/*\
+			 * Script::Tokens::Iterator - All this just to pair together an index with it
+			\*/
 			class Iterator
 			{
 				Vector::iterator		m_It;
+				size_t					m_Index = 0;
 
 			public:
 				Iterator() = default;
-				Iterator(Vector::iterator it) : m_It(it) { }
+				Iterator(Vector & cont) : m_It(cont.begin()), m_Index(0)
+				{ }
+				Iterator(Vector::iterator it, const Vector & cont) : m_It(it), m_Index(it - cont.begin())
+				{ }
+
+				inline IToken::Shared Get() const {
+					return *m_It;
+				}
+				inline size_t GetIndex() const {
+					return m_Index;
+				}
+
+				// Access
+				inline IToken::Shared operator*() const {
+					return Get();
+				}
+				inline IToken::Shared * operator->() const {
+					return &**this;
+				}
+				inline IToken::Shared operator[](size_t n) const {
+					return m_It[n];
+				}
+
+				// Manipulation
+				inline Iterator& operator++() {
+					++m_It;
+					++m_Index;
+					return *this;
+				}
+				inline Iterator operator++(int) {
+					auto it = *this;
+					++m_It;
+					++m_Index;
+					return it;
+				}
+				inline Iterator& operator--() {
+					--m_It;
+					--m_Index;
+					return *this;
+				}
+				inline Iterator operator--(int) {
+					auto it = *this;
+					--m_It;
+					--m_Index;
+					return it;
+				}
+				inline Iterator& operator+=(size_t n) {
+					m_It += n;
+					m_Index += n;
+					return *this;
+				}
+				inline Iterator& operator-=(size_t n) {
+					m_It -= n;
+					m_Index -= n;
+					return *this;
+				}
+				inline Iterator operator+(size_t n) {
+					auto it = *this;
+					it.m_It += n;
+					it.m_Index += n;
+					return it;
+				}
+				inline Iterator operator-(size_t n) {
+					auto it = *this;
+					it.m_It -= n;
+					it.m_Index -= n;
+					return it;
+				}
+
+				// Comparison
+				inline bool operator==(const Iterator& rhs) const {
+					return m_It == rhs.m_It;
+				}
+				inline bool operator!=(const Iterator& rhs) const {
+					return !(*this == rhs);
+				}
+				inline bool operator<(const Iterator& rhs) const {
+					return m_It < rhs.m_It;
+				}
+				inline bool operator<=(const Iterator& rhs) const {
+					return m_It <= rhs.m_It;
+				}
+				inline bool operator>(const Iterator& rhs) const {
+					return m_It > rhs.m_It;
+				}
+				inline bool operator>=(const Iterator& rhs) const {
+					return m_It >= rhs.m_It;
+				}
 			};
 
 			Tokens() = default;
@@ -457,20 +602,41 @@ namespace SCRambl
 			template<typename TToken, typename... TArgs>
 			inline std::shared_ptr<TToken> Add(TArgs&&... args)		{
 				auto ptr = std::make_shared<TToken, TArgs&&...>(std::forward<TArgs>(args)...);
-				m_Tokens.push_back(ptr);
+				m_Tokens.emplace_back(ptr);
 				return ptr;
 			}
 
 			/* Navigation */
 
 			// Begin
-			inline Iterator Begin()					{ return m_Tokens.begin(); }
+			inline Iterator Begin()					{ return{ m_Tokens.begin(), m_Tokens }; }
 			// End
-			inline Iterator End()					{ return m_Tokens.end(); }
+			inline Iterator End()					{ return{ m_Tokens.end(), m_Tokens }; }
 
 			// STL hates my style
 			inline Iterator begin()					{ return Begin(); }
 			inline Iterator end()					{ return End(); }
+		};
+
+		/*\
+		 * Script::Scope - Scope of variables, labels, you name it
+		\*/
+		template<typename TObj, typename TKey = std::string, typename TCont = std::unordered_map<TKey, TObj>>
+		class Scope
+		{
+		public:
+			using Container = TCont;
+
+		private:
+			Container			m_Stuff;
+
+		public:
+			Scope() = default;
+			inline virtual ~Scope() { }
+
+			inline void Insert(TKey & key, TObj & obj) {
+				m_Stuff.emplace(key, obj);
+			}
 		};
 		
 	private:
@@ -507,8 +673,8 @@ namespace SCRambl
 		Script();
 		// Construct script parser with code from memory
 		Script(const CodeList &);
-
-		~Script();
+		// Destructor
+		virtual ~Script();
 
 		// Load file into code lines
 		void LoadFile(const std::string &);

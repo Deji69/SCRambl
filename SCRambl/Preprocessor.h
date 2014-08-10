@@ -245,8 +245,8 @@ namespace SCRambl
 			LexerToken					m_Token;
 			DirectiveMap				m_Directives;
 			Directive					m_Directive = Directive::INVALID;
-			std::string					m_String;
-			std::string					m_Identifier;
+			std::string					m_String;					// last scanned string
+			std::string					m_Identifier;				// last scanned identifier
 			MacroMap					m_Macros;
 
 		public:

@@ -16,6 +16,8 @@ namespace SCRambl
 	class IToken
 	{
 	public:
+		using Shared = std::shared_ptr < IToken > ;
+
 		IToken() = default;
 		virtual ~IToken() { }
 	};
@@ -49,18 +51,20 @@ namespace SCRambl
 	
 	enum class TokenType {
 		None,
-		Whitespace,
 		Eol,
-		Identifier,
-		Label,
-		Directive,
+		Whitespace,
 		OpenParen,
 		CloseParen,
-		Comment,
 		BlockComment,
+		Comment,
+		Directive,
+
+		Identifier,
 		Number,
+		Label,
 		Operator,
 		String,
+
 		Invalid,
 		Max = Invalid
 	};

@@ -165,7 +165,13 @@ namespace SCRambl
 					AddToken(PreprocessingToken::Number, range, NumberType::Float, m_NumericScanner.Get<float>());
 				break;
 			case TokenType::Label:
-				AddToken(PreprocessingToken::Label, m_Token.Range());
+				AddToken(PreprocessingToken::Label, range);
+				break;
+			case TokenType::Operator:
+				AddToken(PreprocessingToken::Operator, range, m_OperatorScanner.GetOperator());
+				break;
+			case TokenType::String:
+				AddToken(PreprocessingToken::String, range, m_String);
 				break;
 			}
 
