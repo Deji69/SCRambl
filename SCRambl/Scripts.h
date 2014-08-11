@@ -601,7 +601,7 @@ namespace SCRambl
 			// Insert
 			template<typename TToken, typename... TArgs>
 			inline std::shared_ptr<TToken> Add(TArgs&&... args)		{
-				auto ptr = std::make_shared<TToken, TArgs&&...>(std::forward<TArgs>(args)...);
+				auto ptr = std::make_shared<TToken/*, TArgs&&...*/>(std::forward<TArgs>(args)...);
 				m_Tokens.emplace_back(ptr);
 				return ptr;
 			}
@@ -616,6 +616,12 @@ namespace SCRambl
 			// STL hates my style
 			inline Iterator begin()					{ return Begin(); }
 			inline Iterator end()					{ return End(); }
+			//inline Iterator rbegin()				{ return{ m_Tokens.rbegin(), m_Tokens }; }
+			//inline Iterator rend()					{ return{ m_Tokens.rend(), m_Tokens }; }
+
+			/* Info */
+
+			inline size_t Size() const				{ return m_Tokens.size(); }
 		};
 
 		/*\

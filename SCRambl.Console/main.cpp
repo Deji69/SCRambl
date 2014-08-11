@@ -99,7 +99,7 @@ int main(int argc, char* argv[])
 
 		try
 		{
-			using SCRambl::Preprocessor::Event;
+			/**************** Preprocessor Stuff ****************/
 
 			// Add the preprocessor task to preprocess the script - give it our 'preprocessor' ID so we can identify it later
 			auto preprocessor_task = engine.AddTask<SCRambl::Preprocessor::Task>(preprocessor, std::ref(script));
@@ -109,15 +109,19 @@ int main(int argc, char* argv[])
 				return true;
 			};*/
 
-			preprocessor_task->AddEventHandler<Event::Begin>([](){
+			preprocessor_task->AddEventHandler<SCRambl::Preprocessor::Event::Begin>([](){
 				std::cout << "\nPreprocessing started.\n";
+				return true;
+			});
+			preprocessor_task->AddEventHandler<SCRambl::Preprocessor::Event::Finish>([](){
+				std::cout << "\nPreprocessing finished.\n";
 				return true;
 			});
 
 			bool print_nl;
 
 			// Add event handler for preprocessor errors
-			preprocessor_task->AddEventHandler<Event::Error>([&print_nl, &script, &preprocessor_task](SCRambl::Basic::Error id, std::vector<std::string>& params){
+			preprocessor_task->AddEventHandler<SCRambl::Preprocessor::Event::Error>([&print_nl, &script, &preprocessor_task](SCRambl::Basic::Error id, std::vector<std::string>& params){
 				using SCRambl::Preprocessor::Error;
 
 				if (print_nl) std::cerr << "\n";
@@ -183,14 +187,20 @@ int main(int argc, char* argv[])
 				return true;
 			});
 
-			preprocessor_task->AddEventHandler<Event::FoundToken>([&print_nl](SCRambl::Script::Range range){
+			preprocessor_task->AddEventHandler<SCRambl::Preprocessor::Event::FoundToken>([&print_nl](SCRambl::Script::Range range){
 				//std::cerr << ">>>" << range.Formatter(range) << "\n";
 				print_nl = true;
 				return true;
 			});
 
+			/**************** Parser Stuff ****************/
+
 			// Add the parser task to parse the code symbols to tokens
-			engine.AddTask<SCRambl::ParserTask>(parser, script);
+			auto parser_task = engine.AddTask<SCRambl::Parser::Task>(parser, script);
+			parser_task->AddEventHandler<SCRambl::Parser::Event::Begin>([](){
+				std::cout << "\nParsing started.\n";
+				return true;
+			});
 
 			//
 			bool bRunning = true;
@@ -204,18 +214,17 @@ int main(int argc, char* argv[])
 				switch (engine.GetCurrentTaskID()) {
 				case preprocessor: {
 					auto& task = engine.GetCurrentTask<SCRambl::Preprocessor::Task>();
-					std::cout << "Preprocessing...";
 					if (auto pos = task.Info().GetScriptPos())
 					{
 						auto pc = std::floor(((float)pos.GetLine() / fNumLines) * 100.0);
-						std::cout << pc << "%" << "\r";
+						std::cout << "Preprocessing..." << pc << "%" << "\r";
 					}
 					break;
 				}
 				case parser: {
-					auto& task = engine.GetCurrentTask<SCRambl::Parser>();
-					std::cout << "Parsing...\r";
-					//std::cout << std::floor(((float)task.->Info().GetScriptPos().GetLine() / (float)script.GetCode().NumLines()) * 100.0) << "%" << "\r";
+					auto& task = engine.GetCurrentTask<SCRambl::Parser::Task>();
+					auto pc = std::floor(((float)task.GetProgressCurrent() / (float)task.GetProgressTotal()) * 100.0);
+					std::cout << "Parsing..." << pc << "%" << "\r";
 					break;
 				}
 				}

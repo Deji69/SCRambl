@@ -24,6 +24,27 @@ namespace SCRambl
 	namespace Preprocessor
 	{
 		/*\
+		 * Preprocessor::Token - Types of token information
+		\*/
+		class Token {
+		public:
+			enum Type {
+				None, Directive, Identifier, Label, Number, Operator, String
+			};
+
+			using NoneInfo = TokenInfo < Type >;
+			//using DirectiveInfo = TokenInfo < PreprocessingToken::Type, Script::Range >;
+			using DirectiveInfo = TokenInfo < Type, Script::Range >;
+			using IdentifierInfo = TokenInfo < Type, Script::Range >;
+			using LabelInfo = TokenInfo < Type, Script::Range >;
+			template<typename TNumberType>
+			using NumberInfo = TokenInfo < Type, Script::Range, NumberType, TNumberType >;
+			template<typename TOperatorType>
+			using OperatorInfo = TokenInfo < Type, Script::Range, TOperatorType >;
+			using StringInfo = TokenInfo < Type, Script::Range, std::string >;
+		};
+
+		/*\
 		 * WhitespaceScanner - Lexer::Scanner for nothingness (useless?)
 		\*/
 		class WhitespaceScanner : public Lexer::Scanner
@@ -223,7 +244,7 @@ namespace SCRambl
 			using OperatorTable = Operator::Table < Operator::Type, Operator::max_operator >;
 			using OperatorScanner = Operator::Scanner < Operator::Type, Operator::max_operator >;
 			template<typename... T>
-			using Token = TokenInfo < PreprocessingToken, T... > ;
+			using TToken = TokenInfo < Token::Type, T... > ;
 
 			Engine					&	m_Engine;
 			Task					&	m_Task;
@@ -330,11 +351,16 @@ namespace SCRambl
 			bool LexNumber();
 
 			// Add a preprocessing token
-			template<typename... TArgs>
-			inline std::shared_ptr<Token<TArgs...>> AddToken(PreprocessingToken token, TArgs&&... args)
+			template<typename T, typename... TArgs>
+			inline std::shared_ptr<T> AddToken(Token::Type token, TArgs... args)
+			{
+				return m_Tokens.Add < T >(token, std::forward<TArgs>(args)...);
+			}
+			/*template<typename... TArgs>
+			inline std::shared_ptr<Token<TArgs...>> AddToken(PreprocessingToken::Type token, TArgs... args)
 			{
 				return m_Tokens.Add < Token<TArgs...> >(token, std::forward<TArgs>(args)...);
-			}
+			}*/
 
 			// Handle expressions
 			int ProcessExpression(bool paren = false);
@@ -374,7 +400,7 @@ namespace SCRambl
 		\*/
 		enum class Event
 		{
-			Begin,
+			Begin, Finish,
 			Warning,
 			Error,
 			FoundToken,

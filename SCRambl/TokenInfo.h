@@ -9,17 +9,25 @@
 
 namespace SCRambl
 {
-	enum class PreprocessingToken {
-		None, Directive, Identifier, Label, Number, Operator, String
-	};
-
 	class IToken
 	{
+		template<typename>
+		friend class TokenBase;
+
 	public:
 		using Shared = std::shared_ptr < IToken > ;
 
+	protected:
 		IToken() = default;
 		virtual ~IToken() { }
+
+	public:
+		template<typename T>
+		inline T & Get()								{ return *dynamic_cast<T*>(this); }
+		template<typename T>
+		inline const T & Get() const					{ return *dynamic_cast<T*>(this); }
+		template<typename T>
+		inline T GetType() const						{ return static_cast<const TokenBase<T>*>(this)->GetType(); }
 	};
 
 	template<typename TTokenType>
@@ -38,15 +46,17 @@ namespace SCRambl
 	template<typename TTokenType, typename... TValueType>
 	class TokenInfo : public TokenBase<TTokenType>
 	{
-		//TValueType					m_Value;
+	private:
 		std::tuple<TValueType...>	m_Value;
 
 	public:
 		TokenInfo(TTokenType type, TValueType&&... val) : TokenBase(type), m_Value(val...)
 		{ }
 
-		inline std::tuple<TValueType...> &			GetValue()					{ return m_Value; }
-		inline const std::tuple <TValueType...> &	GetValue() const			{ return m_Value; }
+		template<std::size_t N>
+		inline typename std::tuple_element<N, std::tuple<TValueType...>>::type & GetValue() 				{ return std::get<N>(m_Value); }
+		template<std::size_t N>
+		inline typename const std::tuple_element<N, std::tuple<TValueType...>>::type & GetValue() const		{ return std::get<N>(m_Value); }
 	};
 	
 	enum class TokenType {

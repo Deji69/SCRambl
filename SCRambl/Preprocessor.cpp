@@ -156,22 +156,22 @@ namespace SCRambl
 
 			switch (m_Token) {
 			case TokenType::Identifier:
-				AddToken(PreprocessingToken::Identifier, m_Token.Range());
+				AddToken<Token::IdentifierInfo>(Token::Identifier, m_Token.Range());
 				break;
 			case TokenType::Number:
 				if (m_NumericScanner.Is<int>())
-					AddToken(PreprocessingToken::Number, range, NumberType::Integer, m_NumericScanner.Get<int>());
+					AddToken<Token::NumberInfo<int>>(Token::Number, range, NumberType::Integer, m_NumericScanner.Get<int>());
 				else
-					AddToken(PreprocessingToken::Number, range, NumberType::Float, m_NumericScanner.Get<float>());
+					AddToken<Token::NumberInfo<float>>(Token::Number, range, NumberType::Float, m_NumericScanner.Get<float>());
 				break;
 			case TokenType::Label:
-				AddToken(PreprocessingToken::Label, range);
+				AddToken<Token::LabelInfo>(Token::Label, range);
 				break;
 			case TokenType::Operator:
-				AddToken(PreprocessingToken::Operator, range, m_OperatorScanner.GetOperator());
+				AddToken<Token::OperatorInfo<Operator::Type>>(Token::Operator, range, m_OperatorScanner.GetOperator());
 				break;
 			case TokenType::String:
-				AddToken(PreprocessingToken::String, range, m_String);
+				AddToken<Token::StringInfo>(Token::String, range, m_String);
 				break;
 			}
 
@@ -324,6 +324,7 @@ namespace SCRambl
 				// (debug) output file
 				m_Script.OutputFile();
 				m_State = finished;
+				m_Task(Event::Finish);
 				return;
 			}
 
