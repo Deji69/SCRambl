@@ -164,9 +164,13 @@ namespace SCRambl
 				else
 					AddToken<Token::NumberInfo<float>>(Token::Number, range, NumberType::Float, m_NumericScanner.Get<float>());
 				break;
-			case TokenType::Label:
-				AddToken<Token::LabelInfo>(Token::Label, range);
+			case TokenType::Label: {
+				auto name = range.Format();
+				auto label = std::make_shared<Label>(name);
+				m_Script.GetLabelScope().Insert(range.Format(), label);
+				AddToken<Token::LabelInfo>(Token::Label, range, label);
 				break;
+			}
 			case TokenType::Operator:
 				AddToken<Token::OperatorInfo<Operator::Type>>(Token::Operator, range, m_OperatorScanner.GetOperator());
 				break;

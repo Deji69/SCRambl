@@ -9,8 +9,14 @@
 
 namespace SCRambl
 {
-	class Labels
+	class Label
 	{
+		std::string			m_Name;
 
+	public:
+		using Shared = std::shared_ptr < Label > ;
+
+		Label(std::string name) : m_Name(name)
+		{ }
 	};
 }

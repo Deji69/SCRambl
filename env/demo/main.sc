@@ -44,6 +44,8 @@ wait:
 WAIT 0
 GOTO wait
 
+prolog:
+
 //#if 0
 #if 0
 	#register_command 0FFF SUM_COMMAND(i,=f)

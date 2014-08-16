@@ -39,11 +39,9 @@ namespace SCRambl
 			auto type = ptr->GetType<Token::Type>();
 
 			switch (type) {
-			case Token::Label:
-			{
-				auto& label = ptr->Get<Token::LabelInfo>();
-				auto& name = label.GetValue<0>().Format();
-				
+			case Token::Label: {
+				auto& token = ptr->Get<Token::LabelInfo>();
+				auto label = token.GetValue<1>();
 				break;
 			}
 			default:

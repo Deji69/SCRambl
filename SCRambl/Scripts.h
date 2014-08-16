@@ -14,6 +14,7 @@
 //#include "FileSystem.h"
 #include "Symbols.h"
 #include "TokenInfo.h"
+#include "Labels.h"
 
 namespace SCRambl
 {
@@ -601,7 +602,7 @@ namespace SCRambl
 			// Insert
 			template<typename TToken, typename... TArgs>
 			inline std::shared_ptr<TToken> Add(TArgs&&... args)		{
-				auto ptr = std::make_shared<TToken/*, TArgs&&...*/>(std::forward<TArgs>(args)...);
+				auto ptr = std::make_shared<TToken>(std::forward<TArgs>(args)...);
 				m_Tokens.emplace_back(ptr);
 				return ptr;
 			}
@@ -616,8 +617,6 @@ namespace SCRambl
 			// STL hates my style
 			inline Iterator begin()					{ return Begin(); }
 			inline Iterator end()					{ return End(); }
-			//inline Iterator rbegin()				{ return{ m_Tokens.rbegin(), m_Tokens }; }
-			//inline Iterator rend()					{ return{ m_Tokens.rend(), m_Tokens }; }
 
 			/* Info */
 
@@ -640,8 +639,14 @@ namespace SCRambl
 			Scope() = default;
 			inline virtual ~Scope() { }
 
-			inline void Insert(TKey & key, TObj & obj) {
-				m_Stuff.emplace(key, obj);
+			template<typename... TArgs>
+			inline void Insert(const TKey & key, TArgs&&... obj) {
+				m_Stuff.emplace(key, std::forward<TArgs>(obj)...);
+			}
+
+			inline Label::Shared Find(const TKey & key) {
+				auto it = m_Stuff.find(key);
+				return it == m_Stuff.end() ? nullptr : it->second;
 			}
 		};
 		
@@ -649,6 +654,7 @@ namespace SCRambl
 		std::shared_ptr<File>				m_File;
 		Tokens								m_Tokens;
 		Code								m_Code;
+		Scope<Label::Shared>				m_LabelScope;
 
 		// Initialise script for parsing with current code
 		void Init();
@@ -697,5 +703,6 @@ namespace SCRambl
 		// Get the informative token list
 		inline Tokens & GetTokens()					{ return m_Tokens; }
 		inline const Tokens & GetTokens() const		{ return m_Tokens; }
+		inline Scope<Label::Shared> & GetLabelScope()		{ return m_LabelScope; }
 	};
 }

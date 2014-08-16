@@ -23,9 +23,9 @@ namespace SCRambl
 
 	public:
 		template<typename T>
-		inline T & Get()								{ return *dynamic_cast<T*>(this); }
+		inline T & Get()								{ return *static_cast<T*>(this); }
 		template<typename T>
-		inline const T & Get() const					{ return *dynamic_cast<T*>(this); }
+		inline const T & Get() const					{ return *static_cast<T*>(this); }
 		template<typename T>
 		inline T GetType() const						{ return static_cast<const TokenBase<T>*>(this)->GetType(); }
 	};
@@ -34,6 +34,9 @@ namespace SCRambl
 	class TokenBase : public IToken
 	{
 		TTokenType			m_Type;
+
+	private:
+		using IToken::Get;
 
 	public:
 		TokenBase(TTokenType type) : m_Type(type)
@@ -46,7 +49,8 @@ namespace SCRambl
 	template<typename TTokenType, typename... TValueType>
 	class TokenInfo : public TokenBase<TTokenType>
 	{
-	private:
+		using IToken::Get;
+
 		std::tuple<TValueType...>	m_Value;
 
 	public:

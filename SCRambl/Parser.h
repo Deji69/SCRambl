@@ -10,6 +10,7 @@
 #include "Engine.h"
 #include "Scripts.h"
 #include "Preprocessor.h"
+#include "Labels.h"
 
 namespace SCRambl
 {
@@ -62,6 +63,8 @@ namespace SCRambl
 		\*/
 		class Parser
 		{
+			using LabelMap = std::unordered_map < std::string, std::shared_ptr<Label> > ;
+
 		public:
 			enum State {
 				init, parsing, finished,
@@ -90,6 +93,7 @@ namespace SCRambl
 			Script					&	m_Script;
 			Script::Tokens			&	m_Tokens;
 			Script::Tokens::Iterator	m_TokenIt;
+			LabelMap					m_Labels;
 
 			// Send an error event
 			void SendError(Error);

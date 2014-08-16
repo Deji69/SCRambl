@@ -17,6 +17,7 @@
 #include "Identifiers.h"
 #include "Operators.h"
 #include "Numbers.h"
+#include "Labels.h"
 #include "TokenInfo.h"
 
 namespace SCRambl
@@ -36,7 +37,7 @@ namespace SCRambl
 			//using DirectiveInfo = TokenInfo < PreprocessingToken::Type, Script::Range >;
 			using DirectiveInfo = TokenInfo < Type, Script::Range >;
 			using IdentifierInfo = TokenInfo < Type, Script::Range >;
-			using LabelInfo = TokenInfo < Type, Script::Range >;
+			using LabelInfo = TokenInfo < Type, Script::Range, Label::Shared >;
 			template<typename TNumberType>
 			using NumberInfo = TokenInfo < Type, Script::Range, NumberType, TNumberType >;
 			template<typename TOperatorType>
