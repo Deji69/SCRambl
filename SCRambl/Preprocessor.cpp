@@ -82,6 +82,7 @@ namespace SCRambl
 			m_Engine.SetFormatter<Script::Position>(Script::Position::Formatter);
 			m_Engine.SetFormatter<Script::Range>(Script::Range::Formatter);
 			m_Engine.SetFormatter<Directive>(Directive::Formatter);
+			m_Engine.SetFormatter<Script::Label::Shared>(Script::Label::Formatter);
 		}
 
 		void Preprocessor::Reset()
@@ -152,31 +153,46 @@ namespace SCRambl
 		void Preprocessor::HandleToken()
 		{
 			auto range = m_Token.Range();
-			//auto 
+			auto pos = m_Token.Begin();
 
 			switch (m_Token) {
-			case TokenType::Identifier:
-				AddToken<Token::IdentifierInfo>(Token::Identifier, m_Token.Range());
-				break;
-			case TokenType::Number:
-				if (m_NumericScanner.Is<int>())
-					AddToken<Token::NumberInfo<int>>(Token::Number, range, NumberType::Integer, m_NumericScanner.Get<int>());
-				else
-					AddToken<Token::NumberInfo<float>>(Token::Number, range, NumberType::Float, m_NumericScanner.Get<float>());
-				break;
-			case TokenType::Label: {
-				auto name = range.Format();
-				auto label = std::make_shared<Label>(name);
-				m_Script.GetLabelScope().Insert(range.Format(), label);
-				AddToken<Token::LabelInfo>(Token::Label, range, label);
+			case TokenType::Identifier: {
+ 				AddToken<Token::Identifier::Info<>>(pos, Token::Type::Identifier, m_Token.Range());
+				m_Task(Event::AddedToken, range);
 				break;
 			}
-			case TokenType::Operator:
-				AddToken<Token::OperatorInfo<Operator::Type>>(Token::Operator, range, m_OperatorScanner.GetOperator());
+			case TokenType::Number: {
+				if (m_NumericScanner.Is<int>())
+					AddToken<Token::Number::Info<int>>(pos, Token::Type::Number, range, Numbers::Integer, m_NumericScanner.Get<int>());
+				else
+					AddToken<Token::Number::Info<float>>(pos, Token::Type::Number, range, Numbers::Float, m_NumericScanner.Get<float>());
+				m_Task(Event::AddedToken, range);
 				break;
-			case TokenType::String:
-				AddToken<Token::StringInfo>(Token::String, range, m_String);
+			}
+			case TokenType::Label: {
+				auto name = range.Format();
+				auto label = Script::Label::Make(name);
+				m_Script.GetLabels().Insert(range.Format(), label);
+				AddToken<Token::Label::Info>(pos, Token::Type::Label, range, label);
+				m_Task(Event::AddedToken, range);
 				break;
+			}
+			case TokenType::Operator: {
+				AddToken<Token::Operator::Info<Operator::Type>>(pos, Token::Type::Operator, range, m_OperatorScanner.GetOperator());
+				m_Task(Event::AddedToken, range);
+				break;
+			}
+			case TokenType::Directive: {
+				AddToken<Token::Directive::Info>(pos, Token::Type::Directive, range);
+				m_Task(Event::AddedToken, range);
+				break;
+			}
+			case TokenType::String: {
+				AddToken<Token::String::Info>(pos, Token::Type::String, range, m_String);
+				m_Task(Event::AddedToken, range);
+				break;
+			}
+			default: break;
 			}
 
 			m_State = lexing;
@@ -315,10 +331,19 @@ namespace SCRambl
 
 		void Preprocessor::LexerPhase()
 		{
-			// here we only want #'s, comments and identifiers for macro replacement...
 			if (m_State == lexing)
 			{
-				while (m_CodePos && *m_CodePos != '#' && *m_CodePos != '/' && m_CodePos->GetType() != Symbol::identifier)
+				if (m_CodePos && m_CodePos->IsEOL()) {
+					if (!m_WasLastTokenEOL)
+					{
+						AddToken<Token::Character::Info<Character>>(m_CodePos, Token::Type::Character, m_CodePos, Character::EOL);
+						m_WasLastTokenEOL = true;
+					}
+				}
+
+				//while (m_CodePos && *m_CodePos != '#' && *m_CodePos != '/' && m_CodePos->GetType() != Symbol::)
+					//++m_CodePos;
+				while (m_CodePos && m_CodePos->IsIgnorable())
 					++m_CodePos;
 			}
 
@@ -733,7 +758,7 @@ namespace SCRambl
 		{
 			Lexer::Result result;
 
-			// it is a crime to consider any of these a macro, under punishment of death via infinite recursion
+			// it is a crime to consider any of these a macro, under punishment of death by infinite recursion (a slow, painful way to go)
 			std::unordered_set<std::string> identifiersThatAreNotMacros;
 
 			while (true)
@@ -759,7 +784,22 @@ namespace SCRambl
 				// try to lex something - catch and handle any thrown scanner errors
 				try
 				{
+					/*if (m_CodePos->IsEOL())
+					{
+						if (!m_WasLastTokenEOL)
+						{
+							AddToken<Token::Character::Info<Character>>(m_CodePos, Token::Type::Character, m_CodePos, Character::EOL);
+							m_WasLastTokenEOL = true;
+						}
+					}*/
+
 					result = m_CodePos ? m_Lexer.Scan(m_CodePos, m_Token) : Lexer::Result::found_nothing;
+					/*else if (!m_WasLastTokenEOL)
+					{
+						result = m_CodePos ? m_Lexer.Scan(m_CodePos, m_Token) : Lexer::Result::found_nothing;
+						AddToken<Token::CharacterInfo<Character>>(m_CodePos, Token::Character, m_CodePos, Character::EOL);
+						m_WasLastTokenEOL = true;
+					}*/
 				}
 				catch (const StringLiteralScanner::Error & err)
 				{
@@ -792,8 +832,15 @@ namespace SCRambl
 
 				switch (result)
 				{
-				case Lexer::Result::still_scanning: continue;
-				case Lexer::Result::found_nothing: break;
+				case Lexer::Result::still_scanning:
+					if (m_CodePos->IsEOL())
+					{
+						AddToken<Token::Character::Info<Character>>(m_CodePos, Token::Type::Character, m_CodePos, Character::EOL);
+						m_WasLastTokenEOL = true;
+					}
+					continue;
+				case Lexer::Result::found_nothing:
+					break;
 
 				case Lexer::Result::found_token:
 					// we found one, we found one!

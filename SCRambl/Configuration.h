@@ -23,6 +23,8 @@ namespace SCRambl
 		std::string								m_Name;
 
 	public:
+		typedef std::shared_ptr<Configuration> Shared;
+
 		Configuration(std::string name) : m_Name(name)
 		{ }
 		virtual ~Configuration() { }
@@ -30,8 +32,9 @@ namespace SCRambl
 		inline const std::string & GetName() const		{ return m_Name; }
 
 	private:
-		class Object;
 
+	public:
+		class Object;
 		class Config {
 			friend class Configuration;
 

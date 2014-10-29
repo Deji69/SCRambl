@@ -24,7 +24,10 @@ const TaskSystem::Task<EngineEvent> & Engine::Run()
 		while (task->IsTaskFinished())
 		{
 			++it;
-			if (it == std::end(Tasks)) return *this;
+			if (it == std::end(Tasks)) {
+				m_State = finished;
+				return *this;
+			}
 			task = it->second;
 		}
 

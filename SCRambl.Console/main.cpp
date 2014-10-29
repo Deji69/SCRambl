@@ -187,9 +187,14 @@ int main(int argc, char* argv[])
 				return true;
 			});
 
+			preprocessor_task->AddEventHandler<SCRambl::Preprocessor::Event::AddedToken>([](SCRambl::Script::Range& range){
+				std::cout << "\n" << range.Format() << "\n";
+				return true;
+			});
+
 			preprocessor_task->AddEventHandler<SCRambl::Preprocessor::Event::FoundToken>([&print_nl](SCRambl::Script::Range range){
 				//std::cerr << ">>>" << range.Formatter(range) << "\n";
-				print_nl = true;
+				//print_nl = true;
 				return true;
 			});
 
@@ -201,15 +206,60 @@ int main(int argc, char* argv[])
 				std::cout << "\nParsing started.\n";
 				return true;
 			});
+			parser_task->AddEventHandler<SCRambl::Parser::Event::Finish>([](){
+				std::cout << "\nParsing finished.\n";
+				return true;
+			});
+
+			// Add event handler for parser errors
+			parser_task->AddEventHandler<SCRambl::Parser::Event::Error>([&print_nl, &script, &parser_task](SCRambl::Basic::Error id, std::vector<std::string>& params){
+				using SCRambl::Parser::Error;
+
+				// get some much needed info, display the file, line number and error ID
+				auto tok = parser_task->GetToken();
+				auto & pos = tok.GetPosition();
+				auto script_file = pos.GetLine().GetFile();
+				auto error_id = id.Get<SCRambl::Parser::Error>();
+				bool fatal = error_id >= Error::fatal_begin && error_id <= Error::fatal_end;
+
+				// "  %s(%d,%d)> {fatal} error(%d) : "
+				// e.g. "  file.sc(6,9)> fatal error(4001) : "
+				std::cerr << "  " << script_file->GetPath() << "(" << pos.GetLine() << "," << pos.GetColumn()
+						  << ")> " << (fatal ? "fatal error" : "error") << "(" << error_id << ") : ";
+
+				switch (error_id)
+				{
+				default:
+					// unknown error? print all available params
+					bool b;
+					b = false;
+					for (auto p : params) {
+						if (!p.empty())
+						{
+							if (b) std::cerr << ", ";
+							else b = true;
+							std::cerr << p;
+						}
+					}
+					break;
+
+					// errors
+				case Error::label_on_line: std::cerr << "unexpected label on current line " << params[0];
+					break;
+				}
+
+				std::cerr << "\n";
+				return true;
+			});
 
 			//
 			bool bRunning = true;
 			bool bPreprocessorStarted = false;
 
 			// main loop
-			using SCRambl::TaskSystem::Task;
+			using TaskSys = SCRambl::TaskSystem::Task<Task>;
 			float fNumLines = (float)script.GetCode().NumLines();
-			while (engine.Run().GetState() != finished)
+			while (engine.Run().GetState() != TaskSys::finished)
 			{
 				switch (engine.GetCurrentTaskID()) {
 				case preprocessor: {
@@ -229,6 +279,8 @@ int main(int argc, char* argv[])
 				}
 				}
 			}
+
+			std::cout << "                                                                         \r";
 		}
 		catch (const std::exception & ex)
 		{

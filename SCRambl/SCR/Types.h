@@ -27,15 +27,24 @@ namespace SCR
 	class Type
 	{
 	public:
+		typedef std::shared_ptr<Type> Shared;
+		typedef std::shared_ptr<const Type> CShared;
+		typedef std::unique_ptr<Type> Unique;
+		typedef std::unique_ptr<const Type> CUnique;
 		enum class ValueType { Null, Value, String, Variable, Label, Enum };
+
+		virtual bool IsBasic() const			{ return false; }
+		virtual bool IsExtended() const			{ return false; }
+		virtual bool IsVariable() const			{ return false; }
 
 	private:
 		class Size
 		{
-			size_t			m_Size;					// size value
-			bool			m_IsVariable;			// if true, m_Size is a limit. if false, it's exact
+			size_t			m_Size = 0;				// size value
+			bool			m_IsVariable = false;	// if true, m_Size is a limit. if false, it's exact
 
 		public:
+			Size() = default;
 			Size(size_t size, bool variable = false) : m_Size(size), m_IsVariable(variable)
 			{ }
 
@@ -52,6 +61,9 @@ namespace SCR
 			bool				m_SizesSorted = true;
 
 		public:
+			typedef std::shared_ptr<IValue<T>> Shared;
+			typedef std::unique_ptr<IValue<T>> Unique;
+
 			IValue(T type) : m_Type(type), m_SizesSorted(true)
 			{ }
 			inline virtual ~IValue()
@@ -73,6 +85,14 @@ namespace SCR
 		};
 
 	public:
+		class AnonymousValue : public IValue < ValueType >
+		{
+		public:
+			AnonymousValue() : IValue(ValueType::Null)
+			{ }
+		};
+
+
 		class Value : public IValue < ValueType >
 		{
 			bool				m_Float = false;
@@ -113,8 +133,10 @@ namespace SCR
 		};
 
 	private:
-		unsigned long long			m_ID;
-		std::string					m_Name;
+		unsigned long long						m_ID;
+		std::string								m_Name;
+		std::vector<IValue<ValueType>::Shared>	m_Values;
+		bool									m_Null = true;
 
 	public:
 		Type(unsigned long long id, std::string name) : m_ID(id), m_Name(name)
@@ -123,6 +145,20 @@ namespace SCR
 
 		inline unsigned long long	GetID() const		{ return m_ID; }
 		inline std::string			GetName() const		{ return m_Name; }
+
+		template<typename TType, typename... T>
+		IValue<ValueType>::Shared AddValue(T&&... args) {
+			auto ptr = std::make_shared<TType>(std::forward<T>(args)...);
+			m_Values.emplace_back(ptr);
+			return ptr;
+		}
+
+		static Shared MakeShared(unsigned long long id, std::string name) {
+			return std::make_shared<Type>(id, name);
+		}
+		static Unique MakeUnique(unsigned long long id, std::string name) {
+			return std::make_unique<Type>(id, name);
+		}
 	};
 
 	enum class VarScope {
@@ -148,16 +184,32 @@ namespace SCR
 	 * <TType> - Use to override the types of variables - uses local/global scope by default
 	\*/
 	template<typename TType>
-	class VarType : public Type
+	class VarType : Type
 	{
-		TType				m_Type;			// usually scope
+		bool IsVariable() const override			{ return true; }
+
+		TType					m_VarType;			// usually scope
+		Type::CShared			m_Type;
 
 	public:
+		typedef std::shared_ptr<VarType> Shared;
+		typedef std::shared_ptr<const VarType> CShared;
+		
+		VarType(Type::CShared basic = nullptr) : Type(*basic)
+		{ }
 		VarType(unsigned long long id, std::string name, TType type) : Type(id, name), m_Type(type)
 		{ }
 		inline virtual ~VarType() { }
 
-		inline TType GetType() const			{ return m_Type; }
+		inline TType GetType() const				{ return m_VarType; }
+		inline Type::CShared GetValueType() const	{ return m_Type; }
+
+		inline Type & Disqualify()					{ return *this; }
+		inline const Type & Disqualify() const		{ return *this; }
+
+		static Shared MakeShared(unsigned long long id, std::string name, TType var_type, Type::CShared type = nullptr) {
+			return std::make_shared<ExtendedType>(id, name, var_type, type);
+		}
 	};
 
 	/*\
@@ -165,11 +217,51 @@ namespace SCR
 	\*/
 	class BasicType : public Type
 	{
-
+		bool IsBasic() const override				{ return true; }
 
 	public:
+		typedef std::shared_ptr<BasicType> Shared;
+		typedef std::unique_ptr<BasicType> Unique;
+		typedef std::shared_ptr<const BasicType> CShared;
+		typedef std::unique_ptr<const BasicType> CUnique;
+
+		BasicType(Type::CShared basic = nullptr) : Type(*basic)
+		{ }
 		BasicType(unsigned long long id, std::string name) : Type(id, name)
 		{ }
 		inline virtual ~BasicType() { }
+
+		inline Type & Disqualify()					{ return *this; }
+		inline const Type & Disqualify() const		{ return *this; }
+
+		static Shared MakeShared(unsigned long long id, std::string name)		{ return std::make_shared<BasicType>(id, name); }
+		static Unique MakeUnique(unsigned long long id, std::string name)		{ return std::make_unique<BasicType>(id, name); }
+	};
+
+	/*\
+	 * SCR::ExtendedType - SCR extended type
+	\*/
+	class ExtendedType : public Type
+	{
+		bool IsExtended() const override			{ return true; }
+
+		Type::CShared		m_BasicType;
+
+	public:
+		typedef std::shared_ptr<ExtendedType> Shared;
+		typedef std::shared_ptr<const ExtendedType> CShared;
+
+		ExtendedType(Type::CShared basic = nullptr) : Type(*basic), m_BasicType(basic)
+		{ }
+		ExtendedType(unsigned long long id, std::string name, Type::CShared basic = nullptr) : Type(id, name), m_BasicType(basic)
+		{ }
+		inline virtual ~ExtendedType() { }
+
+		inline Type & Disqualify()					{ return *this; }
+		inline const Type & Disqualify() const		{ return *this; }
+
+		static Shared MakeShared(unsigned long long id, std::string name, Type::CShared basic = nullptr) {
+			return std::make_shared<ExtendedType>(id, name, basic);
+		}
 	};
 }

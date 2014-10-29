@@ -24,12 +24,16 @@ namespace SCRambl
 			auto command = AddCommand(xml.attribute("Name").as_string(), xml.attribute("ID").as_ullong());
 			obj = command;
 		}).AddClass("Args");
-			args.AddClass("Arg", [this,&types](const pugi::xml_node xml, std::shared_ptr<void> & obj){
-				// retrieve the object poiter as a SCR command we know it to be
-				auto& command = *std::static_pointer_cast<SCRambl::SCR::Command>(obj);
-				if (auto type = types.GetType(xml.attribute("Type").as_string())) {
-					
-				}
-			});
+		args.AddClass("Arg", [this,&types](const pugi::xml_node xml, std::shared_ptr<void> & obj){
+			// retrieve the object poiter as a SCR command we know it to be
+			auto& command = *std::static_pointer_cast<SCRambl::SCR::Command>(obj);
+			if (auto type = types.GetType(xml.attribute("Type").as_string())) {
+				command.AddArg(*type);
+			}
+			else {
+				std::string name = xml.attribute("Type").as_string();
+				name.size();
+			}
+		});
 	}
 }

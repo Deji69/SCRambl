@@ -20,23 +20,29 @@ namespace SCRambl
 	class Types
 	{
 	public:
-		using Map = std::unordered_map < std::string, std::shared_ptr<SCR::Type> >;
+		typedef std::unordered_map < std::string, SCR::Type::Shared > Map;
 
 	private:
-		Engine							&	m_Engine;
-		std::shared_ptr<Configuration>		m_Config;
-		Map									m_Map;
+		Engine					&	m_Engine;
+		Configuration::Shared		m_Config;
+		Map							m_Map;
 
 	public:
 		Types(Engine & eng);
 
-		inline std::shared_ptr<SCR::Type> AddType(std::string name, unsigned long long id)
+		inline SCR::Type::Shared AddType(std::string name, unsigned long long id)
 		{
 			auto type = std::make_shared<SCR::Type>(id, name);
 			m_Map.emplace(name, type);
 			return type;
 		}
-		inline std::shared_ptr<SCR::Type> GetType(const std::string & name) const
+		inline SCR::Type::Shared AddExtendedType(std::string name, unsigned long long id, SCR::Type::Shared type)
+		{
+			auto full_type = SCR::ExtendedType::MakeShared(id, name);
+			m_Map.emplace(name, full_type);
+			return type;
+		}
+		inline SCR::Type::Shared GetType(const std::string & name) const
 		{
 			if (m_Map.empty()) return nullptr;
 			auto it = m_Map.find(name);

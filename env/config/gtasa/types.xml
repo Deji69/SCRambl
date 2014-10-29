@@ -3,21 +3,21 @@
 <SCRambl Version="1.0" FileVersion="0.0.0.0">
 	<VariableTypes>
 		<Type Name="LVAR" Scope="local">
-			<Size>2</Size>
+			<Width>16</Width>
 			<Limit What="Index">32</Limit>
 		</Type>
 		<Type Name="VAR" Scope="global">
-			<Size>2</Size>
+			<Width>16</Width>
 			<Limit What="Index">9216</Limit>
 		</Type>
 		<Type Name="LVAR_ARRAY" Type="LVAR">
 			<Array />
-			<Size>2</Size>
+			<Width>16</Width>
 			<Limit What="Index">255</Limit>
 		</Type>
 		<Type Name="VAR_ARRAY" Type="VAR">
 			<Array />
-			<Size>2</Size>
+			<Width>16</Width>
 			<Limit What="Index">255</Limit>
 		</Type>
 	</VariableTypes>
@@ -43,31 +43,31 @@
 		<Type Name="NONE" Hash="Name" />
 		<Type Name="INT" Hash="Name">
 			<Value>
-				<Size>1</Size>
-				<Size>2</Size>
-				<Size>4</Size>
+				<Width>8</Width>
+				<Width>16</Width>
+				<Width>32</Width>
 			</Value>
 		</Type>
 		<Type Name="FLOAT" Hash="Name">
 			<Value>
 				<Float />
-				<Size>4</Size>
+				<Width>32</Width>
 			</Value>
 			<!--
 			<Value>
 				<Float />
 				<Packed />
-				<Size>2</Size>
+				<Width>16</Width>
 			</Value>
 			<Value>
 				<Float />
 				<Packed />
-				<Size>3</Size>
+				<Width>24</Width>
 			</Value>
 			<Value>
 				<Float />
 				<Fixed />
-				<Size>16</Size>
+				<Width>16</Width>
 			</Value>
 			-->
 		</Type>
@@ -145,17 +145,21 @@
 	<ExtendedTypes>
 		<Type Name="LABEL" Basic="INT" Hash="Name">
 			<Label>
-				<Size>4</Size>
+				<Width>32</Width>
 			</Label>
 		</Type>
 		<Type Name="MODEL" Basic="INT" Hash="Name">
-			<Size>2</Size>
+			<Width>16</Width>
 		</Type>
 		<Type Name="BUFFER" Basic="STRING" Hash="Name">
 			<Size>128</Size>
 		</Type>
 	</ExtendedTypes>
 	
+	<!--
+	Translations:
+		Responsible for constructing translations of values by type
+	-->
 	<Translations>
 		<Translate Type="LABEL">
 			<Data>

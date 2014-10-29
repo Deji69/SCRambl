@@ -17,6 +17,8 @@ namespace SCRambl
 
 			m_Task(Event::Begin);
 			m_State = parsing;
+
+			m_OnNewLine = true;
 		}
 		void Parser::Run()
 		{
@@ -25,7 +27,16 @@ namespace SCRambl
 				Init();
 				return;
 			case parsing:
-				Parse();
+				if (m_TokenIt != m_Tokens.End())
+					Parse();
+				else
+				{
+					m_Task(Event::Finish);
+					m_State = finished;
+				}
+				return;
+			case overloading:
+				ParseOverloadedCommand();
 				return;
 			}
 		}
@@ -33,15 +44,102 @@ namespace SCRambl
 		{
 
 		}
+		void Parser::ParseOverloadedCommand()
+		{
+			if (m_OverloadCommands.size() <= 1) {
+				m_CurrentCommand = m_OverloadCommands[0];
+				m_OverloadCommands.clear();
+				m_State = parsing;
+				return;
+			}
+
+			m_CurrentCommand = *m_OverloadCommandsIt;
+			Parse();
+		}
 		void Parser::Parse()
 		{
 			auto ptr = *m_TokenIt;
 			auto type = ptr->GetType<Token::Type>();
+			bool newline = false;
 
 			switch (type) {
-			case Token::Label: {
-				auto& token = ptr->Get<Token::LabelInfo>();
-				auto label = token.GetValue<1>();
+			case Token::Type::Label: {
+				auto& token = ptr->Get<Token::Label::Info>();
+				auto label = token.GetValue<Token::Label::Value::LabelValue>();
+				//auto b = token.GetValue<2>();
+				
+				if (!m_OnNewLine) {
+					SendError(Error::label_on_line, label);
+				}
+				break;
+			}
+			case Token::Type::Identifier: {
+				Commands::Vector vec;
+				auto& token = ptr->Get<Token::Identifier::Info<>>();
+				auto range = token.GetValue<0>();
+				auto name = range.Format();
+
+				if (auto ptr = m_Labels.Find(name))
+				{
+					// this is a label pointer!
+					m_Jumps.emplace_back(ptr, m_TokenIt);
+				}
+				else if (m_Commands.FindCommands(name, vec) > 0)
+				{
+					if (vec.size() == 1)
+					{
+						*m_TokenIt = Script::Tokens::MakeShared < Token::CommandInfo >(range.Begin(), Token::Command, range, vec[0]);
+						m_CurrentCommand = vec[0];
+					}
+					else
+					{
+						*m_TokenIt = Script::Tokens::MakeShared < Token::OLCommandInfo >(range.Begin(), Token::OLCommand, range, vec);
+						ParseCommandOverloads(vec);
+						m_State = overloading;
+					}
+
+					m_ParsingCommandArgs = true;
+				}
+				else
+				{
+					SendError(Error::invalid_identifier, range);
+				}
+				break;
+			}
+			case Token::Type::Number: {
+				auto type = Token::Number::GetValueType(*ptr);
+				bool is_int = type != Numbers::Float;
+				Numbers::IntegerType int_value;
+				Numbers::FloatType float_value;
+				
+				if (is_int)
+				{
+					auto info = ptr->Get<Token::Number::Info<Numbers::IntegerType>>();
+					int_value = info.GetValue < Token::Number::Value::NumberValue >();
+				}
+				else
+				{
+					auto info = ptr->Get<Token::Number::Info<Numbers::FloatType>>();
+					float_value = info.GetValue < Token::Number::Value::NumberValue >();
+				}
+
+				if (m_ParsingCommandArgs) {
+					auto name = m_CurrentCommand->GetName();
+					name.size();
+				}
+				//bool is_int = token.GetValue<
+				break;
+			}
+			case Token::Type::Character: {
+				auto& token = ptr->Get<Token::Character::Info<Character>>();
+				switch (auto ch = token.GetValue<Token::Character::Value::CharacterValue>()) {
+				case Character::EOL:
+					newline = true;
+					break;
+				default:
+					SendError(Error::invalid_character, ch);
+					break;
+				}
 				break;
 			}
 			default:
@@ -49,12 +147,15 @@ namespace SCRambl
 				break;
 			}
 
+			m_OnNewLine = newline;
 			++m_TokenIt;
 		}
 
 		Parser::Parser(Task & task, Engine & engine, Script & script) :
 			m_Task(task), m_Engine(engine), m_Script(script), m_State(init),
-			m_Tokens(script.GetTokens())
+			m_Tokens(script.GetTokens()),
+			m_Labels(script.GetLabels()),
+			m_Commands(m_Engine.GetCommands())
 		{
 		}
 

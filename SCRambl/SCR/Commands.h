@@ -43,18 +43,21 @@ namespace SCR
 			inline bool			IsReturn() const		{ return m_IsReturn; }
 		};
 
+		typedef std::vector<Arg> ArgList;
+
 	private:
 		//uint64_t				m_Index;
 		unsigned long long		m_Index;				// unique index/hash
 		std::string				m_Name;					// command name/id
-		std::vector<Arg>		m_Args;
+		ArgList					m_Args;
 
 	public:
 		Command(std::string name, unsigned long long index) : m_Name(name), m_Index(index)
 		{
 		}
 
-		void AddArg() {
+		void AddArg(const Type & type) {
+			m_Args.emplace_back(type);
 		}
 
 		inline std::string		GetName() const			{ return m_Name; }

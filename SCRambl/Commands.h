@@ -26,6 +26,7 @@ namespace SCRambl
 		};
 
 		using Map = std::unordered_multimap < std::string, std::shared_ptr<SCR::Command> > ;
+		using Vector = std::vector < SCR::Command::Shared > ;
 
 	private:
 		Engine							&	m_Engine;
@@ -82,7 +83,7 @@ namespace SCRambl
 		
 		// Finds all commands matching the name and stores them in a passed vector of command handles
 		// Returns the number of commands found
-		inline long FindCommands(std::string name, std::vector<SCR::Command::Shared> & vec) {
+		inline long FindCommands(std::string name, Vector & vec) {
 			return ForCommandsNamed(name, [&vec](SCR::Command::Shared ptr){ vec.emplace_back(ptr); });
 		}
 	};

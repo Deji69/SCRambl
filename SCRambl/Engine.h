@@ -163,6 +163,7 @@ namespace SCRambl
 		{
 			if (!Formatters.empty())
 			{
+				auto k = &typeid(T);
 				auto it = Formatters.find(&typeid(T));
 				if (it != Formatters.end()) {
 					return it->second->Qualify<T>()(param);

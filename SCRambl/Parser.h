@@ -16,7 +16,27 @@ namespace SCRambl
 {
 	namespace Parser
 	{
-		using Token = Preprocessor::Token;
+		using Character = Preprocessor::Character;
+
+		/*\
+		 * Parser::Token - Parser wrapper for script tokens
+		\*/
+		class Token : public Preprocessor::Token
+		{
+			//Script::Token			m_Token;
+
+		public:
+			enum ParsedType {
+				Command, OLCommand,
+			};
+
+			using CommandInfo = Identifier::Info < ParsedType, SCR::Command::Shared >;
+			using OLCommandInfo = Identifier::Info < ParsedType, Commands::Vector >;
+
+			//Token() = default;
+
+			//inline const Script::Position & GetScriptPos() const			{ return m_Token.GetPosition(); }
+		};
 
 		/*\
 		 * Parser::Symbols - Symbolic data for parsed scripts
@@ -37,10 +57,11 @@ namespace SCRambl
 		public:
 			enum ID {
 				// involuntary errors (errors that should be impossible)
-				//internal_invalid_unary_operator = 500,
+				invalid_character = 500,
 
 				// normal errors
-				//invalid_directive = 1000,
+				invalid_identifier	= 1000,
+				label_on_line		= 1001,
 
 				// fatal errors
 				fatal_begin = 4000,
@@ -56,6 +77,23 @@ namespace SCRambl
 			ID			m_ID;
 		};
 
+		/*\
+		 * Parser::Jump - Jumps from a code position to a label
+		\*/
+		class Jump
+		{
+			Script::Tokens::Iterator	m_TokenIt;
+			Script::Label::Shared		m_Dest;
+
+		public:
+			using Shared = std::shared_ptr < Jump > ;
+			using Vector = std::vector < Jump > ;
+
+			Jump(Script::Label::Shared dest, Script::Tokens::Iterator it) :
+				m_Dest(dest), m_TokenIt(it)
+			{ }
+		};
+
 		class Task;
 		
 		/*\
@@ -63,19 +101,19 @@ namespace SCRambl
 		\*/
 		class Parser
 		{
-			using LabelMap = std::unordered_map < std::string, std::shared_ptr<Label> > ;
+			using LabelMap = std::unordered_map < std::string, std::shared_ptr<Script::Label> > ;
 
 		public:
 			enum State {
-				init, parsing, finished,
-				bad_state,
-				max_state = bad_state,
+				init, parsing, overloading, finished,
+				bad_state, max_state = bad_state,
 			};
 
 			Parser(Task & task, Engine & engine, Script & script);
 
 			inline bool IsFinished() const			{ return m_State == finished; }
 			inline bool IsRunning()	const			{ return m_State == init || m_State == parsing; }
+			void ParseOverloadedCommand();
 			void Run();
 			void Reset();
 
@@ -85,6 +123,9 @@ namespace SCRambl
 			inline size_t GetCurrentToken() const {
 				return m_TokenIt.GetIndex();
 			}
+			inline Script::Token GetToken() const {
+				return m_TokenIt.Get();
+			}
 
 		private:
 			State						m_State = init;
@@ -93,11 +134,29 @@ namespace SCRambl
 			Script					&	m_Script;
 			Script::Tokens			&	m_Tokens;
 			Script::Tokens::Iterator	m_TokenIt;
-			LabelMap					m_Labels;
+			Script::Labels			&	m_Labels;
+			Commands				&	m_Commands;
+			SCR::Command::Shared		m_CurrentCommand;
+			//SCR::Command::Arg
+			Commands::Vector			m_OverloadCommands;
+			Commands::Vector::iterator	m_OverloadCommandsIt;
+			Jump::Vector				m_Jumps;
+
+			// Status
+			bool						m_OnNewLine;
+			bool						m_ParsingCommandArgs;
 
 			// Send an error event
 			void SendError(Error);
 			template<typename First, typename... Args> void SendError(Error, First&&, Args&&...);
+
+			inline void ParseCommandOverloads(const Commands::Vector & vec) {
+				if (m_OverloadCommands.empty()) {
+					m_OverloadCommands = vec;
+					m_OverloadCommandsIt = m_OverloadCommands.begin();
+				}
+				m_State = overloading;
+			}
 
 			void Init();
 			void Parse();
@@ -108,7 +167,7 @@ namespace SCRambl
 		\*/
 		enum class Event
 		{
-			Begin,
+			Begin, Finish,
 			Warning,
 			Error,
 			FoundToken,
@@ -120,18 +179,21 @@ namespace SCRambl
 		class Task : public TaskSystem::Task<Event>, private Parser
 		{
 			friend Parser;
+			Engine				&	m_Engine;
 
-			inline bool operator()(Event id)			{ return CallEventHandler(id); }
-
+			inline bool operator()(Event id)					{ return CallEventHandler(id); }
 			template<typename... Args>
 			inline bool operator()(Event id, Args&&... args)	{ return CallEventHandler(id, std::forward<Args>(args)...); }
 
 		public:
-			Task(Engine & engine, Script & script) : Parser(*this, engine, script)
+			Task(Engine & engine, Script & script) :
+				Parser(*this, engine, script),
+				m_Engine(engine)
 			{ }
 
-			inline size_t GetProgressCurrent() const	{ return GetCurrentToken(); }
-			inline size_t GetProgressTotal() const		{ return GetNumTokens(); }
+			inline size_t GetProgressCurrent() const		{ return GetCurrentToken(); }
+			inline size_t GetProgressTotal() const			{ return GetNumTokens(); }
+			inline Script::Token GetToken() const			{ return Parser::GetToken(); }
 
 		protected:
 			bool IsRunning() const					{ return Parser::IsRunning(); }

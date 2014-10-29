@@ -483,12 +483,61 @@ namespace SCRambl
 		};
 
 		/*\
-		 * Script::Tokens - Preprocessing token container
+		 * Script::Label - Labels in scripts
+		\*/
+		class Label
+		{
+			std::string				m_Name;
+			uint32_t				m_Offset = 0;
+
+		public:
+			using Shared = std::shared_ptr < Label >;
+
+			Label(std::string name) : m_Name(name)
+			{ }
+
+			inline const std::string &			GetName() const			{ return m_Name; }
+			inline uint32_t						GetOffset() const		{ return m_Offset; }
+
+			static inline Shared Make(std::string name) {
+				return std::make_shared<Label>(name);
+			}
+
+			static inline std::string Formatter(Shared label) {
+				return "(" + label->GetName() + ")";
+			}
+		};
+		
+		/*\
+		 * Script::Token - Script token wrapper
+		\*/
+		class Token
+		{
+			Script::Position		m_Position;
+			IToken::Shared			m_Token;
+
+		public:
+			typedef std::shared_ptr<Token> Shared;
+
+			Token(Script::Position pos, IToken::Shared tok) :
+				m_Position(pos),
+				m_Token(tok)
+			{ }
+
+			inline Script::Position & GetPosition()				{ return m_Position; }
+			inline const Script::Position & GetPosition() const	{ return m_Position; }
+
+			inline operator IToken::Shared&()				{ return m_Token; }
+			inline operator const IToken::Shared&() const	{ return m_Token; }
+		};
+
+		/*\
+		 * Script::Tokens - Script token container
 		\*/
 		class Tokens
 		{
-		//public:
-			typedef std::vector<IToken::Shared> Vector;
+		public:
+			typedef std::vector<std::shared_ptr<Token>> Vector;
 
 		private:
 			Vector			m_Tokens;
@@ -509,8 +558,8 @@ namespace SCRambl
 				Iterator(Vector::iterator it, const Vector & cont) : m_It(it), m_Index(it - cont.begin())
 				{ }
 
-				inline IToken::Shared Get() const {
-					return *m_It;
+				inline Token Get() const {
+					return **m_It;
 				}
 				inline size_t GetIndex() const {
 					return m_Index;
@@ -524,7 +573,7 @@ namespace SCRambl
 					return &**this;
 				}
 				inline IToken::Shared operator[](size_t n) const {
-					return m_It[n];
+					return *m_It[n];
 				}
 
 				// Manipulation
@@ -601,8 +650,8 @@ namespace SCRambl
 
 			// Insert
 			template<typename TToken, typename... TArgs>
-			inline std::shared_ptr<TToken> Add(TArgs&&... args)		{
-				auto ptr = std::make_shared<TToken>(std::forward<TArgs>(args)...);
+			inline Token::Shared Add(Position pos, TArgs... args)		{
+				auto ptr = std::make_shared<Token>(pos, std::make_shared<TToken>(std::forward<TArgs>(args)...));
 				m_Tokens.emplace_back(ptr);
 				return ptr;
 			}
@@ -618,9 +667,21 @@ namespace SCRambl
 			inline Iterator begin()					{ return Begin(); }
 			inline Iterator end()					{ return End(); }
 
-			/* Info */
+			/* Access */
+			inline const Token & Front() const		{ return *m_Tokens.front(); }
+			inline Token & Front()					{ return *m_Tokens.front(); }
+			inline const Token & Back() const		{ return *m_Tokens.back(); }
+			inline Token & Back()					{ return *m_Tokens.back(); }
 
+			/* Info */
 			inline size_t Size() const				{ return m_Tokens.size(); }
+			inline bool Empty() const				{ return m_Tokens.empty(); }
+
+			//
+			template<typename TToken, typename... TArgs>
+			static inline Token MakeShared(Position pos, TArgs... args) {
+				return{ pos, std::make_shared<TToken>(std::forward<TArgs>(args)...) };
+			}
 		};
 
 		/*\
@@ -631,6 +692,9 @@ namespace SCRambl
 		{
 		public:
 			using Container = TCont;
+			using Iterator = typename Container::iterator;
+			using ReverseIterator = typename Container::reverse_iterator;
+			using ConstIterator = typename Container::reverse_iterator;
 
 		private:
 			Container			m_Stuff;
@@ -644,17 +708,28 @@ namespace SCRambl
 				m_Stuff.emplace(key, std::forward<TArgs>(obj)...);
 			}
 
-			inline Label::Shared Find(const TKey & key) {
+			inline Iterator Begin() {
+				return m_Stuff.begin();
+			}
+			inline Iterator End() {
+				return m_Stuff.end();
+			}
+			inline Iterator begin()				{ return Begin(); }
+			inline Iterator end()				{ return End(); }
+
+			inline TObj Find(const TKey & key) {
 				auto it = m_Stuff.find(key);
 				return it == m_Stuff.end() ? nullptr : it->second;
 			}
 		};
 		
+		typedef Scope<Label::Shared> Labels;
+
 	private:
 		std::shared_ptr<File>				m_File;
 		Tokens								m_Tokens;
 		Code								m_Code;
-		Scope<Label::Shared>				m_LabelScope;
+		Labels								m_LabelScope;
 
 		// Initialise script for parsing with current code
 		void Init();
@@ -695,14 +770,14 @@ namespace SCRambl
 		Position Include(Position &, const std::string &);
 
 		// OK?
-		inline bool OK() const						{ return true; }
+		inline bool OK() const							{ return true; }
 		// Number of source lines
-		inline size_t GetNumLines() const			{ return m_Code.NumLines(); }
+		inline size_t GetNumLines() const				{ return m_Code.NumLines(); }
 		// Get the almighty source code list
-		inline Code & GetCode()						{ return m_Code; }
+		inline Code & GetCode()							{ return m_Code; }
 		// Get the informative token list
-		inline Tokens & GetTokens()					{ return m_Tokens; }
-		inline const Tokens & GetTokens() const		{ return m_Tokens; }
-		inline Scope<Label::Shared> & GetLabelScope()		{ return m_LabelScope; }
+		inline Tokens & GetTokens()						{ return m_Tokens; }
+		inline const Tokens & GetTokens() const			{ return m_Tokens; }
+		inline Scope<Label::Shared> & GetLabels()		{ return m_LabelScope; }
 	};
 }

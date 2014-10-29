@@ -29,20 +29,74 @@ namespace SCRambl
 		\*/
 		class Token {
 		public:
-			enum Type {
-				None, Directive, Identifier, Label, Number, Operator, String
+			enum class Type {
+				None, Directive, Identifier, Label, Number, Operator, String, Character
 			};
 
-			using NoneInfo = TokenInfo < Type >;
+			class None {
+			public:
+				static const enum Value { TokenType };
+				using Info = TokenInfo < Type > ;
+			};
+			class Directive {
+			public:
+				static const enum Value { TokenType, ScriptRange };
+				using Info = TokenInfo < Type, Script::Range >;
+			};
+			class Identifier {
+			public:
+				static const enum Value { TokenType, ScriptRange };
+				template<typename TType = Type, typename ...TData>
+				using Info = TokenInfo < TType, Script::Range, TData... >;
+			};
+			class Label {
+			public:
+				static const enum Value { ScriptRange, LabelValue };
+				using Info = TokenInfo < Type, Script::Range, Script::Label::Shared >;
+			};
+			class Number {
+			public:
+				static const enum Value { ScriptRange, ValueType, NumberValue };
+				template<typename TNumberType>
+				using Info = TokenInfo < Type, Script::Range, Numbers::Type, TNumberType >;
+				using TypelessInfo = TokenInfo < Type, Script::Range, Numbers::Type >;
+
+				static Numbers::Type GetValueType(const IToken& token) {
+					return token.Get<const TypelessInfo>().GetValue<ValueType>();
+				}
+			};
+			class Operator {
+			public:
+				static const enum Value { ScriptRange, OperatorType };
+				template<typename TOperatorType>
+				using Info = TokenInfo < Type, Script::Range, TOperatorType >;
+			};
+			class String {
+			public:
+				static const enum Value { ScriptRange, StringValue };
+				using Info = TokenInfo < Type, Script::Range, std::string >;
+			};
+			class Character {
+			public:
+				static const enum Value { ScriptPosition, CharacterValue };
+				template<typename TCharacterType>
+				using Info = TokenInfo < Type, Script::Position, TCharacterType >;
+			};
+
+			//using NoneInfo = TokenInfo < Type >;
 			//using DirectiveInfo = TokenInfo < PreprocessingToken::Type, Script::Range >;
-			using DirectiveInfo = TokenInfo < Type, Script::Range >;
-			using IdentifierInfo = TokenInfo < Type, Script::Range >;
-			using LabelInfo = TokenInfo < Type, Script::Range, Label::Shared >;
-			template<typename TNumberType>
-			using NumberInfo = TokenInfo < Type, Script::Range, NumberType, TNumberType >;
-			template<typename TOperatorType>
-			using OperatorInfo = TokenInfo < Type, Script::Range, TOperatorType >;
-			using StringInfo = TokenInfo < Type, Script::Range, std::string >;
+			//using DirectiveInfo = TokenInfo < Type, Script::Range >;
+			//template<typename TType = Type, typename ...TData>
+			//using IdentifierInfo = TokenInfo < TType, Script::Range, TData... >;
+			//using LabelInfo = TokenInfo < Type, Script::Range, Script::Label::Shared >;
+			//template<typename TNumberType>
+			//using NumberInfo = TokenInfo < Type, Script::Range, NumberType, TNumberType >;
+			//using UnknownNumberInfo = TokenInfo < Type, Script::Range, NumberType > ;
+			//template<typename TOperatorType>
+			//using OperatorInfo = TokenInfo < Type, Script::Range, TOperatorType >;
+			//using StringInfo = TokenInfo < Type, Script::Range, std::string >;
+			//template<typename TCharacterType>
+			//using CharacterInfo = TokenInfo < Type, Script::Position, TCharacterType >;
 		};
 
 		/*\
@@ -232,6 +286,36 @@ namespace SCRambl
 		};
 
 		/*\
+		 - Preprocessor::Character - Preprocessor character stuff
+		\*/
+		class Character
+		{
+		public:
+			enum Type {
+				EOL,
+			};
+
+		private:
+			Type		m_Type;
+
+		public:
+			Character() = default;
+			Character(Type type) : m_Type(type)
+			{ }
+
+			inline operator Type() const		{ return m_Type; }
+
+			static inline std::string Formatter(Character type) {
+				std::string rep;
+				switch (type) {
+				case EOL: rep = "[EOL]";
+					break;
+				}
+				return !rep.empty() ? rep : "[UNK]";
+			}
+		};
+
+		/*\
 		 - Preprocessor::Preprocessor - Main Preprocessor task routine
 		\*/
 		class Preprocessor
@@ -255,7 +339,7 @@ namespace SCRambl
 			CommentScanner				m_CommentScanner;
 			DirectiveScanner			m_DirectiveScanner;
 			IdentifierScanner			m_IdentifierScanner;
-			NumericScanner				m_NumericScanner;
+			Numbers::Scanner			m_NumericScanner;
 			LabelScanner				m_LabelScanner;
 			StringLiteralScanner		m_StringLiteralScanner;
 			WhitespaceScanner			m_WhitespaceScanner;
@@ -300,6 +384,7 @@ namespace SCRambl
 			bool								m_bScriptIsLoaded;						// if so, we only need to add-in any #include's
 			bool								m_DisableMacroExpansion = false;
 			bool								m_DisableMacroExpansionOnce = false;
+			bool								m_WasLastTokenEOL = false;
 			std::stack<bool>					m_PreprocessorLogic;
 			unsigned long						m_FalseLogicDepth = 0;					// for #if..#endif's ocurring within "#if FALSE"
 			std::unordered_set<std::string>		m_IdentifiersThatAreNotMacros;
@@ -353,9 +438,10 @@ namespace SCRambl
 
 			// Add a preprocessing token
 			template<typename T, typename... TArgs>
-			inline std::shared_ptr<T> AddToken(Token::Type token, TArgs... args)
+			inline Script::Token::Shared AddToken(Script::Position pos, Token::Type token, TArgs&&... args)
 			{
-				return m_Tokens.Add < T >(token, std::forward<TArgs>(args)...);
+				m_WasLastTokenEOL = false;
+				return m_Tokens.Add < T >(pos, token, std::forward<TArgs>(args)...);
 			}
 			/*template<typename... TArgs>
 			inline std::shared_ptr<Token<TArgs...>> AddToken(PreprocessingToken::Type token, TArgs... args)
@@ -404,6 +490,7 @@ namespace SCRambl
 			Begin, Finish,
 			Warning,
 			Error,
+			AddedToken,
 			FoundToken,
 		};
 
@@ -427,8 +514,7 @@ namespace SCRambl
 			Task(Engine & engine, Script & script):
 				Preprocessor(*this, engine, script),
 				m_Engine(engine), m_Info(GetInfo())
-			{
-			}
+			{ }
 
 			const Information & Info() const		{ return m_Info; }
 
