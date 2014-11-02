@@ -36,11 +36,18 @@ namespace SCRambl
 			m_Map.emplace(name, type);
 			return type;
 		}
-		inline SCR::Type::Shared AddExtendedType(std::string name, unsigned long long id, SCR::Type::Shared type)
+		inline SCR::Type::Shared AddExtendedType(std::string name, unsigned long long id, SCR::Type::CShared type = nullptr)
 		{
-			auto full_type = SCR::ExtendedType::MakeShared(id, name);
+			auto full_type = SCR::ExtendedType::MakeShared(id, name, type);
 			m_Map.emplace(name, full_type);
-			return type;
+			return full_type;
+		}
+		template<typename T>
+		inline SCR::Type::Shared AddVariableType(std::string name, unsigned long long id, T var_type, SCR::Type::CShared type = nullptr)
+		{
+			auto vartype = SCR::VarType<T>::MakeShared(id, name, var_type, type);
+			m_Map.emplace(name, vartype);
+			return vartype;
 		}
 		inline SCR::Type::Shared GetType(const std::string & name) const
 		{

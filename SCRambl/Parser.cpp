@@ -49,6 +49,12 @@ namespace SCRambl
 			if (m_OverloadCommands.size() <= 1) {
 				m_CurrentCommand = m_OverloadCommands[0];
 				m_OverloadCommands.clear();
+
+				// replace overload token with single command token
+				auto& token = m_CommandTokenIt->get()->Get<Token::Identifier::Info<>>();
+				auto range = token.GetValue<0>();
+				*m_CommandTokenIt = Script::Tokens::MakeShared < Token::CommandInfo >(range.Begin(), Token::Command, range, m_CurrentCommand);
+				
 				m_State = parsing;
 				return;
 			}
@@ -61,6 +67,10 @@ namespace SCRambl
 			auto ptr = *m_TokenIt;
 			auto type = ptr->GetType<Token::Type>();
 			bool newline = false;
+
+			if (IsCommandParsing()) {
+				m_CommandArgIt->IsReturn();
+			}
 
 			switch (type) {
 			case Token::Type::Label: {
@@ -86,19 +96,10 @@ namespace SCRambl
 				}
 				else if (m_Commands.FindCommands(name, vec) > 0)
 				{
-					if (vec.size() == 1)
-					{
-						*m_TokenIt = Script::Tokens::MakeShared < Token::CommandInfo >(range.Begin(), Token::Command, range, vec[0]);
-						m_CurrentCommand = vec[0];
-					}
-					else
-					{
-						*m_TokenIt = Script::Tokens::MakeShared < Token::OLCommandInfo >(range.Begin(), Token::OLCommand, range, vec);
-						ParseCommandOverloads(vec);
-						m_State = overloading;
-					}
+					if (vec.size() == 1) *m_TokenIt = Script::Tokens::MakeShared < Token::CommandInfo >(range.Begin(), Token::Command, range, vec[0]);
+					else *m_TokenIt = Script::Tokens::MakeShared < Token::OLCommandInfo >(range.Begin(), Token::OLCommand, range, vec);
 
-					m_ParsingCommandArgs = true;
+					if (ParseCommandOverloads(vec)) BeginCommandParsing();
 				}
 				else
 				{
@@ -123,7 +124,7 @@ namespace SCRambl
 					float_value = info.GetValue < Token::Number::Value::NumberValue >();
 				}
 
-				if (m_ParsingCommandArgs) {
+				if (IsCommandParsing()) {
 					auto name = m_CurrentCommand->GetName();
 					name.size();
 				}

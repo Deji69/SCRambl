@@ -21,6 +21,45 @@ namespace SCRambl
 
 	Types::Types(Engine & eng) : m_Engine(eng)
 	{
+		m_Config = m_Engine.AddConfig("VariableTypes");
+		{
+			auto& vartype = m_Config->AddClass("Type", [this](const pugi::xml_node vec, std::shared_ptr<void> & obj){
+				// store the command to the object pointer so we can access it again
+				SCR::VarScope scope;
+				unsigned long id = 0;
+				if (auto attr = vec.attribute("ID"))
+					id = attr.as_uint();
+
+				std::string name = vec.attribute("Name").as_string();
+
+				if (auto attr = vec.attribute("Scope"))
+					scope = SCR::VarScope(attr.as_string());
+
+				std::hash<std::string> hasher;
+				if (auto attr = vec.attribute("Hash"))
+					id = hasher(vec.attribute(attr.as_string()).as_string());
+				else
+					id = hasher(name);
+				
+				auto type = AddVariableType(name, id, scope);
+				obj = type;
+			});
+			vartype.AddClass("Width", [this](const pugi::xml_node vec, std::shared_ptr<void> & obj){
+				/*auto vartype = std::static_pointer_cast<SCRambl::SCR::VarType<>>(obj);
+				bool is_variable = false;
+				if (auto attr = vec.attribute("Variable"))
+					is_variable = attr.as_bool(false);
+				Numbers::IntegerType size;
+				auto result = Numbers::StringToInt(vec.first_child().value(), size);
+				if (result == Numbers::ConvertResult::success) {
+					value->AddSize(size, is_variable);
+				}*/
+			});
+			vartype.AddClass("Array", [this](const pugi::xml_node vec, std::shared_ptr<void> & obj){
+				auto vartype = std::static_pointer_cast<SCR::VarType<>>(obj);
+				vartype->SetIsArray(true);
+			});
+		}
 		m_Config = m_Engine.AddConfig("Types");
 		{
 			auto& type = m_Config->AddClass("Type", [this](const pugi::xml_node vec, std::shared_ptr<void> & obj){
@@ -72,6 +111,7 @@ namespace SCRambl
 					auto array = type->AddValue<SCR::Type::Variable>(*var_type, *val_type);
 					obj = array;
 				}
+				else obj = nullptr;
 			});
 
 			AddSizeAttribute(value);

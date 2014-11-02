@@ -33,14 +33,21 @@ namespace SCR
 			const Type			&	m_Type;
 			int						m_Index;				// nth arg
 			//std::string			m_Description;
-			bool					m_IsReturn = true;
-
+			bool					m_IsReturn = false;
 
 		public:
+			using List = std::vector < Arg >;
+			using Iterator = List::iterator;
+			using CIterator = List::const_iterator;
+			using RIterator = List::reverse_iterator;
+			using CRIterator = List::const_reverse_iterator;
+
 			Arg(const Type & type) : m_Type(type)
 			{ }
 
 			inline bool			IsReturn() const		{ return m_IsReturn; }
+			inline int			GetIndex() const		{ return m_Index; }
+			inline const Type & GetType() const			{ return m_Type; }
 		};
 
 		typedef std::vector<Arg> ArgList;
@@ -60,6 +67,10 @@ namespace SCR
 			m_Args.emplace_back(type);
 		}
 
+		inline Arg::CIterator	BeginArg() const		{ return m_Args.begin(); }
+		inline Arg::Iterator	BeginArg()				{ return m_Args.begin(); }
+		inline Arg::CIterator	EndArg() const			{ return m_Args.end(); }
+		inline Arg::Iterator	EndArg()				{ return m_Args.end(); }
 		inline std::string		GetName() const			{ return m_Name; }
 	};
 }

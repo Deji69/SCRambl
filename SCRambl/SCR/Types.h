@@ -37,6 +37,8 @@ namespace SCR
 		virtual bool IsExtended() const			{ return false; }
 		virtual bool IsVariable() const			{ return false; }
 
+		// TODO: Add "IsCompatible" functions
+
 	private:
 		class Size
 		{
@@ -161,9 +163,33 @@ namespace SCR
 		}
 	};
 
-	enum class VarScope {
-		local, global
+	class VarScope {
+	public:
+		enum Type {
+			invalid, local, global
+		};
+
+		static inline std::string GetTypeName(VarScope type) {
+			return type == invalid ? "" : (type == global ? "global" : "local");
+		}
+
+		inline std::string GetName() const		{ return GetTypeName(m_Type); }
+		inline bool IsValid() const				{ return m_Type != invalid; }
+		
+		inline operator Type() const			{ return m_Type; }
+		inline operator bool() const			{ return IsValid(); }
+
+		VarScope() = default;
+		VarScope(Type scope) : m_Type(scope)
+		{ }
+		VarScope(std::string scope) : m_Type(scope != "global" ? (scope == "local" ? local : invalid) : global)
+		{ }
+
+	private:
+		Type		m_Type = invalid;
 	};
+
+	static std::string GetVarTypeName(VarScope type);
 
 	// VarType will use VarScope by default to differentiate between variations of variable types
 	template<typename = VarScope>
@@ -184,22 +210,30 @@ namespace SCR
 	 * <TType> - Use to override the types of variables - uses local/global scope by default
 	\*/
 	template<typename TType>
-	class VarType : Type
+	class VarType : public Type
 	{
 		bool IsVariable() const override			{ return true; }
 
-		TType					m_VarType;			// usually scope
-		Type::CShared			m_Type;
+		TType					m_VarType;				// class of variable - usually scope
+		Type::CShared			m_Type;					// applicable for arrays
+		bool					m_IsArray = false;
+		//short					m_Width = 0;			// capacity in bits
 
 	public:
 		typedef std::shared_ptr<VarType> Shared;
 		typedef std::shared_ptr<const VarType> CShared;
 		
-		VarType(Type::CShared basic = nullptr) : Type(*basic)
+		VarType(Type::CShared basic = nullptr) : Type(basic)
 		{ }
-		VarType(unsigned long long id, std::string name, TType type) : Type(id, name), m_Type(type)
+		VarType(unsigned long long id, std::string name, TType type, Type::CShared basic = nullptr) : Type(id, name), m_VarType(type), m_Type(basic)
 		{ }
 		inline virtual ~VarType() { }
+
+		inline short GetWidth() const				{ return m_Width; }
+		inline void SetWidth(short w)				{ m_Width = w; }
+
+		inline void SetIsArray(bool b)				{ m_IsArray = b; }
+		inline bool IsArray() const					{ return m_IsArray; }
 
 		inline TType GetType() const				{ return m_VarType; }
 		inline Type::CShared GetValueType() const	{ return m_Type; }
@@ -208,7 +242,7 @@ namespace SCR
 		inline const Type & Disqualify() const		{ return *this; }
 
 		static Shared MakeShared(unsigned long long id, std::string name, TType var_type, Type::CShared type = nullptr) {
-			return std::make_shared<ExtendedType>(id, name, var_type, type);
+			return std::make_shared<VarType>(id, name, var_type, type);
 		}
 	};
 

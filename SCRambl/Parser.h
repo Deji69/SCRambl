@@ -128,34 +128,62 @@ namespace SCRambl
 			}
 
 		private:
-			State						m_State = init;
-			Engine					&	m_Engine;
-			Task					&	m_Task;
-			Script					&	m_Script;
-			Script::Tokens			&	m_Tokens;
-			Script::Tokens::Iterator	m_TokenIt;
-			Script::Labels			&	m_Labels;
-			Commands				&	m_Commands;
-			SCR::Command::Shared		m_CurrentCommand;
+			State							m_State = init;
+			Engine						&	m_Engine;
+			Task						&	m_Task;
+			Script						&	m_Script;
+			Script::Tokens				&	m_Tokens;
+			Script::Tokens::Iterator		m_TokenIt;
+			Script::Tokens::Iterator		m_CommandTokenIt;
+			Script::Labels				&	m_Labels;
+			Commands					&	m_Commands;
+			SCR::Command::Shared			m_CurrentCommand;
+			SCR::Command::Arg::Iterator		m_CommandArgIt;
 			//SCR::Command::Arg
-			Commands::Vector			m_OverloadCommands;
-			Commands::Vector::iterator	m_OverloadCommandsIt;
-			Jump::Vector				m_Jumps;
+			Commands::Vector				m_OverloadCommands;
+			Commands::Vector::iterator		m_OverloadCommandsIt;
+			Jump::Vector					m_Jumps;
 
 			// Status
-			bool						m_OnNewLine;
-			bool						m_ParsingCommandArgs;
+			bool							m_OnNewLine;
+			bool							m_ParsingCommandArgs;
 
 			// Send an error event
 			void SendError(Error);
 			template<typename First, typename... Args> void SendError(Error, First&&, Args&&...);
 
-			inline void ParseCommandOverloads(const Commands::Vector & vec) {
-				if (m_OverloadCommands.empty()) {
-					m_OverloadCommands = vec;
-					m_OverloadCommandsIt = m_OverloadCommands.begin();
+			inline bool ParseCommandOverloads(const Commands::Vector & vec) {
+				if (vec.size() == 1) {
+					m_CurrentCommand = vec[0];
 				}
-				m_State = overloading;
+				else {
+					if (!m_OverloadCommands.empty()) {
+						m_OverloadCommands = vec;
+						m_OverloadCommandsIt = m_OverloadCommands.begin();
+						m_CurrentCommand = *m_OverloadCommandsIt;
+						m_State = overloading;
+					}
+					else {
+						m_CurrentCommand = nullptr;
+						return false;
+					}
+				}
+				return true;
+			}
+			inline void BeginCommandParsing() {
+				m_CommandTokenIt = m_TokenIt;
+				if (m_State == overloading) {
+					m_CurrentCommand = *m_OverloadCommandsIt;
+				}
+				m_CommandArgIt = m_CurrentCommand->BeginArg();
+				m_ParsingCommandArgs = true;
+			}
+			inline bool IsCommandParsing() {
+				return m_ParsingCommandArgs;
+			}
+			inline void NextCommandArg() {
+				++m_CommandArgIt;
+				m_ParsingCommandArgs = m_CommandArgIt != m_CurrentCommand->EndArg();
 			}
 
 			void Init();

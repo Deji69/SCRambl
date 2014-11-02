@@ -51,8 +51,8 @@ namespace SCRambl
 					if (it != m_Objects.end())
 					{
 						auto obj = it->second;
-						ptr = obj->LoadXML(node, ptr);
-						obj->LoadChildXML(node.children(), ptr);
+						auto new_ptr = obj->LoadXML(node, ptr);
+						obj->LoadChildXML(node.children(), new_ptr);
 						continue;
 					}
 				}

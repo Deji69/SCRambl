@@ -1,13 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 
+<!-- 
+	This file is always loaded in order: VariableTypes, Types, ExtendedTypes, Translations
+	
+	
+-->
+
 <SCRambl Version="1.0" FileVersion="0.0.0.0">
 	<VariableTypes>
 		<Type Name="LVAR" Scope="local">
-			<Width>16</Width>
+			<Width>32</Width>
 			<Limit What="Index">32</Limit>
 		</Type>
 		<Type Name="VAR" Scope="global">
-			<Width>16</Width>
+			<Width>32</Width>
 			<Limit What="Index">9216</Limit>
 		</Type>
 		<Type Name="LVAR_ARRAY" Type="LVAR">
