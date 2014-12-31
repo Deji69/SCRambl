@@ -30,7 +30,7 @@ namespace SCRambl
 				Command, OLCommand,
 			};
 
-			using CommandInfo = Identifier::Info < ParsedType, SCR::Command::Shared >;
+			using CommandInfo = Identifier::Info < ParsedType, Command::Shared >;
 			using OLCommandInfo = Identifier::Info < ParsedType, Commands::Vector >;
 
 			//Token() = default;
@@ -57,11 +57,12 @@ namespace SCRambl
 		public:
 			enum ID {
 				// involuntary errors (errors that should be impossible)
-				invalid_character = 500,
+				invalid_character		= 500,
 
 				// normal errors
-				invalid_identifier	= 1000,
-				label_on_line		= 1001,
+				invalid_identifier		= 1000,
+				label_on_line			= 1001,
+				unsupported_value_type	= 1002,
 
 				// fatal errors
 				fatal_begin = 4000,
@@ -137,8 +138,8 @@ namespace SCRambl
 			Script::Tokens::Iterator		m_CommandTokenIt;
 			Script::Labels				&	m_Labels;
 			Commands					&	m_Commands;
-			SCR::Command::Shared			m_CurrentCommand;
-			SCR::Command::Arg::Iterator		m_CommandArgIt;
+			Command::Shared					m_CurrentCommand;
+			Command::Arg::Iterator			m_CommandArgIt;
 			//SCR::Command::Arg
 			Commands::Vector				m_OverloadCommands;
 			Commands::Vector::iterator		m_OverloadCommandsIt;
@@ -175,8 +176,10 @@ namespace SCRambl
 				if (m_State == overloading) {
 					m_CurrentCommand = *m_OverloadCommandsIt;
 				}
-				m_CommandArgIt = m_CurrentCommand->BeginArg();
-				m_ParsingCommandArgs = true;
+				if (m_CurrentCommand->GetNumArgs()) {
+					m_CommandArgIt = m_CurrentCommand->BeginArg();
+					m_ParsingCommandArgs = true;
+				}
 			}
 			inline bool IsCommandParsing() {
 				return m_ParsingCommandArgs;

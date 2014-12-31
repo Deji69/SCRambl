@@ -3,31 +3,36 @@
 <!-- 
 	This file is always loaded in order: VariableTypes, Types, ExtendedTypes, Translations
 	
-	
 -->
 
 <SCRambl Version="1.0" FileVersion="0.0.0.0">
 	<VariableTypes>
-		<Type Name="LVAR" Scope="local">
+		<Type NAME="LVAR" Scope="local">
 			<Width>32</Width>
 			<Limit What="Index">32</Limit>
 		</Type>
-		<Type Name="VAR" Scope="global">
+		<Type NAME="VAR" Scope="global">
 			<Width>32</Width>
-			<Limit What="Index">9216</Limit>
+			<Limit WHAT="Index">9216</Limit>
 		</Type>
-		<Type Name="LVAR_ARRAY" Type="LVAR">
+		<Type NAME="LVAR_ARRAY" TYPE="LVAR">
 			<Array />
 			<Width>16</Width>
-			<Limit What="Index">255</Limit>
+			<Limit WHAT="Index">255</Limit>
 		</Type>
-		<Type Name="VAR_ARRAY" Type="VAR">
+		<Type NAME="VAR_ARRAY" TYPE="VAR">
 			<Array />
 			<Width>16</Width>
-			<Limit What="Index">255</Limit>
+			<Limit WHAT="Index">255</Limit>
 		</Type>
 	</VariableTypes>
-	<Types>
+	
+	<!--
+	Basic Types:
+		Basic types are ones which represent the full external language, thus extended types can be built upon these
+		A basic type is recognised directly by the script engine as its own entity
+	-->
+	<BasicTypes>
 		<!--
 		Value Types:
 			<Type - Begin type declaration
@@ -46,52 +51,43 @@
 				/> - End array type specification
 			</Type> - End Type declaration
 		-->
-		<Type Name="NONE" Hash="Name" />
-		<Type Name="INT" Hash="Name">
-			<Value>
-				<Width>8</Width>
-				<Width>16</Width>
-				<Width>32</Width>
-			</Value>
+		<Type NAME="NONE" />
+		<Type NAME="INT">
+			<!-- 8 bit integer number -->
+			<Number TYPE="int" SIZE="8" />
+			<!-- 16 bit integer number -->
+			<Number TYPE="int" SIZE="16" />
+			<!-- 32 bit integer number -->
+			<Number TYPE="int" SIZE="32" />
 		</Type>
-		<Type Name="FLOAT" Hash="Name">
-			<Value>
-				<Float />
-				<Width>32</Width>
-			</Value>
-			<!--
-			<Value>
-				<Float />
-				<Packed />
-				<Width>16</Width>
-			</Value>
-			<Value>
-				<Float />
-				<Packed />
-				<Width>24</Width>
-			</Value>
-			<Value>
-				<Float />
-				<Fixed />
-				<Width>16</Width>
-			</Value>
-			-->
+		<Type NAME="FLOAT">
+			<!-- 32 bit floating-point number -->
+			<Number TYPE="float" SIZE="32" />
+			
+			<!-- GTA III only -->
+			<!--<Number TYPE="float" SIZE="16" MODE="packed" />
+			<Number TYPE="float" SIZE="24" MODE="packed" />
+			<Number TYPE="float" SIZE="16" MODE="fixed" />-->
+			<!-- Hypothetical -->
+			<!--<Number TYPE="float" SIZE="64" />-->
 		</Type>
-		<Type Name="TEXT_LABEL" Hash="Name">
-			<String>
-				<Size>8</Size>
-				<Size>16</Size>
-			</String>
+		<Type NAME="TEXT_LABEL">
+			<!-- 8 character text string -->
+			<Text SIZE="8" MODE="static" />
+			<!-- 16 character text string -->
+			<Text SIZE="16" MODE="static" />
 		</Type>
-		<Type Name="STRING" Hash="Name">
-			<String>
-				<Size Variable="true">255</Size>
-			</String>
+		<Type NAME="STRING">
+			<!-- Variable-length text string with 255-character limit -->
+			<Text SIZE="255" MODE="variable" />
 		</Type>
-		<Type Name="CONST" Hash="Name">
-			<Value>
-				<Size>4</Size>
-			</Value>
+		
+		<Type NAME="LABEL">
+			<!-- Label pointer with 32 bit range -->
+			<Label SIZE="32" />
+			
+			<!-- 32 bit integer number (loose matching) -->
+			<Number MATCH="loose" TYPE="int" SIZE="32" />
 		</Type>
 		
 		<!--
@@ -110,108 +106,142 @@
 				/> - End array type specification
 			</Type> - End Type declaration
 		-->
-		<Type Name="VAR_INT" Hash="Name">
-			<Variable Type="VAR" Value="INT" />
-			<Array Type="VAR_ARRAY" Value="INT" />
+		<Type NAME="VAR_INT">
+			<Variable TYPE="VAR" BASIC="INT" />
+			<Array TYPE="VAR_ARRAY" BASIC="INT" />
 		</Type>
-		<Type Name="VAR_FLOAT" Hash="Name">
-			<Variable Type="VAR" Value="FLOAT" />
-			<Array Type="VAR_ARRAY" Value="FLOAT" />
+		<Type NAME="VAR_FLOAT">
+			<Variable TYPE="VAR" BASIC="FLOAT" />
+			<Array TYPE="VAR_ARRAY" BASIC="FLOAT" />
 		</Type>
-		<Type Name="VAR_TEXT_LABEL" Hash="Name">
-			<Variable Type="VAR" Value="TEXT_LABEL" />
-			<Array Type="VAR_ARRAY" Value="TEXT_LABEL" />
+		<Type NAME="VAR_TEXT_LABEL">
+			<Variable TYPE="VAR" BASIC="TEXT_LABEL" />
+			<Array TYPE="VAR_ARRAY" BASIC="TEXT_LABEL" />
 		</Type>
-		<Type Name="VAR_STRING" Hash="Name">
-			<Variable Type="VAR" Value="STRING" />
-			<Array Type="VAR_ARRAY" Value="STRING" />
+		<Type NAME="VAR_STRING">
+			<Variable TYPE="VAR" BASIC="STRING" />
+			<Array TYPE="VAR_ARRAY" BASIC="STRING" />
 		</Type>
-		<Type Name="LVAR_INT" Hash="Name">
-			<Variable Type="LVAR" Value="INT" />
-			<Array Type="LVAR_ARRAY" Value="INT" />
+		<Type NAME="LVAR_INT">
+			<Variable TYPE="LVAR" BASIC="INT" />
+			<Array TYPE="LVAR_ARRAY" BASIC="INT" />
 		</Type>
-		<Type Name="LVAR_FLOAT" Hash="Name">
-			<Variable Type="LVAR" Value="FLOAT" />
-			<Array Type="LVAR_ARRAY" Value="FLOAT" />
+		<Type NAME="LVAR_FLOAT">
+			<Variable TYPE="LVAR" BASIC="FLOAT" />
+			<Array TYPE="LVAR_ARRAY" BASIC="FLOAT" />
 		</Type>
-		<Type Name="LVAR_TEXT_LABEL" Hash="Name">
-			<Variable Type="LVAR" Value="TEXT_LABEL" />
-			<Array Type="LVAR_ARRAY" Value="TEXT_LABEL" />
+		<Type NAME="LVAR_TEXT_LABEL">
+			<Variable TYPE="LVAR" BASIC="TEXT_LABEL" />
+			<Array TYPE="LVAR_ARRAY" BASIC="TEXT_LABEL" />
 		</Type>
-		<Type Name="LVAR_STRING" Hash="Name">
-			<Variable Type="LVAR" Value="STRING" />
-			<Array Type="LVAR_ARRAY" Value="STRING" />
+		<Type NAME="LVAR_STRING">
+			<Variable TYPE="LVAR" BASIC="STRING" />
+			<Array TYPE="LVAR_ARRAY" BASIC="STRING" />
 		</Type>
-	</Types>
+	</BasicTypes>
 	
 	<!--
 	Extended Types:
+		These are internal extensions of the basic type set, which build upon the basic language
 		Each Type needs a 'Basic' value representing an already declared type
 	-->
 	<ExtendedTypes>
-		<Type Name="LABEL" Basic="INT" Hash="Name">
-			<Label>
-				<Width>32</Width>
-			</Label>
+		<Type Name="CONST" BASIC="INT">
+			<Identifier>
+			</Identifier>
 		</Type>
-		<Type Name="MODEL" Basic="INT" Hash="Name">
+		<Type Name="MODEL" BASIC="CONST">
 			<Width>16</Width>
 		</Type>
-		<Type Name="BUFFER" Basic="STRING" Hash="Name">
+		<Type Name="ENUM" BASIC="CONST">
+			
+		</Type>
+		<Type Name="BUFFER" BASIC="TEXT_LABEL">
 			<Size>128</Size>
 		</Type>
+		
+		<!-- Hacky -->
+		<!--
+		<Type NAME="VAR_LABEL" BASIC="VAR_INT">
+			<Variable TYPE="VAR" BASIC="LABEL" />
+			<Array TYPE="VAR_ARRAY" BASIC="LABEL" />
+			
+		</Type>
+		-->
 	</ExtendedTypes>
 	
 	<!--
 	Translations:
 		Responsible for constructing translations of values by type
+		
+		Tags:
+			<Translate>				- Creates a translation which tells the compiler how to compile values of different Type's and Size's
+			Attributes:
+				Type				- Name of a Type defined in BasicTypes or ExtendedTypes
+				Value				- Specifies the only Value type (Number/Label/Text etc...) this translation apllies to
+				Size				- Specifies the only value size (in bits) this translation applies to (e.g. 16 if it translates a 16 bit value)
+			Tags:
+				<Data>				- Begins the Data definition of the translation, tags must be used to specify what to encode
+				Attributes <None>
+				Tags:
+					<Int8>			- The compiler will encode the contained integer data (or data pulled from a value specified by the Source attribute)
+					<Int16>			- ...
+					<Int24>			- ...
+					<Int32>			- ...
+					<Float32>		- The compiler will encode the contained float data (or data pulled from a value specified by the Source attribute)
+					
+					| Attributes:
+						Source		- Data will be retrieved from the given source
 	-->
 	<Translations>
-		<Translate Type="LABEL">
+		<!-- 'Value' only needs specifying if a different tranlsation is needed depending on the type of value being translated -->
+		<!-- Compile the offset of a label given for a LABEL -->
+		<Translate Type="LABEL" Value="Label">
 			<Data>
 				<Int8>1</Int8>
 				<Int32 Source="Label.Offset" />
 			</Data>
 		</Translate>
-	
-		<Translate Type="NONE" Size="0">
+		
+		<!-- Compile the value of a numeric value given for a LABEL -->
+		<Translate Type="LABEL" Value="Number">
+			<Data>
+				<Int8>1</Int8>
+				<Int32 Source="Number.Value" />
+			</Data>
+		</Translate>
+		
+		<!-- Compile a single 'null' byte for any occurrance of the type 'NONE' - since NONE has no accepted values, this can only occur built-in to a command arg list -->
+		<Translate Type="NONE">
 			<Data>
 				<Int8>0</Int8>
 			</Data>
 		</Translate>
 		
-		<Translate Type="INT" Size="1">
+		<!-- Compile the value of a numeric value given for an INT -->
+		<Translate Type="INT" Size="8">
 			<Data>
 				<Int8>4</Int8>
-				<Int8 Source="Value" />
+				<Int8 Source="Number.Value" />
 			</Data>
 		</Translate>
-		
-		<Translate Type="INT" Size="2">
+		<Translate Type="INT" Size="16">
 			<Data>
 				<Int8>5</Int8>
-				<Int16 Source="Value" />
+				<Int16 Source="Number.Value" />
 			</Data>
 		</Translate>
-		
-		<Translate Type="INT" Size="4">
+		<Translate Type="INT" Size="32">
 			<Data>
 				<Int8>1</Int8>
-				<Int32 Source="Value" />
+				<Int32 Source="Number.Value" />
 			</Data>
 		</Translate>
 		
-		<Translate Type="INT" Size="2">
-			<Data>
-				<Int8>5</Int8>
-				<Int16 Source="Value" />
-			</Data>
-		</Translate>
-		
-		<Translate Type="FLOAT" Size="4">
+		<Translate Type="FLOAT" Size="32">
 			<Data>
 				<Int8>6</Int8>
-				<Float32 Source="Value" />
+				<Float32 Source="Number.Value" />
 			</Data>
 		</Translate>
 		
@@ -241,29 +271,29 @@
 		<Translate Type="CONST" Size="4">
 			<Data>
 				<Int8>1</Int8>
-				<Int32 Source="Value" />
+				<Int32 Source="Number.Value" />
 			</Data>
 		</Translate>
 		
 		<Translate Type="TEXT_LABEL" Size="8">
 			<Data>
 				<Int8>9</Int8>
-				<String Size="8" Source="Value" />
+				<String Size="8" Source="Text.Value" />
 			</Data>
 		</Translate>
 		
 		<Translate Type="TEXT_LABEL" Size="16">
 			<Data>
 				<Int8>15</Int8>
-				<String Size="16" Source="Value" />
+				<String Size="16" Source="Text.Value" />
 			</Data>
 		</Translate>
 		
 		<Translate Type="STRING" Size="255">
 			<Data>
 				<Int8>14</Int8>
-				<Int8 Source="Value.Size" />
-				<String Source="Value" />
+				<Int8 Source="Text.Size" />
+				<String Source="Text.Value" />
 			</Data>
 		</Translate>
 		

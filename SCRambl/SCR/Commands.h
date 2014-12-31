@@ -21,36 +21,49 @@
 namespace SCR
 {
 	/*\
+	 * Command Arg - SCR Command Arg
+	\*/
+	template<typename TBasicType = Default::BasicType>
+	class CommandArg
+	{
+		const TBasicType			&	m_Type;
+		int								m_Index;				// nth arg
+		bool							m_IsReturn = false;
+		//std::string					m_Description;
+
+	public:
+		typedef TBasicType BasicType;
+		using Shared = std::shared_ptr < CommandArg >;
+		using CShared = std::shared_ptr < const CommandArg >;
+		typedef typename std::template vector < CommandArg > Vector;
+		typedef typename Vector::iterator Iterator;
+		/*using Iterator = Vector::iterator;
+		using CIterator = Vector::const_iterator;
+		using RIterator = Vector::reverse_iterator;
+		using CRIterator = Vector::const_reverse_iterator;*/
+
+		CommandArg(const TBasicType & type, int index) : m_Type(type), m_Index(index)
+		{ }
+
+		inline bool			IsReturn() const			{ return m_IsReturn; }
+		inline int			GetIndex() const			{ return m_Index; }
+		inline const TBasicType & GetType() const		{ return m_Type; }
+	};
+
+	namespace Default {
+		typedef SCR::CommandArg<Default::BasicType> CommandArg;
+	}
+
+	/*\
 	 * Command - SCR command
 	\*/
+	template<typename TArgType = Default::CommandArg>
 	class Command
 	{
 	public:
-		using Shared = std::shared_ptr < SCR::Command > ;
-
-		class Arg
-		{
-			const Type			&	m_Type;
-			int						m_Index;				// nth arg
-			//std::string			m_Description;
-			bool					m_IsReturn = false;
-
-		public:
-			using List = std::vector < Arg >;
-			using Iterator = List::iterator;
-			using CIterator = List::const_iterator;
-			using RIterator = List::reverse_iterator;
-			using CRIterator = List::const_reverse_iterator;
-
-			Arg(const Type & type) : m_Type(type)
-			{ }
-
-			inline bool			IsReturn() const		{ return m_IsReturn; }
-			inline int			GetIndex() const		{ return m_Index; }
-			inline const Type & GetType() const			{ return m_Type; }
-		};
-
-		typedef std::vector<Arg> ArgList;
+		typedef TArgType Arg;
+		typedef std::shared_ptr< Command<TArgType> > Shared;
+		typedef std::vector< TArgType > ArgList;
 
 	private:
 		//uint64_t				m_Index;
@@ -60,17 +73,17 @@ namespace SCR
 
 	public:
 		Command(std::string name, unsigned long long index) : m_Name(name), m_Index(index)
-		{
+		{ }
+
+		void AddArg(const typename Arg::BasicType & type) {
+			m_Args.emplace_back(type, m_Args.size());
 		}
 
-		void AddArg(const Type & type) {
-			m_Args.emplace_back(type);
-		}
-
-		inline Arg::CIterator	BeginArg() const		{ return m_Args.begin(); }
-		inline Arg::Iterator	BeginArg()				{ return m_Args.begin(); }
-		inline Arg::CIterator	EndArg() const			{ return m_Args.end(); }
-		inline Arg::Iterator	EndArg()				{ return m_Args.end(); }
-		inline std::string		GetName() const			{ return m_Name; }
+		inline typename ArgList::const_iterator	BeginArg() const		{ return m_Args.begin(); }
+		inline typename ArgList::iterator		BeginArg()				{ return m_Args.begin(); }
+		inline typename ArgList::const_iterator	EndArg() const			{ return m_Args.end(); }
+		inline typename ArgList::iterator		EndArg()				{ return m_Args.end(); }
+		inline size_t				GetNumArgs() const		{ return m_Args.size(); }
+		inline std::string			GetName() const			{ return m_Name; }
 	};
 }

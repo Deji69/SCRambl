@@ -26,9 +26,9 @@ namespace SCRambl
 		}).AddClass("Args");
 		args.AddClass("Arg", [this,&types](const pugi::xml_node xml, std::shared_ptr<void> & obj){
 			// retrieve the object poiter as a SCR command we know it to be
-			auto& command = *std::static_pointer_cast<SCRambl::SCR::Command>(obj);
+			auto& command = *std::static_pointer_cast<SCRambl::Command>(obj);
 			if (auto type = types.GetType(xml.attribute("Type").as_string())) {
-				command.AddArg(*type);
+				command.AddArg(type->Extend());
 			}
 			else {
 				std::string name = xml.attribute("Type").as_string();

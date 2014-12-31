@@ -76,6 +76,18 @@ namespace SCRambl
 		return out;
 	}
 
+	template<typename T>
+	inline size_t CountBitOccupation(T N) {
+		auto v = std::log2(N);
+		return v ? v : 1;
+	}
+
+	template<typename T>
+	inline size_t CountByteOccupation(T v) {
+		size_t n = CountBitOccupation<unsigned long>(v);
+		return (n / 8) + (n % 8 ? 1 : 0);
+	}
+
 #ifdef _WIN32
 	inline uint64_t JoinInt32(uint32_t high, uint32_t low)
 	{

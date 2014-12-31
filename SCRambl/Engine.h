@@ -49,7 +49,7 @@ namespace SCRambl
 
 		Constants				m_Constants;
 		Commands				m_Commands;
-		Types					m_Types;
+		Types::Types			m_Types;
 
 	public:
 		Engine();
@@ -59,7 +59,7 @@ namespace SCRambl
 		// Get SCR Commands
 		inline Commands & GetCommands()			{ return m_Commands; }
 		// Get SCR Types
-		inline Types & GetTypes()				{ return m_Types; }
+		inline Types::Types & GetTypes()		{ return m_Types; }
 
 		/*\
 		 * Engine::AddConfig - Returns shared Configuration element

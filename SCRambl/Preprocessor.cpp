@@ -845,6 +845,7 @@ namespace SCRambl
 				case Lexer::Result::found_token:
 					// we found one, we found one!
 					m_CodePos = m_Token.End();
+					//if (m_CodePos->IsSeparating() && !m_CodePos->IsEOL() && !m_CodePos->IsIgnorable()) ++m_CodePos;
 
 					// only try to handle directives and comments if we're skipping source
 					//if (m_Directive != Directive::ELIF) {
@@ -906,6 +907,8 @@ namespace SCRambl
 					case TokenType::Label:
 						// save the label name
 						m_Identifier = m_Token.Range().Format();
+						if (m_CodePos->GetType() == Symbol::punctuator)
+							++m_CodePos;
 						}
 
 						// in certain cases we may want the macros actual identifier

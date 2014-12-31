@@ -10,10 +10,14 @@
 #include "utils.h"
 #include "Configuration.h"
 #include "SCR.h"
+#include "Types.h"
 
 namespace SCRambl
 {
 	class Engine;
+
+	// Use SCR Command's and SCR CommandArg's with our own TypeExt's
+	typedef SCR::Command<SCR::CommandArg<Types::Type>> Command;
 
 	/*\
 	 * Commands - SCR command manager
@@ -25,8 +29,8 @@ namespace SCRambl
 			none, uppercase, lowercase
 		};
 
-		using Map = std::unordered_multimap < std::string, std::shared_ptr<SCR::Command> > ;
-		using Vector = std::vector < SCR::Command::Shared > ;
+		using Map = std::unordered_multimap < std::string, Command::Shared >;
+		using Vector = std::vector < Command::Shared >;
 
 	private:
 		Engine							&	m_Engine;
@@ -48,7 +52,7 @@ namespace SCRambl
 			return Casing::none;
 		}
 
-		inline std::shared_ptr<SCR::Command> AddCommand(std::string name, unsigned long long opcode) {
+		inline std::shared_ptr<Command> AddCommand(std::string name, unsigned long long opcode) {
 			if (name.empty()) return nullptr;
 
 			if (m_SourceCasing != m_DestCasing) {
@@ -56,7 +60,7 @@ namespace SCRambl
 					std::transform(name.begin(), name.end(), name.begin(), m_DestCasing == Casing::lowercase ? std::tolower : std::toupper);
 			}
 
-			auto command = std::make_shared<SCR::Command>(name, opcode);
+			auto command = std::make_shared<Command>(name, opcode);
 			m_Map.emplace(name, command);
 			return command;
 		}
@@ -84,7 +88,7 @@ namespace SCRambl
 		// Finds all commands matching the name and stores them in a passed vector of command handles
 		// Returns the number of commands found
 		inline long FindCommands(std::string name, Vector & vec) {
-			return ForCommandsNamed(name, [&vec](SCR::Command::Shared ptr){ vec.emplace_back(ptr); });
+			return ForCommandsNamed(name, [&vec](Command::Shared ptr){ vec.emplace_back(ptr); });
 		}
 	};
 }

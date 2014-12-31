@@ -64,6 +64,7 @@ namespace SCRambl
 		}
 		void Parser::Parse()
 		{
+			auto& types = m_Engine.GetTypes();
 			auto ptr = *m_TokenIt;
 			auto type = ptr->GetType<Token::Type>();
 			bool newline = false;
@@ -71,6 +72,8 @@ namespace SCRambl
 			if (IsCommandParsing()) {
 				m_CommandArgIt->IsReturn();
 			}
+
+			Types::ValueSet val_type;
 
 			switch (type) {
 			case Token::Type::Label: {
@@ -81,6 +84,8 @@ namespace SCRambl
 				if (!m_OnNewLine) {
 					SendError(Error::label_on_line, label);
 				}
+
+				val_type = Types::ValueSet::Label;
 				break;
 			}
 			case Token::Type::Identifier: {
@@ -89,22 +94,38 @@ namespace SCRambl
 				auto range = token.GetValue<0>();
 				auto name = range.Format();
 
-				if (auto ptr = m_Labels.Find(name))
-				{
+				if (auto ptr = m_Labels.Find(name)) {
 					// this is a label pointer!
 					m_Jumps.emplace_back(ptr, m_TokenIt);
 				}
-				else if (m_Commands.FindCommands(name, vec) > 0)
-				{
+				else if (m_Commands.FindCommands(name, vec) > 0) {
 					if (vec.size() == 1) *m_TokenIt = Script::Tokens::MakeShared < Token::CommandInfo >(range.Begin(), Token::Command, range, vec[0]);
 					else *m_TokenIt = Script::Tokens::MakeShared < Token::OLCommandInfo >(range.Begin(), Token::OLCommand, range, vec);
 
 					if (ParseCommandOverloads(vec)) BeginCommandParsing();
 				}
-				else
-				{
+				else if (false /*check variables */) {
+
+				}
+				else if (IsCommandParsing()/* && m_CommandArgIt->GetType().IsCompatible()*/) {
+
+				}
+				else {
 					SendError(Error::invalid_identifier, range);
 				}
+
+				val_type = Types::ValueSet::Label;
+				
+				break;
+			}
+			case Token::Type::String: {
+				auto& token = ptr->Get<Token::String::Info>();
+				auto range = token.GetValue<0>();
+				auto string = range.Format();
+
+				
+
+				val_type = Types::ValueSet::Text;
 				break;
 			}
 			case Token::Type::Number: {
@@ -113,22 +134,72 @@ namespace SCRambl
 				Numbers::IntegerType int_value;
 				Numbers::FloatType float_value;
 				
-				if (is_int)
-				{
+				size_t size;
+				if (is_int) {
 					auto info = ptr->Get<Token::Number::Info<Numbers::IntegerType>>();
 					int_value = info.GetValue < Token::Number::Value::NumberValue >();
+					size = CountBitOccupation(int_value);
 				}
-				else
-				{
+				else {
 					auto info = ptr->Get<Token::Number::Info<Numbers::FloatType>>();
 					float_value = info.GetValue < Token::Number::Value::NumberValue >();
+					size = 32;
 				}
 
 				if (IsCommandParsing()) {
+					auto& type = m_CommandArgIt->GetType();
+					bool b = type.IsBasicType();
 					auto name = m_CurrentCommand->GetName();
 					name.size();
 				}
-				//bool is_int = token.GetValue<
+				
+				//Types::NumberValue number_value((is_int ? Types::NumberValue::Integer : Types::NumberValue::Float), CountBitOccupation(int_value));
+				Types::Value::Shared best_value_match;
+				size_t smallest_fitting_value_size = 0;
+
+				std::vector<Types::Value::Shared> vec;
+				size_t n;
+				if (IsCommandParsing()) {
+					auto& type = m_CommandArgIt->GetType();
+					n = types.GetValues(Types::ValueSet::Number, size, vec, [&best_value_match, &smallest_fitting_value_size, is_int, &vec](Types::Value::Shared value){
+						// Keep this value?
+						auto& num_value = value->Extend<Types::NumberValue>();
+						if (num_value.GetNumberType() != (is_int ? Types::NumberValue::Integer : Types::NumberValue::Float))
+							return false;
+
+						// Oh, is this the only one we need?
+						auto &ntype = value->GetType();
+						if (!best_value_match || smallest_fitting_value_size > value->GetSize()) {
+							best_value_match = value;
+							smallest_fitting_value_size = value->GetSize();
+						}
+						return true;
+					});
+
+					if (best_value_match) {
+						//best_value_match->GetType
+					}
+				}
+				else
+				{
+					n = types.GetValues(Types::ValueSet::Number, size, vec, [this, is_int, &vec](Types::Value::Shared value){
+						// Keep this value?
+						auto& num_value = value->Extend<Types::NumberValue>();
+						if (num_value.GetNumberType() != (is_int ? Types::NumberValue::Integer : Types::NumberValue::Float))
+							return false;
+						return true;
+					});
+				}
+
+				if (!n) {
+					SendError(Error::unsupported_value_type);
+				}
+				
+				val_type = Types::ValueSet::Number;
+
+				if (IsCommandParsing()) {
+					
+				}
 				break;
 			}
 			case Token::Type::Character: {
@@ -141,6 +212,13 @@ namespace SCRambl
 					SendError(Error::invalid_character, ch);
 					break;
 				}
+				break;
+			}
+			case Token::Type::Operator: {
+				auto& token = ptr->Get<Token::Operator::Info<Operator::Type>>();
+				auto type = token.GetValue<Token::Operator::Value::OperatorType>();
+				auto rg = token.GetValue<Token::Operator::Value::ScriptRange>();
+				rg.Begin();
 				break;
 			}
 			default:
