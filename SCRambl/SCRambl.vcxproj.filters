@@ -61,6 +61,9 @@
     <ClCompile Include="Constants.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Compiler.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Builder.h">
@@ -194,6 +197,15 @@
     </ClInclude>
     <ClInclude Include="Scope.h">
       <Filter>Header\SCR</Filter>
+    </ClInclude>
+    <ClInclude Include="Attributes.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\map.h">
+      <Filter>Header\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Compiler.h">
+      <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

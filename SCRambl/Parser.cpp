@@ -137,12 +137,12 @@ namespace SCRambl
 				size_t size;
 				if (is_int) {
 					auto info = ptr->Get<Token::Number::Info<Numbers::IntegerType>>();
-					int_value = info.GetValue < Token::Number::Value::NumberValue >();
+					int_value = info.GetValue < Token::Number::Parameter::NumberValue >();
 					size = CountBitOccupation(int_value);
 				}
 				else {
 					auto info = ptr->Get<Token::Number::Info<Numbers::FloatType>>();
-					float_value = info.GetValue < Token::Number::Value::NumberValue >();
+					float_value = info.GetValue < Token::Number::Parameter::NumberValue >();
 					size = 32;
 				}
 
@@ -164,7 +164,7 @@ namespace SCRambl
 					n = types.GetValues(Types::ValueSet::Number, size, vec, [&best_value_match, &smallest_fitting_value_size, is_int, &vec](Types::Value::Shared value){
 						// Keep this value?
 						auto& num_value = value->Extend<Types::NumberValue>();
-						if (num_value.GetNumberType() != (is_int ? Types::NumberValue::Integer : Types::NumberValue::Float))
+						if (num_value.GetNumberType() != (is_int ? Types::NumberValueType::Integer : Types::NumberValueType::Float))
 							return false;
 
 						// Oh, is this the only one we need?
@@ -176,6 +176,13 @@ namespace SCRambl
 						return true;
 					});
 
+					auto& number_value = best_value_match->Extend<Types::NumberValue>();
+					auto val_token = is_int ? number_value.CreateToken<Token::Number::Value>(ptr->Get<Token::Number::Info<Numbers::IntegerType>>())
+						: number_value.CreateToken<Token::Number::Value>(ptr->Get<Token::Number::Info<Numbers::FloatType>>());
+					ptr->Get<Token::Number::Info<Numbers::FloatType>>().GetValue<Token::Number::ScriptRange>();
+					auto info = ptr->Get<Token::Number::Info<Numbers::IntegerType>>();
+					info.GetType();
+
 					if (best_value_match) {
 						//best_value_match->GetType
 					}
@@ -185,7 +192,7 @@ namespace SCRambl
 					n = types.GetValues(Types::ValueSet::Number, size, vec, [this, is_int, &vec](Types::Value::Shared value){
 						// Keep this value?
 						auto& num_value = value->Extend<Types::NumberValue>();
-						if (num_value.GetNumberType() != (is_int ? Types::NumberValue::Integer : Types::NumberValue::Float))
+						if (num_value.GetNumberType() != (is_int ? Types::NumberValueType::Integer : Types::NumberValueType::Float))
 							return false;
 						return true;
 					});

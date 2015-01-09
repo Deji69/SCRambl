@@ -8,6 +8,7 @@
 namespace Basic { class Error; };
 #include "Preprocessor.h"
 #include "Parser.h"
+#include "Compiler.h"
 
 namespace SCRambl
 {

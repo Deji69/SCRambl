@@ -44,9 +44,26 @@ namespace SCRambl
 		class Symbols
 		{
 		public:
-			class Object
+			enum class Structure {
+				Header, Data
+			};
+			enum class DataStructure {
+
+			};
+
+			class Data
+			{
+				Types::ValueToken			m_ValToken;
+			};
+
+			class FileFunctions
 			{
 			};
+
+			template<typename T = FileFunctions, typename... TArgs>
+			void WriteFile(TArgs&&... args) {
+				T();
+			}
 		};
 
 		/*\
@@ -78,10 +95,24 @@ namespace SCRambl
 			ID			m_ID;
 		};
 
+
+		/*\
+		 * Parser::Symbolic - Symbolic parser data
+		\*/
+		enum class SymbolTypes {
+			Label, Command, Value
+		};
+		class Symbolic
+		{
+		public:
+			inline virtual ~Symbolic()
+			{ }
+		};
+
 		/*\
 		 * Parser::Jump - Jumps from a code position to a label
 		\*/
-		class Jump
+		class Jump : public Symbolic
 		{
 			Script::Tokens::Iterator	m_TokenIt;
 			Script::Label::Shared		m_Dest;

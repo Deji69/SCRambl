@@ -128,6 +128,8 @@ namespace SCR
 			static inline typename Type::Shared MakeShared(TValType type)				{ return std::make_shared<Value>(type); }
 		};
 
+		typedef typename Value::Shared SharedValue;
+
 		class Storage {
 		public:
 			typedef std::unordered_map<std::string, std::shared_ptr < Type >> Map;
@@ -169,21 +171,20 @@ namespace SCR
 		/*\
 		 * Types::Types::AllValues - Calls the requested function for each Value this Type contains
 		\*/
-		template<typename TFunc>
-		void AllValues(TFunc func) const {
-			for (auto i = m_Values.begin(); i != m_Values.end(); ++i) {
-				func(i->second);
+		template<typename TValue = Value, typename TFunc>
+		void AllValues(TFunc func) {
+			for (auto i : m_Values) {
+				func(std::static_pointer_cast<TValue>(i));
 			}
-			return n;
 		}
 
 		static inline typename Type::Shared MakeShared(std::string name, TType type)			{ return std::make_shared<Type>(name, type); }
 		//static inline Type::CShared MakeShared(TType type, TValType valtype) const			{ return std::make_shared<Type>(type, valtype); }
 
 	private:
-		std::string							m_Name;
-		TType								m_Type;
-		std::vector<typename Value::Shared>	m_Values;
+		std::string						m_Name;
+		TType							m_Type;
+		std::vector<SharedValue>		m_Values;
 	};
 
 	namespace Default

@@ -685,6 +685,23 @@ namespace SCRambl
 		};
 
 		/*\
+		 * Script::Symbol
+		\*/
+		/*class Symbol
+		{
+		public:
+		};*/
+
+		/*\
+		 * Script::Symbols
+		\*/
+		class Symbols
+		{
+		public:
+			using Shared = std::shared_ptr < Symbols > ;
+		};
+
+		/*\
 		 * Script::Scope - Scope of variables, labels, you name it
 		\*/
 		template<typename TObj, typename TKey = std::string, typename TCont = std::unordered_map<TKey, TObj>>
@@ -730,6 +747,7 @@ namespace SCRambl
 		Tokens								m_Tokens;
 		Code								m_Code;
 		Labels								m_LabelScope;
+		Symbols::Shared						m_Symbols;
 
 		// Initialise script for parsing with current code
 		void Init();

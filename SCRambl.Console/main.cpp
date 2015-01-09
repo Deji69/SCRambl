@@ -252,6 +252,18 @@ int main(int argc, char* argv[])
 				return true;
 			});
 
+			/**************** Compiler Stuff ****************/
+			// Add the parser task to parse the code symbols to tokens
+			auto compiler_task = engine.AddTask<SCRambl::Compiler::Task>(compiler, script);
+			compiler_task->AddEventHandler<SCRambl::Compiler::Event::Begin>([](){
+				std::cout << "\nCompilation started.\n";
+				return true;
+			});
+			compiler_task->AddEventHandler<SCRambl::Compiler::Event::Finish>([](){
+				std::cout << "\nCompilation finished.\n";
+				return true;
+			});
+
 			//
 			bool bRunning = true;
 			bool bPreprocessorStarted = false;
@@ -275,6 +287,10 @@ int main(int argc, char* argv[])
 					auto& task = engine.GetCurrentTask<SCRambl::Parser::Task>();
 					auto pc = std::floor(((float)task.GetProgressCurrent() / (float)task.GetProgressTotal()) * 100.0);
 					std::cout << "Parsing..." << pc << "%" << "\r";
+					break;
+				}
+				case compiler: {
+					auto& task = engine.GetCurrentTask<SCRambl::Compiler::Task>();
 					break;
 				}
 				}

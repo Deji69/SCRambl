@@ -58,7 +58,7 @@ namespace SCRambl
 			out = is_float ? (IntegerType)((n + ((FloatType)f / (FloatType)d))) : n;
 			return ConvertResult::success;
 		}
-		static ConvertResult StringToFloat(const char * str, IntegerType & out, bool convert_int = false) {
+		static ConvertResult StringToFloat(const char * str, FloatType & out, bool convert_int = false) {
 			unsigned long n = 0;
 			unsigned long d = 1;		// number of decimal places
 			unsigned long f = 0;		// the RHS of the decimal point
@@ -91,7 +91,7 @@ namespace SCRambl
 			if (!is_float) {
 				if (!convert_int) return ConvertResult::is_an_int;
 			}
-			out = is_float ? (IntegerType)((n + ((FloatType)f / (FloatType)d))) : n;
+			out = is_float ? (n + ((FloatType)f / (FloatType)d)) : n;
 			return ConvertResult::success;
 		}
 

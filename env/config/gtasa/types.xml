@@ -3,6 +3,11 @@
 <!-- 
 	This file is always loaded in order: VariableTypes, Types, ExtendedTypes, Translations
 	
+	
+	Type Encoding Process
+		COMMAD > ARG > TYPE > VALTYPE == VALTYPE < VALUE < PARSER TOKEN
+									  \/
+								SYMBOLIC TOKEN >
 -->
 
 <SCRambl Version="1.0" FileVersion="0.0.0.0">
@@ -80,6 +85,11 @@
 		<Type NAME="STRING">
 			<!-- Variable-length text string with 255-character limit -->
 			<Text SIZE="255" MODE="variable" />
+		</Type>
+		
+		<Type NAME="COMMAND">
+			<!-- Command with 16 bit ID -->
+			<Command TYPE="ID" SIZE="16" />
 		</Type>
 		
 		<Type NAME="LABEL">
@@ -177,7 +187,7 @@
 		Tags:
 			<Translate>				- Creates a translation which tells the compiler how to compile values of different Type's and Size's
 			Attributes:
-				Type				- Name of a Type defined in BasicTypes or ExtendedTypes
+				Type	(req.)		- Name of a Type defined in BasicTypes or ExtendedTypes
 				Value				- Specifies the only Value type (Number/Label/Text etc...) this translation apllies to
 				Size				- Specifies the only value size (in bits) this translation applies to (e.g. 16 if it translates a 16 bit value)
 			Tags:
@@ -191,15 +201,30 @@
 					<Float32>		- The compiler will encode the contained float data (or data pulled from a value specified by the Source attribute)
 					
 					| Attributes:
-						Source		- Data will be retrieved from the given source
+						Source		- Data will be retrieved from the given source (requires Attribute)
+						Attribute	- Attribute of the source to retrieve data from (requires Source)
 	-->
 	<Translations>
 		<!-- 'Value' only needs specifying if a different tranlsation is needed depending on the type of value being translated -->
+		<Translate Type="COMMAND">
+			<Data>
+				<Int16 Source="Command" Attribute="ID" />
+			</Data>
+		</Translate>
+		
+		<!-- (Just a suggestion...) -->
+		<!-- <Translate Type="COMMAND_EXT">
+			<Data>
+				<Int16>0xFFFF</Int16>
+				<Int32 Source="Command.Hash" />
+			</Data>
+		</Translate> -->
+		
 		<!-- Compile the offset of a label given for a LABEL -->
 		<Translate Type="LABEL" Value="Label">
 			<Data>
 				<Int8>1</Int8>
-				<Int32 Source="Label.Offset" />
+				<Int32 Source="Label" Attribute="Offset" />
 			</Data>
 		</Translate>
 		
@@ -207,7 +232,7 @@
 		<Translate Type="LABEL" Value="Number">
 			<Data>
 				<Int8>1</Int8>
-				<Int32 Source="Number.Value" />
+				<Int32 Source="Number" Attribute="Value" />
 			</Data>
 		</Translate>
 		
@@ -222,26 +247,26 @@
 		<Translate Type="INT" Size="8">
 			<Data>
 				<Int8>4</Int8>
-				<Int8 Source="Number.Value" />
+				<Int8 Source="Number" Attribute="Value" />
 			</Data>
 		</Translate>
 		<Translate Type="INT" Size="16">
 			<Data>
 				<Int8>5</Int8>
-				<Int16 Source="Number.Value" />
+				<Int16 Source="Number" Attribute="Value" />
 			</Data>
 		</Translate>
 		<Translate Type="INT" Size="32">
 			<Data>
 				<Int8>1</Int8>
-				<Int32 Source="Number.Value" />
+				<Int32 Source="Number" Attribute="Value" />
 			</Data>
 		</Translate>
 		
 		<Translate Type="FLOAT" Size="32">
 			<Data>
 				<Int8>6</Int8>
-				<Float32 Source="Number.Value" />
+				<Float32 Source="Number" Attribute="Value" />
 			</Data>
 		</Translate>
 		
@@ -271,85 +296,90 @@
 		<Translate Type="CONST" Size="4">
 			<Data>
 				<Int8>1</Int8>
-				<Int32 Source="Number.Value" />
+				<Int32 Source="Number" Attribute="Value" />
 			</Data>
 		</Translate>
 		
 		<Translate Type="TEXT_LABEL" Size="8">
 			<Data>
 				<Int8>9</Int8>
-				<String Size="8" Source="Text.Value" />
+				<!-- Use only 7 bytes and ensure the 8th is the terminator -->
+				<String Size="7" Source="Text" Attribute="Value" />
+				<Int8>0</Int8>
 			</Data>
 		</Translate>
 		
 		<Translate Type="TEXT_LABEL" Size="16">
 			<Data>
 				<Int8>15</Int8>
-				<String Size="16" Source="Text.Value" />
+				<!-- Use only 15 bytes and ensure the 16th is the terminator -->
+				<String Size="15" Source="Text" Attribute="Value" />
+				<Int8>0</Int8>
 			</Data>
 		</Translate>
 		
 		<Translate Type="STRING" Size="255">
 			<Data>
 				<Int8>14</Int8>
-				<Int8 Source="Text.Size" />
-				<String Source="Text.Value" />
+				<Int8 Source="Text" Attribute="Size" />
+				<String Source="Text" Attribute="Value" />
+				<Int8>0</Int8>
 			</Data>
 		</Translate>
 		
 		<Translate Type="VAR_INT" Size="2">
 			<Data>
 				<Int8>2</Int8>
-				<Int16 Source="Variable.Index" />
+				<Int16 Source="Variable" Attribute="Index" />
 			</Data>
 		</Translate>
 		
 		<Translate Type="VAR_FLOAT" Size="2">
 			<Data>
 				<Int8>2</Int8>
-				<Int16 Source="Variable.Index" />
+				<Int16 Source="Variable" Attribute="Index" />
 			</Data>
 		</Translate>
 		
 		<Translate Type="VAR_TEXT_LABEL" Size="2">
 			<Data>
 				<Int8>10</Int8>
-				<Int16 Source="Variable.Index" />
+				<Int16 Source="Variable" Attribute="Index" />
 			</Data>
 		</Translate>
 		
 		<Translate Type="VAR_STRING" Size="2">
 			<Data>
 				<Int8>16</Int8>
-				<Int16 Source="Variable.Index" />
+				<Int16 Source="Variable" Attribute="Index" />
 			</Data>
 		</Translate>
 		
 		<Translate Type="LVAR_INT" Size="2">
 			<Data>
 				<Int8>3</Int8>
-				<Int16 Source="Variable.Index" />
+				<Int16 Source="Variable" Attribute="Index" />
 			</Data>
 		</Translate>
 		
 		<Translate Type="LVAR_FLOAT" Size="2">
 			<Data>
 				<Int8>3</Int8>
-				<Int16 Source="Variable.Index" />
+				<Int16 Source="Variable" Attribute="Index" />
 			</Data>
 		</Translate>
 		
 		<Translate Type="LVAR_TEXT_LABEL" Size="2">
 			<Data>
 				<Int8>11</Int8>
-				<Int16 Source="Variable.Index" />
+				<Int16 Source="Variable" Attribute="Index" />
 			</Data>
 		</Translate>
 		
 		<Translate Type="LVAR_STRING" Size="2">
 			<Data>
 				<Int8>17</Int8>
-				<Int16 Source="Variable.Index" />
+				<Int16 Source="Variable" Attribute="Index" />
 			</Data>
 		</Translate>
 	</Translations>

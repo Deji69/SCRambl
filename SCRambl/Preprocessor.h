@@ -56,7 +56,7 @@ namespace SCRambl
 			};
 			class Number {
 			public:
-				static const enum Value { ScriptRange, ValueType, NumberValue };
+				static const enum Parameter { ScriptRange, ValueType, NumberValue };
 				template<typename TNumberType>
 				using Info = TokenInfo < Type, Script::Range, Numbers::Type, TNumberType >;
 				using TypelessInfo = TokenInfo < Type, Script::Range, Numbers::Type >;
@@ -64,6 +64,32 @@ namespace SCRambl
 				static Numbers::Type GetValueType(const IToken& token) {
 					return token.Get<const TypelessInfo>().GetValue<ValueType>();
 				}
+
+				/*\
+				 * Preprocessor::Number::Value - Carries all symbolic data for a number value
+				\*/
+				class Value : Types::ValueToken
+				{
+					Numbers::Type			m_Type;
+					Numbers::IntegerType	m_IntegerValue;
+					Numbers::FloatType		m_FloatValue;
+					Script::Range			m_Range;
+
+				public:
+					using Shared = std::shared_ptr < ValueToken >;
+
+					Value(const Types::NumberValue & value_type, const TypelessInfo& info) : ValueToken(value_type),
+						m_Type(info.GetValue<ValueType>()),
+						m_Range(info.GetValue<ScriptRange>())
+					{
+					}
+					Value(const Types::NumberValue & value_type, const Info<Numbers::IntegerType>& info) : Value(value_type, reinterpret_cast<const TypelessInfo&>(info)) {
+						m_IntegerValue = info.GetValue<NumberValue>();
+					}
+					Value(const Types::NumberValue & value_type, const Info<Numbers::FloatType>& info) : Value(value_type, reinterpret_cast<const TypelessInfo&>(info)) {
+						m_FloatValue = info.GetValue<NumberValue>();
+					}
+				};
 			};
 			class Operator {
 			public:

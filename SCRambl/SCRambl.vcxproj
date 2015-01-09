@@ -79,8 +79,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\SCRambl.h" />
+    <ClInclude Include="Attributes.h" />
     <ClInclude Include="Builder.h" />
     <ClInclude Include="Commands.h" />
+    <ClInclude Include="Compiler.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="Labels.h" />
     <ClInclude Include="Scope.h" />
@@ -119,6 +121,7 @@
     <ClInclude Include="utils\function_traits.h" />
     <ClInclude Include="utils\hash.h" />
     <ClInclude Include="utils\key.h" />
+    <ClInclude Include="utils\map.h" />
     <ClInclude Include="utils\MurmurHash3.h" />
     <ClInclude Include="utils\utf8.h" />
     <ClInclude Include="utils\xml.h" />
@@ -126,6 +129,7 @@
   <ItemGroup>
     <ClCompile Include="Builder.cpp" />
     <ClCompile Include="Commands.cpp" />
+    <ClCompile Include="Compiler.cpp" />
     <ClCompile Include="Constants.cpp" />
     <ClCompile Include="Directives.cpp" />
     <ClCompile Include="Engine.cpp" />

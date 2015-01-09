@@ -12,6 +12,7 @@
 #include "SCRambl/Preparser.h"
 #include "SCRambl/Preprocessor.h"
 #include "SCRambl/Parser.h"
+#include "SCRambl/Compiler.h"
 
 namespace SCRambl
 {

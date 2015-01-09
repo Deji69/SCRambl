@@ -27,6 +27,7 @@ namespace SCRambl
 #include "utils/utf8.h"
 #include "utils/ansi.h"
 #include "utils/key.h"
+#include "utils/map.h"
 #include "utils/function_traits.h"
 #include "utils/xml.h"
 
