@@ -79,7 +79,7 @@ namespace SCRambl
 
 	template<typename T>
 	inline size_t CountBitOccupation(T N) {
-		auto v = std::log2(N);
+		auto v = (size_t)std::log2(N);
 		return v ? v : 1;
 	}
 

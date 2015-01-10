@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include "utils.h"
 //#include "FileSystem.h"
+#include "Tokens.h"
 #include "Symbols.h"
 #include "TokenInfo.h"
 #include "Labels.h"
@@ -19,6 +20,8 @@
 namespace SCRambl
 {
 	//typedef std::list<class Script::Line> CodeList;
+	//using TokenSymbol = Tokens::Symbol;
+	typedef Tokens::Symbol TokenSymbol;
 
 	class Script
 	{
@@ -92,14 +95,14 @@ namespace SCRambl
 			 - Get begin line Position
 			\*/
 			inline Position Begin() {
-				return{ *this };
+				return this;
 			}
 
 			/*\
 			 - Get end line Position
 			\*/
 			inline Position End() {
-				Position pos{ *this };
+				Position pos(this);
 				pos.m_LineIt = m_Code.empty() ? m_Code.begin() : m_Code.end();
 				pos.GetCodeLine();
 				return pos;
@@ -172,6 +175,7 @@ namespace SCRambl
 		{
 			friend class Code;
 
+			//Code					*	m_pCode;
 			Code					*	m_pCode;
 			CodeList::iterator			m_LineIt;		// (x)
 			CodeLine::iterator			m_CodeIt;		// (y)
@@ -184,10 +188,12 @@ namespace SCRambl
 		public:
 			// construct invalid thing
 			Position();
+
 			// beginning of code
 			Position(Code &);
+			Position(Code *);
 			// specified line of code
-			Position(Code &, CodeList::iterator &);
+			Position(Code *, CodeList::iterator &);
 
 			/*\
 			- Attempt to set this position at the next line
@@ -228,14 +234,14 @@ namespace SCRambl
 			 - Select a string from this position to the specified one
 			\*/
 			inline std::string Select(const Position & end) const {
-				return GetCode().Select(*this, end);
+				return GetCode()->Select(*this, end);
 			}
 
 			/*\
 			 - Returns true if this position is at the end of the symbol list
 			\*/
 			inline bool IsEnd() const {
-				return !m_pCode || GetCode().IsEmpty() || m_LineIt == GetCode()->end() || m_CodeIt == m_LineIt->GetCode().End();
+				return !m_pCode || GetCode()->IsEmpty() || m_LineIt == GetCodeLines().end() || m_CodeIt == m_LineIt->GetCode().End();
 			}
 
 			/*\
@@ -288,8 +294,10 @@ namespace SCRambl
 			}
 
 			// Get teh code
-			inline Code	& GetCode()						{ ASSERT(m_pCode); return *m_pCode; }
-			inline const Code & GetCode() const			{ ASSERT(m_pCode); return *m_pCode; }
+			inline Code * GetCode()							{ ASSERT(m_pCode); return m_pCode; }
+			inline const Code * GetCode() const				{ ASSERT(m_pCode); return m_pCode; }
+			inline CodeList & GetCodeLines()				{ ASSERT(m_pCode); return m_pCode->GetLines(); }
+			inline const CodeList & GetCodeLines() const	{ ASSERT(m_pCode); return m_pCode->GetLines(); }
 
 			// Get the current line of this position
 			inline Line & GetLine()							{ return *m_LineIt; }
@@ -462,18 +470,18 @@ namespace SCRambl
 		\*/
 		class File
 		{
-			const File		*	m_Parent = nullptr;
-			Code			&	m_Code;					// code source
-			Position			m_Begin;				// beginning of this file in code source
-			Position			m_End;					// end of this file in code source
-			Files				m_Includes;				// included files
+			const File			*	m_Parent = nullptr;
+			Code				*	m_Code;					// code source
+			Position				m_Begin;				// beginning of this file in code source
+			Position				m_End;					// end of this file in code source
+			Files					m_Includes;				// included files
 			
-			long				m_NumLines = 0;
-			std::string			m_Path;
+			long					m_NumLines = 0;
+			std::string				m_Path;
 
 		public:
-			File(std::string, Code &);
-			File(std::string, Code &, Position, const File *);
+			File(std::string, Code *);
+			File(std::string, Code *, Position, const File *);
 
 			inline long GetNumLines() const { return m_NumLines; }
 			inline const std::string & GetPath() const { return m_Path; }
@@ -515,6 +523,7 @@ namespace SCRambl
 		{
 			Script::Position		m_Position;
 			IToken::Shared			m_Token;
+			TokenSymbol::Shared		m_Symbol;
 
 		public:
 			typedef std::shared_ptr<Token> Shared;
@@ -523,12 +532,17 @@ namespace SCRambl
 				m_Position(pos),
 				m_Token(tok)
 			{ }
+			Token(TokenSymbol::Shared symb) : m_Symbol(symb)
+			{ }
 
 			inline Script::Position & GetPosition()				{ return m_Position; }
 			inline const Script::Position & GetPosition() const	{ return m_Position; }
+			inline TokenSymbol::Shared GetSymbol() const		{ return m_Symbol; }
 
-			inline operator IToken::Shared&()				{ return m_Token; }
-			inline operator const IToken::Shared&() const	{ return m_Token; }
+			inline operator IToken::Shared&()					{ return m_Token; }
+			inline operator const IToken::Shared&() const		{ return m_Token; }
+			inline operator TokenSymbol::Shared&()				{ return m_Symbol; }
+			inline operator const TokenSymbol::Shared&() const	{ return m_Symbol; }
 		};
 
 		/*\
@@ -693,15 +707,6 @@ namespace SCRambl
 		};*/
 
 		/*\
-		 * Script::Symbols
-		\*/
-		class Symbols
-		{
-		public:
-			using Shared = std::shared_ptr < Symbols > ;
-		};
-
-		/*\
 		 * Script::Scope - Scope of variables, labels, you name it
 		\*/
 		template<typename TObj, typename TKey = std::string, typename TCont = std::unordered_map<TKey, TObj>>
@@ -744,10 +749,9 @@ namespace SCRambl
 
 	private:
 		std::shared_ptr<File>				m_File;
-		Tokens								m_Tokens;
 		Code								m_Code;
+		Tokens								m_Tokens;
 		Labels								m_LabelScope;
-		Symbols::Shared						m_Symbols;
 
 		// Initialise script for parsing with current code
 		void Init();
@@ -764,7 +768,7 @@ namespace SCRambl
 			std::ofstream file("script.txt");
 			if (file)
 			{
-				for (Script::Position pos(m_Code); pos; ++pos)
+				for (Script::Position pos(&m_Code); pos; ++pos)
 				{
 					char c = *pos;
 					file << (c ? c : '\n');

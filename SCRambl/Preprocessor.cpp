@@ -157,15 +157,15 @@ namespace SCRambl
 
 			switch (m_Token) {
 			case TokenType::Identifier: {
- 				AddToken<Token::Identifier::Info<>>(pos, Token::Type::Identifier, m_Token.Range());
+ 				AddToken<Tokens::Identifier::Info<>>(pos, Tokens::Type::Identifier, m_Token.Range());
 				m_Task(Event::AddedToken, range);
 				break;
 			}
 			case TokenType::Number: {
 				if (m_NumericScanner.Is<int>())
-					AddToken<Token::Number::Info<int>>(pos, Token::Type::Number, range, Numbers::Integer, m_NumericScanner.Get<int>());
+					AddToken<Tokens::Number::Info<Numbers::IntegerType>>(pos, Tokens::Type::Number, range, Numbers::Integer, m_NumericScanner.Get<long long>());
 				else
-					AddToken<Token::Number::Info<float>>(pos, Token::Type::Number, range, Numbers::Float, m_NumericScanner.Get<float>());
+					AddToken<Tokens::Number::Info<Numbers::FloatType>>(pos, Tokens::Type::Number, range, Numbers::Float, m_NumericScanner.Get<float>());
 				m_Task(Event::AddedToken, range);
 				break;
 			}
@@ -173,22 +173,22 @@ namespace SCRambl
 				auto name = range.Format();
 				auto label = Script::Label::Make(name);
 				m_Script.GetLabels().Insert(range.Format(), label);
-				AddToken<Token::Label::Info>(pos, Token::Type::Label, range, label);
+				AddToken<Tokens::Label::Info>(pos, Tokens::Type::Label, range, label);
 				m_Task(Event::AddedToken, range);
 				break;
 			}
 			case TokenType::Operator: {
-				AddToken<Token::Operator::Info<Operator::Type>>(pos, Token::Type::Operator, range, m_OperatorScanner.GetOperator());
+				AddToken<Tokens::Operator::Info<Operator::Type>>(pos, Tokens::Type::Operator, range, m_OperatorScanner.GetOperator());
 				m_Task(Event::AddedToken, range);
 				break;
 			}
 			case TokenType::Directive: {
-				AddToken<Token::Directive::Info>(pos, Token::Type::Directive, range);
+				AddToken<Tokens::Directive::Info>(pos, Tokens::Type::Directive, range);
 				m_Task(Event::AddedToken, range);
 				break;
 			}
 			case TokenType::String: {
-				AddToken<Token::String::Info>(pos, Token::Type::String, range, m_String);
+				AddToken<Tokens::String::Info>(pos, Tokens::Type::String, range, m_String);
 				m_Task(Event::AddedToken, range);
 				break;
 			}
@@ -336,7 +336,7 @@ namespace SCRambl
 				if (m_CodePos && m_CodePos->IsEOL()) {
 					if (!m_WasLastTokenEOL)
 					{
-						AddToken<Token::Character::Info<Character>>(m_CodePos, Token::Type::Character, m_CodePos, Character::EOL);
+						AddToken<Tokens::Character::Info<Character>>(m_CodePos, Tokens::Type::Character, m_CodePos, Character::EOL);
 						m_WasLastTokenEOL = true;
 					}
 				}
@@ -835,7 +835,7 @@ namespace SCRambl
 				case Lexer::Result::still_scanning:
 					if (m_CodePos->IsEOL())
 					{
-						AddToken<Token::Character::Info<Character>>(m_CodePos, Token::Type::Character, m_CodePos, Character::EOL);
+						AddToken<Tokens::Character::Info<Character>>(m_CodePos, Tokens::Type::Character, m_CodePos, Character::EOL);
 						m_WasLastTokenEOL = true;
 					}
 					continue;

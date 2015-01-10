@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include "utils.h"
 #include "Symbols.h"
+#include "Tokens.h"
 #include "Scripts.h"
 
 namespace SCRambl
@@ -48,7 +49,7 @@ namespace SCRambl
 
 		public:
 			Token()
-			{}
+			{ }
 
 			inline TokenIDType				GetType() const			{ return m_Type; }
 

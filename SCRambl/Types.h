@@ -10,6 +10,8 @@
 #include "Configuration.h"
 #include "SCR.h"
 #include "Attributes.h"
+#include "Tokens.h"
+#include "TokensB.h"
 
 namespace SCRambl
 {
@@ -18,6 +20,7 @@ namespace SCRambl
 	namespace Types
 	{
 		typedef unsigned long long TypeID;
+		typedef Tokens::ValueToken<class Value> ValueToken;
 
 		// Type set
 		enum class TypeSet {
@@ -49,11 +52,14 @@ namespace SCRambl
 
 			inline operator const Type&() const			{ return m_Type; }
 			inline operator Type&()						{ return m_Type; }
-			inline bool IsInteger()	{
+			inline bool IsInteger() const	{
 				return m_Type == Int32 || m_Type == Int24 || m_Type == Int16 || m_Type == Int8;
 			}
-			inline bool IsFloat() {
+			inline bool IsFloat() const {
 				return m_Type == Float32 || m_Type == Float24 || m_Type == Float16 || m_Type == Fixed16;
+			}
+			inline bool IsString() const {
+				return m_Type == String;
 			}
 
 			inline static bool GetByName(std::string str, Type & out) {
@@ -358,20 +364,6 @@ namespace SCRambl
 			Translation<>::Shared	m_Translation = nullptr;
 		};
 
-		class ValueToken
-		{
-		public:
-			using Shared = std::shared_ptr < ValueToken > ;
-
-			ValueToken(const Value & value_type) : m_ValueType(value_type)
-			{ }
-			inline virtual ~ValueToken()
-			{ }
-
-		private:
-			const Value &		m_ValueType;
-		};
-
 		/*\
 		 * Number Value
 		\*/
@@ -390,21 +382,6 @@ namespace SCRambl
 			{ }
 		};
 
-		/*class NumberValueToken : ValueToken
-		{
-		public:
-			using Shared = std::shared_ptr < NumberValueToken >;
-
-			template<typename T, typename... TArgs>
-			NumberValueToken(const T& info, TArgs&&... args)
-			{
-				m_NumberType = info.GetValue<Number>();
-			}
-
-		private:
-			Numbers::Type			m_NumberType;
-		};*/
-
 		class NumberValue : public Value
 		{
 		public:
@@ -415,9 +392,9 @@ namespace SCRambl
 
 			inline NumberValueType	GetNumberType() const			{ return m_Type; }
 
-			template<typename T = NumberValueToken, typename... TArgs>
+			template<typename T, typename... TArgs>
 			inline std::shared_ptr<T> CreateToken(TArgs&&... args) {
-				return std::make_shared<T>(*this, std::forward<TArgs>(args)...);
+				return std::make_shared<T>(Tokens::Type::Number, *this, std::forward<TArgs>(args)...);
 			}
 
 		private:

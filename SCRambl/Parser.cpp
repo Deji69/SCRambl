@@ -4,6 +4,7 @@
 #include "Exception.h"
 #include "Scripts.h"
 #include "Preprocessor.h"
+#include "TokensB.h"
 
 #include <cctype>
 
@@ -51,9 +52,9 @@ namespace SCRambl
 				m_OverloadCommands.clear();
 
 				// replace overload token with single command token
-				auto& token = m_CommandTokenIt->get()->Get<Token::Identifier::Info<>>();
+				auto& token = m_CommandTokenIt->get()->Get<Tokens::Identifier::Info<>>();
 				auto range = token.GetValue<0>();
-				*m_CommandTokenIt = Script::Tokens::MakeShared < Token::CommandInfo >(range.Begin(), Token::Command, range, m_CurrentCommand);
+				*m_CommandTokenIt = Script::Tokens::MakeShared < CommandInfo >(range.Begin(), ParsedType::Command, range, m_CurrentCommand);
 				
 				m_State = parsing;
 				return;
@@ -66,7 +67,7 @@ namespace SCRambl
 		{
 			auto& types = m_Engine.GetTypes();
 			auto ptr = *m_TokenIt;
-			auto type = ptr->GetType<Token::Type>();
+			auto type = ptr->GetType<Tokens::Type>();
 			bool newline = false;
 
 			if (IsCommandParsing()) {
@@ -76,9 +77,9 @@ namespace SCRambl
 			Types::ValueSet val_type;
 
 			switch (type) {
-			case Token::Type::Label: {
-				auto& token = ptr->Get<Token::Label::Info>();
-				auto label = token.GetValue<Token::Label::Value::LabelValue>();
+			case Tokens::Type::Label: {
+				auto& token = ptr->Get<Tokens::Label::Info>();
+				auto label = token.GetValue<Tokens::Label::Parameter::LabelValue>();
 				//auto b = token.GetValue<2>();
 				
 				if (!m_OnNewLine) {
@@ -88,9 +89,9 @@ namespace SCRambl
 				val_type = Types::ValueSet::Label;
 				break;
 			}
-			case Token::Type::Identifier: {
+			case Tokens::Type::Identifier: {
 				Commands::Vector vec;
-				auto& token = ptr->Get<Token::Identifier::Info<>>();
+				auto& token = ptr->Get<Tokens::Identifier::Info<>>();
 				auto range = token.GetValue<0>();
 				auto name = range.Format();
 
@@ -99,8 +100,8 @@ namespace SCRambl
 					m_Jumps.emplace_back(ptr, m_TokenIt);
 				}
 				else if (m_Commands.FindCommands(name, vec) > 0) {
-					if (vec.size() == 1) *m_TokenIt = Script::Tokens::MakeShared < Token::CommandInfo >(range.Begin(), Token::Command, range, vec[0]);
-					else *m_TokenIt = Script::Tokens::MakeShared < Token::OLCommandInfo >(range.Begin(), Token::OLCommand, range, vec);
+					if (vec.size() == 1) *m_TokenIt = Script::Tokens::MakeShared < CommandInfo >(range.Begin(), ParsedType::Command, range, vec[0]);
+					else *m_TokenIt = Script::Tokens::MakeShared < OLCommandInfo >(range.Begin(), ParsedType::OLCommand, range, vec);
 
 					if (ParseCommandOverloads(vec)) BeginCommandParsing();
 				}
@@ -118,8 +119,8 @@ namespace SCRambl
 				
 				break;
 			}
-			case Token::Type::String: {
-				auto& token = ptr->Get<Token::String::Info>();
+			case Tokens::Type::String: {
+				auto& token = ptr->Get<Tokens::String::Info>();
 				auto range = token.GetValue<0>();
 				auto string = range.Format();
 
@@ -128,21 +129,21 @@ namespace SCRambl
 				val_type = Types::ValueSet::Text;
 				break;
 			}
-			case Token::Type::Number: {
-				auto type = Token::Number::GetValueType(*ptr);
+			case Tokens::Type::Number: {
+				auto type = Tokens::Number::GetValueType(*ptr);
 				bool is_int = type != Numbers::Float;
 				Numbers::IntegerType int_value;
 				Numbers::FloatType float_value;
 				
 				size_t size;
 				if (is_int) {
-					auto info = ptr->Get<Token::Number::Info<Numbers::IntegerType>>();
-					int_value = info.GetValue < Token::Number::Parameter::NumberValue >();
-					size = CountBitOccupation(int_value);
+					auto info = ptr->Get<Tokens::Number::Info<Numbers::IntegerType>>();
+					int_value = info.GetValue < Tokens::Number::Parameter::NumberValue >();
+					size = CountBitOccupation(int_value.GetValue<Numbers::IntegerType::MaxType>());
 				}
 				else {
-					auto info = ptr->Get<Token::Number::Info<Numbers::FloatType>>();
-					float_value = info.GetValue < Token::Number::Parameter::NumberValue >();
+					auto info = ptr->Get<Tokens::Number::Info<Numbers::FloatType>>();
+					float_value = info.GetValue < Tokens::Number::Parameter::NumberValue >();
 					size = 32;
 				}
 
@@ -177,10 +178,12 @@ namespace SCRambl
 					});
 
 					auto& number_value = best_value_match->Extend<Types::NumberValue>();
-					auto val_token = is_int ? number_value.CreateToken<Token::Number::Value>(ptr->Get<Token::Number::Info<Numbers::IntegerType>>())
-						: number_value.CreateToken<Token::Number::Value>(ptr->Get<Token::Number::Info<Numbers::FloatType>>());
-					ptr->Get<Token::Number::Info<Numbers::FloatType>>().GetValue<Token::Number::ScriptRange>();
-					auto info = ptr->Get<Token::Number::Info<Numbers::IntegerType>>();
+					auto val_token = is_int ? number_value.CreateToken<Tokens::Number::Value<Types::NumberValue>>(ptr->Get<Tokens::Number::Info<Numbers::IntegerType>>())
+						: number_value.CreateToken<Tokens::Number::Value<Types::NumberValue>>(ptr->Get<Tokens::Number::Info<Numbers::FloatType>>());
+
+
+					ptr->Get<Tokens::Number::Info<Numbers::FloatType>>().GetValue<Tokens::Number::ScriptRange>();
+					auto info = ptr->Get<Tokens::Number::Info<Numbers::IntegerType>>();
 					info.GetType();
 
 					if (best_value_match) {
@@ -209,9 +212,9 @@ namespace SCRambl
 				}
 				break;
 			}
-			case Token::Type::Character: {
-				auto& token = ptr->Get<Token::Character::Info<Character>>();
-				switch (auto ch = token.GetValue<Token::Character::Value::CharacterValue>()) {
+			case Tokens::Type::Character: {
+				auto& token = ptr->Get<Tokens::Character::Info<Character>>();
+				switch (auto ch = token.GetValue<Tokens::Character::Parameter::CharacterValue>()) {
 				case Character::EOL:
 					newline = true;
 					break;
@@ -221,10 +224,10 @@ namespace SCRambl
 				}
 				break;
 			}
-			case Token::Type::Operator: {
-				auto& token = ptr->Get<Token::Operator::Info<Operator::Type>>();
-				auto type = token.GetValue<Token::Operator::Value::OperatorType>();
-				auto rg = token.GetValue<Token::Operator::Value::ScriptRange>();
+			case Tokens::Type::Operator: {
+				auto& token = ptr->Get<Tokens::Operator::Info<Operator::Type>>();
+				auto type = token.GetValue<Tokens::Operator::Parameter::OperatorType>();
+				auto rg = token.GetValue<Tokens::Operator::Parameter::ScriptRange>();
 				rg.Begin();
 				break;
 			}

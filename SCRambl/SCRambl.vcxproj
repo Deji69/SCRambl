@@ -114,7 +114,10 @@
     <ClInclude Include="Scripts.h" />
     <ClInclude Include="Tasks.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="Text.h" />
     <ClInclude Include="TokenInfo.h" />
+    <ClInclude Include="Tokens.h" />
+    <ClInclude Include="TokensB.h" />
     <ClInclude Include="Types.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="utils\ansi.h" />

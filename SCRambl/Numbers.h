@@ -5,7 +5,7 @@
 //	 or copy at http://opensource.org/licenses/MIT)
 /**********************************************************/
 #pragma once
-#include "Scripts.h"
+#include <string>
 #include "Lexer.h"
 
 namespace SCRambl
@@ -16,20 +16,128 @@ namespace SCRambl
 			Integer, Float, Byte, Word, DWord
 		};
 
-		typedef int IntegerType;
-		typedef float FloatType;
+		//typedef int IntegerType;
+		//typedef float FloatType;
+
+		class IntegerType
+		{
+		public:
+			enum Type { None, Int, Long, Short, Char, UInt, ULong, UShort, UChar };
+			
+			typedef long long MaxType;
+			typedef unsigned long long MaxUType;
+			typedef char MinType;
+			typedef unsigned char MinUType;
+
+		private:
+			Type			m_Type = None;
+			union Value {
+				long long			tLong;
+				long				tInt;
+				short				tShort;
+				char				tChar;
+				unsigned long long	tULong;
+				unsigned long		tUInt;
+				unsigned short		tUShort;
+				unsigned char		tUChar;
+			} m_Value;
+
+		public:
+			IntegerType() = default;
+			IntegerType(long long val) : m_Type(Long)
+			{ m_Value.tLong = val; }
+			IntegerType(int val) : m_Type(Int)
+			{ m_Value.tInt = val; }
+			IntegerType(short val) : m_Type(Short)
+			{ m_Value.tShort = val; }
+			IntegerType(char val) : m_Type(Char)
+			{ m_Value.tChar = val; }
+			IntegerType(unsigned long long val) : m_Type(ULong)
+			{ m_Value.tULong = val; }
+			IntegerType(unsigned int val) : m_Type(UInt)
+			{ m_Value.tUInt = val; }
+			IntegerType(unsigned short val) : m_Type(UShort)
+			{ m_Value.tUShort = val; }
+			IntegerType(unsigned char val) : m_Type(UChar)
+			{ m_Value.tUChar = val; }
+			IntegerType(const char * str) : m_Type(None)
+			{
+				if (StringToInt<long long>(str, m_Value.tLong, true) == ConvertResult::success)
+					m_Type = Long;
+			}
+
+			template<typename T>
+			inline T GetValue() const	{
+				switch (m_Type) {
+				case Long: return (T)m_Value.tLong;
+				case Int: return (T)m_Value.tInt;
+				case Short: return (T)m_Value.tShort;
+				case Char: return (T)m_Value.tChar;
+				case ULong: return (T)m_Value.tULong;
+				case UShort: return (T)m_Value.tUShort;
+				case UChar: return (T)m_Value.tUChar;
+				}
+				return (T)m_Value.tLong;
+			}
+			//template<typename T>
+			//inline const T& GetValue() const		{ return GetValue<T>(); }
+
+			inline operator long long() const		{ return GetValue<long long>(); }
+			inline operator long() const			{ return GetValue<long>(); }
+			inline operator short() const			{ return GetValue<short>(); }
+			inline operator char() const				{ return GetValue<char>(); }
+			inline operator unsigned long long() const	{ return GetValue<unsigned long long>(); }
+			inline operator unsigned long() const		{ return GetValue<unsigned long>(); }
+			inline operator unsigned short() const		{ return GetValue<unsigned short>(); }
+			inline operator unsigned char() const		{ return GetValue<unsigned char>(); }
+		};
+
+		class FloatType
+		{
+		public:
+			enum Type { None, Float };
+
+		private:
+			Type			m_Type = None;
+			float			m_Value;
+
+		public:
+			FloatType() = default;
+			FloatType(float val) : m_Type(Float), m_Value(val)
+			{ }
+			FloatType(const char * str) : m_Type(None)
+			{
+				if (StringToFloat<float>(str, m_Value, true) == ConvertResult::success)
+					m_Type = Float;
+			}
+
+			template<typename T>
+			inline T GetValue() const {
+				return m_Value;
+			}
+
+			inline operator float()	const			{ return GetValue<float>(); }
+		};
 
 		enum class ConvertResult {
 			success, not_a_number, is_a_float, is_an_int
 		};
 
 		// Handy converty functions
-		static ConvertResult StringToInt(const char * str, IntegerType & out, bool convert_float = false) {
-			unsigned long n = 0;
-			unsigned long d = 1;		// number of decimal places
-			unsigned long f = 0;		// the RHS of the decimal point
+		template<typename TConv, typename T = TConv>
+		static ConvertResult StringToInt(const char * str, T & out, bool convert_float = false) {
+			long long n = 0;
+			long long d = 1;		// number of decimal places
+			long long f = 0;		// the RHS of the decimal point
 			bool is_float = false;
 			bool is_hex = false;
+			bool is_neg = false;
+			while (*str == '-') is_neg = !is_neg;
+			if (*str == '0' && str[1] == 'x') {
+				is_hex = true;
+				str += 2;
+			}
+			bool have_one = false;
 			for (; *str; ++str)
 			{
 				// make numbers, not war?
@@ -44,6 +152,7 @@ namespace SCRambl
 						if (!convert_float) return ConvertResult::is_a_float;
 						is_float = true;
 					}
+					else if (have_one) break;
 					else return ConvertResult::not_a_number;
 				}
 				else {
@@ -51,19 +160,32 @@ namespace SCRambl
 						f = f * 10 + *str - '0';
 						d *= 10;
 					}
+					else if (have_one) break;
 					else return ConvertResult::not_a_number;
 				}
+				have_one = true;
 			}
 
-			out = is_float ? (IntegerType)((n + ((FloatType)f / (FloatType)d))) : n;
+			if (!have_one) return ConvertResult::not_a_number;
+
+			out = is_neg ? -(is_float ? (TConv)((n + ((float)f / (float)d))) : n)
+						 : (is_float ? (TConv)((n + ((float)f / (float)d))) : n);
 			return ConvertResult::success;
 		}
-		static ConvertResult StringToFloat(const char * str, FloatType & out, bool convert_int = false) {
-			unsigned long n = 0;
-			unsigned long d = 1;		// number of decimal places
-			unsigned long f = 0;		// the RHS of the decimal point
+		template<typename TConv, typename T = TConv>
+		static ConvertResult StringToFloat(const char * str, T & out, bool convert_int = false) {
+			long long n = 0;
+			long long d = 1;		// number of decimal places
+			long long f = 0;		// the RHS of the decimal point
 			bool is_float = false;
 			bool is_hex = false;
+			bool is_neg = false;
+			while (*str == '-') is_neg = !is_neg;
+			if (*str == '0' && str[1] == 'x') {
+				is_hex = true;
+				str += 2;
+			}
+			bool have_one = false;
 			for (; *str; ++str)
 			{
 				// make numbers, not war?
@@ -86,12 +208,15 @@ namespace SCRambl
 					}
 					else return ConvertResult::not_a_number;
 				}
+				have_one = true;
 			}
+
+			if (!have_one) return ConvertResult::not_a_number;
 
 			if (!is_float) {
 				if (!convert_int) return ConvertResult::is_an_int;
 			}
-			out = is_float ? (n + ((FloatType)f / (FloatType)d)) : n;
+			out = (is_float ? (TConv)(is_neg ? -((TConv)n + ((double)f / (double)d)) : ((TConv)n + ((double)f / (double)d))) : (TConv)(is_neg ? -n : n));
 			return ConvertResult::success;
 		}
 
@@ -107,10 +232,8 @@ namespace SCRambl
 			bool m_Float;
 			bool m_Hex;
 
-			union {
-				IntegerType		m_IntVal;
-				FloatType		m_FloatVal;
-			};
+			long long		m_IntVal;
+			float			m_FloatVal;
 
 			static inline bool IsHexPrefix(char c) {
 				return c == 'x' || c == 'X';
@@ -176,7 +299,7 @@ namespace SCRambl
 						}
 					} while (++pos);
 					if (m_Float) {
-						m_FloatVal = n + ((FloatType)f / (FloatType)d);
+						m_FloatVal = n + ((float)f / (float)d);
 					}
 					else m_IntVal = n;
 					state = Lexer::State::after;
@@ -189,13 +312,12 @@ namespace SCRambl
 				return false;
 			}
 
-			template<typename T> inline T Get() const;
-			template<> inline int Get<IntegerType>() const		{ return m_Float ? (IntegerType)m_FloatVal : m_IntVal; }
-			template<> inline float Get<FloatType>() const		{ return m_Float ? m_FloatVal : (FloatType)m_IntVal; }
+			template<typename T> inline T Get() const		{ return m_Float ? (T)m_FloatVal : (T)m_IntVal; }
+			template<> inline float Get<float>() const		{ return m_Float ? m_FloatVal : (float)m_IntVal; }
 
 			template<typename T> bool Is() const;
-			template<> inline bool Is<IntegerType>() const		{ return !m_Float; }
-			template<> inline bool Is<FloatType>() const		{ return m_Float; }
+			template<> inline bool Is<int>() const			{ return !m_Float; }
+			template<> inline bool Is<float>() const		{ return m_Float; }
 		};
 	};
 }

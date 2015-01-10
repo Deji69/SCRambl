@@ -3,6 +3,7 @@
 #include "Compiler.h"
 #include "Exception.h"
 #include "Scripts.h"
+#include "TokensB.h"
 
 #include <cctype>
 

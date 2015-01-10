@@ -11,6 +11,7 @@
 #include "Scripts.h"
 #include "Preprocessor.h"
 #include "Labels.h"
+#include "TokensB.h"
 
 namespace SCRambl
 {
@@ -21,22 +22,12 @@ namespace SCRambl
 		/*\
 		 * Parser::Token - Parser wrapper for script tokens
 		\*/
-		class Token : public Preprocessor::Token
-		{
-			//Script::Token			m_Token;
-
-		public:
-			enum ParsedType {
-				Command, OLCommand,
-			};
-
-			using CommandInfo = Identifier::Info < ParsedType, Command::Shared >;
-			using OLCommandInfo = Identifier::Info < ParsedType, Commands::Vector >;
-
-			//Token() = default;
-
-			//inline const Script::Position & GetScriptPos() const			{ return m_Token.GetPosition(); }
+		enum class ParsedType {
+			Command, OLCommand,
 		};
+
+		using CommandInfo = Tokens::Identifier::Info < ParsedType, Command::Shared >;
+		using OLCommandInfo = Tokens::Identifier::Info < ParsedType, Commands::Vector >;
 
 		/*\
 		 * Parser::Symbols - Symbolic data for parsed scripts

@@ -207,6 +207,15 @@
     <ClInclude Include="Compiler.h">
       <Filter>Header</Filter>
     </ClInclude>
+    <ClInclude Include="Tokens.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="TokensB.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Text.h">
+      <Filter>Header</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header">

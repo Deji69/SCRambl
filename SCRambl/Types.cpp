@@ -2,6 +2,7 @@
 #include "Types.h"
 #include "Engine.h"
 #include "Numbers.h"
+#include "Text.h"
 
 namespace SCRambl
 {
@@ -229,7 +230,7 @@ namespace SCRambl
 									auto src_id = GetDataSource(src_attr.as_string());
 									auto attr_id = GetDataAttribute(src_id, attr_attr.as_string());
 									if (src_id == DataSourceID::None || attr_id == DataAttributeID::None) {
-										__debugbreak();
+										BREAK();
 										field = data.AddField(data_type, DataSourceID::None, DataAttributeID::None);
 									}
 									else {
@@ -237,32 +238,40 @@ namespace SCRambl
 									}
 								}
 								else field = data.AddField(data_type, DataSourceID::None, DataAttributeID::None);
-
-								SCRambl::Numbers::IntegerType int_num;
-								SCRambl::Numbers::FloatType flt_num;
-								if (data_type.IsInteger()) {
-									auto convert_result = Numbers::StringToInt(it.value(), int_num, true);
-									if (convert_result == Numbers::ConvertResult::success) {
-										field->SetValue(int_num);
+								
+								if (*it.value())
+								{
+									if (data_type.IsInteger() || data_type.IsFloat()) {
+										SCRambl::Numbers::IntegerType int_num;
+										SCRambl::Numbers::FloatType flt_num;
+										if (data_type.IsInteger()) {
+											auto convert_result = Numbers::StringToInt<long long>(it.value(), int_num, true);
+											if (convert_result == Numbers::ConvertResult::success) {
+												field->SetValue(int_num);
+											}
+											else {
+												BREAK();
+												field->SetValue(0);
+											}
+										}
+										else if (data_type.IsFloat()) {
+											auto convert_result = Numbers::StringToFloat<float>(it.value(), flt_num, true);
+											if (convert_result == Numbers::ConvertResult::success) {
+												field->SetValue(flt_num);
+											}
+											else {
+												BREAK();
+												field->SetValue(0);
+											}
+										}
+									}
+									else if (data_type.IsString()) {
+										field->SetValue<std::string>(it.value());
 									}
 									else {
-										__debugbreak();
+										BREAK();
 										field->SetValue(0);
 									}
-								}
-								else if (data_type.IsFloat()) {
-									auto convert_result = Numbers::StringToFloat(it.value(), flt_num, true);
-									if (convert_result == Numbers::ConvertResult::success) {
-										field->SetValue(flt_num);
-									}
-									else {
-										__debugbreak();
-										field->SetValue(0);
-									}
-								}
-								else {
-									__debugbreak();
-									field->SetValue(0);
 								}
 							}
 						}

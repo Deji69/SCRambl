@@ -19,112 +19,12 @@
 #include "Numbers.h"
 #include "Labels.h"
 #include "TokenInfo.h"
+#include "Tokens.h"
 
 namespace SCRambl
 {
 	namespace Preprocessor
 	{
-		/*\
-		 * Preprocessor::Token - Types of token information
-		\*/
-		class Token {
-		public:
-			enum class Type {
-				None, Directive, Identifier, Label, Number, Operator, String, Character
-			};
-
-			class None {
-			public:
-				static const enum Value { TokenType };
-				using Info = TokenInfo < Type > ;
-			};
-			class Directive {
-			public:
-				static const enum Value { TokenType, ScriptRange };
-				using Info = TokenInfo < Type, Script::Range >;
-			};
-			class Identifier {
-			public:
-				static const enum Value { TokenType, ScriptRange };
-				template<typename TType = Type, typename ...TData>
-				using Info = TokenInfo < TType, Script::Range, TData... >;
-			};
-			class Label {
-			public:
-				static const enum Value { ScriptRange, LabelValue };
-				using Info = TokenInfo < Type, Script::Range, Script::Label::Shared >;
-			};
-			class Number {
-			public:
-				static const enum Parameter { ScriptRange, ValueType, NumberValue };
-				template<typename TNumberType>
-				using Info = TokenInfo < Type, Script::Range, Numbers::Type, TNumberType >;
-				using TypelessInfo = TokenInfo < Type, Script::Range, Numbers::Type >;
-
-				static Numbers::Type GetValueType(const IToken& token) {
-					return token.Get<const TypelessInfo>().GetValue<ValueType>();
-				}
-
-				/*\
-				 * Preprocessor::Number::Value - Carries all symbolic data for a number value
-				\*/
-				class Value : Types::ValueToken
-				{
-					Numbers::Type			m_Type;
-					Numbers::IntegerType	m_IntegerValue;
-					Numbers::FloatType		m_FloatValue;
-					Script::Range			m_Range;
-
-				public:
-					using Shared = std::shared_ptr < ValueToken >;
-
-					Value(const Types::NumberValue & value_type, const TypelessInfo& info) : ValueToken(value_type),
-						m_Type(info.GetValue<ValueType>()),
-						m_Range(info.GetValue<ScriptRange>())
-					{
-					}
-					Value(const Types::NumberValue & value_type, const Info<Numbers::IntegerType>& info) : Value(value_type, reinterpret_cast<const TypelessInfo&>(info)) {
-						m_IntegerValue = info.GetValue<NumberValue>();
-					}
-					Value(const Types::NumberValue & value_type, const Info<Numbers::FloatType>& info) : Value(value_type, reinterpret_cast<const TypelessInfo&>(info)) {
-						m_FloatValue = info.GetValue<NumberValue>();
-					}
-				};
-			};
-			class Operator {
-			public:
-				static const enum Value { ScriptRange, OperatorType };
-				template<typename TOperatorType>
-				using Info = TokenInfo < Type, Script::Range, TOperatorType >;
-			};
-			class String {
-			public:
-				static const enum Value { ScriptRange, StringValue };
-				using Info = TokenInfo < Type, Script::Range, std::string >;
-			};
-			class Character {
-			public:
-				static const enum Value { ScriptPosition, CharacterValue };
-				template<typename TCharacterType>
-				using Info = TokenInfo < Type, Script::Position, TCharacterType >;
-			};
-
-			//using NoneInfo = TokenInfo < Type >;
-			//using DirectiveInfo = TokenInfo < PreprocessingToken::Type, Script::Range >;
-			//using DirectiveInfo = TokenInfo < Type, Script::Range >;
-			//template<typename TType = Type, typename ...TData>
-			//using IdentifierInfo = TokenInfo < TType, Script::Range, TData... >;
-			//using LabelInfo = TokenInfo < Type, Script::Range, Script::Label::Shared >;
-			//template<typename TNumberType>
-			//using NumberInfo = TokenInfo < Type, Script::Range, NumberType, TNumberType >;
-			//using UnknownNumberInfo = TokenInfo < Type, Script::Range, NumberType > ;
-			//template<typename TOperatorType>
-			//using OperatorInfo = TokenInfo < Type, Script::Range, TOperatorType >;
-			//using StringInfo = TokenInfo < Type, Script::Range, std::string >;
-			//template<typename TCharacterType>
-			//using CharacterInfo = TokenInfo < Type, Script::Position, TCharacterType >;
-		};
-
 		/*\
 		 * WhitespaceScanner - Lexer::Scanner for nothingness (useless?)
 		\*/
@@ -355,7 +255,7 @@ namespace SCRambl
 			using OperatorTable = Operator::Table < Operator::Type, Operator::max_operator >;
 			using OperatorScanner = Operator::Scanner < Operator::Type, Operator::max_operator >;
 			template<typename... T>
-			using TToken = TokenInfo < Token::Type, T... > ;
+			using TToken = TokenInfo < Tokens::Type, T... > ;
 
 			Engine					&	m_Engine;
 			Task					&	m_Task;
@@ -464,7 +364,7 @@ namespace SCRambl
 
 			// Add a preprocessing token
 			template<typename T, typename... TArgs>
-			inline Script::Token::Shared AddToken(Script::Position pos, Token::Type token, TArgs&&... args)
+			inline Script::Token::Shared AddToken(Script::Position pos, Tokens::Type token, TArgs&&... args)
 			{
 				m_WasLastTokenEOL = false;
 				return m_Tokens.Add < T >(pos, token, std::forward<TArgs>(args)...);
