@@ -14,12 +14,16 @@ int main(int argc, char* argv[])
 	std::string cmd;
 	CCLP CmdParser({ argv + 1, &argv[argc] });
 
+	CmdParser.AddFlag("build", 'b');
 	CmdParser.AddFlag("format", 'f');
-	CmdParser.AddFlag("output", 'o');
 	CmdParser.AddFlag("help", 'h');
+	CmdParser.AddFlag("load", 'l');
+	CmdParser.AddFlag("output", 'o');
+	CmdParser.AddFlag("project", 'p');
 	CmdParser.Parse();
 
 	std::cout << "SCRambl Advanced SCR Compiler/Assembler\n";
+	bool error_status = false;
 
 	if (CmdParser.IsFlagSet("help") || CmdParser.IsFlagSet("?") || !CmdParser.GetOpts().size())
 	{
@@ -39,15 +43,25 @@ int main(int argc, char* argv[])
 			for (auto help : helps)
 			{
 				if (help == "f")
-				{
 					std::cout << "Specifies the output format. Use one of the following format parameters:\n"
 						<< "scc - Single Compiled Script\n"
 						<< "scm - Script Multifile\n"
 						<< "Syntax: -f <format>";
-				}
+				else if (help == "p")
+					std::cout << "Enables creation of a project file. Use this with -l to set file path.\n"
+						<< "Syntax: -p <projectname (optional)>";
+				else if (help == "l")
+					std::cout << "Sets the project file path. Without -p this loads a project, otherwise it sets the save path.\n"
+						<< "Syntax: -l <filename>";
 			}
 		}
 	}
+
+	auto& project_opts = CmdParser.GetFlagOpts("project");
+	auto& load_opts = CmdParser.GetFlagOpts("load");
+	bool build_project = !project_opts.empty();
+	bool load_project = !load_opts.empty();
+	std::string project_name;
 
 	// Initiate SCRambl engine
 	SCRambl::Engine engine;
@@ -59,19 +73,50 @@ int main(int argc, char* argv[])
 
 	// Load configuration
 	std::cout << "Loading configuration...\n";
+	std::cout << "Loading build configuration...\n";
+	engine.LoadConfigFile("config\\build.xml");
+	engine.SetBuildConfig(CmdParser.GetFlagOpts("build").front());
 	
-	std::cout << "Loading constants from \"config\\gtasa\\constants.xml\"...\n";
-	engine.LoadConfigFile("config\\gtasa\\constants.xml");
-	
-	std::cout << "Loading types from \"config\\gtasa\\types.xml\"...\n";
-	engine.LoadConfigFile("config\\gtasa\\types.xml");
+	engine.LoadDefinition("constants");
+	engine.LoadDefinition("types");
+	engine.LoadDefinition("commands");
 
-	std::cout << "Loading commands from \"config\\gtasa\\commands.xml\"...\n";
-	engine.LoadConfigFile("config\\gtasa\\commands.xml");
+	SCRambl::Project project;
+
+	// Build project file
+	build_project = false;
+	if (!load_project && build_project) {
+		project.SetName(project_opts.front());
+		project.SetConfig(engine.GetBuildConfig());
+		
+		if (load_project) project.SaveFile(load_opts.front().c_str());
+		else project.SaveFile();
+
+		auto files = CmdParser.GetOpts();
+		for (auto path : files)
+		{
+			project.AddSource(path);
+		}
+	}
+	else if (load_project) {
+		try {
+			project.LoadFile(load_opts.front().c_str());
+		} 
+		catch (...) {
+			std::cerr << "ERROR: Failed to load project file \"" << load_opts.front().c_str() << "\"" << std::endl;
+			error_status = true;
+		}
+	}
+
+	if (error_status) {
+		for (int i = 0; i < 6; ++i) {
+			Sleep(1000);
+			std::cout << ".";
+		}
+	}
 
 	enum Task
 	{
-		//preparser,
 		preprocessor,
 		parser,
 		compiler,
@@ -88,7 +133,7 @@ int main(int argc, char* argv[])
 	{
 		try
 		{
-			script.LoadFile(path);
+			engine.LoadFile(path, script);
 		}
 		catch (...)
 		{
@@ -100,14 +145,8 @@ int main(int argc, char* argv[])
 		try
 		{
 			/**************** Preprocessor Stuff ****************/
-
 			// Add the preprocessor task to preprocess the script - give it our 'preprocessor' ID so we can identify it later
 			auto preprocessor_task = engine.AddTask<SCRambl::Preprocessor::Task>(preprocessor, std::ref(script));
-			
-			/*auto Preprocessor_Warning = [](SCRambl::Preprocessor::Warning id, std::string msg){
-				std::cout << "warning ("<< id <<"): "<< msg;
-				return true;
-			};*/
 
 			preprocessor_task->AddEventHandler<SCRambl::Preprocessor::Event::Begin>([](){
 				std::cout << "\nPreprocessing started.\n";
@@ -186,20 +225,14 @@ int main(int argc, char* argv[])
 				std::cerr << "\n";
 				return true;
 			});
-
 			preprocessor_task->AddEventHandler<SCRambl::Preprocessor::Event::AddedToken>([](SCRambl::Script::Range& range){
-				std::cout << "\n" << range.Format() << "\n";
 				return true;
 			});
-
 			preprocessor_task->AddEventHandler<SCRambl::Preprocessor::Event::FoundToken>([&print_nl](SCRambl::Script::Range range){
-				//std::cerr << ">>>" << range.Formatter(range) << "\n";
-				//print_nl = true;
 				return true;
 			});
 
 			/**************** Parser Stuff ****************/
-
 			// Add the parser task to parse the code symbols to tokens
 			auto parser_task = engine.AddTask<SCRambl::Parser::Task>(parser, script);
 			parser_task->AddEventHandler<SCRambl::Parser::Event::Begin>([](){
@@ -264,10 +297,7 @@ int main(int argc, char* argv[])
 				return true;
 			});
 
-			//
-			bool bRunning = true;
-			bool bPreprocessorStarted = false;
-
+			/**************** Running... ****************/
 			// main loop
 			using TaskSys = SCRambl::TaskSystem::Task<Task>;
 			float fNumLines = (float)script.GetCode().NumLines();
@@ -276,21 +306,29 @@ int main(int argc, char* argv[])
 				switch (engine.GetCurrentTaskID()) {
 				case preprocessor: {
 					auto& task = engine.GetCurrentTask<SCRambl::Preprocessor::Task>();
-					if (auto pos = task.Info().GetScriptPos())
-					{
-						auto pc = std::floor(((float)pos.GetLine() / fNumLines) * 100.0);
-						std::cout << "Preprocessing..." << pc << "%" << "\r";
+					if (task.IsRunning()) {
+						if (auto pos = task.Info().GetScriptPos())
+						{
+							auto pc = std::floor(((float)pos.GetLine() / fNumLines) * 100.0);
+							std::cout << "Preprocessing..." << pc << "%" << "\r";
+						}
 					}
 					break;
 				}
 				case parser: {
 					auto& task = engine.GetCurrentTask<SCRambl::Parser::Task>();
-					auto pc = std::floor(((float)task.GetProgressCurrent() / (float)task.GetProgressTotal()) * 100.0);
-					std::cout << "Parsing..." << pc << "%" << "\r";
+					if (task.IsRunning()) {
+						auto pc = std::floor(((float)task.GetProgressCurrent() / (float)task.GetProgressTotal()) * 100.0);
+						std::cout << "Parsing..." << pc << "%" << "\r";
+					}
 					break;
 				}
 				case compiler: {
 					auto& task = engine.GetCurrentTask<SCRambl::Compiler::Task>();
+					if (task.IsRunning()) {
+						auto pc = std::floor(((float)task.GetProgressCurrent() / (float)task.GetProgressTotal()) * 100.0);
+						std::cout << "Compiling..." << pc << "%" << "\r";
+					}
 					break;
 				}
 				}
@@ -310,7 +348,6 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	//SCRambl::
 	return 0;
 }
 

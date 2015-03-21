@@ -70,7 +70,7 @@ namespace SCRambl
 			friend class Script::Position;
 
 			CodeList				m_Code;
-			const File			*	m_CurrentFile;
+			const File			*	m_CurrentFile = nullptr;
 			long					m_NumSymbols = 0;
 			//long					m_NumLines = 0;
 
@@ -85,7 +85,7 @@ namespace SCRambl
 			inline void	SetFile(const File * file)			{ m_CurrentFile = file; }
 			inline const CodeList	&	GetLines() const	{ return m_Code; }
 			inline long 				NumSymbols() const	{ return m_NumSymbols; }
-			inline long 				NumLines() const	{ return /*m_NumLines*/m_CurrentFile->GetNumLines(); }
+			inline long 				NumLines() const	{ return m_CurrentFile ? m_CurrentFile->GetNumLines() : m_Code.size(); }
 			inline bool					IsEmpty() const		{ return m_Code.empty(); }
 
 			inline const CodeList & operator *() const		{ return GetLines(); }
@@ -521,9 +521,9 @@ namespace SCRambl
 		\*/
 		class Token
 		{
-			Script::Position		m_Position;
-			IToken::Shared			m_Token;
-			TokenSymbol::Shared		m_Symbol;
+			Script::Position				m_Position;
+			IToken::Shared					m_Token = nullptr;
+			std::shared_ptr<TokenSymbol>	m_Symbol = nullptr;
 
 		public:
 			typedef std::shared_ptr<Token> Shared;
@@ -532,17 +532,31 @@ namespace SCRambl
 				m_Position(pos),
 				m_Token(tok)
 			{ }
-			Token(TokenSymbol::Shared symb) : m_Symbol(symb)
+			Token(Token::Shared shared) : Token(*shared)
+			{ }
+			Token(std::shared_ptr<TokenSymbol> symb) : m_Symbol(symb)
 			{ }
 
-			inline Script::Position & GetPosition()				{ return m_Position; }
-			inline const Script::Position & GetPosition() const	{ return m_Position; }
-			inline TokenSymbol::Shared GetSymbol() const		{ return m_Symbol; }
+			inline Script::Position & GetPosition()					{ return m_Position; }
+			inline const Script::Position & GetPosition() const		{ return GetPosition(); }
+			
+			template<typename T>
+			inline std::shared_ptr<T> GetToken()							{ return std::static_pointer_cast<T>(m_Token); }
+			template<typename T>
+			inline std::shared_ptr<const T> GetToken() const				{ return std::static_pointer_cast<T>(m_Token); }
 
-			inline operator IToken::Shared&()					{ return m_Token; }
-			inline operator const IToken::Shared&() const		{ return m_Token; }
-			inline operator TokenSymbol::Shared&()				{ return m_Symbol; }
-			inline operator const TokenSymbol::Shared&() const	{ return m_Symbol; }
+			template<typename T>
+			inline void SetToken(const T& tok)								{ m_Token = /*std::static_pointer_cast<IToken>(tok)*/ tok; }
+			
+			inline IToken::Shared GetToken()								{ return m_Token; }
+			inline const IToken::Shared GetToken() const					{ return GetToken(); }
+			inline std::shared_ptr<TokenSymbol>& GetSymbol()				{ return m_Symbol; }
+			inline const std::shared_ptr<TokenSymbol>& GetSymbol() const	{ return GetSymbol(); }
+
+			inline operator IToken::Shared()							{ return GetToken(); }
+			inline operator const IToken::Shared() const				{ return GetToken(); }
+			inline operator std::shared_ptr<TokenSymbol>&()				{ return GetSymbol(); }
+			inline operator const std::shared_ptr<TokenSymbol>&() const	{ return GetSymbol(); }
 		};
 
 		/*\
@@ -551,7 +565,7 @@ namespace SCRambl
 		class Tokens
 		{
 		public:
-			typedef std::vector<std::shared_ptr<Token>> Vector;
+			typedef std::vector<Token::Shared> Vector;
 
 		private:
 			Vector			m_Tokens;
@@ -566,28 +580,34 @@ namespace SCRambl
 				size_t					m_Index = 0;
 
 			public:
+				//using Vector = std::vector < Iterator > ;
+				using CVector = std::vector < Iterator >;
+
 				Iterator() = default;
 				Iterator(Vector & cont) : m_It(cont.begin()), m_Index(0)
 				{ }
 				Iterator(Vector::iterator it, const Vector & cont) : m_It(it), m_Index(it - cont.begin())
 				{ }
 
-				inline Token Get() const {
-					return **m_It;
+				inline Token::Shared Get() const {
+					return *m_It;
 				}
 				inline size_t GetIndex() const {
 					return m_Index;
 				}
 
 				// Access
-				inline IToken::Shared operator*() const {
+				inline Token::Shared operator*() {
 					return Get();
 				}
-				inline IToken::Shared * operator->() const {
-					return &**this;
+				inline const Token::Shared operator*() const {
+					return Get();
 				}
-				inline IToken::Shared operator[](size_t n) const {
-					return *m_It[n];
+				inline const Token::Shared operator->() const {
+					return **this;
+				}
+				inline Token::Shared operator[](size_t n) const {
+					return m_It[n];
 				}
 
 				// Manipulation
@@ -693,8 +713,8 @@ namespace SCRambl
 
 			//
 			template<typename TToken, typename... TArgs>
-			static inline Token MakeShared(Position pos, TArgs... args) {
-				return{ pos, std::make_shared<TToken>(std::forward<TArgs>(args)...) };
+			static inline Token::Shared MakeShared(Position pos, TArgs... args) {
+				return std::make_shared<Token>(pos, std::make_shared<TToken>(std::forward<TArgs>(args)...));
 			}
 		};
 
@@ -748,10 +768,11 @@ namespace SCRambl
 		typedef Scope<Label::Shared> Labels;
 
 	private:
-		std::shared_ptr<File>				m_File;
-		Code								m_Code;
-		Tokens								m_Tokens;
-		Labels								m_LabelScope;
+		std::shared_ptr<File>						m_File;
+		Code										m_Code;
+		Tokens										m_Tokens;
+		Labels										m_LabelScope;
+		std::vector<std::shared_ptr<TokenSymbol>>	m_Declarations;
 
 		// Initialise script for parsing with current code
 		void Init();
@@ -777,6 +798,8 @@ namespace SCRambl
 			file.flush();
 		}
 
+		bool ProcessCodeLine(const std::string&, CodeLine&, bool = false);
+
 	public:
 		// Default construction
 		Script();
@@ -784,6 +807,9 @@ namespace SCRambl
 		Script(const CodeList &);
 		// Destructor
 		virtual ~Script();
+
+		// Set code
+		void SetCode(const void *);
 
 		// Load file into code lines
 		void LoadFile(const std::string &);
@@ -800,6 +826,10 @@ namespace SCRambl
 		// Get the informative token list
 		inline Tokens & GetTokens()						{ return m_Tokens; }
 		inline const Tokens & GetTokens() const			{ return m_Tokens; }
+		// Get symbolic declarations
+		inline std::vector<std::shared_ptr<TokenSymbol>> &			GetDeclarations()				{ return m_Declarations; }
+		inline const std::vector<std::shared_ptr<TokenSymbol>> &	GetDeclarations() const			{ return m_Declarations; }
+		//
 		inline Scope<Label::Shared> & GetLabels()		{ return m_LabelScope; }
 	};
 }

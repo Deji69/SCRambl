@@ -239,13 +239,14 @@ namespace SCRambl
 								}
 								else field = data.AddField(data_type, DataSourceID::None, DataAttributeID::None);
 								
-								if (*it.value())
+								if (!it.text().empty())
 								{
 									if (data_type.IsInteger() || data_type.IsFloat()) {
 										SCRambl::Numbers::IntegerType int_num;
 										SCRambl::Numbers::FloatType flt_num;
 										if (data_type.IsInteger()) {
-											auto convert_result = Numbers::StringToInt<long long>(it.value(), int_num, true);
+											auto txt = it.text();
+											auto convert_result = Numbers::StringToInt<long long>(it.text().as_string(), int_num, true);
 											if (convert_result == Numbers::ConvertResult::success) {
 												field->SetValue(int_num);
 											}
@@ -255,7 +256,7 @@ namespace SCRambl
 											}
 										}
 										else if (data_type.IsFloat()) {
-											auto convert_result = Numbers::StringToFloat<float>(it.value(), flt_num, true);
+											auto convert_result = Numbers::StringToFloat<float>(it.text().as_string(), flt_num, true);
 											if (convert_result == Numbers::ConvertResult::success) {
 												field->SetValue(flt_num);
 											}
@@ -266,7 +267,7 @@ namespace SCRambl
 										}
 									}
 									else if (data_type.IsString()) {
-										field->SetValue<std::string>(it.value());
+										field->SetValue<std::string>(it.text().as_string());
 									}
 									else {
 										BREAK();

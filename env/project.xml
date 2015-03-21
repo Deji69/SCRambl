@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Name="MyProject" Version="1.0" Type="" Default="Release">
 	<!-- Generic Target Applications -->
-	<Target ID="gtasa Name="GTA: San Andreas" 
+	<Target ID="gtasa" Name="GTA: San Andreas">
 	</Target>
 </Project>

@@ -52,9 +52,9 @@ namespace SCRambl
 				m_OverloadCommands.clear();
 
 				// replace overload token with single command token
-				auto& token = m_CommandTokenIt->get()->Get<Tokens::Identifier::Info<>>();
+				auto& token = m_CommandTokenIt->GetToken()->Get<Tokens::Identifier::Info<>>();
 				auto range = token.GetValue<0>();
-				*m_CommandTokenIt = Script::Tokens::MakeShared < CommandInfo >(range.Begin(), ParsedType::Command, range, m_CurrentCommand);
+				m_CommandTokenIt->SetToken(Script::Tokens::MakeShared < CommandInfo >(range.Begin(), ParsedType::Command, range, m_CurrentCommand)->GetToken());
 				
 				m_State = parsing;
 				return;
@@ -62,15 +62,24 @@ namespace SCRambl
 
 			m_CurrentCommand = *m_OverloadCommandsIt;
 			Parse();
+
+			if (AreCommandArgsParsed()) {
+				if (!m_OnNewLine) FailCommandOverload();
+				if (GetNumberOfOverloadFailures() > 0)
+					MarkOverloadIncompatible();
+				else
+					NextCommandOverload();
+			}
 		}
 		void Parser::Parse()
 		{
 			auto& types = m_Engine.GetTypes();
 			auto ptr = *m_TokenIt;
-			auto type = ptr->GetType<Tokens::Type>();
+			auto type = ptr->GetToken()->GetType<Tokens::Type>();
 			bool newline = false;
+			bool just_found_command = false;
 
-			if (IsCommandParsing()) {
+			if (IsCommandParsing() && !AreCommandArgsParsed()) {
 				m_CommandArgIt->IsReturn();
 			}
 
@@ -78,32 +87,47 @@ namespace SCRambl
 
 			switch (type) {
 			case Tokens::Type::Label: {
-				auto& token = ptr->Get<Tokens::Label::Info>();
+				auto& token = ptr->GetToken()->Get<Tokens::Label::Info>();
 				auto label = token.GetValue<Tokens::Label::Parameter::LabelValue>();
-				//auto b = token.GetValue<2>();
 				
 				if (!m_OnNewLine) {
 					SendError(Error::label_on_line, label);
 				}
 
 				val_type = Types::ValueSet::Label;
+				AddLabel(label, m_TokenIt);
+				m_LabelTokens.emplace_back(m_TokenIt);
+				//m_UnusedLabels
 				break;
 			}
 			case Tokens::Type::Identifier: {
 				Commands::Vector vec;
-				auto& token = ptr->Get<Tokens::Identifier::Info<>>();
+				auto& token = ptr->GetToken()->Get<Tokens::Identifier::Info<>>();
 				auto range = token.GetValue<0>();
 				auto name = range.Format();
 
 				if (auto ptr = m_Labels.Find(name)) {
 					// this is a label pointer!
 					m_Jumps.emplace_back(ptr, m_TokenIt);
+
+					auto tok = Tokens::CreateToken<Tokens::Label::Info>(Tokens::Type::LabelRef, range, ptr);
+					m_TokenIt.Get()->SetToken(tok);
+					m_TokenIt.Get()->GetSymbol() = Tokens::CreateToken<Tokens::Label::Jump<Script::Label>>(tok);
+
+					AddLabelRef(ptr, m_TokenIt);
 				}
 				else if (m_Commands.FindCommands(name, vec) > 0) {
-					if (vec.size() == 1) *m_TokenIt = Script::Tokens::MakeShared < CommandInfo >(range.Begin(), ParsedType::Command, range, vec[0]);
-					else *m_TokenIt = Script::Tokens::MakeShared < OLCommandInfo >(range.Begin(), ParsedType::OLCommand, range, vec);
+					// make a token and store it
+					if (vec.size() == 1)
+						m_TokenIt.Get()->SetToken(Tokens::CreateToken < Tokens::Command::Info<Command> >(Tokens::Type::Command, range, vec[0]));
+					else
+						m_TokenIt.Get()->SetToken(Tokens::CreateToken < Tokens::Command::OverloadInfo<Command> >(Tokens::Type::CommandOverload, range, vec));
+						//m_TokenIt.Get().SetToken(Script::Tokens::MakeShared < Tokens::Command::OverloadInfo<Command> >(range.Begin(), Tokens::Type::CommandOverload, range, vec));
 
-					if (ParseCommandOverloads(vec)) BeginCommandParsing();
+					if (ParseCommandOverloads(vec)) {
+						BeginCommandParsing();
+						just_found_command = true;
+					}
 				}
 				else if (false /*check variables */) {
 
@@ -120,7 +144,7 @@ namespace SCRambl
 				break;
 			}
 			case Tokens::Type::String: {
-				auto& token = ptr->Get<Tokens::String::Info>();
+				auto& token = ptr->GetToken()->Get<Tokens::String::Info>();
 				auto range = token.GetValue<0>();
 				auto string = range.Format();
 
@@ -130,37 +154,33 @@ namespace SCRambl
 				break;
 			}
 			case Tokens::Type::Number: {
-				auto type = Tokens::Number::GetValueType(*ptr);
+				auto type = Tokens::Number::GetValueType(*ptr->GetToken());
 				bool is_int = type != Numbers::Float;
 				Numbers::IntegerType int_value;
 				Numbers::FloatType float_value;
 				
 				size_t size;
 				if (is_int) {
-					auto info = ptr->Get<Tokens::Number::Info<Numbers::IntegerType>>();
+					auto info = ptr->GetToken()->Get<Tokens::Number::Info<Numbers::IntegerType>>();
 					int_value = info.GetValue < Tokens::Number::Parameter::NumberValue >();
 					size = CountBitOccupation(int_value.GetValue<Numbers::IntegerType::MaxType>());
 				}
 				else {
-					auto info = ptr->Get<Tokens::Number::Info<Numbers::FloatType>>();
+					auto info = ptr->GetToken()->Get<Tokens::Number::Info<Numbers::FloatType>>();
 					float_value = info.GetValue < Tokens::Number::Parameter::NumberValue >();
 					size = 32;
 				}
-
-				if (IsCommandParsing()) {
-					auto& type = m_CommandArgIt->GetType();
-					bool b = type.IsBasicType();
-					auto name = m_CurrentCommand->GetName();
-					name.size();
-				}
 				
-				//Types::NumberValue number_value((is_int ? Types::NumberValue::Integer : Types::NumberValue::Float), CountBitOccupation(int_value));
+				// 
 				Types::Value::Shared best_value_match;
 				size_t smallest_fitting_value_size = 0;
 
+				// Contain compatible Value's
 				std::vector<Types::Value::Shared> vec;
+				// Number of compatible Value's
 				size_t n;
-				if (IsCommandParsing()) {
+
+				if (IsCommandParsing() && !AreCommandArgsParsed()) {
 					auto& type = m_CommandArgIt->GetType();
 					n = types.GetValues(Types::ValueSet::Number, size, vec, [&best_value_match, &smallest_fitting_value_size, is_int, &vec](Types::Value::Shared value){
 						// Keep this value?
@@ -177,21 +197,14 @@ namespace SCRambl
 						return true;
 					});
 
-					auto& number_value = best_value_match->Extend<Types::NumberValue>();
-					auto val_token = is_int ? number_value.CreateToken<Tokens::Number::Value<Types::NumberValue>>(ptr->Get<Tokens::Number::Info<Numbers::IntegerType>>())
-						: number_value.CreateToken<Tokens::Number::Value<Types::NumberValue>>(ptr->Get<Tokens::Number::Info<Numbers::FloatType>>());
-
-
-					ptr->Get<Tokens::Number::Info<Numbers::FloatType>>().GetValue<Tokens::Number::ScriptRange>();
-					auto info = ptr->Get<Tokens::Number::Info<Numbers::IntegerType>>();
-					info.GetType();
-
-					if (best_value_match) {
-						//best_value_match->GetType
+					// The value isn't compatible with this command argument
+					if (!n) {
+						BREAK();
 					}
 				}
 				else
 				{
+					// TODO: figure out what to keep
 					n = types.GetValues(Types::ValueSet::Number, size, vec, [this, is_int, &vec](Types::Value::Shared value){
 						// Keep this value?
 						auto& num_value = value->Extend<Types::NumberValue>();
@@ -201,21 +214,39 @@ namespace SCRambl
 					});
 				}
 
+				// No values? Poopy...
 				if (!n) {
 					SendError(Error::unsupported_value_type);
 				}
-				
-				val_type = Types::ValueSet::Number;
 
-				if (IsCommandParsing()) {
-					
+				// Do we have a chosen Value?
+				if (best_value_match) {
+					// Now create a token for the value itself
+					auto& number_value = best_value_match->Extend<Types::NumberValue>();
+					auto val_token = is_int ? number_value.CreateToken<Tokens::Number::Value<Types::NumberValue>>(ptr->GetToken()->Get<Tokens::Number::Info<Numbers::IntegerType>>())
+						: number_value.CreateToken<Tokens::Number::Value<Types::NumberValue>>(ptr->GetToken()->Get<Tokens::Number::Info<Numbers::FloatType>>());
+
+					// Store it back in the script token
+					m_TokenIt.Get()->GetSymbol() = val_token;
 				}
+				else {
+					// TODO: something
+				}
+				
+				// Victory!
+				val_type = Types::ValueSet::Number;
 				break;
 			}
 			case Tokens::Type::Character: {
-				auto& token = ptr->Get<Tokens::Character::Info<Character>>();
+				auto& token = ptr->GetToken()->Get<Tokens::Character::Info<Character>>();
 				switch (auto ch = token.GetValue<Tokens::Character::Parameter::CharacterValue>()) {
 				case Character::EOL:
+					if (IsCommandParsing()) {
+						if (AreCommandArgsParsed()) {
+							FinishCommandParsing();
+						}
+						else BREAK();
+					}
 					newline = true;
 					break;
 				default:
@@ -224,8 +255,13 @@ namespace SCRambl
 				}
 				break;
 			}
+			case Tokens::Type::Command: {
+				BREAK();			// this shouldn't happen
+				++m_TokenIt;
+				break;
+			}
 			case Tokens::Type::Operator: {
-				auto& token = ptr->Get<Tokens::Operator::Info<Operator::Type>>();
+				auto& token = ptr->GetToken()->Get<Tokens::Operator::Info<Operator::Type>>();
 				auto type = token.GetValue<Tokens::Operator::Parameter::OperatorType>();
 				auto rg = token.GetValue<Tokens::Operator::Parameter::ScriptRange>();
 				rg.Begin();
@@ -234,6 +270,16 @@ namespace SCRambl
 			default:
 				
 				break;
+			}
+
+			if (just_found_command) {
+				//auto tok = m_TokenIt.Get().GetToken<Tokens::Command::Info<Command>>();
+				//auto cmd = tok->GetValue<Tokens::Command::CommandType>();
+				m_CommandTokens.emplace_back(m_CommandTokenIt);
+			}
+
+			if (IsCommandParsing() && !just_found_command) {
+				NextCommandArg();
 			}
 
 			m_OnNewLine = newline;
@@ -251,19 +297,29 @@ namespace SCRambl
 		// Printf-styled error reporting
 		void Parser::SendError(Error type)
 		{
-			// send
-			std::vector<std::string> params;
-			m_Task(Event::Error, Basic::Error(type), params);
+			if (m_State == overloading) {
+				FailCommandOverload();
+			}
+			else {
+				// send
+				std::vector<std::string> params;
+				m_Task(Event::Error, Basic::Error(type), params);
+			}
 		}
 		template<typename First, typename... Args>
 		void Parser::SendError(Error type, First&& first, Args&&... args)
 		{
-			// storage for error parameters
-			std::vector<std::string> params;
-			// format the error parameters to the vector
-			m_Engine.Format(params, first, args...);
-			// send
-			m_Task(Event::Error, Basic::Error(type), params);
+			if (m_State == overloading) {
+				FailCommandOverload();
+			}
+			else {
+				// storage for error parameters
+				std::vector<std::string> params;
+				// format the error parameters to the vector
+				m_Engine.Format(params, first, args...);
+				// send
+				m_Task(Event::Error, Basic::Error(type), params);
+			}
 		}
 	}
 }

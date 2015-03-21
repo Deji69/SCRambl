@@ -34,6 +34,29 @@ namespace SCRambl
 		return 0;
 	}
 
+	void Script::SetCode(void const * data)
+	{
+		const char * cdata = static_cast<const char*>(data);
+		int i = 0;
+		bool eol = false;
+		
+		if (!m_Code.IsEmpty()) m_Code.Clear();
+		if (cdata[i])
+		{
+			do
+			{
+				CodeLine line;
+				std::string code;
+				for (; cdata[i] && cdata[i] != '\n'; ++i)
+					code.push_back(cdata[i]);
+				eol = ProcessCodeLine(code, line, eol);
+				m_Code.AddLine(line);
+			} while (cdata[++i]);
+		}
+
+		Init();
+	}
+
 	void Script::ReadFile(std::ifstream & file, Code & dest)
 	{
 		std::string code;
@@ -44,58 +67,63 @@ namespace SCRambl
 		while (std::getline(file, code))
 		{
 			CodeLine line;
+			eol = ProcessCodeLine(code, line, eol);
+			dest.AddLine(line);
+		}
+	}
 
-			int col = 1;
+	bool Script::ProcessCodeLine(const std::string& code, CodeLine& line, bool eol)
+	{
+		int col = 1;
 
-			if (!code.empty())
+		if (!code.empty())
+		{
+			for (auto it = code.begin(); it != code.end(); ++col)
 			{
-				for (auto it = code.begin(); it != code.end(); ++col)
+				char c = *it;
+				++it;
+
+				switch (c)
 				{
-					char c = *it;
-					++it;
-
-					switch (c)
+				case '?':
+					if (it == code.end()) break;
+					if (*it != '?') break;
+					if (++it == code.end()) continue;
+					if (auto t = GetTrigraphChar(*it))
 					{
-					case '?':
-						if (it == code.end()) break;
-						if (*it != '?') break;
-						if (++it == code.end()) continue;
-						if (auto t = GetTrigraphChar(*it))
-						{
-							++it;
-							c = t;
-						}
-						else
-						{
-							--it;
-							break;
-						}
-
-						if (c == '\\')
-						{
-					case '\\':
-							if (it == code.end())
-							{
-								eol = false;
-								continue;
-							}
-						}
+						++it;
+						c = t;
+					}
+					else
+					{
+						--it;
 						break;
 					}
 
-					line.Append(c);
-					eol = true;
+					if (c == '\\')
+					{
+				case '\\':
+					if (it == code.end())
+					{
+						eol = false;
+						continue;
+					}
+					}
+					break;
 				}
-			}
 
-			if (eol)
-			{
-				line.Append(Symbol::eol);
-				eol = false;
+				line.Append(c);
+				eol = true;
 			}
-
-			dest.AddLine(line);
 		}
+
+		if (eol)
+		{
+			line.Append(Symbol::eol);
+			eol = false;
+		}
+
+		return eol;
 	}
 
 	void Script::LoadFile(const std::string & path)

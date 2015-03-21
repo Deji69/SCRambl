@@ -17,6 +17,8 @@ namespace SCRambl
 
 	};
 
+	extern const char *		g_Version;
+
 	//std::map<std::string, CConfiguration>	g_Configurations;
-	std::string								g_sCurrentDir;
+	//std::string								g_sCurrentDir;
 }  // namespace SCRambl

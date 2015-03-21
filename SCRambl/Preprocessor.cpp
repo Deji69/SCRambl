@@ -16,7 +16,6 @@ namespace SCRambl
 			m_Script(script),
 			m_Tokens(script.GetTokens()),
 			m_Lexer(),
-			m_CodePos(script.GetCode()),
 			m_OperatorScanner(m_Operators),
 			m_Information(
 				m_CodePos
@@ -25,6 +24,7 @@ namespace SCRambl
 			Reset();
 
 			// we need token scanners!
+			
 			//m_Lexer.AddTokenScanner(TokenType::None, m_WhitespaceScanner);
 			m_Lexer.AddTokenScanner(TokenType::BlockComment, m_BlockCommentScanner);
 			m_Lexer.AddTokenScanner(TokenType::Comment, m_CommentScanner);
@@ -112,6 +112,7 @@ namespace SCRambl
 				{
 				case init:
 					m_Task(Event::Begin);
+					m_CodePos = m_Script.GetCode();
 					m_State = lexing;
 					break;
 				default:
@@ -310,7 +311,7 @@ namespace SCRambl
 				break;
 
 			default:
-				BREAK();		// invalid directive - should've alredy reported - now the preprocessor can continue
+				//BREAK();		// invalid directive - should've alredy reported - now the preprocessor can continue
 				break;
 			}
 

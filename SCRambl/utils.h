@@ -9,6 +9,9 @@
 #include <assert.h>
 #include <algorithm>
 #include <functional>
+#ifdef _WIN32
+	#include <Windows.h>
+#endif
 
 namespace SCRambl
 {
@@ -87,6 +90,21 @@ namespace SCRambl
 	inline size_t CountByteOccupation(T v) {
 		size_t n = CountBitOccupation<unsigned long>(v);
 		return (n / 8) + (n % 8 ? 1 : 0);
+	}
+
+	// Returns the pos of the 'ext' part of "any.path/file.ext", or npos if no extension is found
+	inline size_t GetFilePathExtensionPos(const std::string& path) {
+		for (size_t i = path.length(); i; --i) {
+			if (path[i] == '.') {
+				return i + 1;
+			}
+			if (path[i] == '\\' || path[i] == '//')
+				break;
+		}
+		return std::string::npos;
+	}
+	inline std::string GetFilePathExtension(const std::string& path) {
+		return path.substr(GetFilePathExtensionPos(path));
 	}
 
 #ifdef _WIN32

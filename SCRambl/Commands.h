@@ -88,7 +88,7 @@ namespace SCRambl
 		// Finds all commands matching the name and stores them in a passed vector of command handles
 		// Returns the number of commands found
 		inline long FindCommands(std::string name, Vector & vec) {
-			return ForCommandsNamed(name, [&vec](Command::Shared ptr){ vec.emplace_back(ptr); });
+			return ForCommandsNamed(name, [&vec](Command::Shared ptr){ vec.push_back(ptr); });
 		}
 	};
 }

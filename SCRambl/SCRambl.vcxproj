@@ -136,6 +136,7 @@
     <ClCompile Include="Constants.cpp" />
     <ClCompile Include="Directives.cpp" />
     <ClCompile Include="Engine.cpp" />
+    <ClCompile Include="Environment.cpp" />
     <ClCompile Include="Exception.cpp" />
     <ClCompile Include="Identifiers.cpp" />
     <ClCompile Include="Macros.cpp" />

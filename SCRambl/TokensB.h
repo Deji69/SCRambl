@@ -50,7 +50,8 @@ namespace SCRambl
 		};
 		class Identifier {
 		public:
-			static const enum Parameter { TokenType, ScriptRange };
+			static const enum Parameter { TokenType, ScriptRange, EXTRA };
+			static const size_t c_Extra = EXTRA;
 			template<typename TType = Type, typename ...TData>
 			using Info = TokenInfo < TType, Script::Range, TData... >;
 		};
@@ -58,6 +59,24 @@ namespace SCRambl
 		public:
 			static const enum Parameter { ScriptRange, LabelValue };
 			using Info = TokenInfo < Type, Script::Range, Script::Label::Shared >;
+			//static const enum RefParameter { ScriptRange, LabelValue };
+			//using RefInfo = TokenInfo < Type, Script::Range, Script::Label::Shared >;
+
+			/*\
+			 * Tokens::Command::Call - Carries symbolic data for a command call
+			\*/
+			template<typename TLabelType>
+			class Jump : public Symbol
+			{
+				Shared<TLabelType>				m_Label;
+				size_t							m_Offset;
+
+			public:
+				Jump(std::shared_ptr<const Info> info, size_t off = 0) : Symbol(Type::CommandCall),
+					m_Label(info->GetValue<LabelValue>()),
+					m_Offset(off)
+				{ }
+			};
 		};
 		class Number {
 		public:
@@ -79,18 +98,17 @@ namespace SCRambl
 				Numbers::Type			m_Type;
 				Numbers::IntegerType	m_IntegerValue;
 				Numbers::FloatType		m_FloatValue;
-				Script::Range			m_Range;
 
 			public:
 				using Shared = std::shared_ptr < ValueToken >;
 
-				Value(Type type, const TValue & value_type, Numbers::Type num_type, Script::Range rg) : ValueToken(type, value_type),
-					m_Type(num_type), m_Range(rg)
+				Value(Type type, const TValue & value_type, Numbers::Type num_type) : ValueToken(type, value_type),
+					m_Type(num_type)
 				{ }
-				Value(Type type, const TValue & value_type, const Info<Numbers::IntegerType>& info) : Value(type, value_type, info.GetValue<ValueType>(), info.GetValue<ScriptRange>()) {
+				Value(Type type, const TValue & value_type, const Info<Numbers::IntegerType>& info) : Value(type, value_type, info.GetValue<ValueType>()) {
 					m_IntegerValue = info.GetValue<NumberValue>();
 				}
-				Value(Type type, const TValue & value_type, const Info<Numbers::FloatType>& info) : Value(type, value_type, info.GetValue<ValueType>(), info.GetValue<ScriptRange>()) {
+				Value(Type type, const TValue & value_type, const Info<Numbers::FloatType>& info) : Value(type, value_type, info.GetValue<ValueType>()) {
 					m_FloatValue = info.GetValue<NumberValue>();
 				}
 			};
@@ -105,7 +123,47 @@ namespace SCRambl
 		public:
 			static const enum Parameter { ScriptRange, CommandType };
 			template<typename TCommandType>
-			using Info = TokenInfo < Type, Script::Range, TCommandType >;
+			using Info = TokenInfo < Type, Script::Range, Shared<TCommandType> >;
+			template<typename TCommandType, typename TCont = std::vector<Shared<TCommandType>>>
+			using OverloadInfo = TokenInfo < Type, Script::Range, TCont > ;
+
+			/*\
+			 * Tokens::Command:Decl - Carries symbolic data for a command declaration
+			 \*/
+			template<typename TCommandType>
+			class Decl : public Symbol {
+				size_t						m_ID;
+				Shared<const TCommandType>	m_Command;
+
+			public:
+				Decl(size_t id, Shared<const TCommandType> ptr) : Symbol(Type::CommandDecl),
+					m_ID(id), m_Command(ptr)
+				{ }
+
+				inline size_t GetID() const									{ return m_ID; }
+				inline Shared<const TCommandType>& GetCommand()	const		{ return m_Command; }
+			};
+
+			/*\
+			 * Tokens::Command::Call - Carries symbolic data for a command call
+			\*/
+			template<typename TCommandType>
+			class Call : public Symbol
+			{
+				Shared<const TCommandType>		m_Command;
+				size_t							m_NumArgs;
+
+			public:
+				Call(const Info<TCommandType>& info, size_t num_args) : Symbol(Type::CommandCall),
+					m_Command(info.GetValue<CommandType>()),
+					m_NumArgs(num_args)
+				{
+					//Command::
+				}
+
+				inline Shared<const TCommandType> GetCommand() const	{ return m_Command; }
+				inline size_t GetNumArgs() const						{ return m_NumArgs; }
+			};
 		};
 		class String {
 		public:
@@ -118,5 +176,14 @@ namespace SCRambl
 			template<typename TCharacterType>
 			using Info = TokenInfo < Type, Script::Position, TCharacterType >;
 		};
+
+		template<typename TTokenType, typename... TArgs>
+		static Shared<TTokenType> CreateToken(TArgs&&... args) {
+			return std::make_shared<TTokenType>(args...);
+		}
+		template<typename T>
+		static T& GetToken(IToken::Shared token) {
+			return token->Get<T>();
+		}
 	}
 }

@@ -1,0 +1,13 @@
+<RCC>
+  <qresource prefix="SCRamblUI">
+    <file alias="redo_icon">Resources/icon_redo.gif</file>
+    <file alias="undo_icon">Resources/icon_undo.gif</file>
+    <file alias="buildrun_icon">Resources/icon_buildrun.gif</file>
+    <file alias="build_icon">Resources/icon_build.gif</file>
+    <file alias="options_icon">Resources/icon_opts.gif</file>
+    <file alias="saveall_icon">Resources/icon_saveall.gif</file>
+    <file alias="save_icon">Resources/icon_save.gif</file>
+    <file alias="open_icon">Resources/icon_open.gif</file>
+    <file alias="new_icon">Resources/icon1.gif</file>
+  </qresource>
+</RCC>

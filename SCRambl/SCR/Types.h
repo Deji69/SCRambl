@@ -99,7 +99,7 @@ namespace SCR
 			inline TValType GetType() const					{ return m_ValType; }
 
 		protected:
-			virtual bool TestCompatibility(const Value & lhs) const {
+			virtual bool TestCompatibility(const Value &) const {
 				return true;
 			}
 

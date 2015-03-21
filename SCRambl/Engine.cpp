@@ -6,6 +6,7 @@ using namespace SCRambl;
 Engine::Engine():
 	HaveTask(false),
 	// in that order...
+	m_Builder(*this),
 	m_Constants(*this),
 	m_Types(*this),
 	m_Commands(*this)

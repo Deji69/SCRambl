@@ -295,6 +295,7 @@ namespace SCRambl
 
 			Preprocessor(Task &, Engine &, Script &);
 
+			inline bool IsRunning() const			{ return m_State != finished; }
 			inline bool IsFinished() const			{ return m_State == finished; }
 			void Run();
 			void Reset();
@@ -367,7 +368,7 @@ namespace SCRambl
 			inline Script::Token::Shared AddToken(Script::Position pos, Tokens::Type token, TArgs&&... args)
 			{
 				m_WasLastTokenEOL = false;
-				return m_Tokens.Add < T >(pos, token, std::forward<TArgs>(args)...);
+				return m_Tokens.Add < T >(pos, token, std::forward<TArgs&&>(args)...);
 			}
 			/*template<typename... TArgs>
 			inline std::shared_ptr<Token<TArgs...>> AddToken(PreprocessingToken::Type token, TArgs... args)
@@ -444,8 +445,10 @@ namespace SCRambl
 
 			const Information & Info() const		{ return m_Info; }
 
-		protected:
+			bool IsRunning() const					{ return Preprocessor::IsRunning(); }
 			bool IsTaskFinished() final override	{ return Preprocessor::IsFinished(); }
+
+		protected:
 			void RunTask() final override			{ Preprocessor::Run(); }
 			void ResetTask() final override			{ Preprocessor::Reset(); }
 		};

@@ -8,6 +8,7 @@
 #include <list>
 #include <memory>
 #include <map>
+#include <iostream>
 #include "utils.h"
 #include "Builder.h"
 #include "Tasks.h"
@@ -40,6 +41,9 @@ namespace SCRambl
 		//TaskSystem::Task<TaskSystem::Event>::State	LastTaskState;
 		bool					HaveTask;
 
+		// BuildSystem
+		BuildSystem::Builder	m_Builder;
+
 		// Message formatting
 		FormatMap				Formatters;
 
@@ -62,6 +66,21 @@ namespace SCRambl
 		inline Types::Types & GetTypes()		{ return m_Types; }
 
 		/*\
+		 * Engine::GetBuildConfig
+		\*/
+		inline std::shared_ptr<BuildSystem::BuildConfig> GetBuildConfig() const {
+			return m_Builder.GetConfig();
+		}
+
+		/*\
+		 * Engine::SetBuildConfig
+		\*/
+		inline bool SetBuildConfig(std::string name)
+		{
+			return m_Builder.SetConfig(name);
+		}
+
+		/*\
 		 * Engine::AddConfig - Returns shared Configuration element
 		\*/
 		std::shared_ptr<Configuration> AddConfig(const std::string & name)
@@ -71,6 +90,22 @@ namespace SCRambl
 			auto config = std::make_shared<Configuration>(name);
 			m_Config.emplace(name, config);
 			return config;
+		}
+
+		/*\
+		 * Engine::AddConfig
+		\*/
+		void AddConfig(std::shared_ptr<Configuration> config)
+		{
+			m_Config.emplace(config->GetName(), config);
+		}
+
+		/*\
+		 * Engine::LoadFile
+		\*/
+		bool LoadFile(const std::string & path, Script& script)
+		{
+			return GetFilePathExtension(path) == "xml" ? LoadConfigFile(path) : m_Builder.LoadScriptFile(path, script);
 		}
 
 		/*\
@@ -104,6 +139,16 @@ namespace SCRambl
 				ASSERT(status);
 			}
 			return false;
+		}
+
+		/*\
+		 * Engine::LoadDefinition
+		\*/
+		bool LoadDefinition(std::string name)
+		{
+			std::string path = m_Builder.GetConfig()->GetDefinitionPath() + name + ".xml";
+			std::cout << "Loading " << name << " from \"" << path << "\"...\n";
+			return LoadConfigFile(path);
 		}
 
 		/*\

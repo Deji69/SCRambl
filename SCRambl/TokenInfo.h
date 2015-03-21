@@ -54,7 +54,7 @@ namespace SCRambl
 		std::tuple<TValueType...>	m_Value;
 
 	public:
-		TokenInfo(TTokenType type, TValueType&&... val) : TokenBase(type), m_Value(val...)
+		TokenInfo(TTokenType type, TValueType... val) : TokenBase(type), m_Value(val...)
 		{ }
 
 		template<std::size_t N>

@@ -26,6 +26,10 @@ namespace SCRambl
 			Command, OLCommand,
 		};
 
+		enum class CommandParam {
+			Command = Tokens::Identifier::EXTRA,
+		};
+
 		using CommandInfo = Tokens::Identifier::Info < ParsedType, Command::Shared >;
 		using OLCommandInfo = Tokens::Identifier::Info < ParsedType, Commands::Vector >;
 
@@ -118,6 +122,15 @@ namespace SCRambl
 		};
 
 		class Task;
+
+		struct LabelRef {
+			Script::Tokens::Iterator	TokenIt;
+			bool						IsReference;
+			size_t						NumUses;
+
+			LabelRef(Script::Tokens::Iterator it, bool isref) : TokenIt(it), IsReference(isref)
+			{ }
+		};
 		
 		/*\
 		 * Parser::Parser - Now this is what we're here for
@@ -151,25 +164,33 @@ namespace SCRambl
 			}
 
 		private:
-			State							m_State = init;
-			Engine						&	m_Engine;
-			Task						&	m_Task;
-			Script						&	m_Script;
-			Script::Tokens				&	m_Tokens;
-			Script::Tokens::Iterator		m_TokenIt;
-			Script::Tokens::Iterator		m_CommandTokenIt;
-			Script::Labels				&	m_Labels;
-			Commands					&	m_Commands;
-			Command::Shared					m_CurrentCommand;
-			Command::Arg::Iterator			m_CommandArgIt;
-			//SCR::Command::Arg
-			Commands::Vector				m_OverloadCommands;
-			Commands::Vector::iterator		m_OverloadCommandsIt;
-			Jump::Vector					m_Jumps;
+			State								m_State = init;
+			Engine							&	m_Engine;
+			Task							&	m_Task;
+			Script							&	m_Script;
+			Script::Tokens					&	m_Tokens;
+			Script::Tokens::Iterator			m_TokenIt;
+			Script::Tokens::Iterator			m_CommandTokenIt;
+			Script::Tokens::Iterator::CVector	m_CommandTokens;			// positions of all parsed command tokens
+			Script::Tokens::Iterator::CVector	m_LabelTokens;
+			std::map<Script::Label::Shared, LabelRef>	m_LabelReferences;
+			Script::Labels					&	m_Labels;
+			Commands						&	m_Commands;
+			Command::Shared						m_CurrentCommand;
+			Command::Arg::Iterator				m_CommandArgIt;
+			size_t								m_NumCommandArgs;
+			size_t								m_NumOverloadFailures;
+			Commands::Vector					m_OverloadCommands;
+			Commands::Vector::iterator			m_OverloadCommandsIt;
+			Jump::Vector						m_Jumps;
+
+			std::vector<std::shared_ptr<const Command>>		m_CommandVector;
+			std::unordered_map<std::string, size_t>			m_CommandMap;
 
 			// Status
 			bool							m_OnNewLine;
 			bool							m_ParsingCommandArgs;
+			bool							m_EndOfCommandArgs;
 
 			// Send an error event
 			void SendError(Error);
@@ -193,8 +214,12 @@ namespace SCRambl
 				}
 				return true;
 			}
-			inline void BeginCommandParsing() {
+			void BeginCommandParsing() {
 				m_CommandTokenIt = m_TokenIt;
+				m_NumCommandArgs = 0;
+				m_NumOverloadFailures = 0;
+				m_EndOfCommandArgs = false;
+
 				if (m_State == overloading) {
 					m_CurrentCommand = *m_OverloadCommandsIt;
 				}
@@ -204,11 +229,67 @@ namespace SCRambl
 				}
 			}
 			inline bool IsCommandParsing() {
-				return m_ParsingCommandArgs;
+				return m_ParsingCommandArgs && m_CurrentCommand;
+			}
+			inline bool IsOverloading() {
+				return m_State == overloading;
+			}
+			inline bool AreCommandArgsParsed() {
+				return m_EndOfCommandArgs;
 			}
 			inline void NextCommandArg() {
-				++m_CommandArgIt;
-				m_ParsingCommandArgs = m_CommandArgIt != m_CurrentCommand->EndArg();
+				if (m_CurrentCommand) {
+					if (!m_EndOfCommandArgs)
+					{
+						++m_CommandArgIt;
+						++m_NumCommandArgs;
+					}
+
+					m_EndOfCommandArgs = m_CommandArgIt == m_CurrentCommand->EndArg();
+				}
+				else m_EndOfCommandArgs = true;
+			}
+			inline void NextCommandOverload() {
+				++m_OverloadCommandsIt;
+			}
+			void FinishCommandParsing() {
+				auto tok = m_CommandTokenIt.Get()->GetToken<Tokens::Command::Info<Command>>();
+				m_CommandTokenIt.Get()->GetSymbol() = Tokens::CreateToken<Tokens::Command::Call<Command>>(*tok, m_NumCommandArgs);
+
+				size_t cmdid = m_CommandVector.size();
+				auto it = m_CommandMap.empty() ? m_CommandMap.end() : m_CommandMap.find(m_CurrentCommand->GetName());
+				if (it != m_CommandMap.end()) {
+					cmdid = it->second;
+				}
+				else {
+					m_CommandMap.emplace(m_CurrentCommand->GetName(), m_CommandVector.size());
+					m_CommandVector.emplace_back(m_CurrentCommand);
+				}
+
+				m_Script.GetDeclarations().emplace_back(Tokens::CreateToken <Tokens::Command::Decl<Command>>(cmdid, m_CurrentCommand));
+
+				m_ParsingCommandArgs = false;
+			}
+			void MarkOverloadIncompatible() {
+				m_OverloadCommandsIt = m_OverloadCommands.erase(m_OverloadCommandsIt);
+			}
+			void FailCommandOverload() {
+				++m_NumOverloadFailures;
+			}
+			size_t GetNumberOfOverloadFailures() {
+				return m_NumOverloadFailures;
+			}
+			void AddLabel(Script::Label::Shared label, Script::Tokens::Iterator it) {
+				m_LabelReferences.emplace(label, LabelRef(it, false));
+			}
+			void AddLabelRef(Script::Label::Shared label, Script::Tokens::Iterator it) {
+				auto iter = m_LabelReferences.find(label);
+				if (iter == m_LabelReferences.end()) {
+					m_LabelReferences.emplace(label, LabelRef(it, true));
+				}
+				else {
+					++iter->second.NumUses;
+				}
 			}
 
 			void Init();
@@ -248,9 +329,10 @@ namespace SCRambl
 			inline size_t GetProgressTotal() const			{ return GetNumTokens(); }
 			inline Script::Token GetToken() const			{ return Parser::GetToken(); }
 
-		protected:
 			bool IsRunning() const					{ return Parser::IsRunning(); }
 			bool IsTaskFinished() final override	{ return Parser::IsFinished(); }
+
+		protected:
 			void RunTask() final override			{ Parser::Run(); }
 			void ResetTask() final override			{ Parser::Reset(); }
 		};

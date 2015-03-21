@@ -6,33 +6,50 @@
 /**********************************************************/
 // Definitions for management of SCR projects
 #pragma once
-
-#include "Environment.h"
-#include "utils\xml.h"
 #include <list>
+#include "utils\xml.h"
+#include "Environment.h"
+#include "Builder.h"
 
 namespace SCRambl
 {
 	class ProjectFile
 	{
-		pugi::xml_document			m_XML;
+		std::string					m_Path;
 
-		ProjectFile(const char * szName, const char * szFilePath)
-		{
-			m_XML.load_file(szFilePath);
-		}
+	public:
+		ProjectFile(std::string path) : m_Path(path)
+		{ }
 	};
 
-	/*class CProjectDir
+	class ProjectTarget
 	{
 
-	};*/
+	};
 
 	class Project
 	{
-		std::list<ProjectFile*>		m_Files;
-	};
+		std::string										m_Name;
+		BuildSystem::BuildConfig::Shared				m_Config;
+		std::vector<ProjectFile>						m_Sources;
+		std::unordered_map<std::string, ProjectTarget>	m_Targets;
 
-	Project					*	s_pProject;
+	public:
+		Project() = default;
+		Project(std::string name) : m_Name(name)
+		{ }
+
+		inline void SetName(std::string name)							{ m_Name = name; }
+		inline void SetConfig(BuildSystem::BuildConfig::Shared conf)	{ m_Config = conf; }
+		inline const std::string& GetName() const						{ return m_Name; }
+		inline BuildSystem::BuildConfig::Shared GetConfig() const		{ return m_Config; }
+
+		inline void AddSource(std::string path) {
+			m_Sources.emplace_back(path);
+		}
+
+		void LoadFile(const char*);
+		void SaveFile(const char* = "") const;
+	};
 
 } // namespace SCRambl
