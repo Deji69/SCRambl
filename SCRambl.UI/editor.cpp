@@ -67,6 +67,56 @@ void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *)
 	}
 }*/
 
+QTextLine currentTextLine(const QTextCursor &cursor)
+{
+	const QTextBlock block = cursor.block();
+	QString str = block.text();
+	if (!block.isValid())
+		return QTextLine();
+
+	const QTextLayout *layout = block.layout();
+	if (!layout)
+		return QTextLine();
+
+	const int relativePos = cursor.position() - block.position();
+	auto txt = layout->preeditAreaText();
+	return layout->lineForTextPosition(relativePos);
+}
+
+QString getTokenTypeName(SCRambl::Tokens::Type type)
+{
+	using namespace SCRambl;
+	switch (type) {
+	case Tokens::Type::Character:
+		return "Character";
+	case Tokens::Type::Command:
+		return "Command";
+	case Tokens::Type::CommandCall:
+		return "CommandCall";
+	case Tokens::Type::CommandDecl:
+		return "CommandDecl";
+	case Tokens::Type::CommandOverload:
+		return "CommandOverload";
+	case Tokens::Type::Directive:
+		return "Directed";
+	case Tokens::Type::Identifier:
+		return "Identifier";
+	case Tokens::Type::Label:
+		return "Label";
+	case Tokens::Type::LabelRef:
+		return "LabelRef";
+	case Tokens::Type::None:
+		return "None";
+	case Tokens::Type::Number:
+		return "Number";
+	case Tokens::Type::Operator:
+		return "Operator";
+	case Tokens::Type::String:
+		return "String";
+	}
+	return "";
+}
+
 bool CodeEditor::eventFilter(QObject * obj, QEvent * ev)
 {
 	auto type = ev->type();
@@ -115,10 +165,23 @@ bool CodeEditor::eventFilter(QObject * obj, QEvent * ev)
 				SCRamblUI::mainWindow()->statusBar()->showMessage(QString("%1 x %2 = ").arg(point.x()).arg(point.y()) + QString("%1").arg(block.text().mid(line.textStart(), line.textLength())));
 				QPoint gpos = point.toPoint();
 
-				if (!cursor.selectedText().isEmpty())
-					QToolTip::showText(gpos, cursor.selectedText());
-				else
-					QToolTip::hideText();
+				auto tokMap = GetProcessor().getTokenMap();
+				auto  col = cursor.columnNumber();
+
+				auto lc = cursor.blockNumber();
+				auto tl = currentTextLine(cursor);
+				
+				if (auto tokline = tokMap->GetLine(lc)) {
+					auto pos = tokline->GetToken(cursor.columnNumber());
+					auto type = pos->GetToken()->GetType<SCRambl::Tokens::Type>();
+
+					QString msg;
+					msg = cursor.selectedText();
+					msg += '[';
+					msg += getTokenTypeName(type);
+					msg += ']';
+					QToolTip::showText(gpos, msg);
+				}
 
 				editTip->repaint();
 				return QPlainTextEdit::eventFilter(obj, ev);

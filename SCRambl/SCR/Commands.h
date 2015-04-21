@@ -42,7 +42,7 @@ namespace SCR
 		using RIterator = Vector::reverse_iterator;
 		using CRIterator = Vector::const_reverse_iterator;*/
 
-		CommandArg(const TBasicType & type, int index) : m_Type(type), m_Index(index)
+		CommandArg(const TBasicType & type, int index, bool isRet = false) : m_Type(type), m_Index(index), m_IsReturn(isRet)
 		{ }
 
 		inline bool			IsReturn() const			{ return m_IsReturn; }
@@ -75,8 +75,8 @@ namespace SCR
 		Command(std::string name, unsigned long long index) : m_Name(name), m_Index(index)
 		{ }
 
-		void AddArg(const typename Arg::BasicType & type) {
-			m_Args.emplace_back(type, m_Args.size());
+		void AddArg(const typename Arg::BasicType & type, bool isRet = false) {
+			m_Args.emplace_back(type, m_Args.size(), isRet);
 		}
 
 		inline typename ArgList::const_iterator	BeginArg() const		{ return m_Args.begin(); }

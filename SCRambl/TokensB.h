@@ -5,9 +5,10 @@
 //	 or copy at http://opensource.org/licenses/MIT)
 /**********************************************************/
 #pragma once
-#include "Scripts.h"
+#include "Scripts-code.h"
 #include "Tokens.h"
 #include "Numbers.h"
+#include "Labels.h"
 
 namespace SCRambl
 {
@@ -46,21 +47,21 @@ namespace SCRambl
 		class Directive {
 		public:
 			static const enum Parameter { TokenType, ScriptRange };
-			using Info = TokenInfo < Type, Script::Range >;
+			using Info = TokenInfo < Type, Scripts::Range >;
 		};
 		class Identifier {
 		public:
 			static const enum Parameter { TokenType, ScriptRange, EXTRA };
 			static const size_t c_Extra = EXTRA;
 			template<typename TType = Type, typename ...TData>
-			using Info = TokenInfo < TType, Script::Range, TData... >;
+			using Info = TokenInfo < TType, Scripts::Range, TData... >;
 		};
 		class Label {
 		public:
 			static const enum Parameter { ScriptRange, LabelValue };
-			using Info = TokenInfo < Type, Script::Range, Script::Label::Shared >;
+			using Info = TokenInfo < Type, Scripts::Range, Scripts::Label::Shared >;
 			//static const enum RefParameter { ScriptRange, LabelValue };
-			//using RefInfo = TokenInfo < Type, Script::Range, Script::Label::Shared >;
+			//using RefInfo = TokenInfo < Type, Scripts::Range, Scripts::Label::Shared >;
 
 			/*\
 			 * Tokens::Command::Call - Carries symbolic data for a command call
@@ -82,8 +83,8 @@ namespace SCRambl
 		public:
 			static const enum Parameter { ScriptRange, ValueType, NumberValue };
 			template<typename TNumberType>
-			using Info = TokenInfo < Type, Script::Range, Numbers::Type, TNumberType >;
-			using TypelessInfo = TokenInfo < Type, Script::Range, Numbers::Type >;
+			using Info = TokenInfo < Type, Scripts::Range, Numbers::Type, TNumberType >;
+			using TypelessInfo = TokenInfo < Type, Scripts::Range, Numbers::Type >;
 
 			static Numbers::Type GetValueType(const IToken& token) {
 				return token.Get<const TypelessInfo>().GetValue<ValueType>();
@@ -117,15 +118,15 @@ namespace SCRambl
 		public:
 			static const enum Parameter { ScriptRange, OperatorType };
 			template<typename TOperatorType>
-			using Info = TokenInfo < Type, Script::Range, TOperatorType >;
+			using Info = TokenInfo < Type, Scripts::Range, TOperatorType >;
 		};
 		class Command {
 		public:
 			static const enum Parameter { ScriptRange, CommandType };
 			template<typename TCommandType>
-			using Info = TokenInfo < Type, Script::Range, Shared<TCommandType> >;
+			using Info = TokenInfo < Type, Scripts::Range, Shared<TCommandType> >;
 			template<typename TCommandType, typename TCont = std::vector<Shared<TCommandType>>>
-			using OverloadInfo = TokenInfo < Type, Script::Range, TCont > ;
+			using OverloadInfo = TokenInfo < Type, Scripts::Range, TCont > ;
 
 			/*\
 			 * Tokens::Command:Decl - Carries symbolic data for a command declaration
@@ -168,13 +169,19 @@ namespace SCRambl
 		class String {
 		public:
 			static const enum Parameter { ScriptRange, StringValue };
-			using Info = TokenInfo < Type, Script::Range, std::string >;
+			using Info = TokenInfo < Type, Scripts::Range, std::string >;
+		};
+		class Delimiter {
+		public:
+			static const enum Parameter { ScriptPosition, ScriptRange, DelimiterType };
+			template<typename TDelimiterType>
+			using Info = TokenInfo < Type, Scripts::Position, Scripts::Range, TDelimiterType >;
 		};
 		class Character {
 		public:
 			static const enum Parameter { ScriptPosition, CharacterValue };
 			template<typename TCharacterType>
-			using Info = TokenInfo < Type, Script::Position, TCharacterType >;
+			using Info = TokenInfo < Type, Scripts::Position, TCharacterType >;
 		};
 
 		template<typename TTokenType, typename... TArgs>

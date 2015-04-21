@@ -67,6 +67,9 @@
     <ClCompile Include="Environment.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Delimiters.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Builder.h">
@@ -217,6 +220,18 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="Text.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Variables.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="SCR\Variables.h">
+      <Filter>Header\SCR</Filter>
+    </ClInclude>
+    <ClInclude Include="Scripts-code.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Delimiters.h">
       <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>

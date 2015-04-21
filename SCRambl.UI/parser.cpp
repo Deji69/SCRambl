@@ -49,11 +49,18 @@ void Processor::errorString(QString err)
 {
 }
 
+SCRambl::Script::TokenMap::Shared Processor::getTokenMap()
+{
+	return m_TokenMap;
+}
+
 void Processor::parseFinished()
 {
 	if (!m_Script->GetCode().IsEmpty() && m_CodeIsOld) {
 		auto& tokens = m_Script->GetTokens();
-		for (auto token : tokens)
+		m_TokenMap = m_Script->GenerateTokenMap();
+
+		/*for (auto token : tokens)
 		{
 			auto type = token->GetToken()->GetType<SCRambl::Tokens::Type>();
 			auto symbol = token->GetSymbol();
@@ -67,6 +74,7 @@ void Processor::parseFinished()
 			case SCRambl::Tokens::Type::CommandOverload:
 				break;
 			case SCRambl::Tokens::Type::Identifier: {
+				SCRambl::Script::Position();
 				auto& info = token->GetToken()->Get<SCRambl::Tokens::Identifier::Info<>>();
 				auto range = info.GetValue<0>();
 				auto name = range.Format();
@@ -83,7 +91,7 @@ void Processor::parseFinished()
 				break;
 			}
 			type = type;
-		}
+		}*/
 
 		m_CodeIsOld = false;
 	}

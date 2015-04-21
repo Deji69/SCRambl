@@ -473,13 +473,13 @@ namespace SCRambl
 #endif
 
 		class Types {
-			Engine					&	m_Engine;
 			Configuration::Shared		m_Config;
 			Type::Storage				m_Types;
 			std::multimap<ValueSet, Value::Shared>	m_Values;
 			std::vector<Translation<>::Shared>		m_Translations;
 			
 		public:
+			Types() = default;
 			Types(Engine &);
 
 			DataSourceID GetDataSource(std::string name) {

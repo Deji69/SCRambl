@@ -55,6 +55,34 @@ namespace SCRambl
 		Commands				m_Commands;
 		Types::Types			m_Types;
 
+		bool LoadXML(const std::string & path)
+		{
+			pugi::xml_document xml;
+			auto status = xml.load_file(widen(path).c_str());
+			if (status) {
+				// find our element
+				auto scrambl = xml.child("SCRambl");
+				if (scrambl) {
+					// load configurations
+					if (m_Config.size()) {
+						for (auto node : scrambl.children()) {
+							if (*node.name()) {
+								// find configuration
+								auto it = m_Config.find(node.name());
+								if (it != m_Config.end()) {
+									// load from node
+									it->second->LoadXML(node);
+								}
+							}
+						}
+					}
+				}
+				return true;
+			}
+			ASSERT(status);
+			return false;
+		}
+
 	public:
 		Engine();
 		virtual ~Engine()
@@ -111,32 +139,12 @@ namespace SCRambl
 		/*\
 		 * Engine::LoadConfigFile
 		\*/
+
 		bool LoadConfigFile(const std::string & path)
 		{
-			pugi::xml_document xml;
-			auto status = xml.load_file(widen(path).c_str());
-			if (status) {
-				// find our element
-				auto scrambl = xml.child("SCRambl");
-				if (scrambl) {
-					// load configurations
-					if (m_Config.size()) {
-						for (auto node : scrambl.children()) {
-							if (*node.name()) {
-								// find configuration
-								auto it = m_Config.find(node.name());
-								if (it != m_Config.end()) {
-									// load from node
-									it->second->LoadXML(node);
-								}
-							}
-						}
-					}
-				}
+			if (LoadXML(path)) {
+				m_Builder.LoadDefaultConfigs();
 				return true;
-			}
-			else {
-				ASSERT(status);
 			}
 			return false;
 		}
@@ -144,11 +152,17 @@ namespace SCRambl
 		/*\
 		 * Engine::LoadDefinition
 		\*/
-		bool LoadDefinition(std::string name)
+		bool LoadDefinition(std::string filename, std::string * full_path_out = nullptr)
 		{
-			std::string path = m_Builder.GetConfig()->GetDefinitionPath() + name + ".xml";
-			std::cout << "Loading " << name << " from \"" << path << "\"...\n";
-			return LoadConfigFile(path);
+			auto l = m_Builder.GetConfig()->GetNumDefinitionPaths();
+			for (size_t i = 0; i < l; ++i) {
+				std::string path = m_Builder.GetConfig()->GetDefinitionPath(i) + filename;
+				if (LoadConfigFile(path)) {
+					if (full_path_out) *full_path_out = path;
+					return true;
+				}
+			}
+			return false;
 		}
 
 		/*\

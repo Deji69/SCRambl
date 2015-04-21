@@ -34,7 +34,7 @@ namespace SCRambl
 			});
 		}*/
 
-		Types::Types(Engine & eng) : m_Engine(eng)
+		Types::Types(Engine & eng)
 		{
 			/*m_Config = m_Engine.AddConfig("VariableTypes");
 			{
@@ -75,7 +75,7 @@ namespace SCRambl
 					vartype->SetIsArray(true);
 				});
 			}*/
-			m_Config = m_Engine.AddConfig("BasicTypes");
+			m_Config = eng.AddConfig("BasicTypes");
 			{
 				static const auto size_fun = [this](const pugi::xml_node vec, std::shared_ptr<void> & obj){
 					//auto value = std::static_pointer_cast<ValueExt>(obj);
@@ -166,7 +166,7 @@ namespace SCRambl
 					value->SetFloat(true);
 				});*/
 			}
-			m_Config = m_Engine.AddConfig("ExtendedTypes");
+			m_Config = eng.AddConfig("ExtendedTypes");
 			{
 				auto& extype = m_Config->AddClass("Type", [this](const pugi::xml_node vec, std::shared_ptr<void> & obj){
 					unsigned long id = 0;
@@ -185,7 +185,7 @@ namespace SCRambl
 					//std::cout << "Type: name " << type->GetName() << ", id " << type->GetID() << "\n";
 				});
 			}
-			m_Config = m_Engine.AddConfig("Translations");
+			m_Config = eng.AddConfig("Translations");
 			{
 				auto& trans = m_Config->AddClass("Translate", [this](const pugi::xml_node vec, std::shared_ptr<void> & obj){
 					std::string type_name = vec.attribute("Type").as_string();

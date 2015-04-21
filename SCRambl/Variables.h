@@ -5,10 +5,18 @@
 //	 or copy at http://opensource.org/licenses/MIT)
 /**********************************************************/
 #pragma once
+#include <memory>
+#include "SCR.h"
+
 namespace SCRambl
 {
-#include "SCR/Constants.h"
-#include "SCR/Types.h"
-#include "SCR/Commands.h"
-#include "SCR/Variables.h"
+	template<typename T>
+	class Variable : public SCR::Variable<T>
+	{
+	public:
+		using Shared = std::shared_ptr<Variable>;
+
+		Variable(std::string name, typename T::Shared type) : SCR::Variable<T>(name, type)
+		{ }
+	};
 }

@@ -39,7 +39,7 @@ namespace SCRambl
 			inline size_t GetCurrentToken() const {
 				return m_TokenIt.GetIndex();
 			}
-			inline Script::Token GetToken() const {
+			inline Scripts::Token GetToken() const {
 				return m_TokenIt.Get();
 			}
 			template<typename T>
@@ -56,8 +56,8 @@ namespace SCRambl
 			Task &						m_Task;
 			Engine &					m_Engine;
 			Script &					m_Script;
-			Script::Tokens &			m_Tokens;
-			Script::Tokens::Iterator	m_TokenIt;
+			Scripts::Tokens &			m_Tokens;
+			Scripts::Tokens::Iterator	m_TokenIt;
 			std::ofstream				m_File;
 		};
 
@@ -91,7 +91,7 @@ namespace SCRambl
 
 			inline size_t GetProgressCurrent() const		{ return GetCurrentToken(); }
 			inline size_t GetProgressTotal() const			{ return GetNumTokens(); }
-			//inline Script::Token GetToken() const			{ return Compiler::GetToken(); }
+			//inline Scripts::Token GetToken() const			{ return Compiler::GetToken(); }
 
 			bool IsRunning() const					{ return Compiler::IsRunning(); }
 			bool IsTaskFinished() final override	{ return Compiler::IsFinished(); }

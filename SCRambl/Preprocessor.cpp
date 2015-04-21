@@ -9,22 +9,17 @@ namespace SCRambl
 {
 	namespace Preprocessor
 	{
-		Preprocessor::Preprocessor(Task & task, Engine & engine, Script & script):
-			m_State(init),
-			m_Task(task),
-			m_Engine(engine),
-			m_Script(script),
+		Preprocessor::Preprocessor(Task & task, Engine & engine, Script & script) :
+			m_State(init), m_Task(task),
+			m_Engine(engine), m_Script(script),
 			m_Tokens(script.GetTokens()),
 			m_Lexer(),
 			m_OperatorScanner(m_Operators),
-			m_Information(
-				m_CodePos
-			)
+			m_Information(m_CodePos)
 		{
 			Reset();
 
 			// we need token scanners!
-			
 			//m_Lexer.AddTokenScanner(TokenType::None, m_WhitespaceScanner);
 			m_Lexer.AddTokenScanner(TokenType::BlockComment, m_BlockCommentScanner);
 			m_Lexer.AddTokenScanner(TokenType::Comment, m_CommentScanner);
@@ -45,6 +40,9 @@ namespace SCRambl
 			m_Directives["ifndef"] = Directive::IFNDEF;
 			m_Directives["include"] = Directive::INCLUDE;
 			m_Directives["undef"] = Directive::UNDEF;
+
+			m_Directives["register_var"] = Directive::REGISTER_VAR;
+			m_Directives["register_command"] = Directive::REGISTER_COMMAND;
 
 			// arithmetic operators - add em
 			m_Operators.AddOperator({ { '+' } }, Operator::add);
@@ -79,23 +77,18 @@ namespace SCRambl
 			m_Operators.AddOperator({ { ':' } }, Operator::condel);
 
 			// formatters for messages - set defaults
-			m_Engine.SetFormatter<Script::Position>(Script::Position::Formatter);
-			m_Engine.SetFormatter<Script::Range>(Script::Range::Formatter);
+			m_Engine.SetFormatter<Scripts::Position>(Scripts::Position::Formatter);
+			m_Engine.SetFormatter<Scripts::Range>(Scripts::Range::Formatter);
 			m_Engine.SetFormatter<Directive>(Directive::Formatter);
-			m_Engine.SetFormatter<Script::Label::Shared>(Script::Label::Formatter);
+			m_Engine.SetFormatter<Scripts::Label::Shared>(Scripts::Label::Formatter);
 		}
-
-		void Preprocessor::Reset()
-		{
-			switch (m_State)
-			{
+		void Preprocessor::Reset() {
+			switch (m_State) {
 			default:
 				// mid-process reset
-
 			case finished:
 				// end-process reset
 				break;
-
 			case init:
 				// begin-process init
 				break;
@@ -103,13 +96,9 @@ namespace SCRambl
 
 			m_State = init;
 		}
-
-		void Preprocessor::Run()
-		{
-			try
-			{
-				switch (m_State)
-				{
+		void Preprocessor::Run() {
+			try {
+				switch (m_State) {
 				case init:
 					m_Task(Event::Begin);
 					m_CodePos = m_Script.GetCode();
@@ -128,13 +117,10 @@ namespace SCRambl
 				throw;
 			}
 		}
-
-		void Preprocessor::RunningState()
-		{
+		void Preprocessor::RunningState() {
 			auto old_state = m_State;
 
-			switch (m_State)
-			{
+			switch (m_State) {
 			default:
 			case lexing:
 				LexerPhase();
@@ -150,9 +136,7 @@ namespace SCRambl
 				break;
 			}
 		}
-
-		void Preprocessor::HandleToken()
-		{
+		void Preprocessor::HandleToken() {
 			auto range = m_Token.Range();
 			auto pos = m_Token.Begin();
 
@@ -172,7 +156,7 @@ namespace SCRambl
 			}
 			case TokenType::Label: {
 				auto name = range.Format();
-				auto label = Script::Label::Make(name);
+				auto label = Scripts::Label::Make(name);
 				m_Script.GetLabels().Insert(range.Format(), label);
 				AddToken<Tokens::Label::Info>(pos, Tokens::Type::Label, range, label);
 				m_Task(Event::AddedToken, range);
@@ -198,14 +182,10 @@ namespace SCRambl
 
 			m_State = lexing;
 		}
-
-		void Preprocessor::HandleDirective()
-		{
-			switch (m_Directive)
-			{
+		void Preprocessor::HandleDirective() {
+			switch (m_Directive) {
 			case Directive::DEFINE:
-				if (Lex() == Lexer::Result::found_token && m_Token == TokenType::Identifier)
-				{
+				if (Lex() == Lexer::Result::found_token && m_Token == TokenType::Identifier) {
 					Macro::Name name = m_Identifier;
 
 					// skip to the good bit
@@ -224,8 +204,7 @@ namespace SCRambl
 								continue;
 							}
 							auto result = m_Lexer.ScanFor(TokenType::Identifier, m_CodePos, m_Token);
-							switch (result)
-							{
+							switch (result) {
 							case Lexer::Result::still_scanning:
 								continue;
 							case Lexer::Result::found_nothing:
@@ -233,10 +212,8 @@ namespace SCRambl
 							case Lexer::Result::found_token:
 								m_Identifier = m_Token.Range().Format();
 
-								if (auto macro = m_Macros.Get(m_Identifier))
-								{
-									if (macrosThatAreNotMacros.find(macro) == macrosThatAreNotMacros.end())
-									{
+								if (auto macro = m_Macros.Get(m_Identifier)) {
+									if (macrosThatAreNotMacros.find(macro) == macrosThatAreNotMacros.end()) {
 										macrosThatAreNotMacros.emplace(macro);
 										bool b = m_CodePos == start_pos;
 										m_CodePos = m_Script.GetCode().Erase(m_Token.Begin(), m_Token.End());
@@ -310,6 +287,46 @@ namespace SCRambl
 				else SendError(Error::dir_expected_file_name, m_Directive);
 				break;
 
+			case Directive::REGISTER_COMMAND:
+				if (Lex(
+					[this](const LexerToken& tok){ return tok == TokenType::Number && m_NumericScanner.Is<int>(); },
+					[this](const LexerToken& tok){ SendError(Error::dir_expected_command_id, m_Directive); }
+					)) {
+					unsigned long long opcode = m_NumericScanner.Get<long long>();
+
+					if (Lex(TokenType::Identifier, [this](const LexerToken& tok){
+						SendError(Error::dir_expected_identifier, m_Directive);
+					})) {
+						auto command = m_Commands.AddCommand(m_Identifier, opcode);
+						
+						if (Lex() == Lexer::Result::found_token) {
+							bool openParen = m_Token == TokenType::OpenParen;
+							if (openParen) {
+								if (!Lex(TokenType::Identifier, [this](const LexerToken& tok){ SendError(Error::dir_expected_identifier, m_Directive); }))
+									break;
+							}
+							else if (m_Token != TokenType::Identifier)
+								SendError(Error::dir_expected_identifier, m_Directive);
+
+							do {
+								auto str = m_Token.Range().Format();
+								bool isret = false;
+								if (str[0] == '=') {
+									isret = true;
+									str = str.substr(1);
+								}
+								if (auto type = GetType(str)) {
+									command->AddArg(type->Extend(), isret);
+								}
+								if (!Lexpect(TokenType::Separator)) break;
+							} while (Lex() == Lexer::Result::found_token);
+
+							if (openParen) Lexpect(TokenType::CloseParen);
+						}
+					}
+				}
+				break;
+
 			default:
 				//BREAK();		// invalid directive - should've alredy reported - now the preprocessor can continue
 				break;
@@ -318,9 +335,7 @@ namespace SCRambl
 			m_State = lexing;
 			return;
 		}
-
-		void Preprocessor::HandleComment()
-		{
+		void Preprocessor::HandleComment() {
 			// handle it with care by deleting the shit out of it
 			m_CodePos = m_Script.GetCode().Erase(m_Token.Begin(), m_Token.End());
 
@@ -329,42 +344,52 @@ namespace SCRambl
 
 			m_State = lexing;
 		}
+		void Preprocessor::LexerPhase() {
+			if (m_State == lexing) {
+				if (m_CodePos) {
+					if (m_CodePos->IsEOL()) {
+						if (!m_WasLastTokenEOL) {
+							AddToken<Tokens::Character::Info<Character>>(m_CodePos, Tokens::Type::Character, m_CodePos, Character::EOL);
+							m_WasLastTokenEOL = true;
+						}
+					}
+					else if (m_CodePos->IsDelimiter()) {
+						// only for "range" delimiting - these are independent from tokens using scanners (their contents are separate tokens)
+						bool open = true;
+						Delimiter type;
 
-		void Preprocessor::LexerPhase()
-		{
-			if (m_State == lexing)
-			{
-				if (m_CodePos && m_CodePos->IsEOL()) {
-					if (!m_WasLastTokenEOL)
-					{
-						AddToken<Tokens::Character::Info<Character>>(m_CodePos, Tokens::Type::Character, m_CodePos, Character::EOL);
-						m_WasLastTokenEOL = true;
+						switch (*m_CodePos) {
+						case '{':
+							OpenDelimiter(m_CodePos, Delimiter::Scope);
+							break;
+						case '}':
+							type = Delimiter::Scope;
+							CloseDelimiter(m_CodePos, Delimiter::Scope);
+
+							open = false;
+							break;
+						}
 					}
 				}
 
-				//while (m_CodePos && *m_CodePos != '#' && *m_CodePos != '/' && m_CodePos->GetType() != Symbol::)
-					//++m_CodePos;
 				while (m_CodePos && m_CodePos->IsIgnorable())
 					++m_CodePos;
 			}
 
 			// ya, we're done here...
-			if (!m_CodePos)
-			{
+			if (!m_CodePos) {
 				// (debug) output file
-				m_Script.OutputFile();
+				//m_Script.OutputFile();
 				m_State = finished;
 				m_Task(Event::Finish);
 				return;
 			}
 
 			// Hey, Lex!
-			switch (Lex())
-			{
+			switch (Lex()) {
 			case Lexer::Result::found_token:
 				// handle state-changing token types
-				switch (m_Token.GetType())
-				{
+				switch (m_Token.GetType()) {
 				case TokenType::Directive:
 					m_State = found_directive;
 					return;
@@ -383,13 +408,9 @@ namespace SCRambl
 				return;
 			}
 		}
-
-		bool Preprocessor::ExpressUnary(Operator::Type op, int & val)
-		{
-			switch (op)
-			{
+		bool Preprocessor::ExpressUnary(Operator::Type op, int & val) {
+			switch (op) {
 			default: return false;
-
 			case Operator::not:
 				val = !val;
 				break;
@@ -405,9 +426,7 @@ namespace SCRambl
 			}
 			return true;
 		}
-
-		int Preprocessor::ProcessExpression(bool paren)
-		{
+		int Preprocessor::ProcessExpression(bool paren) {
 			// ultimate expression result
 			int result = 0;
 			// last expression value
@@ -427,15 +446,14 @@ namespace SCRambl
 			Operator::Type op = Operator::max_operator;
 
 			// storage of chained (unary operations, operator code range)
-			std::stack<std::pair<Operator::Type,Script::Range>>	unary_operators;
+			std::stack<std::pair<Operator::Type, Scripts::Range>>	unary_operators;
 
 			// end of the line at the very beginning? that may be a problem...
 			if (m_CodePos->IsEOL()) {
 				SendError(Error::expected_expression);
 			}
 
-			while (!m_CodePos->IsEOL())
-			{
+			while (!m_CodePos->IsEOL()) {
 				// Lex
 				if (Lex() == Lexer::Result::found_nothing) {
 					// TODO: elaborate
@@ -444,8 +462,7 @@ namespace SCRambl
 				}
 
 				// Do stuff
-				switch (m_Token)
-				{
+				switch (m_Token) {
 				default:
 					// TODO: elaborate
 					SendError(Error::expected_expression);
@@ -454,8 +471,7 @@ namespace SCRambl
 				case TokenType::OpenParen:
 					// we may be ignoring parentheses to prevent trying to retrieve a macro as a value (for 'defined(MACRO)')
 					// yes, we hate that stupid wannabe operator/keyword/function
-					if (!ignore_parentheses)
-					{
+					if (!ignore_parentheses) {
 						val = ProcessExpression(true);
 						got_val = true;
 					}
@@ -467,8 +483,7 @@ namespace SCRambl
 						SendError(Error::expr_unmatched_closing_parenthesis, std::string(")"));
 					}
 					paren = false;
-					if (ignore_parentheses)
-					{
+					if (ignore_parentheses) {
 						ignore_parentheses = false;
 						got_val = true;
 						break;
@@ -524,8 +539,7 @@ namespace SCRambl
 					}
 
 					last_op = op;
-					switch (op = m_OperatorScanner.GetOperator())
-					{
+					switch (op = m_OperatorScanner.GetOperator()) {
 						// Arithmetic
 					case Operator::add:			// +
 						// if not, do the binary operation instead
@@ -662,8 +676,7 @@ namespace SCRambl
 				// if we've got a value, we've probably got an operation to do!
 				if (got_val) {
 					// handle unary / 1-ary operations
-					for (; !unary_operators.empty(); unary_operators.pop())
-					{
+					for (; !unary_operators.empty(); unary_operators.pop()) {
 						bool b = ExpressUnary(unary_operators.top().first, val);
 						if (!b) {
 							SendError(Error::invalid_unary_operator, unary_operators.top().first, unary_operators.top().second);
@@ -754,31 +767,61 @@ namespace SCRambl
 			
 			return result;
 		}
-
-		Lexer::Result Preprocessor::Lex()
-		{
+		bool Preprocessor::Lexpect(TokenType type) {
+			if (Lex() == Lexer::found_token) {
+				if (m_Token == type) return true;
+				switch (type) {
+				case TokenType::Eol: SendError(Error::expected_eol);
+					break;
+				case TokenType::Identifier: SendError(Error::expected_identifier);
+					break;
+				case TokenType::String: SendError(Error::expected_string);
+					break;
+				case TokenType::Label: SendError(Error::expected_label);
+					break;
+				case TokenType::Number: SendError(Error::expected_number);
+					break;
+				case TokenType::Operator: SendError(Error::expected_operator);
+					break;
+				case TokenType::CloseParen: SendError(Error::expected_closing_paren);
+					break;
+				case TokenType::OpenParen: SendError(Error::expected_opening_paren);
+					break;
+				case TokenType::Separator: SendError(Error::expected_separator);
+					break;
+				}
+			}
+			return false;
+		}
+		Lexer::Result Preprocessor::Lex() {
 			Lexer::Result result;
 
 			// it is a crime to consider any of these a macro, under punishment of death by infinite recursion (a slow, painful way to go)
 			std::unordered_set<std::string> identifiersThatAreNotMacros;
 
-			while (true)
-			{
+			while (true) {
 				while (m_CodePos && m_CodePos->IsIgnorable())
 					++m_CodePos;
 
 				// If we're preprocessing a directive, directly return further directions
-				if (m_State == found_directive && m_CodePos->GetType() == Symbol::punctuator)
-				{
-					switch (char c = *m_CodePos)
-					{
-					case '(':
-					case ')':
-						m_Token(c == '(' ? TokenType::OpenParen : TokenType::CloseParen, m_CodePos, m_CodePos, m_CodePos + 1);
+				if (m_State == found_directive) {
+					if (m_CodePos->GetType() == Symbol::punctuator) {
+						switch (char c = *m_CodePos)
+						{
+						case '(':
+						case ')':
+							m_Token(c == '(' ? TokenType::OpenParen : TokenType::CloseParen, m_CodePos, m_CodePos, m_CodePos + 1);
+							m_CodePos = m_Token.End();
+							return Lexer::Result::found_token;
+						default:
+							break;
+						}
+					}
+					else if (m_CodePos->GetType() == Symbol::separator) {
+						m_Token(TokenType::Separator, m_CodePos, m_CodePos, m_CodePos + 1);
 						m_CodePos = m_Token.End();
 						return Lexer::Result::found_token;
-					default:
-						break;
+						//m_Token()
 					}
 				}
 				
@@ -884,7 +927,7 @@ namespace SCRambl
 						{
 							// ensure any report is at the beginning of the directive, not the end where we currently are
 							//m_Information.SetScriptPos(m_Token.Begin());
-							SendError(Error::invalid_directive, Script::Range(m_Token.Inside(), m_Token.End()));
+							SendError(Error::invalid_directive, Scripts::Range(m_Token.Inside(), m_Token.End()));
 							//m_Information.SetScriptPos(m_CodePos);
 
 							// to recover, skip to the eol
@@ -945,11 +988,8 @@ namespace SCRambl
 
 			return result;
 		}
-
-		bool Preprocessor::LexNumber()
-		{
-			if (Lex() == Lexer::Result::found_token)
-			{
+		bool Preprocessor::LexNumber() {
+			if (Lex() == Lexer::Result::found_token) {
 				if (m_Token == TokenType::Number)
 					return true;
 			}
@@ -957,15 +997,13 @@ namespace SCRambl
 		}
 
 		// Printf-styled error reporting
-		void Preprocessor::SendError(Error type)
-		{
+		void Preprocessor::SendError(Error type) {
 			// send
 			std::vector<std::string> params;
 			m_Task(Event::Error, Basic::Error(type), params);
 		}
 		template<typename First, typename... Args>
-		void Preprocessor::SendError(Error type, First&& first, Args&&... args)
-		{
+		void Preprocessor::SendError(Error type, First&& first, Args&&... args) {
 			// storage for error parameters
 			std::vector<std::string> params;
 			// format the error parameters to the vector
@@ -977,12 +1015,9 @@ namespace SCRambl
 		// Scanners - BORING! ;)
 
 		// Scan nothing (as useless as it sounds)
-		bool WhitespaceScanner::Scan(Lexer::State & state, Script::Position & code)
-		{
-			if (state == Lexer::State::before)
-			{
-				if (code->GetType() == Symbol::whitespace)
-				{
+		bool WhitespaceScanner::Scan(Lexer::State & state, Scripts::Position & code) {
+			if (state == Lexer::State::before) {
+				if (code->GetType() == Symbol::whitespace) {
 					// remove excess whitespace (?)
 					auto next = code;
 					++next;
@@ -994,14 +1029,11 @@ namespace SCRambl
 			return false;
 		}
 		// Scan identifiers
-		bool IdentifierScanner::Scan(Lexer::State & state, Script::Position & pos)
-		{
-			switch (state)
-			{
+		bool IdentifierScanner::Scan(Lexer::State & state, Scripts::Position & pos) {
+			switch (state) {
 				// return true if the symbol can only be an identifier
 			case Lexer::State::before:
-				if (pos->GetType() == Symbol::identifier)
-				{
+				if (pos->GetType() == Symbol::identifier) {
 					++pos;
 					state = Lexer::State::inside;
 					return true;
@@ -1017,24 +1049,18 @@ namespace SCRambl
 
 				// make sure that a separator followed the identifier chars - else throw a tantrum
 			case Lexer::State::after:
-				if (!pos || pos->IsSeparating())
-				{
-					return true;
-				}
+				if (!pos || pos->IsSeparating()) return true;
 				// throw()
 				return false;
 			}
 			return false;
 		}
 		// Scan labels
-		bool LabelScanner::Scan(Lexer::State & state, Script::Position & pos)
-		{
-			switch (state)
-			{
+		bool LabelScanner::Scan(Lexer::State & state, Scripts::Position & pos) {
+			switch (state) {
 				// return true if the symbol can only be an identifier
 			case Lexer::State::before:
-				if (pos->GetType() == Symbol::identifier)
-				{
+				if (pos->GetType() == Symbol::identifier) {
 					++pos;
 					state = Lexer::State::inside;
 					return true;
@@ -1050,8 +1076,7 @@ namespace SCRambl
 
 				// make sure that a : followed the identifier chars
 			case Lexer::State::after:
-				if (pos && pos->GetGrapheme() == Grapheme::colon)
-				{
+				if (pos && pos->GetGrapheme() == Grapheme::colon) {
 					++pos;
 					return true;
 				}
@@ -1060,10 +1085,8 @@ namespace SCRambl
 			return false;
 		}
 		// Scan directives
-		bool DirectiveScanner::Scan(Lexer::State & state, Script::Position & pos)
-		{
-			switch (state)
-			{
+		bool DirectiveScanner::Scan(Lexer::State & state, Scripts::Position & pos) {
+			switch (state) {
 				// check prefix
 			case Lexer::State::before:
 				if (pos->GetGrapheme() == Grapheme::hash)		// #
@@ -1090,13 +1113,10 @@ namespace SCRambl
 			return false;
 		}
 		// Scan string literals
-		bool StringLiteralScanner::Scan(Lexer::State & state, Script::Position & pos)
-		{
-			switch (state)
-			{
+		bool StringLiteralScanner::Scan(Lexer::State & state, Scripts::Position & pos) {
+			switch (state) {
 			case Lexer::State::before:
-				if (pos == '"')
-				{
+				if (pos == '"') {
 					++pos;
 					state = Lexer::State::inside;
 					return true;
@@ -1104,20 +1124,16 @@ namespace SCRambl
 				return false;
 
 			case Lexer::State::inside:
-				while (pos)
-				{
+				while (pos) {
 					// escaped? just skip it :)
-					if (pos == '\\')
-					{
+					if (pos == '\\') {
 						if (++pos) ++pos;
 						continue;
 					}
-					else if (pos->GetType() == Symbol::eol)
-					{
+					else if (pos->GetType() == Symbol::eol) {
 						throw(Error::unterminated);
 					}
-					else if (pos == '"')
-					{
+					else if (pos == '"') {
 						*pos = '\0';
 						++pos;
 						state = Lexer::State::after;
@@ -1133,14 +1149,12 @@ namespace SCRambl
 			return false;
 		}
 		// Scan line comments
-		bool CommentScanner::Scan(Lexer::State & state, Script::Position & pos)
-		{
+		bool CommentScanner::Scan(Lexer::State & state, Scripts::Position & pos) {
 			switch (state)
 			{
 				// return number of matched prefix chars
 			case Lexer::State::before:
-				if (pos == '/' && ++pos == '/')
-				{
+				if (pos == '/' && ++pos == '/') {
 					++pos;
 					state = Lexer::State::inside;
 					return true;
@@ -1160,16 +1174,13 @@ namespace SCRambl
 			return false;
 		}
 		// Scan block comments
-		bool BlockCommentScanner::Scan(Lexer::State & state, Script::Position & pos)
-		{
+		bool BlockCommentScanner::Scan(Lexer::State & state, Scripts::Position & pos) {
 			char last_char = '\0';
-			switch (state)
-			{
+			switch (state) {
 				// check for opening of block comment sequence
 			case Lexer::State::before:
 				// check for opening
-				if (pos == '/' && ++pos == '*')
-				{
+				if (pos == '/' && ++pos == '*') {
 					++pos;
 					++depth;
 					state = Lexer::State::inside;
@@ -1180,22 +1191,17 @@ namespace SCRambl
 				// check for nested comments and closing comment
 			case Lexer::State::inside:
 				do {
-					if (pos->GetType() == Symbol::punctuator)
-					{
-						if (pos == '/')
-						{
-							if (last_char == '*')
-							{
+					if (pos->GetType() == Symbol::punctuator) {
+						if (pos == '/') {
+							if (last_char == '*') {
 								++pos;
-								if (!--depth)
-								{
+								if (!--depth) {
 									state = Lexer::State::after;
 									return true;
 								}
 							}
 						}
-						else if (last_char == '/' && pos == '*')
-						{
+						else if (last_char == '/' && pos == '*') {
 							++depth;
 						}
 
@@ -1210,7 +1216,6 @@ namespace SCRambl
 			case Lexer::State::after:
 				return true;
 			}
-
 			return false;
 		}
 	}

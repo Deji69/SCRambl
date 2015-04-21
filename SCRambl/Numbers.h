@@ -67,7 +67,7 @@ namespace SCRambl
 			}
 
 			template<typename T>
-			inline T GetValue() const	{
+			inline T GetValue() const {
 				switch (m_Type) {
 				case Long: return (T)m_Value.tLong;
 				case Int: return (T)m_Value.tInt;
@@ -91,7 +91,6 @@ namespace SCRambl
 			inline operator unsigned short() const		{ return GetValue<unsigned short>(); }
 			inline operator unsigned char() const		{ return GetValue<unsigned char>(); }
 		};
-
 		class FloatType
 		{
 		public:
@@ -116,7 +115,7 @@ namespace SCRambl
 				return m_Value;
 			}
 
-			inline operator float()	const			{ return GetValue<float>(); }
+			inline operator float()	const { return GetValue<float>(); }
 		};
 
 		enum class ConvertResult {
@@ -240,10 +239,8 @@ namespace SCRambl
 			}
 
 		public:
-			bool Scan(Lexer::State & state, Script::Position & pos) override
-			{
-				switch (state)
-				{
+			bool Scan(Lexer::State & state, Scripts::Position & pos) override {
+				switch (state) {
 				case Lexer::State::before:
 					m_Hex = false;
 					m_Float = false;
@@ -271,8 +268,7 @@ namespace SCRambl
 					unsigned long n = 0;
 					unsigned long d = 1;		// number of decimal places
 					unsigned long f = 0;		// the RHS of the decimal point
-					do
-					{
+					do {
 						// make numbers, not war?
 						if (!m_Float) {
 							if (pos->GetType() == Symbol::number)
@@ -289,8 +285,7 @@ namespace SCRambl
 								m_Float = true;
 							}
 							else break;
-						}
-						else {
+						} else {
 							if (pos->GetType() == Symbol::number) {
 								f = f * 10 + *pos - '0';
 								d *= 10;
@@ -298,14 +293,11 @@ namespace SCRambl
 							else break;
 						}
 					} while (++pos);
-					if (m_Float) {
-						m_FloatVal = n + ((float)f / (float)d);
-					}
+					if (m_Float) m_FloatVal = n + ((float)f / (float)d);
 					else m_IntVal = n;
 					state = Lexer::State::after;
 					return true;
 				}
-
 				case Lexer::State::after:
 					return true;
 				}

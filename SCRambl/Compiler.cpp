@@ -22,7 +22,7 @@ namespace SCRambl
 			std::string test = "TEST";
 			Output(test, test.length());
 
-			m_Script.OutputFile();
+			//m_Script.OutputFile();
 		}
 		void Compiler::Reset()
 		{

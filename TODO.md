@@ -16,6 +16,7 @@ est. 40% Complete
 - [ ] Parser Tasks
 - [ ] Compiler Tasks
 - [ ] Linker Tasks
+- [ ] Build Files
 
 Completed: 6 / 9
 

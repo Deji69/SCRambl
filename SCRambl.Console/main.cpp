@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
 	// Load configuration
 	std::cout << "Loading configuration...\n";
 	std::cout << "Loading build configuration...\n";
-	engine.LoadConfigFile("config\\build.xml");
+	engine.LoadConfigFile("build\\build.xml");
 	engine.SetBuildConfig(CmdParser.GetFlagOpts("build").front());
 	
 	engine.LoadDefinition("constants");
@@ -126,7 +126,53 @@ int main(int argc, char* argv[])
 
 	// Initialise script
 	SCRambl::Script script;
+	for (auto& path : CmdParser.GetOpts()) {
+		script.OpenFile(path);
+	}
 
+	std::cout << "Loaded. " << script.GetCode().NumLines() << " lines, " << script.GetCode().NumSymbols() << " symbols.\n";
+
+	/**************** Preprocessor Stuff ****************/
+	// Add the preprocessor task to preprocess the script - give it our 'preprocessor' ID so we can identify it later
+	auto preprocessor_task = engine.AddTask<SCRambl::Preprocessor::Task>(preprocessor, std::ref(script));
+	auto parser_task = engine.AddTask<SCRambl::Parser::Task>(parser, std::ref(script));
+	
+	using TaskSys = SCRambl::TaskSystem::Task<Task>;
+	float fNumLines = (float)script.GetCode().NumLines();
+	while (engine.Run().GetState() != TaskSys::finished)
+	{
+		switch (engine.GetCurrentTaskID()) {
+		case preprocessor: {
+			auto& task = engine.GetCurrentTask<SCRambl::Preprocessor::Task>();
+			if (task.IsRunning()) {
+				if (auto pos = task.Info().GetScriptPos())
+				{
+					auto pc = std::floor(((float)pos.GetLine() / fNumLines) * 100.0);
+					std::cout << "Preprocessing..." << pc << "%" << "\r";
+				}
+			}
+			break;
+		}
+		case parser: {
+			auto& task = engine.GetCurrentTask<SCRambl::Parser::Task>();
+			if (task.IsRunning()) {
+				auto pc = std::floor(((float)task.GetProgressCurrent() / (float)task.GetProgressTotal()) * 100.0);
+				std::cout << "Parsing..." << pc << "%" << "\r";
+			}
+			break;
+		}
+		case compiler: {
+			auto& task = engine.GetCurrentTask<SCRambl::Compiler::Task>();
+			if (task.IsRunning()) {
+				auto pc = std::floor(((float)task.GetProgressCurrent() / (float)task.GetProgressTotal()) * 100.0);
+				std::cout << "Compiling..." << pc << "%" << "\r";
+			}
+			break;
+		}
+		}
+	}
+	return 0;
+#if 0
 	// Load a script from each file and feed it into the SCRambl engine
 	auto files = CmdParser.GetOpts();
 	for (auto path : files)
@@ -349,6 +395,7 @@ int main(int argc, char* argv[])
 	}
 
 	return 0;
+#endif
 }
 
 void ProcessCommand(const std::string & cmd)

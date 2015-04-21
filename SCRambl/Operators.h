@@ -177,14 +177,14 @@ namespace SCRambl
 			typedef typename Operator::Table<T, max>::Cell OperatorCell;
 			Operator::Table<T, max>		&	m_Table;
 			const OperatorCell			*	m_Cell;
-			Script::Position				m_LastOperatorPos;
+			Scripts::Position				m_LastOperatorPos;
 			const OperatorCell			*	m_LastOperatorCell;
 
 		public:
 			Scanner(Operator::Table<T, max> & table) : m_Table(table)
 			{}
 
-			bool Scan(Lexer::State & state, Script::Position & pos)
+			bool Scan(Lexer::State & state, Scripts::Position & pos)
 			{
 				switch (state)
 				{

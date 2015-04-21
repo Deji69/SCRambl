@@ -53,6 +53,7 @@ class Processor : public QObject, Configurable
 	SCRambl::Engine					m_SCRamblEngine;
 	SCRambl::Script				*	m_Script;
 	RunningProcessor			*	m_Running;
+	SCRambl::Script::TokenMap::Shared			m_TokenMap;
 	std::shared_ptr<SCRambl::Preprocessor::Task>		m_Preprocessor;
 	std::shared_ptr<SCRambl::Parser::Task>				m_Parser;
 
@@ -133,7 +134,8 @@ public:
 	Processor();
 	Processor(const Processor&) = delete;
 	~Processor();
-
+	
+	SCRambl::Script::TokenMap::Shared getTokenMap();
 	KeywordType getKeywordType(const QString& kw);
 
 	void setCode(const void * data)

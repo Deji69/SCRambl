@@ -5,7 +5,6 @@
 //	 or copy at http://opensource.org/licenses/MIT)
 /**********************************************************/
 #pragma once
-
 #include <string>
 #include <vector>
 #include <assert.h>
@@ -156,6 +155,7 @@ namespace SCRambl
 		inline bool HasGrapheme() const			{ return m_Grapheme != Grapheme::max_type; }
 		inline bool IsEOL() const				{ return m_Type == eol; }
 		inline bool IsIgnorable() const			{ return m_Type == whitespace; }
+		inline bool IsDelimiter() const			{ return m_Type == delimiter; }
 		inline bool IsSeparating() const {
 			switch (m_Type)
 			{

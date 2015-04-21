@@ -19,9 +19,7 @@ namespace SCRambl
 	// Use SCR Command's and SCR CommandArg's with our own TypeExt's
 	typedef SCR::Command<SCR::CommandArg<Types::Type>> Command;
 
-	/*\
-	 * Commands - SCR command manager
-	\*/
+	/*\ Commands - SCR command manager \*/
 	class Commands
 	{
 	public:
@@ -33,7 +31,7 @@ namespace SCRambl
 		using Vector = std::vector < Command::Shared >;
 
 	private:
-		Engine							&	m_Engine;
+		//Engine							&	m_Engine;
 		std::shared_ptr<Configuration>		m_Config;
 		bool								m_UseCaseConversion;
 		Casing								m_SourceCasing = Casing::none;
@@ -41,6 +39,7 @@ namespace SCRambl
 		Map									m_Map;
 
 	public:
+		Commands();
 		Commands(Engine & engine);
 
 		// Get casing by name - or rather, the first character - whatever

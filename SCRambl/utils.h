@@ -9,6 +9,8 @@
 #include <assert.h>
 #include <algorithm>
 #include <functional>
+#include <sys/types.h>
+#include <sys/stat.h>
 #ifdef _WIN32
 	#include <Windows.h>
 #endif

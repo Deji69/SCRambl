@@ -12,7 +12,7 @@
 #include "utils.h"
 #include "Symbols.h"
 #include "Tokens.h"
-#include "Scripts.h"
+#include "Scripts-code.h"
 
 namespace SCRambl
 {
@@ -30,7 +30,7 @@ namespace SCRambl
 		class Scanner
 		{
 		public:
-			virtual bool Scan(class State & state, Script::Position & pos) = 0;
+			virtual bool Scan(class State & state, Scripts::Position & pos) = 0;
 		};
 
 		/*\
@@ -43,9 +43,9 @@ namespace SCRambl
 			friend class Lexer;
 
 			TokenIDType						m_Type;
-			Script::Position				m_Start;
-			Script::Position				m_Middle;
-			Script::Position				m_End;
+			Scripts::Position				m_Start;
+			Scripts::Position				m_Middle;
+			Scripts::Position				m_End;
 
 		public:
 			Token()
@@ -54,18 +54,18 @@ namespace SCRambl
 			inline TokenIDType				GetType() const			{ return m_Type; }
 
 			// get the position of the token before any prefix
-			inline Script::Position			Begin() const			{ return m_Start; }
+			inline Scripts::Position			Begin() const			{ return m_Start; }
 			// get the position of the token after any prefix
-			inline Script::Position			Inside() const			{ return m_Middle; }
+			inline Scripts::Position			Inside() const			{ return m_Middle; }
 			// get the position of the token at the very end
-			inline Script::Position			End() const				{ return m_End; }
+			inline Scripts::Position			End() const				{ return m_End; }
 			// get the entire range
-			inline Script::Range			Range() const			{ return{ m_Start, m_End }; }
+			inline Scripts::Range			Range() const			{ return{ m_Start, m_End }; }
 
 			inline operator TokenIDType &()							{ return m_Type; }
 			inline operator TokenIDType () const					{ return m_Type; }
 
-			inline void operator ()(TokenIDType type, Script::Position start, Script::Position mid, Script::Position end) {
+			inline void operator ()(TokenIDType type, Scripts::Position start, Scripts::Position mid, Scripts::Position end) {
 				m_Type = type;
 				m_Start = start;
 				m_Middle = mid;
@@ -89,28 +89,28 @@ namespace SCRambl
 			state_t							m_State = before;
 
 			// current code symbol position
-			Script::Position				m_CodeCur;
+			Scripts::Position				m_CodeCur;
 
 			// *before* code symbol position
-			Script::Position				m_CodeBefore;
+			Scripts::Position				m_CodeBefore;
 
 			// *inside* code symbol position
-			Script::Position				m_CodeInside;
+			Scripts::Position				m_CodeInside;
 
 			// *after* code symbol position
-			Script::Position				m_CodeAfter;
+			Scripts::Position				m_CodeAfter;
 
-			explicit State(Script::Position pos) :
+			explicit State(Scripts::Position pos) :
 				m_CodeCur(pos),
 				m_CodeBefore(pos),
 				m_CodeInside(pos),
 				m_CodeAfter(pos)
 			{}
 
-			inline Script::Position & Current()				{ return m_CodeCur; }
-			inline Script::Position & Before()				{ return m_CodeBefore; }
-			inline Script::Position & Inside()				{ return m_CodeInside; }
-			inline Script::Position & After()				{ return m_CodeAfter; }
+			inline Scripts::Position & Current()				{ return m_CodeCur; }
+			inline Scripts::Position & Before()				{ return m_CodeBefore; }
+			inline Scripts::Position & Inside()				{ return m_CodeInside; }
+			inline Scripts::Position & After()				{ return m_CodeAfter; }
 
 		public:
 			inline void ChangeState(state_t val)
@@ -169,9 +169,9 @@ namespace SCRambl
 			}
 
 			/*\
-			 - Give it the current Script::Position and a Token<> to write to, let magic happen
+			 - Give it the current Scripts::Position and a Token<> to write to, let magic happen
 			\*/
-			Result Scan(const Script::Position & pos, Token<TokenIDType> & token)
+			Result Scan(const Scripts::Position & pos, Token<TokenIDType> & token)
 			{
 				ASSERT(!m_Scanners.empty());		// you need to add some scanners first!
 
@@ -263,7 +263,7 @@ namespace SCRambl
 			 - ScanFor something specific - will initiate similarly to 'Scan' except for a specific token type
 			 - After the first successful call, further calls made to this simply redirect to 'Scan'
 			\*/
-			Result ScanFor(TokenIDType type, const Script::Position & pos, Token<TokenIDType> & token)
+			Result ScanFor(TokenIDType type, const Scripts::Position & pos, Token<TokenIDType> & token)
 			{
 				ASSERT(!m_Scanners.empty());			// better add a scanner
 

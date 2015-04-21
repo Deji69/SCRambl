@@ -69,6 +69,7 @@ namespace SCRambl
 		Whitespace,
 		OpenParen,
 		CloseParen,
+		Separator,
 		BlockComment,
 		Comment,
 		Directive,
@@ -77,6 +78,7 @@ namespace SCRambl
 		Number,
 		Label,
 		Operator,
+		Delimiter,
 		String,
 
 		Invalid,

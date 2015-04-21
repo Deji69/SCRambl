@@ -5,6 +5,7 @@
 //	 or copy at http://opensource.org/licenses/MIT)
 /**********************************************************/
 #pragma once
+#include "TokenInfo.h"
 
 namespace SCRambl
 {
@@ -19,11 +20,11 @@ namespace SCRambl
 		enum class Type : char {
 			None, Directive,
 			Command, CommandDecl, CommandCall, CommandOverload,
-			Identifier, Label, LabelRef, Number, Operator, String, Character
+			Identifier, Label, LabelRef, Number, Operator, String, Character, Delimiter
 		};
 
 		/*\
-		* Tokens::Symbol - Base for parsed token data
+		 * Tokens::Symbol - Base for parsed token data
 		\*/
 		class Symbol
 		{

@@ -37,10 +37,10 @@ namespace SCRambl
 					case FileType::compiled:
 					case FileType::merged:
 					case FileType::parsed:
-						script.LoadFile(path);
+						//script.LoadFile(path);
 						break;
 					case FileType::source:
-						script.LoadFile(path);
+						//script.LoadFile(path);
 						break;
 					default: return false;
 					}
@@ -90,9 +90,33 @@ namespace SCRambl
 			auto it = m_FileTypes.find(GetFilePathExtension(path));
 			return it != m_FileTypes.end() ? it->second : nullptr;
 		}
-		bool BuildConfig::AddIncludePath(std::string path) {
+		bool BuildConfig::AddIncludePath(const std::string& path) {
 			if (!path.empty()) {
 				m_IncludePaths.emplace_back(path);
+				return true;
+			}
+			return false;
+		}
+		bool BuildConfig::AddDefaultLoad(const std::string& path) {
+			if (!path.empty()) {
+				m_LoadDefaults.emplace_back(GetDefinitionPath() + path);
+				return true;
+			}
+			return false;
+		}
+		bool BuildConfig::AddDefaultLoadLocally(const std::string& path) {
+			if (!path.empty()) {
+				m_LoadDefaults.emplace_back(path);
+				return true;
+			}
+			return false;
+		}
+		bool BuildConfig::AddDefinitionPath(const std::string& path) {
+			if (!path.empty()) {
+				if (m_UsedDefinitionPaths.find(path) != m_UsedDefinitionPaths.end()) {
+					m_DefinitionPaths.emplace_back(path);
+					m_UsedDefinitionPaths.emplace(path);
+				}
 				return true;
 			}
 			return false;
@@ -104,7 +128,7 @@ namespace SCRambl
 			}
 			return false;
 		}
-		bool BuildConfig::SetLibraryPath(std::string path) {
+		bool BuildConfig::SetLibraryPath(const std::string& path) {
 			if (!path.empty()) {
 				m_LibraryPath = path;
 				return true;
@@ -126,9 +150,27 @@ namespace SCRambl
 		{ }
 		BuildConfig::BuildConfig(std::string id, std::string name, Configuration::Config& config) : m_ID(id), m_Name(name)
 		{
-			config.AddClass("DefinitionPath", [](const pugi::xml_node vec, std::shared_ptr<void> & obj){
+			auto& defpath = config.AddClass("DefinitionPath", [](const pugi::xml_node vec, std::shared_ptr<void> & obj){
 				auto ptr = std::static_pointer_cast<BuildConfig>(obj);
-				ptr->SetDefinitionPath(vec.text().as_string());
+				if (auto attr = vec.attribute("Path")) {
+					if (ptr->AddDefinitionPath(attr.as_string()))
+						ptr->SetDefinitionPath(attr.as_string());
+				}
+				ptr->SetDefinitionPath("");
+			});
+			defpath.AddClass("Definition", [](const pugi::xml_node vec, std::shared_ptr<void>& obj){
+				auto ptr = std::static_pointer_cast<BuildConfig>(obj);
+				std::string path = vec.text().as_string();
+				if (!path.empty()) {
+					ptr->AddDefaultLoad(path);
+				}
+			});
+			config.AddClass("Definition", [](const pugi::xml_node vec, std::shared_ptr<void>& obj){
+				auto ptr = std::static_pointer_cast<BuildConfig>(obj);
+				std::string path = vec.text().as_string();
+				if (!path.empty()) {
+					ptr->AddDefaultLoadLocally(path);
+				}
 			});
 			config.AddClass("LibraryPath", [](const pugi::xml_node vec, std::shared_ptr<void> & obj){
 				auto ptr = std::static_pointer_cast<BuildConfig>(obj);
@@ -141,7 +183,7 @@ namespace SCRambl
 					ptr->AddIncludePath(vec.text().as_string());
 				}
 			});
-			config.AddClass("FileType", [](const pugi::xml_node vec, std::shared_ptr<void> & obj){
+			/*config.AddClass("FileType", [](const pugi::xml_node vec, std::shared_ptr<void> & obj){
 				auto ptr = std::static_pointer_cast<BuildConfig>(obj);
 				auto attr = vec.attribute("Name");
 				if (!attr.empty()) {
@@ -163,11 +205,11 @@ namespace SCRambl
 				}
 
 				obj = nullptr;
-			});
+			});*/
 		}
 		
 		Builder::Builder(Engine& engine) : m_Config(engine.AddConfig("BuildConfig")),
-			m_ConfigurationConfig(m_Config->AddClass("Configuration", [this](const pugi::xml_node vec, std::shared_ptr<void> & obj){
+			m_ConfigurationConfig(m_Config->AddClass("Build", [this](const pugi::xml_node vec, std::shared_ptr<void> & obj){
 				auto attr = vec.attribute("ID");
 				if (!attr.empty()) {
 					std::string id = attr.as_string();
@@ -180,7 +222,6 @@ namespace SCRambl
 					}
 				}
 			}))
-		{
-		}
+		{ }
 	}
 }

@@ -24,7 +24,9 @@ namespace SCRambl
 		private:
 			Type				m_Type;
 			std::string			m_Message;
-			Script::Position	m_Where;
+			
+			
+			Position	m_Where;
 
 		protected:
 			Report(Type type, std::string msg) : m_Type(type), m_Message(msg)

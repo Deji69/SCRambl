@@ -84,12 +84,15 @@
     <ClInclude Include="Commands.h" />
     <ClInclude Include="Compiler.h" />
     <ClInclude Include="Constants.h" />
+    <ClInclude Include="Delimiters.h" />
     <ClInclude Include="Labels.h" />
     <ClInclude Include="Scope.h" />
     <ClInclude Include="SCR.h" />
+    <ClInclude Include="Scripts-code.h" />
     <ClInclude Include="SCR\Commands.h" />
     <ClInclude Include="SCR\Constants.h" />
     <ClInclude Include="SCR\Types.h" />
+    <ClInclude Include="SCR\Variables.h" />
     <ClInclude Include="Standard.h" />
     <ClInclude Include="Formatter.h" />
     <ClInclude Include="Numbers.h" />
@@ -128,12 +131,14 @@
     <ClInclude Include="utils\MurmurHash3.h" />
     <ClInclude Include="utils\utf8.h" />
     <ClInclude Include="utils\xml.h" />
+    <ClInclude Include="Variables.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Builder.cpp" />
     <ClCompile Include="Commands.cpp" />
     <ClCompile Include="Compiler.cpp" />
     <ClCompile Include="Constants.cpp" />
+    <ClCompile Include="Delimiters.cpp" />
     <ClCompile Include="Directives.cpp" />
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="Environment.cpp" />

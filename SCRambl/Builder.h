@@ -55,14 +55,33 @@ namespace SCRambl
 			std::string					m_Extension;
 		};
 
+		class BuildDirectory
+		{
+			std::string					m_DirectoryPath;
+
+		public:
+			BuildDirectory() = default;
+			BuildDirectory(std::string path) : m_DirectoryPath(path)
+			{ }
+
+			inline void SetDirectory(const std::string& path)				{ m_DirectoryPath; }
+			inline const std::string& GetDirectory() const					{ return m_DirectoryPath; }
+
+			inline operator const std::string&() const						{ return m_DirectoryPath; }
+			inline operator std::string&()									{ return m_DirectoryPath; }
+		};
+
 		class BuildConfig
 		{
-			std::string					m_ID;
-			std::string					m_Name;
+			std::string	m_ID;
+			std::string	m_Name;
 
-			std::string					m_DefinitionPath;
-			std::string					m_LibraryPath;
-			std::vector<std::string>	m_IncludePaths;
+			std::string m_DefinitionPath;
+			std::vector<BuildDirectory> m_DefinitionPaths;
+			std::set<std::string> m_UsedDefinitionPaths;
+			std::string	m_LibraryPath;
+			std::vector<std::string> m_IncludePaths;
+			std::vector<std::string> m_LoadDefaults;
 
 			std::unordered_map<std::string, std::shared_ptr<FileType>> m_FileTypes;
 
@@ -75,23 +94,28 @@ namespace SCRambl
 			std::shared_ptr<FileType> AddFileType(FileType::Type, std::string, std::string);
 			std::shared_ptr<FileType> GetFileType(const std::string&);
 			bool SetDefinitionPath(std::string);
-			bool SetLibraryPath(std::string);
-			bool AddIncludePath(std::string);
+			bool SetLibraryPath(const std::string&);
+			bool AddDefinitionPath(const std::string&);
+			bool AddIncludePath(const std::string&);
+			bool AddDefaultLoad(const std::string &);
+			bool AddDefaultLoadLocally(const std::string &);
 			void OutputFile(const std::string&) const;
 
 			const std::string & GetDefinitionPath() const;
 			const std::string & GetLibraryPath() const;
 
-			inline const std::string & GetID() const			{ return m_ID; }
-			inline const std::string & GetName() const			{ return m_Name; }
+			inline size_t GetNumDefinitionPaths() const						{ return m_DefinitionPaths.size(); }
+			inline const std::string & GetDefinitionPath(size_t i) const	{ return m_DefinitionPaths[i]; }
+			inline const std::string & GetID() const						{ return m_ID; }
+			inline const std::string & GetName() const						{ return m_Name; }
 		};
 
 		class Builder : public TaskSystem::Task < BuildEvent >
 		{
-			Configuration::Shared			m_Config;
-			Configuration::Config&			m_ConfigurationConfig;
-			std::unordered_map<std::string, std::shared_ptr<BuildConfig>>		m_BuildConfigurations;
-			std::shared_ptr<BuildConfig>	m_BuildConfig;
+			Configuration::Shared m_Config;
+			Configuration::Config& m_ConfigurationConfig;
+			std::unordered_map<std::string, std::shared_ptr<BuildConfig>> m_BuildConfigurations;
+			std::shared_ptr<BuildConfig> m_BuildConfig;
 
 		public:
 			enum State {

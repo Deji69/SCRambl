@@ -17,13 +17,12 @@ namespace SCRambl
 	class StringScanner : public Lexer::Scanner
 	{
 	public:
-		bool Scan(Lexer::State & state, Script::Position & pos) override
+		bool Scan(Lexer::State & state, Scripts::Position & pos) override
 		{
 			switch (state)
 			{
 			case Lexer::State::before:
-				if (*pos == '"')
-				{
+				if (*pos == '"') {
 					++pos;
 					state = Lexer::State::inside;
 					return true;

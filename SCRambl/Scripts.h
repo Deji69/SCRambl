@@ -11,466 +11,157 @@
 #include <assert.h>
 #include <unordered_map>
 #include "utils.h"
+#include "Scripts-code.h"
 //#include "FileSystem.h"
 #include "Tokens.h"
 #include "Symbols.h"
 #include "TokenInfo.h"
 #include "Labels.h"
+#include "Types.h"
+#include "Variables.h"
 
 namespace SCRambl
 {
-	//typedef std::list<class Script::Line> CodeList;
+	//typedef std::list<class Scripts::Line> CodeList;
 	//using TokenSymbol = Tokens::Symbol;
-	typedef Tokens::Symbol TokenSymbol;
+	typedef SCRambl::Tokens::Symbol TokenSymbol;
 
-	class Script
+	/*class Script
 	{
 	public:
-		class Code;
-		class File;
-		class Line;
-		class Column;
-		class Range;
-		class Position;
-		class Tokens;
+		using Code = Scripts::Code;
+		using File = Scripts::File;
+		using Line = Scripts::Line;
+		using Column = Scripts::Column;
+		using Range = Scripts::Range;
+		using Position = Scripts::Position;
+		using Label = Scripts::Label;
+		using Token = Scripts::Token;
+		using Tokens = Scripts::Tokens;
+		using TokenLine = Scripts::TokenLine;
+		using TokenMap = Scripts::TokenMap;
+		using CodeList = Scripts::CodeList;
+		using Files = Scripts::Files;
+		template<typename TObj, typename TKey = std::string, typename TCont = std::unordered_map<TKey, TObj>>
+		using Scope = Scripts::Scope<TObj, TKey, TCont>;
+		using Labels = Scripts::Labels;
 
+	private:
+		std::shared_ptr<File>						m_File;
+		Code										m_Code;
+		Tokens										m_Tokens;
+		//TokenList									m_TokenMap;
+		Labels										m_LabelScope;
+		std::vector<std::shared_ptr<TokenSymbol>>	m_Declarations;
+
+		// Initialise script for parsing with current code
+		void Init();
+
+		void Error(int code, const std::string &);
+
+		void ReadFile(std::ifstream &, Code &);
+
+		// DEBUG
+#ifdef _DEBUG
+	public:
+#endif
+		void OutputFile() {
+			std::ofstream file("script.txt");
+			if (file)
+			{
+				for (Scripts::Position pos(&m_Code); pos; ++pos)
+				{
+					char c = *pos;
+					file << (c ? c : '\n');
+				}
+			}
+			file.flush();
+		}
+
+		bool ProcessCodeLine(const std::string&, CodeLine&, bool = false);
+
+	public:
+		// Default construction
+		Script();
+		// Construct script parser with code from memory
+		Script(const CodeList &);
+		// Destructor
+		virtual ~Script();
+
+		// GenerateTokenMap
+		TokenMap::Shared GenerateTokenMap();
+
+		// Set code
+		void SetCode(const void *);
+
+		// Load file into code lines
+		void LoadFile(const std::string &);
+
+		// Include file in specific code line
+		Position Include(Position &, const std::string &);
+
+		// OK?
+		inline bool OK() const							{ return true; }
+		// Number of source lines
+		inline size_t GetNumLines() const				{ return m_Code.NumLines(); }
+		// Get the almighty source code list
+		inline Code & GetCode()							{ return m_Code; }
+		// Get the informative token list
+		inline Tokens & GetTokens()						{ return m_Tokens; }
+		inline const Tokens & GetTokens() const			{ return m_Tokens; }
+		// Get symbolic declarations
+		inline std::vector<std::shared_ptr<TokenSymbol>> &			GetDeclarations()				{ return m_Declarations; }
+		inline const std::vector<std::shared_ptr<TokenSymbol>> &	GetDeclarations() const			{ return m_Declarations; }
+		//
+		inline Scope<Label::Shared> & GetLabels()		{ return m_LabelScope; }
+	};*/
+
+	namespace Scripts
+	{
 		typedef std::list<Line> CodeList;
-		typedef std::vector<File> Files;
+		typedef std::vector<std::shared_ptr<File>> Files;
 
 		/*\
-		 - Script::Line - this is one
-		\*/
-		class Line
-		{
-			const File		*	m_File = nullptr;
-			long				m_Line = 0;
-			CodeLine			m_Code;
-
-		public:
-			Line() = default;
-			Line(long line, CodeLine code, const File * file) : m_Line(line), m_Code(code), m_File(file)
-			{ }
-
-			inline const File * GetFile() const			{ return m_File; }
-			inline CodeLine & GetCode()					{ return m_Code; }
-			inline const CodeLine & GetCode() const		{ return GetCode(); }
-
-			inline long GetLine() const					{ return m_Line; }
-
-			inline operator const CodeLine &() const	{ return GetCode(); }
-			inline operator CodeLine &()				{ return GetCode(); }
-			inline operator long() const				{ return GetLine(); }
-		};
-
-		/*\
-		 - Script::Code - where symbolic data lives in peaceful bliss
-		\*/
-		class Code
-		{
-			friend class Script::Position;
-
-			CodeList				m_Code;
-			const File			*	m_CurrentFile = nullptr;
-			long					m_NumSymbols = 0;
-			//long					m_NumLines = 0;
-
-			inline CodeList	& GetLines()		{ return m_Code; }
-			inline CodeList & operator *()		{ return GetLines(); }
-			inline CodeList * operator ->()		{ return &**this; }
-
-		public:
-			Code();
-			Code(const CodeList & code);
-
-			inline void	SetFile(const File * file)			{ m_CurrentFile = file; }
-			inline const CodeList	&	GetLines() const	{ return m_Code; }
-			inline long 				NumSymbols() const	{ return m_NumSymbols; }
-			inline long 				NumLines() const	{ return m_CurrentFile ? m_CurrentFile->GetNumLines() : m_Code.size(); }
-			inline bool					IsEmpty() const		{ return m_Code.empty(); }
-
-			inline const CodeList & operator *() const		{ return GetLines(); }
-			inline const CodeList * operator ->() const		{ return &**this; }
-
-			/*\
-			 - Get begin line Position
-			\*/
-			inline Position Begin() {
-				return this;
-			}
-
-			/*\
-			 - Get end line Position
-			\*/
-			inline Position End() {
-				Position pos(this);
-				pos.m_LineIt = m_Code.empty() ? m_Code.begin() : m_Code.end();
-				pos.GetCodeLine();
-				return pos;
-			}
-
-			/*\
-			 - Add a line of code to the grande list
-			\*/
-			inline void AddLine(const CodeLine & code) {
-				if (!code.Empty())
-				{
-					m_Code.emplace_back(NumLines() + 1, code, m_CurrentFile);
-					m_NumSymbols += code.Size();
-				}
-			}
-			inline Position & AddLine(Position & pos, const CodeLine & code) {
-				if (!code.Empty())
-				{
-					pos.m_LineIt = m_Code.emplace(pos.GetLineIt(), NumLines() + 1, code, m_CurrentFile);
-					pos.GetCodeLine();
-					m_NumSymbols += code.Size();
-				}
-				return pos;
-			}
-
-			/*\
-			 - Make the code vanish completely
-			\*/
-			inline void Clear() {
-				m_Code.clear();
-				//m_NumLines = 0;
-				m_NumSymbols = 0;
-			}
-
-			/*\
-			 - Insert code from elsewhere onto the next line
-			 - Returns the beginning position of the inserted code
-			\*/
-			Position & Insert(Position &, const Code &);
-
-			/*\
-			- Insert code symbols into the line at Position
-			- Returns the beginning position of the inserted code
-			\*/
-			Position & Insert(Position &, const CodeLine/*::vector*/ &);
-			//inline Position & Insert(Position & pos, const CodeLine & line)		{ return Insert(pos, line.Symbols()); }
-
-			/*\
-			 - Erase the code from Position A to (and including) Position B
-			 - Updates all positions automatically and returns the reference to Position A
-			\*/
-			Position & Erase(Position &, Position &);
-
-			/*\
-			 - Selects a string sequence from Position A to Position B
-			\*/
-			std::string Select(const Position &, const Position &) const;
-
-			/*\
-			 - Copy the symbols from Position A to Position B
-			 - Returns the vector of collected symbols
-			\*/
-			CodeLine & Copy(const Position &, const Position &, CodeLine &) const;
-		};
-
-		/*\
-		 - Script::Position(tm) - iterating through all that matters since '14
-		\*/
-		class Position
-		{
-			friend class Code;
-
-			//Code					*	m_pCode;
-			Code					*	m_pCode;
-			CodeList::iterator			m_LineIt;		// (x)
-			CodeLine::iterator			m_CodeIt;		// (y)
-
-			inline CodeList::iterator		GetLineIt()			{ return m_LineIt; }
-			inline CodeLine::iterator		GetSymbolIt()		{ return m_CodeIt; }
-
-			void GetCodeLine();
-
-		public:
-			// construct invalid thing
-			Position();
-
-			// beginning of code
-			Position(Code &);
-			Position(Code *);
-			// specified line of code
-			Position(Code *, CodeList::iterator &);
-
-			/*\
-			- Attempt to set this position at the next line
-			\*/
-			Position & NextLine();
-
-			/*\
-			 - Attempt to set this position at the next symbol
-			 - Returns true if another symbol is available
-			\*/
-			bool Forward();
-
-			/*\
-			 - Attempt to set this position at the previous symbol
-			 - Returns true if another symbol is available
-			\*/
-			bool Backward();
-
-			/*\
-			 - Attempt to erase the symbol at the current position
-			 - Returns a reference to this position at the next symbol
-			\*/
-			Position & Delete();
-
-			/*\
-			 - Attempt to insert a symbol at the current position
-			 - Returns a reference to this position at the inserted symbol
-			\*/
-			Position & Insert(const Symbol &);
-
-			/*\
-			 - Attempt to insert multiple symbols at the current position
-			 - Returns a reference to this position at the inserted symbol
-			\*/
-			Position & Insert(const CodeLine &);
-
-			/*\
-			 - Select a string from this position to the specified one
-			\*/
-			inline std::string Select(const Position & end) const {
-				return GetCode()->Select(*this, end);
-			}
-
-			/*\
-			 - Returns true if this position is at the end of the symbol list
-			\*/
-			inline bool IsEnd() const {
-				return !m_pCode || GetCode()->IsEmpty() || m_LineIt == GetCodeLines().end() || m_CodeIt == m_LineIt->GetCode().End();
-			}
-
-			/*\
-			 - Returns true if each Position refers to the same script position
-			\*/
-			inline bool Compare(const Position & pos) const {
-				return m_pCode == pos.m_pCode && m_LineIt == pos.m_LineIt && m_CodeIt == pos.m_CodeIt;
-			}
-
-			/*\
-			 - Returns true if both Position's are on the same line
-			\*/
-			inline bool IsOnSameLine(const Position & pos) const {
-				return m_LineIt == pos.m_LineIt;
-			}
-
-			/*\
-			 - Returns true if the Position is on an earlier line
-			\*/
-			inline bool IsOnEarlierLine(const Position & pos) const {
-				return GetLine().GetLine() > pos.GetLine().GetLine();
-			}
-
-			/*\
-			 - Returns true if the position is on a later line
-			\*/
-			inline bool IsOnLaterLine(const Position & pos) const {
-				return GetLine().GetLine() < pos.GetLine().GetLine();
-			}
-
-			/*\
-			 - Returns ture if the position is earlier
-			\*/
-			inline bool IsEarlier(const Position & pos) const {
-				return IsOnEarlierLine(pos) || (IsOnSameLine(pos) && GetColumn() < pos.GetColumn());
-			}
-
-			/*\
-			 - Returns ture if the position is later
-			\*/
-			inline bool IsLater(const Position & pos) const {
-				return IsOnLaterLine(pos) || (IsOnSameLine(pos) && GetColumn() > pos.GetColumn());
-			}
-
-			/*\
-			 - Returns true if the Position points to the same character
-			\*/
-			inline bool Compare(const char c) const {
-				return !IsEnd() ? *m_CodeIt == c : false;
-			}
-
-			// Get teh code
-			inline Code * GetCode()							{ ASSERT(m_pCode); return m_pCode; }
-			inline const Code * GetCode() const				{ ASSERT(m_pCode); return m_pCode; }
-			inline CodeList & GetCodeLines()				{ ASSERT(m_pCode); return m_pCode->GetLines(); }
-			inline const CodeList & GetCodeLines() const	{ ASSERT(m_pCode); return m_pCode->GetLines(); }
-
-			// Get the current line of this position
-			inline Line & GetLine()							{ return *m_LineIt; }
-			inline const Line & GetLine()	const			{ return *m_LineIt; }
-
-			// Get the current number of the column at this position
-			inline int GetColumn() const					{ return m_CodeIt->Number(); }
-
-			// Get the current line code of this position
-			inline CodeLine & GetLineCode()					{ return m_LineIt->GetCode(); }
-			inline const CodeLine & GetLineCode()	const	{ return m_LineIt->GetCode(); }
-
-			// Get the current symbol of this position
-			inline Symbol & GetSymbol()						{ return *m_CodeIt; }
-			inline const Symbol & GetSymbol() const			{ return *m_CodeIt; }
-
-			// GetSymbol()
-			inline Symbol & operator*()					{ return GetSymbol(); }
-			inline const Symbol & operator*() const		{ return GetSymbol(); }
-
-			// GetSymbol()
-			inline Symbol * operator->()				{ return &**this; }
-			inline const Symbol * operator->() const	{ return &**this; }
-
-			// !IsEnd()
-			inline operator bool() const				{ return !IsEnd(); }
-
-			// Insert Symbol
-			inline Position & operator<<(const Symbol & sym) {
-				return Insert(sym);
-			}
-
-			// Insert Line
-			inline Position & operator<<(const CodeLine & line) {
-				m_pCode->AddLine(*this, line);
-				return *this;
-			}
-
-			// 
-			inline Position & operator=(const Position & pos) {
-				m_pCode = pos.m_pCode;
-				m_CodeIt = pos.m_CodeIt;
-				m_LineIt = pos.m_LineIt;
-				return *this;
-			}
-
-			inline Position operator[](int i) {
-				Position new_pos = *this;
-				for (i; i > 0; --i) if (!new_pos.Forward()) break;
-				return new_pos;
-			}
-
-			// Forward()
-			inline Position & operator++() {
-				Forward();
-				return *this;
-			}
-			inline Position operator++(int) {
-				auto pos = *this;
-				Forward();
-				return pos;
-			}
-
-			inline Position operator+(int n) const {
-				Position new_pos = *this;
-				for (n; n > 0; --n)
-				{
-					if (!new_pos.Forward()) break;
-				}
-				return new_pos;
-			}
-
-			inline Position & operator+=(int n) {
-				for (n; n > 0; --n) if (!Forward()) break;
-				return *this;
-			}
-
-			// Backward()
-			inline Position & operator--() {
-				Backward();
-				return *this;
-			}
-			inline Position operator--(int) {
-				auto pos = *this;
-				Backward();
-				return pos;
-			}
-
-			inline Position operator-(int n) const {
-				Position new_pos = *this;
-				for (n; n > 0; --n)
-				{
-					if (!new_pos.Backward()) break;
-				}
-				return new_pos;
-			}
-
-			inline Position & operator-=(int n) {
-				for (n; n > 0; --n) if (!Backward()) break;
-				return *this;
-			}
-
-			// Compare()
-			inline bool operator==(const Position & pos) const {
-				return Compare(pos);
-			}
-			inline bool operator!=(const Position & pos) const {
-				return !(*this == pos);
-			}
-
-			// IsEarlier()
-			inline bool operator<(const Position & pos) const {
-				return IsEarlier(pos);
-			}
-			// IsLater()
-			inline bool operator>(const Position & pos) const {
-				return IsLater(pos);
-			}
-
-			// Compare() || IsEarlier()
-			inline bool operator<=(const Position & pos) const {
-				return Compare(pos) || IsEarlier(pos);
-			}
-			// Compare() || IsLater()
-			inline bool operator>=(const Position & pos) const {
-				return Compare(pos) || IsLater(pos);
-			}
-
-			// CompareChar()
-			inline bool operator==(const char c) const {
-				return Compare(c);
-			}
-			inline bool operator!=(const char c) const {
-				return !(*this == c);
-			}
-
-			// String formatter
-			static inline std::string Formatter(const Position & pos) {
-				return std::to_string(pos.GetLine().GetLine());
-			}
-		};
-
-		/*\
-		 * Script::Range - Range of Position's in the script
-		\*/
-		class Range
-		{
-			std::pair<Position, Position>	m_Pair;
-
-		public:
-			Range(Position a, Position b) : m_Pair(a < b ? std::make_pair(a, b) : std::make_pair(b, a))
-			{ }
-			Range(std::pair<Position, Position> pair) : m_Pair(pair.first < pair.second ? std::make_pair(pair.first, pair.second) : std::make_pair(pair.second, pair.first))
-			{ }
-
-			// String formatter
-			static inline std::string Formatter(const Range & range) {
-				return range.Begin().Select(range.End());
-			}
-
-			inline operator const std::pair<Position, Position>() const	{ return Get(); }
-			inline const std::pair<Position, Position> & Get() const	{ return m_Pair; }
-			inline const Position & Begin() const		{ return m_Pair.first; }
-			inline const Position & End() const			{ return m_Pair.second; }
-			inline std::string Format() const			{ return Formatter(*this); }
-		};
-
-		/*\
-		 * Script::File - Script files and includes
+		 * Scripts::File - Script files and includes
 		\*/
 		class File
 		{
+		public:
+			using Shared = std::shared_ptr<File>;
+			
+			File();
+			File(File*);
+			File(Code::Shared);
+			File(std::string);
+			File(File*, std::string);
+			File(Code::Shared, std::string);
+
+			bool IsOpen() const;
+			bool IsInclude() const;
+			long GetNumLines() const;
+			long GetNumIncludes() const;
+			Code::Shared GetCode() const;
+			void SetCode(Code::Shared);
+			bool Open(std::string);
+			bool Open(Code::Shared, std::string);
+			File::Shared IncludeFile(Position&, std::string);
+
+		private:
+			void ReadFile(std::ifstream&);
+
+			bool m_FileOpen = false;
+			File* m_Parent = nullptr;
+			Code::Shared m_Code;
+			Position m_Begin;
+			Position m_End;
+			Files m_Includes;
+			std::string m_Path;
+			long m_NumLines = 0;
+		};
+		/*class File
+		{
 			const File			*	m_Parent = nullptr;
+			
 			Code				*	m_Code;					// code source
 			Position				m_Begin;				// beginning of this file in code source
 			Position				m_End;					// end of this file in code source
@@ -488,47 +179,21 @@ namespace SCRambl
 
 			void ReadFile(std::ifstream &);
 			File & IncludeFile(Position &, const std::string &);
-		};
-
-		/*\
-		 * Script::Label - Labels in scripts
-		\*/
-		class Label
-		{
-			std::string				m_Name;
-			uint32_t				m_Offset = 0;
-
-		public:
-			using Shared = std::shared_ptr < Label >;
-
-			Label(std::string name) : m_Name(name)
-			{ }
-
-			inline const std::string &			GetName() const			{ return m_Name; }
-			inline uint32_t						GetOffset() const		{ return m_Offset; }
-
-			static inline Shared Make(std::string name) {
-				return std::make_shared<Label>(name);
-			}
-
-			static inline std::string Formatter(Shared label) {
-				return "(" + label->GetName() + ")";
-			}
-		};
+		};*/
 		
 		/*\
-		 * Script::Token - Script token wrapper
+		 * Scripts::Token - Script token wrapper
 		\*/
 		class Token
 		{
-			Script::Position				m_Position;
+			Position						m_Position;
 			IToken::Shared					m_Token = nullptr;
 			std::shared_ptr<TokenSymbol>	m_Symbol = nullptr;
 
 		public:
 			typedef std::shared_ptr<Token> Shared;
 
-			Token(Script::Position pos, IToken::Shared tok) :
+			Token(Position pos, IToken::Shared tok) :
 				m_Position(pos),
 				m_Token(tok)
 			{ }
@@ -537,8 +202,8 @@ namespace SCRambl
 			Token(std::shared_ptr<TokenSymbol> symb) : m_Symbol(symb)
 			{ }
 
-			inline Script::Position & GetPosition()					{ return m_Position; }
-			inline const Script::Position & GetPosition() const		{ return GetPosition(); }
+			inline Position & GetPosition()					{ return m_Position; }
+			inline const Position & GetPosition() const		{ return GetPosition(); }
 			
 			template<typename T>
 			inline std::shared_ptr<T> GetToken()							{ return std::static_pointer_cast<T>(m_Token); }
@@ -560,7 +225,7 @@ namespace SCRambl
 		};
 
 		/*\
-		 * Script::Tokens - Script token container
+		 * Scripts::Tokens - Script token container
 		\*/
 		class Tokens
 		{
@@ -572,7 +237,7 @@ namespace SCRambl
 
 		public:
 			/*\
-			 * Script::Tokens::Iterator - All this just to pair together an index with it
+			 * Scripts::Tokens::Iterator - All this just to pair together an index with it
 			\*/
 			class Iterator
 			{
@@ -702,10 +367,10 @@ namespace SCRambl
 			inline Iterator end()					{ return End(); }
 
 			/* Access */
-			inline const Token & Front() const		{ return *m_Tokens.front(); }
-			inline Token & Front()					{ return *m_Tokens.front(); }
-			inline const Token & Back() const		{ return *m_Tokens.back(); }
-			inline Token & Back()					{ return *m_Tokens.back(); }
+			inline const Token::Shared Front() const	{ return m_Tokens.front(); }
+			inline Token::Shared Front()				{ return m_Tokens.front(); }
+			inline const Token::Shared Back() const		{ return m_Tokens.back(); }
+			inline Token::Shared Back()					{ return m_Tokens.back(); }
 
 			/* Info */
 			inline size_t Size() const				{ return m_Tokens.size(); }
@@ -717,17 +382,86 @@ namespace SCRambl
 				return std::make_shared<Token>(pos, std::make_shared<TToken>(std::forward<TArgs>(args)...));
 			}
 		};
-
-		/*\
-		 * Script::Symbol
-		\*/
-		/*class Symbol
+		class TokenLine
 		{
+		private:
+			typedef std::vector<Token::Shared> Line;
+			Line		m_Line;
+
 		public:
-		};*/
+			using Iter = Line::iterator;
+			using RevIter = Line::reverse_iterator;
+			using CIter = Line::const_iterator;
+			using CRevIter = Line::const_reverse_iterator;
+			using Ref = Line::reference;
+			using CRef = Line::reference;
+			using Shared = std::shared_ptr < TokenLine > ;
+
+			TokenLine() = default;
+
+			void AddToken(Token::Shared tok) {
+				auto dest_it = m_Line.end();
+				auto dest_col = -1;
+				for (auto it = m_Line.begin(); it != m_Line.end(); ++it) {
+					auto ptr = *it;
+					auto col = ptr->GetPosition().GetColumn();
+
+					if (dest_it == m_Line.end() || col < dest_col) {
+						dest_it = it;
+						dest_col = col;
+					}
+					else if (col >= dest_col) {
+						if (col == dest_col) dest_col = -1;
+						break;
+					}
+				}
+
+				if (dest_it != m_Line.end()) {
+					if (dest_col == -1) return;
+					m_Line.emplace(dest_it, tok);
+				}
+				else m_Line.emplace_back(tok);
+			}
+			Token::Shared GetToken(int col) {
+				Token::Shared r;
+				for (auto ptr : m_Line) {
+					if (ptr->GetPosition().GetColumn() >= col)
+						return r;
+					r = ptr;
+				}
+				return r;
+			}
+
+			inline Iter begin()						{ return m_Line.begin(); }
+			inline Iter end()						{ return m_Line.end(); }
+			inline CIter cbegin()					{ return m_Line.cbegin(); }
+			inline CIter cend()						{ return m_Line.cend(); }
+		};
+		class TokenMap
+		{
+			
+			typedef std::map<int, TokenLine::Shared> TokenList;
+
+			TokenList			m_Map;
+
+		public:
+			using Iter = TokenList::iterator;
+			using RevIter = TokenList::reverse_iterator;
+			using CIter = TokenList::const_iterator;
+			using CRevIter = TokenList::const_reverse_iterator;
+			using Ref = TokenList::reference;
+			using CRef = TokenList::reference;
+			using RefType = TokenList::referent_type;
+			using Shared = std::shared_ptr < TokenMap > ;
+
+			TokenMap() = default;
+
+			TokenLine::Shared AddLine(int);
+			TokenLine::Shared GetLine(int);
+		};
 
 		/*\
-		 * Script::Scope - Scope of variables, labels, you name it
+		 * Scripts::Scope - Scope of variables, labels, you name it
 		\*/
 		template<typename TObj, typename TKey = std::string, typename TCont = std::unordered_map<TKey, TObj>>
 		class Scope
@@ -764,72 +498,96 @@ namespace SCRambl
 				return it == m_Stuff.end() ? nullptr : it->second;
 			}
 		};
+
+		using Labels = Scope<std::shared_ptr<Label>>;
+		using Variables = Scope<std::shared_ptr<Variable<Types::Type>>>;
+
+		//template<typename T> typedef Variable<T> Variable;
+		//template<typename T> typedef Scope<Variable<T>::Shared> Variables;
+
+		class LScript
+		{
+		public:
+			using Shared = std::shared_ptr<LScript>;
+
+			LScript();
+
+			inline Labels& GetLabels()							{ return m_Labels; }
+			inline const Labels& GetLabels() const				{ return m_Labels; }
+			inline Variables& GetVariables()					{ return m_Variables; }
+			inline const Variables& GetVariables() const		{ return m_Variables; }
+
+		private:
+			Labels			m_Labels;
+			Variables		m_Variables;
+		};
+
+		typedef std::vector<LScript> LScripts;
+	}
+
+	class Script
+	{
+	public:
+		Script();
+
+		// Open file 
+		Scripts::File::Shared OpenFile(const std::string&);
 		
-		typedef Scope<Label::Shared> Labels;
+		// Must be \0 terminated
+		void SetCode(const void *);
+		
+		// Is there a file for the main code?
+		bool IsFileOpen() const;
+		
+		// Returns number of loaded code lines
+		long long GetNumLines() const;
+
+		//void LoadFile(const std::string&);
+		void ReadFile(std::ifstream &, Scripts::Code &);
+
+		/* Include File
+		[in] position
+		[in] include file path */
+		Scripts::Position Include(Scripts::Position &, const std::string &);
+
+		Scripts::TokenMap::Shared GenerateTokenMap();
+
+		// Get number of (additional) local scripts
+		size_t NumLScripts() const { return m_LScripts.size(); }
+
+		// Get the code list
+		Scripts::Code& GetCode() { return *m_Code; }
+
+		// Get the labels
+		Scripts::Labels& GetLabels() { return m_LScript ? m_LScript->GetLabels() : m_Labels ; }
+
+		// Get the current local script
+		Scripts::LScript* GetLScript() { return m_LScript; }
+		const Scripts::LScript* GetLScript() const { return m_LScript; }
+
+		// Get one of the local scripts
+		Scripts::LScript* GetLScript(size_t i) { return &m_LScripts[i]; }
+		const Scripts::LScript* GetLScript(size_t i) const { return &m_LScripts[i]; }
+
+		// Get the tokens
+		Scripts::Tokens& GetTokens() { return m_Tokens; }
+
+		// X
+		inline std::vector<std::shared_ptr<TokenSymbol>> & GetDeclarations() { throw; }
+		inline const std::vector<std::shared_ptr<TokenSymbol>> & GetDeclarations() const { throw; }
 
 	private:
-		std::shared_ptr<File>						m_File;
-		Code										m_Code;
-		Tokens										m_Tokens;
-		Labels										m_LabelScope;
-		std::vector<std::shared_ptr<TokenSymbol>>	m_Declarations;
-
-		// Initialise script for parsing with current code
-		void Init();
-
-		void Error(int code, const std::string &);
-
-		void ReadFile(std::ifstream &, Code &);
-
-		// DEBUG
-#ifdef _DEBUG
-	public:
-#endif
-		void OutputFile() {
-			std::ofstream file("script.txt");
-			if (file)
-			{
-				for (Script::Position pos(&m_Code); pos; ++pos)
-				{
-					char c = *pos;
-					file << (c ? c : '\n');
-				}
-			}
-			file.flush();
-		}
-
 		bool ProcessCodeLine(const std::string&, CodeLine&, bool = false);
 
-	public:
-		// Default construction
-		Script();
-		// Construct script parser with code from memory
-		Script(const CodeList &);
-		// Destructor
-		virtual ~Script();
-
-		// Set code
-		void SetCode(const void *);
-
-		// Load file into code lines
-		void LoadFile(const std::string &);
+		Scripts::Tokens m_Tokens;
+		Scripts::Files m_Files;
+		Scripts::LScripts m_LScripts;
+		Scripts::Labels m_Labels;
+		Scripts::Variables m_Variables;
 		
-		// Include file in specific code line
-		Position Include(Position &, const std::string &);
-
-		// OK?
-		inline bool OK() const							{ return true; }
-		// Number of source lines
-		inline size_t GetNumLines() const				{ return m_Code.NumLines(); }
-		// Get the almighty source code list
-		inline Code & GetCode()							{ return m_Code; }
-		// Get the informative token list
-		inline Tokens & GetTokens()						{ return m_Tokens; }
-		inline const Tokens & GetTokens() const			{ return m_Tokens; }
-		// Get symbolic declarations
-		inline std::vector<std::shared_ptr<TokenSymbol>> &			GetDeclarations()				{ return m_Declarations; }
-		inline const std::vector<std::shared_ptr<TokenSymbol>> &	GetDeclarations() const			{ return m_Declarations; }
-		//
-		inline Scope<Label::Shared> & GetLabels()		{ return m_LabelScope; }
+		Scripts::LScript m_LScriptMain;
+		Scripts::LScript* m_LScript;
+		Scripts::File::Shared m_File;
+		Scripts::Code::Shared m_Code;
 	};
 }

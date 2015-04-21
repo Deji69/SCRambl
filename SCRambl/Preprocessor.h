@@ -25,45 +25,35 @@ namespace SCRambl
 {
 	namespace Preprocessor
 	{
-		/*\
-		 * WhitespaceScanner - Lexer::Scanner for nothingness (useless?)
-		\*/
+		/*\ WhitespaceScanner - Lexer::Scanner for nothingness (useless?) \*/
 		class WhitespaceScanner : public Lexer::Scanner
 		{
 		public:
-			bool Scan(Lexer::State & state, Script::Position & code) override;
+			bool Scan(Lexer::State & state, Scripts::Position & code) override;
 		};
 
-		/*\
-		 * IdentifierScanner - Lexer::Scanner for identifiers
-		\*/
+		/*\ IdentifierScanner - Lexer::Scanner for identifiers \*/
 		class IdentifierScanner : public Lexer::Scanner
 		{
 		public:
-			bool Scan(Lexer::State & state, Script::Position & pos) override;
+			bool Scan(Lexer::State & state, Scripts::Position & pos) override;
 		};
 
-		/*\
-		 * LabelScanner - Lexer::Scanner for labels
-		\*/
+		/*\ LabelScanner - Lexer::Scanner for labels \*/
 		class LabelScanner : public Lexer::Scanner
 		{
 		public:
-			bool Scan(Lexer::State & state, Script::Position & pos) override;
+			bool Scan(Lexer::State & state, Scripts::Position & pos) override;
 		};
 
-		/*\
-		 * DirectiveScanner - Lexer::Scanner for directives
-		\*/
+		/*\ DirectiveScanner - Lexer::Scanner for directives \*/
 		class DirectiveScanner : public Lexer::Scanner
 		{
 		public:
-			bool Scan(Lexer::State & state, Script::Position & pos) override;
+			bool Scan(Lexer::State & state, Scripts::Position & pos) override;
 		};
 
-		/*\
-		 * StringLiteralScanner - Lexer::Scanner for string literals
-		\*/
+		/*\ StringLiteralScanner - Lexer::Scanner for string literals \*/
 		class StringLiteralScanner : public Lexer::Scanner
 		{
 		public:
@@ -71,21 +61,17 @@ namespace SCRambl
 				unterminated
 			};
 
-			bool Scan(Lexer::State & state, Script::Position & pos) override;
+			bool Scan(Lexer::State & state, Scripts::Position & pos) override;
 		};
 
-		/*\
-		 * CommentScanner - Lexer::Scanner for line comments
-		\*/
+		/*\ CommentScanner - Lexer::Scanner for line comments \*/
 		class CommentScanner : public Lexer::Scanner
 		{
 		public:
-			bool Scan(Lexer::State & state, Script::Position & pos) override;
+			bool Scan(Lexer::State & state, Scripts::Position & pos) override;
 		};
 
-		/*\
-		 * BlockCommentScanner - Lexer::Scanner for block comments
-		\*/
+		/*\ BlockCommentScanner - Lexer::Scanner for block comments \*/
 		class BlockCommentScanner : public Lexer::Scanner
 		{
 			int				depth = 0;
@@ -95,7 +81,7 @@ namespace SCRambl
 				end_of_file_reached,
 			};
 
-			bool Scan(Lexer::State & state, Script::Position & pos) override;
+			bool Scan(Lexer::State & state, Scripts::Position & pos) override;
 		};
 
 		class Task;
@@ -106,16 +92,16 @@ namespace SCRambl
 		class Information
 		{
 			friend class Preprocessor;
-			Script::Position		&	m_ScriptPosition;
+			Scripts::Position		&	m_ScriptPosition;
 
-			void SetScriptPos(Script::Position & pos)				{ m_ScriptPosition = pos; }
+			void SetScriptPos(Scripts::Position & pos)				{ m_ScriptPosition = pos; }
 
 		public:
-			Information(Script::Position & pos):
+			Information(Scripts::Position & pos):
 				m_ScriptPosition(pos)
 			{}
 
-			inline const Script::Position &	GetScriptPos() const	{ return m_ScriptPosition; }
+			inline const Scripts::Position &	GetScriptPos() const	{ return m_ScriptPosition; }
 		};
 
 		/*\
@@ -141,6 +127,16 @@ namespace SCRambl
 				invalid_unary_operator,					// 1009
 				invalid_unary_operator_use,				// 1010
 				dir_expected_file_name,					// 1011
+				dir_expected_command_id,				// 1012
+				dir_expected_identifier,				// 1013
+				expected_eol,							// 1014
+				expected_string,						// 1015
+				expected_label,							// 1016
+				expected_number,						// 1017
+				expected_operator,						// 1018
+				expected_closing_paren,					// 1019
+				expected_opening_paren,					// 1020
+				expected_separator,						// 1021
 
 				// fatal errors
 				fatal_begin								= 4000,
@@ -173,6 +169,9 @@ namespace SCRambl
 				ELSE,
 				ENDIF,
 				UNDEF,
+
+				REGISTER_VAR,
+				REGISTER_COMMAND,
 			};
 
 		private:
@@ -190,6 +189,10 @@ namespace SCRambl
 				switch (type) {
 				default:
 				case INVALID: break;
+				case REGISTER_VAR: name = "register_var";
+					break;
+				case REGISTER_COMMAND: name = "register_command";
+					break;
 				case INCLUDE: name = "include";
 					break;
 				case DEFINE: name = "define";
@@ -211,25 +214,15 @@ namespace SCRambl
 			}
 		};
 
-		/*\
-		 - Preprocessor::Character - Preprocessor character stuff
-		\*/
+		/*\ Preprocessor::Character - Preprocessor character stuff \*/
 		class Character
 		{
 		public:
-			enum Type {
-				EOL,
-			};
+			enum Type { EOL };
 
-		private:
-			Type		m_Type;
-
-		public:
 			Character() = default;
-			Character(Type type) : m_Type(type)
-			{ }
-
-			inline operator Type() const		{ return m_Type; }
+			Character(Type type) : m_Type(type) { }
+			inline operator Type() const { return m_Type; }
 
 			static inline std::string Formatter(Character type) {
 				std::string rep;
@@ -239,11 +232,39 @@ namespace SCRambl
 				}
 				return !rep.empty() ? rep : "[UNK]";
 			}
+
+		private:
+			Type		m_Type;
 		};
 
-		/*\
-		 - Preprocessor::Preprocessor - Main Preprocessor task routine
-		\*/
+		/*\ Preprocessor::Delimiter - Preprocessor delimiter stuff \*/
+		class Delimiter
+		{
+		public:
+			enum Type {
+				None, Scope
+			};
+
+			Delimiter() = default;
+			Delimiter(Type type) : m_Type(type) {}
+			/*Delimiter(Type type, char beg[2], char end[2] = 0) : m_Type(type) {
+				if (beg[1]) m_Open[1] = beg[1];
+				if (end[1]) m_Close[1] = end[1];
+				m_Open[0] = beg[0];
+				m_Close[0] = end[0];
+			}*/
+
+			//inline const std::array<char, 2>& Open() const { return m_Open; }
+			//inline const std::array<char, 2>& Close() const { return m_Close; }
+			inline operator Type() const { return m_Type; }
+			
+		private:
+			//std::array<char, 2> m_Open = { { '\0', '\0' } };
+			//std::array<char, 2> m_Close = { { '\0', '\0' } };
+			Type m_Type = None;
+		};
+
+		/*\ Preprocessor::Preprocessor - Main Preprocessor task routine \*/
 		class Preprocessor
 		{
 			friend class Information;
@@ -280,6 +301,8 @@ namespace SCRambl
 			std::string					m_String;					// last scanned string
 			std::string					m_Identifier;				// last scanned identifier
 			MacroMap					m_Macros;
+			
+			std::stack<Scripts::Token::Shared> m_Delimiters;
 
 		public:
 			enum State {
@@ -306,8 +329,10 @@ namespace SCRambl
 		private:
 			State								m_State = init;
 			Script							&	m_Script;
-			Script::Tokens					&	m_Tokens;
-			Script::Position					m_CodePos;
+			Scripts::Tokens					&	m_Tokens;
+			Scripts::Position					m_CodePos;
+			Commands							m_Commands;
+			Types::Types						m_Types;
 			bool								m_bScriptIsLoaded;						// if so, we only need to add-in any #include's
 			bool								m_DisableMacroExpansion = false;
 			bool								m_DisableMacroExpansionOnce = false;
@@ -346,6 +371,28 @@ namespace SCRambl
 				return m_PreprocessorLogic.empty() ? true : m_PreprocessorLogic.top();
 			}
 
+			// Add
+			bool OpenDelimiter(Scripts::Position pos, Delimiter type) {
+				auto token = AddToken<Tokens::Delimiter::Info<Delimiter>>(pos, Tokens::Type::Delimiter, pos, Scripts::Range(pos, pos), type);
+				if (token) {
+					m_Delimiters.push(token);
+					return true;
+				}
+				return false;
+			}
+			//
+			bool CloseDelimiter(Scripts::Position pos, Delimiter type) {
+				auto& token = m_Delimiters.top()->GetToken<Tokens::Delimiter::Info<Delimiter>>();
+				// ensure the delimiters are for the same purpose, otherwise there's error
+				if (token->GetValue<Tokens::Delimiter::DelimiterType>() == type) {
+					// replace the token with an updated Scripts::Range
+					token = Tokens::CreateToken<Tokens::Delimiter::Info<Delimiter>>(Tokens::Type::Delimiter, pos, Scripts::Range(token->GetValue<Tokens::Delimiter::ScriptRange>().Begin(), pos), type);
+					m_Delimiters.pop();
+					return true;
+				}
+				return false;
+			}
+
 			// Runs while running
 			void RunningState();
 			// Runs while lexing
@@ -358,14 +405,39 @@ namespace SCRambl
 			// Strips comments
 			void HandleComment();
 
+			inline Types::Type::Shared GetType(const std::string& name) {
+				auto ptr = m_Types.GetType(name);
+				return ptr ? ptr : m_Engine.GetTypes().GetType(name);
+			}
+
 			// Lex main code
 			Lexer::Result Lex();
+			// Lex with error callback
+			template<typename TFunc>
+			inline bool Lex(TokenType type, TFunc func) {
+				if (Lex() == Lexer::Result::found_token && m_Token == type) {
+					return true;
+				}
+				func(m_Token);
+				return false;
+			}
+			// Lex with custom comparison & error callback
+			template<typename TCompFunc, typename TFunc>
+			inline bool Lex(TCompFunc compFunc, TFunc func) {
+				if (Lex() == Lexer::Result::found_token && compFunc(m_Token)) {
+					return true;
+				}
+				func(m_Token);
+				return false;
+			}
+			// Lex main code, returns true if token of TokenType is found, automatically sends errors
+			bool Lexpect(TokenType);
 			// Lex around for a number
 			bool LexNumber();
 
 			// Add a preprocessing token
 			template<typename T, typename... TArgs>
-			inline Script::Token::Shared AddToken(Script::Position pos, Tokens::Type token, TArgs&&... args)
+			inline Scripts::Token::Shared AddToken(Scripts::Position pos, Tokens::Type token, TArgs&&... args)
 			{
 				m_WasLastTokenEOL = false;
 				return m_Tokens.Add < T >(pos, token, std::forward<TArgs&&>(args)...);

@@ -5,14 +5,16 @@
 
 namespace SCRambl
 {
-	Commands::Commands(Engine & eng) : m_Engine(eng)
+	Commands::Commands()
+	{ }
+	Commands::Commands(Engine & eng)
 	{
-		auto& types = m_Engine.GetTypes();
+		auto& types = eng.GetTypes();
 		auto& usecc = m_UseCaseConversion;
 		auto& ccdest = m_DestCasing;
 		auto& ccsrc = m_SourceCasing;
 
-		m_Config = m_Engine.AddConfig("Commands");
+		m_Config = eng.AddConfig("Commands");
 
 		m_Config->AddClass("Case", [this, &usecc, &ccdest, &ccsrc](const pugi::xml_node xml, std::shared_ptr<void> & obj){
 			usecc = xml.attribute("Convert").as_bool();
@@ -28,7 +30,7 @@ namespace SCRambl
 			// retrieve the object poiter as a SCR command we know it to be
 			auto& command = *std::static_pointer_cast<SCRambl::Command>(obj);
 			if (auto type = types.GetType(xml.attribute("Type").as_string())) {
-				command.AddArg(type->Extend());
+				command.AddArg(type->Extend(), xml.attribute("Out").as_bool());
 			}
 			else {
 				std::string name = xml.attribute("Type").as_string();
