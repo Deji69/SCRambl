@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Paths are relative to the install directory -->
+
+<SCRambl Version="1.0" FileVersion="0.0.0.0">
+	<!-- Configuration for builds (specified through -b) -->
+	<BuildConfig>
+		<!-- -b:cleo_sa configuration for GTASA: CLEO Scripts -->
+		<Build ID="cleo_sa" Name="GTA:SA CLEO Script" Tasks="parse,compile,link">
+			<!-- Definition paths to include - DefinitionPath can be used without a nest to not load default definition files -->
+			<DefinitionPath Path="config/default/">
+				<!-- Definition files to load (from this path) by default -->
+				<!-- <Definition> can be used outside of this nest to search through all Path's -->
+				<Definition>delimiters.xml</Definition>
+				<Definition>constants.xml</Definition>
+				<Definition>types.xml</Definition>
+				<Definition>commands.xml</Definition>
+			</DefinitionPath>
+			
+			<LibraryPath>gtasa/lib/</LibraryPath>
+			<IncludePaths>
+				<Path>gtasa/lib/</Path>
+			</IncludePaths>
+			
+			<!-- Build up the script -->
+			<Script Name="main">
+				<Input>($InputFiles)</Input>
+			</Script>
+			
+			<!-- Send compiler the -o(utput) parameter -->
+			<Compile Output="($OutputFile)" />
+		</Build>
+		
+		<Build ID="scm_sa" Name="GTA:SA SCM Script" Tasks="parse,compile,link,merge">
+			<DefinitionPath Path="config/default/">
+				<Definition>delimiters.xml</Definition>
+				<Definition>constants.xml</Definition>
+				<Definition>types.xml</Definition>
+				<Definition>commands.xml</Definition>
+			</DefinitionPath>
+			
+			<LibraryPath>gtasa/lib/</LibraryPath>
+			<IncludePaths>
+				<Path>gtasa/lib/</Path>
+			</IncludePaths>
+			
+			<Script Name="Main Script" Type="main">
+				<Input>($InputFile)</Input>
+				<Input Type="subscript">($InputDir)\($InputName)</Input>
+				
+				<Command ID="0xD7">
+					<Input Type="mission">{$InputDir}\{$Arg[1]}</Input>
+				</Command>
+			</Script>
+			<Script Name="Main Script Extension" Type="mainext">
+			</Script>
+			<Script Name="Mission Script" Type="mission">
+			</Script>
+			<Script Name="Sub Script" Type="subscript">
+			</Script>
+
+			<Compile Output="($OutputFile)">
+				<Header>
+					<Data>
+						<Array Using="Variables">{$Variables}</Array>
+					</Data>
+				</Header>
+			</Compile>
+		</Build>
+		</BuildConfig>
+
+	<BuildConfig>
+		<!-- Configurations for parsing and compilation -->
+		<Configuration ID="scm_sa" Name="GTA:SA SCM">
+			<!-- Paths of definitions and additional include paths -->
+			<DefinitionPath>gtasa\</DefinitionPath>
+			<LibraryPath>gtasa\lib\</LibraryPath>
+			<IncludePaths>
+				<Path>gtasa\lib\</Path>
+			</IncludePaths>
+			
+			<FileType Name="SCR Source Code" FormatExt="sc" Type="source">
+				
+			</FileType>
+			
+			<FileType Name="SCRambl Parsed Symbols" FormatExt="scrmbl" Type="parsed">
+				
+			</FileType>
+			
+			<FileType Name="SCR Compiled Code" FormatExt="scc" Type="compiled">
+				
+			</FileType>
+			
+			<FileType Name="SCR Compiled Script Multifile" FormatExt="scm" Type="merged">
+				
+			</FileType>
+		</Configuration>
+		
+		<Configuration ID="cleo_sa" Name="GTA:SA CLEO">
+			<!-- Paths of definitions and additional include paths -->
+			<DefinitionPath>gtasa\</DefinitionPath>
+			<LibraryPath>gtasa\lib\</LibraryPath>
+		</Configuration>
+		
+		<!-- Configurations dependent on the target goal/tool/application -->
+		<Target ID="gtasa" Name="GTA: San Andreas">
+			<InstallDir>C:\Program Files\Rockstar Games\GTA San Andreas</InstallDir>
+			<UseConfig>
+				<Config>scm_sa</Config>
+			</UseConfig>
+		</Target>
+		<Target ID="cleo_sa" Name="CLEO for GTA San Andreas">
+			<InstallDir>C:\Program Files\Rockstar Games\GTA San Andreas\cleo\</InstallDir>
+			<UseConfig>
+				<Config>cleo_sa</Config>
+			</UseConfig>
+		</Target>
+	</BuildConfig>
+</SCRambl>

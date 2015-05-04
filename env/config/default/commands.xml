@@ -364,11 +364,6 @@
                 <Arg Type="LABEL" />
             </Args>
         </Command>
-		<Command Name="launch_mission" ID="0xD7">
-			<Args>
-				<Arg Type="STRING" />
-			</Args>
-		</Command>
         <Command Name="mission_has_finished" ID="0xD8">
         </Command>
         <Command Name="store_car_char_is_in" ID="0xD9">

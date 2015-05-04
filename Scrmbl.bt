@@ -1,0 +1,15 @@
+//--------------------------------------
+//--- 010 Editor v5.0 Binary Template
+//
+// File:
+// Author:
+// Revision:
+// Purpose:
+//--------------------------------------
+
+struct SymbolFile
+{
+    uint64              SourceTime;
+    char                Name[];
+    int                 Aaa;
+} File;

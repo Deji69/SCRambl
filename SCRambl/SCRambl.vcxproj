@@ -132,6 +132,7 @@
     <ClInclude Include="utils\utf8.h" />
     <ClInclude Include="utils\xml.h" />
     <ClInclude Include="Variables.h" />
+    <ClInclude Include="XML.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Builder.cpp" />

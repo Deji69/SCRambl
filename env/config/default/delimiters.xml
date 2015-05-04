@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<SCRambl Version="1.0" FileVersion="0.0.0.0">
+    <Delimiters>
+		<Scope Open="{" Close="}" />
+		<Subscript Open="[" Close="]" />
+	</Delimiters>
+</SCRambl>

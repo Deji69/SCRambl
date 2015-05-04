@@ -74,12 +74,7 @@ int main(int argc, char* argv[])
 	// Load configuration
 	std::cout << "Loading configuration...\n";
 	std::cout << "Loading build configuration...\n";
-	engine.LoadConfigFile("build\\build.xml");
-	engine.SetBuildConfig(CmdParser.GetFlagOpts("build").front());
-	
-	engine.LoadDefinition("constants");
-	engine.LoadDefinition("types");
-	engine.LoadDefinition("commands");
+	engine.LoadBuildFile("build\\build.xml", CmdParser.GetFlagOpts("build").front());
 
 	SCRambl::Project project;
 

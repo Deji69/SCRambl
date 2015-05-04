@@ -208,7 +208,7 @@ namespace SCRambl
 			});*/
 		}
 		
-		Builder::Builder(Engine& engine) : m_Config(engine.AddConfig("BuildConfig")),
+		Builder::Builder(Engine& engine) : m_Engine(engine), m_Config(engine.AddConfig("BuildConfig")),
 			m_ConfigurationConfig(m_Config->AddClass("Build", [this](const pugi::xml_node vec, std::shared_ptr<void> & obj){
 				auto attr = vec.attribute("ID");
 				if (!attr.empty()) {

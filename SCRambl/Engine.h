@@ -18,6 +18,7 @@
 #include "Commands.h"
 #include "Types.h"
 #include "Constants.h"
+#include "Scripts.h"
 
 namespace SCRambl
 {
@@ -133,18 +134,24 @@ namespace SCRambl
 		\*/
 		bool LoadFile(const std::string & path, Script& script)
 		{
-			return GetFilePathExtension(path) == "xml" ? LoadConfigFile(path) : m_Builder.LoadScriptFile(path, script);
+			return GetFilePathExtension(path) == "xml" ? LoadXML(path) : m_Builder.LoadScriptFile(path, script);
 		}
 
 		/*\
-		 * Engine::LoadConfigFile
+		 * Engine::LoadConfigFile - Loads a build file (e.g. build.xml) and applies the buildConfig
 		\*/
-
-		bool LoadConfigFile(const std::string & path)
+		bool LoadBuildFile(const std::string& path, const std::string& buildConfig = "")
 		{
 			if (LoadXML(path)) {
-				m_Builder.LoadDefaultConfigs();
-				return true;
+				m_Builder.SetConfig(buildConfig);
+				if (auto config = m_Builder.GetConfig()) {
+					auto l = config->GetNumDefaultLoads();
+					for (size_t i = 0; i < l; ++i) {
+						if (!LoadXML(config->GetDefaultLoad(i)))
+							return false;
+					}
+					return true;
+				}
 			}
 			return false;
 		}
@@ -157,7 +164,7 @@ namespace SCRambl
 			auto l = m_Builder.GetConfig()->GetNumDefinitionPaths();
 			for (size_t i = 0; i < l; ++i) {
 				std::string path = m_Builder.GetConfig()->GetDefinitionPath(i) + filename;
-				if (LoadConfigFile(path)) {
+				if (LoadXML(path)) {
 					if (full_path_out) *full_path_out = path;
 					return true;
 				}

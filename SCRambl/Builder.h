@@ -105,13 +105,16 @@ namespace SCRambl
 			const std::string & GetLibraryPath() const;
 
 			inline size_t GetNumDefinitionPaths() const						{ return m_DefinitionPaths.size(); }
+			inline size_t GetNumDefaultLoads() const						{ return m_LoadDefaults.size(); }
 			inline const std::string & GetDefinitionPath(size_t i) const	{ return m_DefinitionPaths[i]; }
+			inline const std::string & GetDefaultLoad(size_t i) const		{ return m_LoadDefaults[i]; }
 			inline const std::string & GetID() const						{ return m_ID; }
 			inline const std::string & GetName() const						{ return m_Name; }
 		};
 
 		class Builder : public TaskSystem::Task < BuildEvent >
 		{
+			Engine& m_Engine;
 			Configuration::Shared m_Config;
 			Configuration::Config& m_ConfigurationConfig;
 			std::unordered_map<std::string, std::shared_ptr<BuildConfig>> m_BuildConfigurations;
@@ -141,6 +144,10 @@ namespace SCRambl
 			void ResetTask() override			{ Init(); }
 
 		public:
+		};
+
+		class Build
+		{
 		};
 	}
 }
