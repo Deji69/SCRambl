@@ -70,6 +70,9 @@
     <ClCompile Include="Delimiters.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="XML.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Builder.h">
@@ -235,7 +238,7 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="XML.h">
-      <Filter>Header</Filter>
+      <Filter>Resource</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

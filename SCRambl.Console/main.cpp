@@ -6,6 +6,7 @@
 #include "stdafx.h"
 #include "SCRambl.h"
 #include "main.h"
+#include "SCRambl\XML.h"
 
 void ProcessCommand(const std::string & cmd);
 
@@ -21,6 +22,11 @@ int main(int argc, char* argv[])
 	CmdParser.AddFlag("output", 'o');
 	CmdParser.AddFlag("project", 'p');
 	CmdParser.Parse();
+
+	SCRambl::XML xml("build\\build.xml");
+	//auto res = xml;
+	
+	return 0;
 
 	std::cout << "SCRambl Advanced SCR Compiler/Assembler\n";
 	bool error_status = false;
@@ -74,7 +80,9 @@ int main(int argc, char* argv[])
 	// Load configuration
 	std::cout << "Loading configuration...\n";
 	std::cout << "Loading build configuration...\n";
-	engine.LoadBuildFile("build\\build.xml", CmdParser.GetFlagOpts("build").front());
+	if (!engine.LoadBuildFile("build\\build.xml", CmdParser.GetFlagOpts("build").front())) {
+		std::cerr << "Failed to load build configuration!";
+	}
 
 	SCRambl::Project project;
 

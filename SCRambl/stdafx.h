@@ -5,12 +5,14 @@
 //	 or copy at http://opensource.org/licenses/MIT)
 /**********************************************************/
 #pragma once
-#pragma warning(disable:4341)
+#ifdef _MSC_VER
+	#pragma warning(disable:4341)
+#endif
 
 #ifdef _WIN32
-#include <Windows.h>
+	#include <Windows.h>
 #else
-#define DWORD unsigned long
+	#define DWORD unsigned long
 #endif
 
 #include <stdio.h>
@@ -21,11 +23,7 @@
 #include <sstream>
 #include <map>
 #include <unordered_map>
-//#include <hash_map>
 #include <exception>
-//#include <tchar.h>
-//#include <direct.h>
-//#include <conio.h>
 #include <iostream>
 #include <vector>
 #include <list>

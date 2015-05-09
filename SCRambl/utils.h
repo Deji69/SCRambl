@@ -38,6 +38,32 @@ namespace SCRambl
 
 namespace SCRambl
 {
+	union VersionStruct
+	{
+		struct {
+			uint32_t Major : 8;
+			uint32_t Minor : 8;
+			uint32_t Beta : 8;
+			uint32_t Alpha : 8;
+		};
+		uint32_t VersionLong;
+
+		VersionStruct() : VersionLong(0) { }
+		VersionStruct(uint32_t v) : VersionLong(v) { }
+		VersionStruct(uint8_t major, uint8_t minor, uint8_t beta = 0, uint8_t alpha = 0) : Alpha(alpha), Beta(beta), Minor(minor), Major(major) { }
+		inline bool operator==(const VersionStruct& v) const { return VersionLong == v.VersionLong; }
+		inline bool operator!=(const VersionStruct& v) const { return !(*this == v); }
+		inline bool operator>(const VersionStruct& v) const { return Major > v.Major || Minor > v.Minor || Beta > v.Beta || Alpha > v.Alpha; }
+		inline bool operator<(const VersionStruct& v) const { return Major < v.Major || Minor < v.Minor || Beta < v.Beta || Alpha < v.Alpha; }
+		inline bool operator>=(const VersionStruct& v) const { return !(*this < v); }
+		inline bool operator<=(const VersionStruct& v) const { return !(*this > v); }
+
+		// Will get the shortest possible version string (omitting unnecessary .0) e.g. 1.0.0.0 == 1, 1.0.2.0 = 1.0.2, 0.0.0.0 = 0
+		std::string GetString() const;
+	};
+
+	extern const VersionStruct SCRamblVersion;
+
 	class line
 	{
 		std::string str;

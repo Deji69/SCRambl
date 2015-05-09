@@ -165,6 +165,7 @@
     <ClCompile Include="utils\pugixml\pugixml.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="XML.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\TODO.md" />

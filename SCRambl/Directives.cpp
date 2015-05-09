@@ -20,4 +20,10 @@ namespace SCRambl
 		auto it = g_Directives.find(str);
 		return it != g_Directives.end() ? it->second : invalid;
 	}
+
+	Directive::Directive(ID id) : m_ID(id)
+	{ }
+	Directive::operator ID() const {
+		return m_ID;
+	}
 }

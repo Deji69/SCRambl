@@ -27,10 +27,8 @@ namespace SCRambl
 			UNDEF,
 		}	m_ID;
 
-		Directive(ID id) : m_ID(id)
-		{}
-
-		inline operator ID() const			{ return m_ID; }
+		Directive(ID);
+		operator ID() const;
 	};
 	
 	typedef Identifier::Map<Directive> DirectiveMap;

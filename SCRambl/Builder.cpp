@@ -150,6 +150,7 @@ namespace SCRambl
 		{ }
 		BuildConfig::BuildConfig(std::string id, std::string name, Configuration::Config& config) : m_ID(id), m_Name(name)
 		{
+			// <DefinitionPath>s
 			auto& defpath = config.AddClass("DefinitionPath", [](const pugi::xml_node vec, std::shared_ptr<void> & obj){
 				auto ptr = std::static_pointer_cast<BuildConfig>(obj);
 				if (auto attr = vec.attribute("Path")) {
@@ -158,6 +159,8 @@ namespace SCRambl
 				}
 				ptr->SetDefinitionPath("");
 			});
+
+			// <DefinitionPath>'s <Definition>s
 			defpath.AddClass("Definition", [](const pugi::xml_node vec, std::shared_ptr<void>& obj){
 				auto ptr = std::static_pointer_cast<BuildConfig>(obj);
 				std::string path = vec.text().as_string();
@@ -165,6 +168,8 @@ namespace SCRambl
 					ptr->AddDefaultLoad(path);
 				}
 			});
+
+			// <Definition>s
 			config.AddClass("Definition", [](const pugi::xml_node vec, std::shared_ptr<void>& obj){
 				auto ptr = std::static_pointer_cast<BuildConfig>(obj);
 				std::string path = vec.text().as_string();
@@ -172,10 +177,12 @@ namespace SCRambl
 					ptr->AddDefaultLoadLocally(path);
 				}
 			});
+			// <LibraryPath>
 			config.AddClass("LibraryPath", [](const pugi::xml_node vec, std::shared_ptr<void> & obj){
 				auto ptr = std::static_pointer_cast<BuildConfig>(obj);
 				ptr->SetLibraryPath(vec.text().as_string());
 			});
+			// <IncludePath> <Path>s
 			config.AddClass("IncludePaths", [](const pugi::xml_node vec, std::shared_ptr<void> & obj){
 			}).AddClass("Path", [](const pugi::xml_node vec, std::shared_ptr<void> & obj){
 				auto ptr = std::static_pointer_cast<BuildConfig>(obj);
@@ -183,6 +190,13 @@ namespace SCRambl
 					ptr->AddIncludePath(vec.text().as_string());
 				}
 			});
+			// <Script>
+			auto& script = config.AddClass("Script", [](const pugi::xml_node vec, std::shared_ptr<void>& obj){
+			});
+			script.AddClass("Input", [](const pugi::xml_node vec, std::shared_ptr<void>& obj) {
+
+			});
+
 			/*config.AddClass("FileType", [](const pugi::xml_node vec, std::shared_ptr<void> & obj){
 				auto ptr = std::static_pointer_cast<BuildConfig>(obj);
 				auto attr = vec.attribute("Name");
