@@ -85,8 +85,15 @@ namespace SCRambl
 	// -- Take care of prior commitments... --
 
 	/* XML */
-	auto XML::GetPugiParseResult() -> decltype(m_parseResult) { return m_parseResult; }
-	auto XML::GetPugi() -> decltype(m_doc)& { return m_doc; }
+	auto XML::GetNode(const char * name) const->XMLNode { return m_parseData.Result ? m_parseData.SCRamblNode.GetPugi().child(name) : XMLNode(); }
+	auto XML::GetNode(std::string name) const->XMLNode { return GetNode(name.c_str()); }
+	auto XML::GetNode(const wchar_t* name) const->XMLNode { return GetNode(narrow(name)); }
+	auto XML::GetNode(std::wstring name) const->XMLNode { return GetNode(narrow(name)); }
+	auto XML::Node() const->XMLNode { return m_parseData.SCRamblNode; }
+	auto XML::GetParseResult() const->decltype(m_parseData) { return m_parseData; }
+	auto XML::GetPugiParseResult() const->decltype(m_parseResult) { return m_parseResult; }
+	auto XML::GetPugi() const->const decltype(m_doc)& { return m_doc; }
+	auto XML::GetPugi()->decltype(m_doc)& { return m_doc; }
 	XML::XML() { ParseXML(*this, m_parseData); }
 	XML::XML(std::string path) : XML(path.c_str()) { ParseXML(*this, m_parseData); }
 	XML::XML(std::wstring path) : XML(path.c_str()) { ParseXML(*this, m_parseData); }
@@ -230,8 +237,8 @@ namespace SCRambl
 		if (!str.empty()) vec.emplace_back(str);
 		return vec;
 	}
-	auto XMLValue::AsString(std::string default_value) const->std::string { return m_str.empty() ? m_str : default_value; }
-	XMLValue::XMLValue() : m_type(xmlvalue_null) { };
+	auto XMLValue::AsString(std::string default_value) const->std::string { return m_str.empty() ? default_value : m_str; }
+	XMLValue::XMLValue() { }
 	XMLValue::XMLValue(std::string str) : m_str(str) { }
 	/* XMLAttribute */
 	auto XMLAttribute::GetValue() const->XMLValue { return m_attr.as_string(); }
@@ -240,15 +247,27 @@ namespace SCRambl
 	XMLAttribute::XMLAttribute(pugi::xml_attribute_struct* attr) : m_attr(attr) { }
 	XMLAttribute::operator bool() const { return m_attr; }
 	/* XMLNode */
-	auto XMLNode::GetAttribute(std::string attr) const->XMLAttribute { return m_node.attribute(attr.c_str()); }
+	auto XMLNode::GetNode(const char * name) const->XMLNode { return m_node ? m_node.child(name) : XMLNode(); }
+	auto XMLNode::GetNode(std::string name) const->XMLNode { return GetNode(name.c_str()); }
+	auto XMLNode::GetNode(const wchar_t * name) const->XMLNode { return GetNode(narrow(name)); }
+	auto XMLNode::GetNode(std::wstring name) const->XMLNode { return GetNode(name.c_str()); }
+	auto XMLNode::GetValue(const char * name) const->XMLValue { return m_node.value(); }
+	auto XMLNode::GetValue(std::string name) const->XMLValue { return name.c_str(); }
 	auto XMLNode::GetAttribute(const char * attr) const->XMLAttribute { return m_node.attribute(attr); }
-	auto XMLNode::GetPugi() -> decltype(m_node)& { return m_node; }
+	auto XMLNode::GetAttribute(std::string attr) const->XMLAttribute { return GetAttribute(attr.c_str()); }
+	auto XMLNode::GetPugi() const->const decltype(m_node)& { return m_node; }
+	auto XMLNode::GetPugi()->decltype(m_node)& { return m_node; }
+	auto XMLNode::End() const->Iterator { return m_node.end(); }
 	XMLNode::XMLNode(const pugi::xml_node& node) : m_node(node) { }
 	XMLNode::XMLNode(pugi::xml_node_struct* node) : m_node(node) { }
 	XMLNode::operator bool() const { return m_node; }
+	/* XMLNodeIterator */
+	XMLNode* XMLNodeIterator::operator->() const { return &m_mnode; }
+	XMLNode& XMLNodeIterator::operator*() const { return m_mnode; }
+	XMLNodeIterator::XMLNodeIterator(pugi::xml_node::iterator it) : m_it(it), m_node(*it), m_mnode(*it) { }
 	/* XMLParseData */
 	XMLParseData::XMLParseData() { }
 	/* XMLResult */
-	XMLResult::XMLResult() : status(xmlstatus_error), error(xmlerror_none) { }
+	XMLResult::XMLResult() : status(xmlstatus_ok), error(xmlerror_none) { }
 	XMLResult::operator bool() const { return status == xmlstatus_ok; }
 }

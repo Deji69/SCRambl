@@ -24,7 +24,11 @@ int main(int argc, char* argv[])
 	CmdParser.Parse();
 
 	SCRambl::XML xml("build\\build.xml");
-	//auto res = xml;
+	auto node = xml.GetNode("BuildConfig");
+	auto conf = node.GetNode("Build");
+	auto attr = conf.GetAttribute("Name");
+	auto val = attr.GetValue();
+	auto name = val.AsString();
 	
 	return 0;
 

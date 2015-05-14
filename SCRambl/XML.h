@@ -16,7 +16,6 @@ namespace SCRambl
 
 	class XMLValue
 	{
-		XMLValueType m_type;
 		std::string m_str;
 
 	public:
@@ -57,7 +56,29 @@ namespace SCRambl
 		operator bool() const;
 
 		auto GetValue() const->XMLValue;
+		auto GetPugi() const->const decltype(m_attr)&;
 		auto GetPugi()->decltype(m_attr)&;
+	};
+
+	class XMLNodeIterator
+	{
+		pugi::xml_node::iterator m_it;
+		mutable XMLNode m_mnode;
+		XMLNode m_node;
+
+	public:
+		XMLNodeIterator() = default;
+		XMLNodeIterator(const XMLNodeIterator&) = default;
+		XMLNodeIterator(pugi::xml_node::iterator);
+		
+		XMLNode& operator*() const;
+		XMLNode* operator->() const;
+		XMLNodeIterator operator++(int);
+		XMLNodeIterator operator--(int);
+		const XMLNodeIterator& operator++();
+		const XMLNodeIterator& operator--();
+		bool operator==(const XMLNodeIterator& rhs) const;
+		bool operator!=(const XMLNodeIterator& rhs) const;
 	};
 
 	class XMLNode
@@ -65,14 +86,25 @@ namespace SCRambl
 		pugi::xml_node m_node;
 
 	public:
+		typedef XMLNodeIterator Iterator;
+
 		XMLNode() = default;
 		XMLNode(const XMLNode&) = default;
 		XMLNode(const decltype(m_node)& node);
 		XMLNode(pugi::xml_node_struct* node);
 		operator bool() const;
 
+		auto Begin() const->Iterator;
+		auto End() const->Iterator;
+		auto GetNode(std::wstring) const->XMLNode;
+		auto GetNode(std::string) const->XMLNode;
+		auto GetNode(const wchar_t *) const->XMLNode;
+		auto GetNode(const char *) const->XMLNode;
+		auto GetValue(std::string) const->XMLValue;
+		auto GetValue(const char *) const->XMLValue;
 		auto GetAttribute(std::string) const->XMLAttribute;
 		auto GetAttribute(const char *) const->XMLAttribute;
+		auto GetPugi() const->const decltype(m_node)&;
 		auto GetPugi()->decltype(m_node)&;
 	};
 
@@ -121,8 +153,16 @@ namespace SCRambl
 		XML(const char* path);
 		XML(const wchar_t* path);
 		operator bool() const;
+		
+		auto Node() const->XMLNode;
+		auto GetNode(std::string) const->XMLNode;
+		auto GetNode(std::wstring) const->XMLNode;
+		auto GetNode(const char*) const->XMLNode;
+		auto GetNode(const wchar_t*) const->XMLNode;
 
-		auto GetPugiParseResult()->decltype(m_parseResult);
+		auto GetParseResult() const->decltype(m_parseData);
+		auto GetPugiParseResult() const->decltype(m_parseResult);
+		auto GetPugi() const->const decltype(m_doc)&;
 		auto GetPugi()->decltype(m_doc)&;
 	};
 }
