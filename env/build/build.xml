@@ -27,8 +27,6 @@
 				<Info>
 					<!-- Declare script info pseudo-VARs -->
 					<VAR Type="INT" Name="_NUM_VARS" />
-					<VAR Type="INT" Name="_NUM_MODELS" />
-					<VAR Type="STRING[24][]" Name="_MODEL_NAMES" />
 				</Info>
 				
 				<Input>($InputFiles)</Input>
@@ -55,6 +53,19 @@
 			<Script Name="Main Script" Type="main">
 				<Input>($InputFile)</Input>
 				<Input Type="subscript">($InputDir)\($InputName)</Input>
+				
+				<Info>
+					<VAR Type="INT" Name="_MAIN_SIZE" />
+					<VAR Type="INT" Name="_LARGEST_STREAMED_SCRIPT_SIZE" />
+					<VAR Type="INT" Name="_LARGEST_MISSION_SIZE" />
+					<VAR Type="INT" Name="_HIGHEST_NUM_MISSION_LOCALS" />
+					<VAR Type="INT" Name="_MISSION_OFFSETS" />
+					<VAR Type="INT" Name="_NUM_MISSIONS" />
+					<VAR Type="INT" Name="_NUM_EXCLUSIVE_MISSIONS" />
+					<VAR Type="INT" Name="_NUM_STREAMED_SCRIPTS" />
+					<VAR Type="INT" Name="_NUM_MODELS" />
+					<VAR Type="STRING[24][]" Name="_MODEL_NAMES" />
+				</Info>
 				
 				<Command ID="0xD7">
 					<Input Type="mission">{$InputDir}\{$Arg[1]}</Input>

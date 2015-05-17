@@ -282,6 +282,13 @@ namespace SCRambl
 					ptr->AddDefinitionPath(attr.GetValue().AsString(), defs);
 			}
 		});
+
+		// <Script>
+		auto& script = config.AddClass("Script", [](const XMLNode base, std::shared_ptr<void>& obj){
+			auto ptr = std::static_pointer_cast<BuildConfig>(obj);
+			if (auto attr = base.GetAttribute("Name")) {
+			}
+		});
 	}
 	//BuildConfig::BuildConfig(std::string id, std::string name) : m_ID(id), m_Name(name)
 	//{ }
