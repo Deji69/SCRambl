@@ -98,11 +98,11 @@ namespace SCRambl
 	auto XML::GetPugiParseResult() const->decltype(m_parseResult) { return m_parseResult; }
 	auto XML::GetPugi() const->const decltype(m_doc)& { return m_doc; }
 	auto XML::GetPugi()->decltype(m_doc)& { return m_doc; }
-	XML::XML(Engine& engine) : m_engine(engine) { ParseXML(*this, m_parseData); }
-	XML::XML(Engine& engine, std::string path) : XML(engine, widen(path).c_str()) { ParseXML(*this, m_parseData); }
-	XML::XML(Engine& engine, std::wstring path) : XML(engine, path.c_str()) { ParseXML(*this, m_parseData); }
-	XML::XML(Engine& engine, const char* path) : m_engine(engine), m_parseResult(m_doc.load_file(widen(path).c_str())) { ParseXML(*this, m_parseData); }
-	XML::XML(Engine& engine, const wchar_t* path) : m_engine(engine), m_parseResult(m_doc.load_file(path)) { ParseXML(*this, m_parseData); }
+	XML::XML() { ParseXML(*this, m_parseData); }
+	XML::XML(std::string path) : XML(widen(path).c_str()) { ParseXML(*this, m_parseData); }
+	XML::XML(std::wstring path) : XML(path.c_str()) { ParseXML(*this, m_parseData); }
+	XML::XML(const char* path) : m_parseResult(m_doc.load_file(widen(path).c_str())) { ParseXML(*this, m_parseData); }
+	XML::XML(const wchar_t* path) : m_parseResult(m_doc.load_file(path)) { ParseXML(*this, m_parseData); }
 	XML::operator bool() const { return m_parseResult; }
 	/* XMLValue */
 	template<typename T, typename F>
@@ -244,6 +244,7 @@ namespace SCRambl
 	auto XMLValue::AsString(std::string default_value) const->std::string {
 		return m_str.empty() ? default_value : m_str;
 	}
+	auto XMLValue::Raw() const->std::string { return m_str; }
 	XMLValue::XMLValue() { }
 	XMLValue::XMLValue(std::string str) : m_str(str) { }
 	XMLValue::XMLValue(pugi::xml_text txt) : m_str(txt.as_string()) { }

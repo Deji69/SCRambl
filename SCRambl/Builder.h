@@ -21,6 +21,26 @@ namespace SCRambl
 		BuildDefinitionPath(std::string path);
 	};
 
+	struct InputConfig
+	{
+		using Shared = std::shared_ptr<InputConfig>;
+		InputConfig::InputConfig(XMLValue input) : Input(input)
+		{ }
+
+		XMLValue Input;
+		XMLValue Output;
+	};
+
+	struct ScriptConfig
+	{
+		using Shared = std::shared_ptr<ScriptConfig>;
+		ScriptConfig::ScriptConfig(XMLValue name) : Name(name)
+		{ }
+
+		XMLValue Name;
+		std::vector<InputConfig> Inputs;
+	};
+
 	class BuildConfig
 	{
 		XMLConfiguration::Shared m_Config;
@@ -33,6 +53,9 @@ namespace SCRambl
 		std::vector<BuildDefinitionPath> m_DefinitionPaths;
 		std::map<const std::string, size_t> m_DefinitionPathMap;
 
+		//
+		std::map<std::string, ScriptConfig::Shared> m_Scripts;
+
 		BuildDefinitionPath& AddDefPath(std::string);
 		size_t GetDefinitionPathID(std::string);				// returns -1 on failure
 
@@ -40,6 +63,7 @@ namespace SCRambl
 		//BuildConfig::BuildConfig(std::string id, std::string name);
 		BuildConfig::BuildConfig(std::string id, std::string name, XMLConfig& config);
 
+		ScriptConfig::Shared AddScript(XMLValue);
 		void AddDefinitionPath(std::string);
 		void AddDefinitionPath(std::string, const std::vector<std::string>&);
 
@@ -47,6 +71,23 @@ namespace SCRambl
 		size_t GetNumDefaultLoads() const { return 0; }
 		std::string GetDefaultLoad(size_t i = 0) const { return ""; }
 		std::string GetDefinitionPath(size_t i) const { return m_DefinitionPaths[i].Path; }
+	};
+
+	class Build
+	{
+		friend class Builder;
+
+		Script m_Script;
+		std::vector<std::string> m_Files;
+
+	public:
+		using Shared = std::shared_ptr<Build>;
+
+		Build();
+		//Build(Script&);
+
+		inline Script& GetScript() { return m_Script; }
+		inline const Script& GetScript() const { return m_Script; }
 	};
 
 	class Builder
@@ -59,7 +100,10 @@ namespace SCRambl
 
 	public:
 		Builder(Engine&);
-		bool LoadScriptFile(std::string, Script&) { return true; }
+
+		Scripts::File::Shared LoadFile(Build&, std::string);
+
+		bool LoadScriptFile(std::string, Script&);
 		bool SetConfig(std::string) const { return true; }
 		std::shared_ptr<BuildConfig> GetConfig() const { return m_BuildConfig; }
 	};

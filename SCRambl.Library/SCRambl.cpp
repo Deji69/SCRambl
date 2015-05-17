@@ -59,6 +59,9 @@ SCRAMBLAPI bool SCRambl_LoadBuildConfig(SCRamblInst* inst, const char* file, con
 }
 
 SCRAMBLAPI bool SCRambl_Build(SCRamblInst* inst) {
+	auto& engine = inst->Inst->Engine;
+	engine.InitBuild(inst->Inst->Script, inst->Inst->InputFiles);
+
 	auto& script = inst->Inst->Script;
 	auto& files = inst->Inst->InputFiles;
 	for (auto path : files) {

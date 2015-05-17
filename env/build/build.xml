@@ -14,7 +14,6 @@
 				<Definition>constants.xml</Definition>
 				<Definition>types.xml</Definition>
 				<Definition>commands.xml</Definition>
-				<Definition>commands.xml</Definition>
 			</DefinitionPath>
 			
 			<LibraryPath>gtasa/lib/</LibraryPath>
@@ -29,7 +28,11 @@
 					<VAR Type="INT" Name="_NUM_VARS" />
 				</Info>
 				
-				<Input>($InputFiles)</Input>
+				<Input>
+					<File Out="($OutputName).cs">($InputFiles[0])</File>
+					<File Out="($OutputName).cs">($InputFiles[1...])</File>
+				</Input>
+				<Input Type="">
 				<!--<Header Template="gtasa/SCM.sc"></Header>-->
 			</Script>
 			

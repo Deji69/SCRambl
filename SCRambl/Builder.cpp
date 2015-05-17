@@ -239,7 +239,16 @@ namespace SCRambl
 		{ }
 	}
 
+	/* Build */
+	Build::Build()
+	{ }
+
 	/* BuildConfig */
+	ScriptConfig::Shared BuildConfig::AddScript(XMLValue name) {
+		auto ptr = std::make_shared<ScriptConfig>(name);
+		m_Scripts.emplace(name.Raw(), ptr);			// TODO: ?
+		return ptr;
+	}
 	void BuildConfig::AddDefinitionPath(std::string path, const std::vector<std::string>& defs) {
 		auto defpath = AddDefPath(path);
 		std::remove_copy_if(defs.begin(), defs.end(), std::back_inserter(defpath.Definitions), VectorContainPred<std::string>(defpath.Definitions));
@@ -262,7 +271,7 @@ namespace SCRambl
 		return it != m_DefinitionPathMap.end() ? it->second : -1;
 	}
 	BuildConfig::BuildConfig(std::string id, std::string name, XMLConfig& config) : m_ID(id), m_Name(name) {
-		// <DefinitionPath>
+		// <DefinitionPath>...</DefinitionPath>
 		auto& defpath = config.AddClass("DefinitionPath", [](const XMLNode base, std::shared_ptr<void>& obj) {
 			auto ptr = std::static_pointer_cast<BuildConfig>(obj);
 			if (auto attr = base.GetAttribute("Path")) {
@@ -286,14 +295,35 @@ namespace SCRambl
 		// <Script>
 		auto& script = config.AddClass("Script", [](const XMLNode base, std::shared_ptr<void>& obj){
 			auto ptr = std::static_pointer_cast<BuildConfig>(obj);
-			if (auto attr = base.GetAttribute("Name")) {
-			}
+			if (auto attr = base.GetAttribute("Name"))
+				obj = ptr->AddScript(attr.GetValue());
+			else
+				obj = nullptr;
 		});
+			// <Input>
+			script.AddClass("Input", [](const XMLNode base, std::shared_ptr<void>& obj){
+			}).
+				// <File>
+				AddClass("File", [](const XMLNode base, std::shared_ptr<void>& obj){
+					auto ptr = std::static_pointer_cast<ScriptConfig>(obj);
+					ptr->Inputs.emplace_back(base.GetValue());
+					if (auto attr = base.GetAttribute("Out")) {
+						ptr->Inputs.back().Output = attr.GetValue();
+					}
+				}); // </File>
+			// </Input>
+		// </Script>
 	}
 	//BuildConfig::BuildConfig(std::string id, std::string name) : m_ID(id), m_Name(name)
 	//{ }
 
 	/* Builder */
+	Scripts::File::Shared Builder::LoadFile(Build& build, std::string path) {
+		return build.GetScript().OpenFile(path);
+	}
+	bool Builder::LoadScriptFile(std::string path, Script& script) {
+
+	}
 	Builder::Builder(Engine& engine) : m_Engine(engine), m_Configuration(engine.AddConfig("BuildConfig")),
 		m_Config(m_Configuration->AddClass("Build", [this](const XMLNode path, std::shared_ptr<void>& obj){
 			// get attributes

@@ -43,6 +43,8 @@ namespace SCRambl
 		auto AsBool(bool default_value = false) const->bool;
 		auto AsList(char sep = ',', char delim = '"') const->Vector;
 
+		auto Raw() const->std::string;
+
 		auto IsValidNumber() const->bool;
 		auto IsValidVersion() const->bool;
 		auto IsValidBool() const->bool;
@@ -160,17 +162,16 @@ namespace SCRambl
 	
 	class XML
 	{
-		Engine& m_engine;
 		pugi::xml_document m_doc;
 		pugi::xml_parse_result m_parseResult;
 		XMLParseData m_parseData;
 		
 	public:
-		XML(Engine&);
-		XML(Engine&, std::string path);
-		XML(Engine&, std::wstring path);
-		XML(Engine&, const char* path);
-		XML(Engine&, const wchar_t* path);
+		XML();
+		XML(std::string path);
+		XML(std::wstring path);
+		XML(const char* path);
+		XML(const wchar_t* path);
 		XML(const XML&) = default;
 		operator bool() const;
 		

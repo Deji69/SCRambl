@@ -63,6 +63,8 @@ namespace SCRambl
 		virtual ~Engine()
 		{ }
 
+		Build InitBuild(Script&, std::vector<std::string> files);
+
 		// Get SCR Commands
 		inline Commands & GetCommands()			{ return m_Commands; }
 		// Get SCR Types
@@ -78,8 +80,7 @@ namespace SCRambl
 		/*\
 		 * Engine::SetBuildConfig
 		\*/
-		inline bool SetBuildConfig(std::string name)
-		{
+		inline bool SetBuildConfig(std::string name) {
 			return m_Builder.SetConfig(name);
 		}
 
@@ -102,24 +103,21 @@ namespace SCRambl
 		/*\
 		 * Engine::AddConfig
 		\*/
-		void AddConfig(std::shared_ptr<Configuration> config)
-		{
+		void AddConfig(std::shared_ptr<Configuration> config) {
 			//m_Config.emplace(config->GetName(), config);
 		}
 
 		/*\
 		 * Engine::LoadFile
 		\*/
-		bool LoadFile(const std::string & path, Script& script)
-		{
+		bool LoadFile(const std::string & path, Script& script) {
 			return GetFilePathExtension(path) == "xml" ? LoadXML(path) : m_Builder.LoadScriptFile(path, script);
 		}
 
 		/*\
 		 * Engine::LoadConfigFile - Loads a build file (e.g. build.xml) and applies the buildConfig
 		\*/
-		bool LoadBuildFile(const std::string& path, const std::string& buildConfig = "")
-		{
+		bool LoadBuildFile(const std::string& path, const std::string& buildConfig = "") {
 			if (LoadXML(path)) {
 				m_Builder.SetConfig(buildConfig);
 				if (auto config = m_Builder.GetConfig()) {

@@ -3,8 +3,21 @@
 
 using namespace SCRambl;
 
+Build Engine::InitBuild(Script& script, std::vector<std::string> files) {
+	Build build;
+	auto config = m_Builder.GetConfig();
+	for (auto path : files) {
+		auto file = m_Builder.LoadFile(build, path);
+		if (!file) {
+			BREAK();
+		}
+	}
+
+	
+}
+
 bool Engine::LoadXML(const std::string& path) {
-	XML xml(*this, path);
+	XML xml(path);
 	if (xml) {
 		// load configurations
 		if (m_Config.size()) {
