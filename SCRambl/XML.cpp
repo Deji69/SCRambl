@@ -245,7 +245,7 @@ namespace SCRambl
 	auto XMLAttribute::GetPugi()->decltype(m_attr)& { return m_attr; }
 	XMLAttribute::XMLAttribute(const decltype(m_attr)& attr) : m_attr(attr) { }
 	XMLAttribute::XMLAttribute(pugi::xml_attribute_struct* attr) : m_attr(attr) { }
-	XMLAttribute::operator bool() const { return m_attr; }
+	XMLAttribute::operator bool() const { return !m_attr.empty(); }
 	/* XMLNode */
 	auto XMLNode::GetNode(const char * name) const->XMLNode { return m_node ? m_node.child(name) : XMLNode(); }
 	auto XMLNode::GetNode(std::string name) const->XMLNode { return GetNode(name.c_str()); }
@@ -260,7 +260,7 @@ namespace SCRambl
 	auto XMLNode::End() const->Iterator { return m_node.end(); }
 	XMLNode::XMLNode(const pugi::xml_node& node) : m_node(node) { }
 	XMLNode::XMLNode(pugi::xml_node_struct* node) : m_node(node) { }
-	XMLNode::operator bool() const { return m_node; }
+	XMLNode::operator bool() const { return !m_node.empty(); }
 	/* XMLNodeIterator */
 	XMLNode* XMLNodeIterator::operator->() const { return &m_mnode; }
 	XMLNode& XMLNodeIterator::operator*() const { return m_mnode; }

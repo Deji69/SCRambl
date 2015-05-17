@@ -4,49 +4,33 @@
 /****************************************************/
 
 #include "stdafx.h"
-#include "SCRambl.h"
+//#include "SCRambl.h"
 #include "main.h"
-#include "SCRambl\XML.h"
+//#include "SCRambl\XML.h"
+#include "SCRambl.Library\SCRambl.h"
+#include "SCRambl\Scripts.h"
+#include <stdexcept>
 
 void ProcessCommand(const std::string & cmd);
 
-int main(int argc, char* argv[])
-{
-	std::string cmd;
-	CCLP CmdParser({ argv + 1, &argv[argc] });
+struct return_exception : public std::exception {
+	int RC;
+	return_exception(int rc) : RC(rc) { }
+};
 
-	CmdParser.AddFlag("build", 'b');
-	CmdParser.AddFlag("format", 'f');
-	CmdParser.AddFlag("help", 'h');
-	CmdParser.AddFlag("load", 'l');
-	CmdParser.AddFlag("output", 'o');
-	CmdParser.AddFlag("project", 'p');
-	CmdParser.Parse();
-
-	SCRambl::XML xml("build\\build.xml");
-	auto node = xml.GetNode("BuildConfig");
-	auto conf = node.GetNode("Build");
-	auto attr = conf.GetAttribute("Name");
-	auto val = attr.GetValue();
-	auto name = val.AsString();
-	
-	return 0;
-
-	std::cout << "SCRambl Advanced SCR Compiler/Assembler\n";
-	bool error_status = false;
-
-	if (CmdParser.IsFlagSet("help") || CmdParser.IsFlagSet("?") || !CmdParser.GetOpts().size())
+void CheckCommandLine(const CCLP& cmdParser) {
+	if (cmdParser.IsFlagSet("help") || cmdParser.IsFlagSet("?") || !cmdParser.GetOpts().size())
 	{
-		std::list<std::string> helps(CmdParser.GetFlagOpts("help"));
-		auto qs = CmdParser.GetFlagOpts("?");
+		std::list<std::string> helps(cmdParser.GetFlagOpts("help"));
+		auto qs = cmdParser.GetFlagOpts("?");
 		helps.insert(helps.end(), qs.begin(), qs.end());
 
-		if (!helps.size()) helps = CmdParser.GetFlagOpts("?");
+		if (!helps.size()) helps = cmdParser.GetFlagOpts("?");
 		if (!helps.size())
 		{
 			std::cout << "Syntax: SCRambl <input_filename> [-f=<format>] [-o=<output_filename>]\n"
 				<< "Use the -h flag for help on any other flag e.g. \"-hf\" or \"-h format\" for help on the -f flag\n";
-			return 0;
+			throw return_exception(EXIT_SUCCESS);
 		}
 		else
 		{
@@ -54,18 +38,97 @@ int main(int argc, char* argv[])
 			{
 				if (help == "f")
 					std::cout << "Specifies the output format. Use one of the following format parameters:\n"
-						<< "scc - Single Compiled Script\n"
-						<< "scm - Script Multifile\n"
-						<< "Syntax: -f <format>";
+					<< "scc - Single Compiled Script\n"
+					<< "scm - Script Multifile\n"
+					<< "Syntax: -f <format>";
 				else if (help == "p")
 					std::cout << "Enables creation of a project file. Use this with -l to set file path.\n"
-						<< "Syntax: -p <projectname (optional)>";
+					<< "Syntax: -p <projectname (optional)>";
 				else if (help == "l")
 					std::cout << "Sets the project file path. Without -p this loads a project, otherwise it sets the save path.\n"
-						<< "Syntax: -l <filename>";
+					<< "Syntax: -l <filename>";
 			}
+			throw return_exception(EXIT_SUCCESS);
 		}
 	}
+}
+
+class SCRamblProc
+{
+	SCRamblInst* m_inst = nullptr;
+
+public:
+	SCRamblProc() {
+		if (!SCRambl_Init(&m_inst))
+			m_inst = nullptr;
+	}
+	SCRamblProc(const SCRamblProc& v) = delete;
+	SCRamblProc(SCRamblProc&& v) : m_inst(v.m_inst) {
+		v.m_inst = nullptr;
+	}
+
+	SCRamblProc& operator=(const SCRamblProc& v) = delete;
+	SCRamblProc& operator=(SCRamblProc&& v) {
+		std::swap(m_inst, v.m_inst);
+		return *this;
+	}
+
+	~SCRamblProc() {
+		if (m_inst) SCRambl_Free(&m_inst);
+	}
+
+	inline int RC() const { return m_inst->Status.RC; }
+	inline operator SCRamblInst*() const { return m_inst; }
+};
+
+int main(int argc, char* argv[])
+{
+	try {
+		std::string cmd;
+		CCLP CmdParser({ argv + 1, &argv[argc] });
+
+		CmdParser.AddFlag("build", 'b');
+		CmdParser.AddFlag("format", 'f');
+		CmdParser.AddFlag("help", 'h');
+		CmdParser.AddFlag("load", 'l');
+		CmdParser.AddFlag("output", 'o');
+		CmdParser.AddFlag("project", 'p');
+		CmdParser.Parse();
+
+		std::cout << "SCRambl Advanced SCR Compiler/Assembler\n";
+
+		CheckCommandLine(CmdParser);
+
+		SCRamblProc scrambl;
+
+		if (!SCRambl_LoadBuildConfig(scrambl, "build\\build.xml", CmdParser.GetFlagOpts("build").front().c_str()))
+		{
+			if (scrambl.RC() == SCRAMBLRC_BUILD_FILE_NOT_FOUND) {
+				std::cerr << "build file 'build.xml' not found";
+			}
+			else std::cerr << "error loading 'build.xml' file";
+		}
+		else
+		{
+			auto files = CmdParser.GetOpts();
+			for (auto path : files) {
+				SCRambl_AddInputFile(scrambl, path.c_str());
+			}
+
+			SCRambl_Build(scrambl);
+		}
+	}
+	catch (return_exception& ex) {
+		return ex.RC;
+	}
+	catch (std::exception& ex) {
+		std::cerr << "unhandled exception: " << ex.what();
+		return EXIT_FAILURE;
+	}
+	return EXIT_SUCCESS;
+
+#if 0
+	bool error_status = false;
 
 	auto& project_opts = CmdParser.GetFlagOpts("project");
 	auto& load_opts = CmdParser.GetFlagOpts("load");
@@ -402,6 +465,7 @@ int main(int argc, char* argv[])
 	}
 
 	return 0;
+#endif
 #endif
 }
 

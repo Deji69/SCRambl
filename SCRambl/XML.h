@@ -60,26 +60,7 @@ namespace SCRambl
 		auto GetPugi()->decltype(m_attr)&;
 	};
 
-	class XMLNodeIterator
-	{
-		pugi::xml_node::iterator m_it;
-		mutable XMLNode m_mnode;
-		XMLNode m_node;
-
-	public:
-		XMLNodeIterator() = default;
-		XMLNodeIterator(const XMLNodeIterator&) = default;
-		XMLNodeIterator(pugi::xml_node::iterator);
-		
-		XMLNode& operator*() const;
-		XMLNode* operator->() const;
-		XMLNodeIterator operator++(int);
-		XMLNodeIterator operator--(int);
-		const XMLNodeIterator& operator++();
-		const XMLNodeIterator& operator--();
-		bool operator==(const XMLNodeIterator& rhs) const;
-		bool operator!=(const XMLNodeIterator& rhs) const;
-	};
+	class XMLNodeIterator;
 
 	class XMLNode
 	{
@@ -106,6 +87,27 @@ namespace SCRambl
 		auto GetAttribute(const char *) const->XMLAttribute;
 		auto GetPugi() const->const decltype(m_node)&;
 		auto GetPugi()->decltype(m_node)&;
+	};
+
+	class XMLNodeIterator
+	{
+		pugi::xml_node::iterator m_it;
+		mutable XMLNode m_mnode;
+		XMLNode m_node;
+
+	public:
+		XMLNodeIterator() = default;
+		XMLNodeIterator(const XMLNodeIterator&) = default;
+		XMLNodeIterator(pugi::xml_node::iterator);
+
+		XMLNode& operator*() const;
+		XMLNode* operator->() const;
+		XMLNodeIterator operator++(int);
+		XMLNodeIterator operator--(int);
+		const XMLNodeIterator& operator++();
+		const XMLNodeIterator& operator--();
+		bool operator==(const XMLNodeIterator& rhs) const;
+		bool operator!=(const XMLNodeIterator& rhs) const;
 	};
 
 	enum XMLStatus {

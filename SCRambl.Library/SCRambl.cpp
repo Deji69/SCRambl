@@ -1,0 +1,78 @@
+#include "stdafx.h"
+#include "SCRambl.h"
+#include "..\SCRambl.h"
+#include "SCRambl\XML.h"
+#include "Instance.h"
+
+SCRambl::Engine g_Engine;
+std::vector<std::string> g_InputFiles;
+
+SCRamblStatus MakeStatus(SCRamblResultCode rc) {
+	SCRamblStatus status;
+	status.RC = rc;
+	return status;
+}
+
+SCRAMBLAPI bool SCRambl_Init(SCRamblInst** out) {
+	if (auto inst = new SCRamblInst) {
+		if (inst->Inst = new SCRamblInstance()) {
+			inst->Status = MakeStatus(SCRAMBLRC_OK);
+			*out = inst;
+			return true;
+		}
+		else delete inst;
+	}
+	return false;
+}
+
+SCRAMBLAPI bool SCRambl_Free(SCRamblInst** inst) {
+	if (inst) {
+		if (*inst) {
+			if ((*inst)->Inst) {
+				delete (*inst)->Inst;
+				(*inst)->Inst = nullptr;
+			}
+			delete *inst;
+		}
+		*inst = nullptr;
+		return true;
+	}
+	return false;
+}
+
+SCRAMBLAPI bool SCRambl_AddInputFile(SCRamblInst* instance, const char* path) {
+	instance->Inst->InputFiles.emplace_back(path);
+	return true;
+}
+
+SCRAMBLAPI void SCRambl_ClearInputFiles(SCRamblInst* instance) {
+	instance->Inst->InputFiles.clear();
+}
+
+SCRAMBLAPI bool SCRambl_LoadBuildConfig(SCRamblInst* inst, const char* file, const char* config) {
+	SCRambl::XML xml(file);
+	if (xml) {
+		auto node = xml.GetNode("BuildConfig");
+		auto conf = node.GetNode("Build");
+		auto attr = conf.GetAttribute("Name");
+		auto val = attr.GetValue();
+		auto name = val.AsString();
+
+
+	}
+	else {
+		inst->Status = MakeStatus(SCRAMBLRC_BUILD_FILE_NOT_FOUND);
+		return false;
+	}
+	inst->Status = MakeStatus(SCRAMBLRC_OK);
+	return true;
+}
+
+SCRAMBLAPI bool SCRambl_Build(SCRamblInst* inst) {
+	auto& script = inst->Inst->Script;
+	auto& files = inst->Inst->InputFiles;
+	for (auto path : files) {
+		script.OpenFile(path);
+	}
+	return true;
+}

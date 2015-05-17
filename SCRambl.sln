@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SCRambl.Console", "SCRambl.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SCRambl.UI", "SCRambl.UI\SCRambl.UI.vcxproj", "{B12702AD-ABFB-343A-A199-8E24837244A3}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SCRambl.Library", "SCRambl.Library\SCRambl.Library.vcxproj", "{7DF2E37F-7722-4D7E-8886-6344FA2CBE38}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -58,6 +60,18 @@ Global
 		{B12702AD-ABFB-343A-A199-8E24837244A3}.Release|Win32.ActiveCfg = Release|Win32
 		{B12702AD-ABFB-343A-A199-8E24837244A3}.Release|Win32.Build.0 = Release|Win32
 		{B12702AD-ABFB-343A-A199-8E24837244A3}.Release|x64.ActiveCfg = Release|Win32
+		{7DF2E37F-7722-4D7E-8886-6344FA2CBE38}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{7DF2E37F-7722-4D7E-8886-6344FA2CBE38}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{7DF2E37F-7722-4D7E-8886-6344FA2CBE38}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{7DF2E37F-7722-4D7E-8886-6344FA2CBE38}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7DF2E37F-7722-4D7E-8886-6344FA2CBE38}.Debug|Win32.Build.0 = Debug|Win32
+		{7DF2E37F-7722-4D7E-8886-6344FA2CBE38}.Debug|x64.ActiveCfg = Debug|Win32
+		{7DF2E37F-7722-4D7E-8886-6344FA2CBE38}.Release|Any CPU.ActiveCfg = Release|Win32
+		{7DF2E37F-7722-4D7E-8886-6344FA2CBE38}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{7DF2E37F-7722-4D7E-8886-6344FA2CBE38}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{7DF2E37F-7722-4D7E-8886-6344FA2CBE38}.Release|Win32.ActiveCfg = Release|Win32
+		{7DF2E37F-7722-4D7E-8886-6344FA2CBE38}.Release|Win32.Build.0 = Release|Win32
+		{7DF2E37F-7722-4D7E-8886-6344FA2CBE38}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

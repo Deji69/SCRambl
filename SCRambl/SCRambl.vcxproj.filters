@@ -238,7 +238,7 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="XML.h">
-      <Filter>Resource</Filter>
+      <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

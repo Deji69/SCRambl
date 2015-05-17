@@ -33,6 +33,8 @@ namespace SCRambl
 		using FormatMap = std::map < const std::type_info*, std::shared_ptr<IFormatter> >;
 		using ConfigMap = std::map < std::string, std::shared_ptr<Configuration> >;
 
+		std::vector<std::string> InputFiles;
+
 		// Configuration
 		ConfigMap				m_Config;
 
