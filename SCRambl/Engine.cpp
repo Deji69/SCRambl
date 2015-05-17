@@ -3,6 +3,27 @@
 
 using namespace SCRambl;
 
+bool Engine::LoadXML(const std::string& path) {
+	XML xml(*this, path);
+	if (xml) {
+		// load configurations
+		if (m_Config.size()) {
+			for (auto node : xml.Children()) {
+				if (!node.Name().empty()) {
+					// find configuration
+					auto it = m_Config.find(node.Name());
+					if (it != m_Config.end()) {
+						// load from node
+						it->second->LoadXML(node);
+					}
+				}
+			}
+		}
+		return true;
+	}
+	return false;
+}
+
 Engine::Engine():
 	HaveTask(false),
 	// in that order...

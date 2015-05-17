@@ -5,7 +5,7 @@
 namespace SCRambl
 {
 	/* XMLObject */
-	std::shared_ptr<void> XMLObject::LoadXML(XMLNode node, std::shared_ptr<void> theptr = nullptr) {
+	std::shared_ptr<void> XMLObject::LoadXML(XMLNode node, std::shared_ptr<void> theptr) {
 		if (m_Func) {
 			auto & func = *static_cast<std::function<void(const XMLNode, std::shared_ptr<void> &)>*>(m_Func.get());
 			func(node, theptr);
@@ -36,10 +36,10 @@ namespace SCRambl
 
 	/* XMLConfiguration */
 	void XMLConfiguration::LoadXML(XMLNode main_node) {
-		if (!m_Groups.empty()) {
+		if (!m_Objects.empty()) {
 			for (auto node : main_node) {
-				auto it = m_Groups.find(node.Name());
-				if (it != m_Groups.end()) {
+				auto it = m_Objects.find(node.Name());
+				if (it != m_Objects.end()) {
 					auto obj = it->second;
 					obj->LoadChildXML(node.Children(), obj->LoadXML(node));
 					continue;

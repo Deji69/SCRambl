@@ -12,7 +12,7 @@
 namespace SCRambl
 {
 	Constants::Constants(Engine & eng) : m_Engine(eng) {
-		m_Config = eng.AddConfig("Constants");
+		m_Config = eng.AddConfiguration("Constants");
 		auto& conf_constant = m_Config->AddClass("Constant", [this](const pugi::xml_node xml, std::shared_ptr<void> & obj){
 			auto attr_name = xml.attribute("Name");
 			if (!attr_name.empty()) {

@@ -14,7 +14,7 @@ namespace SCRambl
 		auto& ccdest = m_DestCasing;
 		auto& ccsrc = m_SourceCasing;
 
-		m_Config = eng.AddConfig("Commands");
+		m_Config = eng.AddConfiguration("Commands");
 
 		m_Config->AddClass("Case", [this, &usecc, &ccdest, &ccsrc](const pugi::xml_node xml, std::shared_ptr<void> & obj){
 			usecc = xml.attribute("Convert").as_bool();

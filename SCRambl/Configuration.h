@@ -14,6 +14,8 @@
 
 namespace SCRambl
 {
+	class Engine;
+
 	class XMLObject;
 
 	class XMLConfig
@@ -45,6 +47,7 @@ namespace SCRambl
 		std::shared_ptr<void> m_Func;
 
 	public:
+		XMLObject() = default;
 		template<typename T>
 		XMLObject(T& func) {
 			m_Func = std::make_shared<decltype(to_function(func))>(to_function(func));
@@ -57,7 +60,7 @@ namespace SCRambl
 	{
 	private:
 		std::string m_Name;
-		std::map<std::string, std::shared_ptr<XMLObject>> m_Groups;
+		std::map<std::string, std::shared_ptr<XMLObject>> m_Objects;
 
 	public:
 		typedef std::shared_ptr<XMLConfiguration> Shared;

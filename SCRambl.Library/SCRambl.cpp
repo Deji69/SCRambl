@@ -50,17 +50,7 @@ SCRAMBLAPI void SCRambl_ClearInputFiles(SCRamblInst* instance) {
 }
 
 SCRAMBLAPI bool SCRambl_LoadBuildConfig(SCRamblInst* inst, const char* file, const char* config) {
-	SCRambl::XML xml(file);
-	if (xml) {
-		auto node = xml.GetNode("BuildConfig");
-		auto conf = node.GetNode("Build");
-		auto attr = conf.GetAttribute("Name");
-		auto val = attr.GetValue();
-		auto name = val.AsString();
-
-
-	}
-	else {
+	if (!inst->Inst->Engine.LoadBuildFile(file, config)) {
 		inst->Status = MakeStatus(SCRAMBLRC_BUILD_FILE_NOT_FOUND);
 		return false;
 	}

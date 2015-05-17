@@ -31,9 +31,7 @@ namespace SCRambl
 		//using TaskEntry = std::pair<int, TypeSystem::Task>;
 		using TaskMap = std::map < int, std::shared_ptr<TaskSystem::ITask> >;
 		using FormatMap = std::map < const std::type_info*, std::shared_ptr<IFormatter> >;
-		using ConfigMap = std::map < std::string, std::shared_ptr<Configuration> >;
-
-		std::vector<std::string> InputFiles;
+		using ConfigMap = std::map < std::string, std::shared_ptr<XMLConfiguration> >;
 
 		// Configuration
 		ConfigMap				m_Config;
@@ -45,7 +43,7 @@ namespace SCRambl
 		bool					HaveTask;
 
 		// BuildSystem
-		BuildSystem::Builder	m_Builder;
+		Builder	m_Builder;
 
 		// Message formatting
 		FormatMap				Formatters;
@@ -58,33 +56,7 @@ namespace SCRambl
 		Commands				m_Commands;
 		Types::Types			m_Types;
 
-		bool LoadXML(const std::string & path)
-		{
-			pugi::xml_document xml;
-			auto status = xml.load_file(widen(path).c_str());
-			if (status) {
-				// find our element
-				auto scrambl = xml.child("SCRambl");
-				if (scrambl) {
-					// load configurations
-					if (m_Config.size()) {
-						for (auto node : scrambl.children()) {
-							if (*node.name()) {
-								// find configuration
-								auto it = m_Config.find(node.name());
-								if (it != m_Config.end()) {
-									// load from node
-									it->second->LoadXML(node);
-								}
-							}
-						}
-					}
-				}
-				return true;
-			}
-			ASSERT(status);
-			return false;
-		}
+		bool LoadXML(const std::string & path);
 
 	public:
 		Engine();
@@ -99,7 +71,7 @@ namespace SCRambl
 		/*\
 		 * Engine::GetBuildConfig
 		\*/
-		inline std::shared_ptr<BuildSystem::BuildConfig> GetBuildConfig() const {
+		inline std::shared_ptr<BuildConfig> GetBuildConfig() const {
 			return m_Builder.GetConfig();
 		}
 
@@ -114,13 +86,17 @@ namespace SCRambl
 		/*\
 		 * Engine::AddConfig - Returns shared Configuration element
 		\*/
-		std::shared_ptr<Configuration> AddConfig(const std::string & name)
+		std::shared_ptr<XMLConfiguration> AddConfig(const std::string & name)
 		{
 			if (name.empty()) return nullptr;
 			if (m_Config.find(name) != m_Config.end()) return nullptr;
-			auto config = std::make_shared<Configuration>(name);
+			auto config = std::make_shared<XMLConfiguration>(name);
 			m_Config.emplace(name, config);
 			return config;
+		}
+
+		std::shared_ptr<Configuration> AddConfiguration(const std::string & name) {
+			return std::make_shared<Configuration>(name);
 		}
 
 		/*\
@@ -128,7 +104,7 @@ namespace SCRambl
 		\*/
 		void AddConfig(std::shared_ptr<Configuration> config)
 		{
-			m_Config.emplace(config->GetName(), config);
+			//m_Config.emplace(config->GetName(), config);
 		}
 
 		/*\

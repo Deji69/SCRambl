@@ -12,9 +12,56 @@
 
 namespace SCRambl
 {
+	struct BuildDefinitionPath
+	{
+		std::string Path;
+		std::vector<std::string> Definitions;
+
+		//BuildDefinitionPath() = default;
+		BuildDefinitionPath(std::string path);
+	};
+
 	class BuildConfig
 	{
+		XMLConfiguration::Shared m_Config;
 
+		// attributes
+		std::string m_ID;
+		std::string m_Name;
+		
+		// paths
+		std::vector<BuildDefinitionPath> m_DefinitionPaths;
+		std::map<const std::string, size_t> m_DefinitionPathMap;
+
+		BuildDefinitionPath& AddDefPath(std::string);
+		size_t GetDefinitionPathID(std::string);				// returns -1 on failure
+
+	public:
+		//BuildConfig::BuildConfig(std::string id, std::string name);
+		BuildConfig::BuildConfig(std::string id, std::string name, XMLConfig& config);
+
+		void AddDefinitionPath(std::string);
+		void AddDefinitionPath(std::string, const std::vector<std::string>&);
+
+		size_t GetNumDefinitionPaths() const { return m_DefinitionPaths.size(); }
+		size_t GetNumDefaultLoads() const { return 0; }
+		std::string GetDefaultLoad(size_t i = 0) const { return ""; }
+		std::string GetDefinitionPath(size_t i) const { return m_DefinitionPaths[i].Path; }
+	};
+
+	class Builder
+	{
+		Engine& m_Engine;
+		XMLConfiguration::Shared m_Configuration;
+		XMLConfig& m_Config;
+		std::unordered_map<std::string, std::shared_ptr<BuildConfig>> m_BuildConfigurations;
+		std::shared_ptr<BuildConfig> m_BuildConfig;
+
+	public:
+		Builder(Engine&);
+		bool LoadScriptFile(std::string, Script&) { return true; }
+		bool SetConfig(std::string) const { return true; }
+		std::shared_ptr<BuildConfig> GetConfig() const { return m_BuildConfig; }
 	};
 
 	namespace BuildSystem

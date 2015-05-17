@@ -26,6 +26,7 @@ namespace SCRambl
 
 		XMLValue();					// null-value
 		XMLValue(std::string);
+		XMLValue(pugi::xml_text);
 		
 		template<typename T> auto AsNumber(T default_value) const->T;
 		template<> auto AsNumber(int) const->int;
@@ -86,10 +87,7 @@ namespace SCRambl
 		auto GetNode(std::string) const->XMLNode;
 		auto GetNode(const wchar_t*) const->XMLNode;
 		auto GetNode(const char*) const->XMLNode;
-		auto GetValue(std::wstring) const->XMLValue;
-		auto GetValue(std::string) const->XMLValue;
-		auto GetValue(const wchar_t*) const->XMLValue;
-		auto GetValue(const char*) const->XMLValue;
+		auto GetValue() const->XMLValue;
 		auto GetAttribute(std::string) const->XMLAttribute;
 		auto GetAttribute(const char*) const->XMLAttribute;
 		auto GetPugi() const->const decltype(m_node)&;
@@ -99,16 +97,15 @@ namespace SCRambl
 	class XMLNodeIterator
 	{
 		pugi::xml_node::iterator m_it;
-		mutable XMLNode m_mnode;
-		XMLNode m_node;
+		mutable XMLNode m_node;
 
 	public:
 		XMLNodeIterator() = default;
 		XMLNodeIterator(const XMLNodeIterator&) = default;
 		XMLNodeIterator(pugi::xml_node::iterator);
 
-		XMLNode& operator*() const;
-		XMLNode* operator->() const;
+		XMLNode operator*() const;
+		XMLNode* operator->() const;			// /fu
 		XMLNodeIterator operator++(int);
 		XMLNodeIterator operator--(int);
 		const XMLNodeIterator& operator++();
@@ -119,13 +116,13 @@ namespace SCRambl
 
 	class XMLRange
 	{
-		XMLNodeIterator m_begin, m_end;
+		pugi::xml_object_range<XMLNodeIterator> m_range;
 
 	public:
-		XMLRange(XMLNodeIterator beg, XMLNodeIterator end) : m_begin(beg), m_end(end)
+		XMLRange(XMLNodeIterator beg, XMLNodeIterator end) : m_range(beg, end)
 		{ }
-		inline XMLNodeIterator Begin() const { return m_begin; }
-		inline XMLNodeIterator End() const { return m_end; }
+		inline XMLNodeIterator Begin() const { return m_range.begin(); }
+		inline XMLNodeIterator End() const { return m_range.end(); }
 		inline XMLNodeIterator begin() const { return Begin(); }
 		inline XMLNodeIterator end() const { return End(); }
 	};
@@ -163,19 +160,21 @@ namespace SCRambl
 	
 	class XML
 	{
+		Engine& m_engine;
 		pugi::xml_document m_doc;
 		pugi::xml_parse_result m_parseResult;
 		XMLParseData m_parseData;
 		
 	public:
-		XML();
+		XML(Engine&);
+		XML(Engine&, std::string path);
+		XML(Engine&, std::wstring path);
+		XML(Engine&, const char* path);
+		XML(Engine&, const wchar_t* path);
 		XML(const XML&) = default;
-		XML(std::string path);
-		XML(std::wstring path);
-		XML(const char* path);
-		XML(const wchar_t* path);
 		operator bool() const;
 		
+		auto Children() const->XMLRange;
 		auto Node() const->XMLNode;
 		auto GetNode(std::string) const->XMLNode;
 		auto GetNode(std::wstring) const->XMLNode;

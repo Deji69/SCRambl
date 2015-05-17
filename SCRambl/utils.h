@@ -64,6 +64,16 @@ namespace SCRambl
 
 	extern const VersionStruct SCRamblVersion;
 
+	// for merging vectors, without duplicates, through remove_copy_if, etc.
+	template<typename T>
+	struct VectorContainPred {
+		const std::vector<T>& vec;
+		VectorContainPred(const std::vector<T>& v) : vec(v) { }
+		inline bool operator()(T v) {
+			return vec.end() != std::find(vec.begin(), vec.end(), v);
+		}
+	};
+
 	class line
 	{
 		std::string str;

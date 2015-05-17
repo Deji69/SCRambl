@@ -14,6 +14,7 @@
 				<Definition>constants.xml</Definition>
 				<Definition>types.xml</Definition>
 				<Definition>commands.xml</Definition>
+				<Definition>commands.xml</Definition>
 			</DefinitionPath>
 			
 			<LibraryPath>gtasa/lib/</LibraryPath>
@@ -23,7 +24,15 @@
 			
 			<!-- Build up the script -->
 			<Script Name="main">
+				<Info>
+					<!-- Declare script info pseudo-VARs -->
+					<VAR Type="INT" Name="_NUM_VARS" />
+					<VAR Type="INT" Name="_NUM_MODELS" />
+					<VAR Type="STRING[24][]" Name="_MODEL_NAMES" />
+				</Info>
+				
 				<Input>($InputFiles)</Input>
+				<!--<Header Template="gtasa/SCM.sc"></Header>-->
 			</Script>
 			
 			<!-- Send compiler the -o(utput) parameter -->

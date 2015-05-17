@@ -70,13 +70,13 @@ namespace SCRambl
 			auto node = doc.append_child("SCRambl");
 			node.append_attribute("Version") = "1.0";
 			node.append_attribute("FileVersion") = "0.0.0.0";
-			
+
 			auto proj_node = node.append_child("Project");
 			proj_node.append_attribute("Name") = name.c_str();
 			node = proj_node.append_child("Configuration");
 			node.append_attribute("ID") = "";
 
-			doc.save_file((name+".xml").c_str());
+			doc.save_file((name + ".xml").c_str());
 		}
 		std::shared_ptr<FileType> BuildConfig::AddFileType(FileType::Type type, std::string name, std::string ext) {
 			if (!name.empty() && !ext.empty()) {
@@ -201,41 +201,112 @@ namespace SCRambl
 				auto ptr = std::static_pointer_cast<BuildConfig>(obj);
 				auto attr = vec.attribute("Name");
 				if (!attr.empty()) {
-					auto name = attr.as_string();
-					attr = vec.attribute("FormatExt");
-					if (!attr.empty()) {
-						auto ext = attr.as_string();
-						attr = vec.attribute("Type");
-						if (!attr.empty()) {
-							auto type = attr.as_string();
-							FileType::Type ftype;
-							if (FileType::GetTypeByName(type, ftype))
-							{
-								obj = ptr->AddFileType(ftype, name, ext);
-								return;
-							}
+				auto name = attr.as_string();
+				attr = vec.attribute("FormatExt");
+				if (!attr.empty()) {
+				auto ext = attr.as_string();
+				attr = vec.attribute("Type");
+				if (!attr.empty()) {
+				auto type = attr.as_string();
+				FileType::Type ftype;
+				if (FileType::GetTypeByName(type, ftype))
+				{
+				obj = ptr->AddFileType(ftype, name, ext);
+				return;
+				}
+				}
+				}
+				}
+
+				obj = nullptr;
+				});*/
+		}
+
+		Builder::Builder(Engine& engine) : m_Engine(engine), m_Config(engine.AddConfiguration("BuildConfig")),
+			m_ConfigurationConfig(m_Config->AddClass("Build", [this](const pugi::xml_node vec, std::shared_ptr<void> & obj){
+			auto attr = vec.attribute("ID");
+			if (!attr.empty()) {
+				std::string id = attr.as_string();
+				attr = vec.attribute("Name");
+				if (!attr.empty()) {
+					std::string name = attr.as_string();
+					auto ptr = std::make_shared<BuildConfig>(id, name, m_ConfigurationConfig);
+					m_BuildConfigurations.emplace(id, ptr);
+					obj = ptr;
+				}
+			}
+		}))
+		{ }
+	}
+
+	/* BuildConfig */
+	void BuildConfig::AddDefinitionPath(std::string path, const std::vector<std::string>& defs) {
+		auto defpath = AddDefPath(path);
+		std::remove_copy_if(defs.begin(), defs.end(), std::back_inserter(defpath.Definitions), VectorContainPred<std::string>(defpath.Definitions));
+	}
+	void BuildConfig::AddDefinitionPath(std::string path) {
+		AddDefPath(path);
+	}
+	// TODO: implement path stripping so all paths are formatted the same (no chance of duplicate paths with different strings)
+	BuildDefinitionPath& BuildConfig::AddDefPath(std::string path) {
+		auto id = GetDefinitionPathID(path);
+		if (id == -1) {
+			id = m_DefinitionPaths.size();
+			m_DefinitionPathMap.emplace(path, id);
+			m_DefinitionPaths.emplace_back(path);
+		}
+		return m_DefinitionPaths[id];
+	}
+	size_t BuildConfig::GetDefinitionPathID(std::string path) {
+		auto it = m_DefinitionPathMap.find(path);
+		return it != m_DefinitionPathMap.end() ? it->second : -1;
+	}
+	BuildConfig::BuildConfig(std::string id, std::string name, XMLConfig& config) : m_ID(id), m_Name(name) {
+		// <DefinitionPath>
+		auto& defpath = config.AddClass("DefinitionPath", [](const XMLNode base, std::shared_ptr<void>& obj) {
+			auto ptr = std::static_pointer_cast<BuildConfig>(obj);
+			if (auto attr = base.GetAttribute("Path")) {
+				std::vector<std::string> defs;
+				for (auto child : base) {
+					if (child.Name() == "Definition") {
+						auto str = child.GetValue().AsString();
+						if (!str.empty()) {
+							defs.emplace_back(str);
 						}
 					}
 				}
 
-				obj = nullptr;
-			});*/
-		}
-		
-		Builder::Builder(Engine& engine) : m_Engine(engine), m_Config(engine.AddConfig("BuildConfig")),
-			m_ConfigurationConfig(m_Config->AddClass("Build", [this](const pugi::xml_node vec, std::shared_ptr<void> & obj){
-				auto attr = vec.attribute("ID");
-				if (!attr.empty()) {
-					std::string id = attr.as_string();
-					attr = vec.attribute("Name");
-					if (!attr.empty()) {
-						std::string name = attr.as_string();
-						auto ptr = std::make_shared<BuildConfig>(id, name, m_ConfigurationConfig);
-						m_BuildConfigurations.emplace(id, ptr);
-						obj = ptr;
-					}
-				}
-			}))
-		{ }
+				if (defs.empty())
+					ptr->AddDefinitionPath(attr.GetValue().AsString());
+				else
+					ptr->AddDefinitionPath(attr.GetValue().AsString(), defs);
+			}
+		});
 	}
+	//BuildConfig::BuildConfig(std::string id, std::string name) : m_ID(id), m_Name(name)
+	//{ }
+
+	/* Builder */
+	Builder::Builder(Engine& engine) : m_Engine(engine), m_Configuration(engine.AddConfig("BuildConfig")),
+		m_Config(m_Configuration->AddClass("Build", [this](const XMLNode path, std::shared_ptr<void>& obj){
+			// get attributes
+			if (auto attr = path.GetAttribute("ID")) {
+				auto id = attr.GetValue().AsString();
+				if (attr = path.GetAttribute("Name")) {
+					auto name = attr.GetValue().AsString();
+
+					// add build configuration
+					auto ptr = std::make_shared<BuildConfig>(id, name, m_Config);
+					m_BuildConfigurations.emplace(id, ptr);
+
+					// set for the BuildConfig XML loader
+					obj = ptr;
+				}
+			}
+		}))
+	{ }
+
+	/* DefinitionPath */
+	BuildDefinitionPath::BuildDefinitionPath(std::string path) : Path(path)
+	{ }
 }

@@ -101,6 +101,11 @@ int main(int argc, char* argv[])
 
 		SCRamblProc scrambl;
 
+		auto files = CmdParser.GetOpts();
+		for (auto path : files) {
+			SCRambl_AddInputFile(scrambl, path.c_str());
+		}
+
 		if (!SCRambl_LoadBuildConfig(scrambl, "build\\build.xml", CmdParser.GetFlagOpts("build").front().c_str()))
 		{
 			if (scrambl.RC() == SCRAMBLRC_BUILD_FILE_NOT_FOUND) {
@@ -110,11 +115,6 @@ int main(int argc, char* argv[])
 		}
 		else
 		{
-			auto files = CmdParser.GetOpts();
-			for (auto path : files) {
-				SCRambl_AddInputFile(scrambl, path.c_str());
-			}
-
 			SCRambl_Build(scrambl);
 		}
 	}
