@@ -10,9 +10,70 @@
 #include <array>
 #include <set>
 #include "utils.h"
+#include "XML.h"
 
 namespace SCRambl
 {
+	class XMLObject;
+
+	class XMLConfig
+	{
+		friend class XMLConfiguration;
+
+	protected:
+		inline virtual ~XMLConfig() { }
+
+	private:
+		std::map<std::string, std::shared_ptr<XMLObject>> m_Objects;
+
+		void LoadChildXML(XMLRange root, std::shared_ptr<void> ptr = nullptr);
+
+	public:
+		XMLConfig AddClass(const std::string&);
+		
+		template<typename T>
+		inline XMLConfig & AddClass(const std::string & name, T& func) {
+			auto obj = std::make_shared<XMLObject>(func);
+			m_Objects.emplace(name, obj);
+			return *obj;
+		}
+	};
+
+	class XMLObject : public XMLConfig
+	{
+		friend class Configuration;
+		std::shared_ptr<void> m_Func;
+
+	public:
+		template<typename T>
+		XMLObject(T& func) {
+			m_Func = std::make_shared<decltype(to_function(func))>(to_function(func));
+		}
+
+		std::shared_ptr<void> LoadXML(XMLNode node, std::shared_ptr<void> theptr = nullptr);
+	};
+
+	class XMLConfiguration
+	{
+	private:
+		std::string m_Name;
+		std::map<std::string, std::shared_ptr<XMLObject>> m_Groups;
+
+	public:
+		typedef std::shared_ptr<XMLConfiguration> Shared;
+
+		XMLConfiguration(std::string name);
+		
+		template<typename T>
+		inline XMLConfig & AddClass(const std::string & name, T& func) {
+			auto obj = std::make_shared<XMLObject>(func);
+			m_Objects.emplace(name, obj);
+			return *obj;
+		}
+
+		void LoadXML(XMLNode main_node);
+	};
+
 	/*\
 	 * Configuration - Configurable component
 	 * AKA big ugly wrapper for SCR XML loading
@@ -124,5 +185,5 @@ namespace SCRambl
 			}
 			return 0;
 		}
-	};
+	};/**/
 }

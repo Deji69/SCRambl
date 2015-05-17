@@ -65,7 +65,7 @@ SCRAMBLAPI bool SCRambl_LoadBuildConfig(SCRamblInst* inst, const char* file, con
 		return false;
 	}
 	inst->Status = MakeStatus(SCRAMBLRC_OK);
-	return true;//
+	return true;
 }
 
 SCRAMBLAPI bool SCRambl_Build(SCRamblInst* inst) {

@@ -10,6 +10,9 @@
 
 namespace SCRambl
 {
+	class XMLRange;
+	class XMLNodeIterator;
+
 	enum XMLValueType {
 		xmlvalue_null, xmlvalue_string, xmlvalue_numeric, xmlvalue_version
 	};
@@ -60,8 +63,6 @@ namespace SCRambl
 		auto GetPugi()->decltype(m_attr)&;
 	};
 
-	class XMLNodeIterator;
-
 	class XMLNode
 	{
 		pugi::xml_node m_node;
@@ -77,14 +78,20 @@ namespace SCRambl
 
 		auto Begin() const->Iterator;
 		auto End() const->Iterator;
+		auto begin() const->Iterator;
+		auto end() const->Iterator;
+		auto Name() const->std::string;
+		auto Children() const->XMLRange;
 		auto GetNode(std::wstring) const->XMLNode;
 		auto GetNode(std::string) const->XMLNode;
-		auto GetNode(const wchar_t *) const->XMLNode;
-		auto GetNode(const char *) const->XMLNode;
+		auto GetNode(const wchar_t*) const->XMLNode;
+		auto GetNode(const char*) const->XMLNode;
+		auto GetValue(std::wstring) const->XMLValue;
 		auto GetValue(std::string) const->XMLValue;
-		auto GetValue(const char *) const->XMLValue;
+		auto GetValue(const wchar_t*) const->XMLValue;
+		auto GetValue(const char*) const->XMLValue;
 		auto GetAttribute(std::string) const->XMLAttribute;
-		auto GetAttribute(const char *) const->XMLAttribute;
+		auto GetAttribute(const char*) const->XMLAttribute;
 		auto GetPugi() const->const decltype(m_node)&;
 		auto GetPugi()->decltype(m_node)&;
 	};
@@ -108,6 +115,19 @@ namespace SCRambl
 		const XMLNodeIterator& operator--();
 		bool operator==(const XMLNodeIterator& rhs) const;
 		bool operator!=(const XMLNodeIterator& rhs) const;
+	};
+
+	class XMLRange
+	{
+		XMLNodeIterator m_begin, m_end;
+
+	public:
+		XMLRange(XMLNodeIterator beg, XMLNodeIterator end) : m_begin(beg), m_end(end)
+		{ }
+		inline XMLNodeIterator Begin() const { return m_begin; }
+		inline XMLNodeIterator End() const { return m_end; }
+		inline XMLNodeIterator begin() const { return Begin(); }
+		inline XMLNodeIterator end() const { return End(); }
 	};
 
 	enum XMLStatus {

@@ -141,6 +141,7 @@
     <ClCompile Include="Builder.cpp" />
     <ClCompile Include="Commands.cpp" />
     <ClCompile Include="Compiler.cpp" />
+    <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="Constants.cpp" />
     <ClCompile Include="Delimiters.cpp" />
     <ClCompile Include="Directives.cpp" />

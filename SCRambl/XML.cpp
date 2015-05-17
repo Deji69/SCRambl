@@ -253,11 +253,17 @@ namespace SCRambl
 	auto XMLNode::GetNode(std::wstring name) const->XMLNode { return GetNode(name.c_str()); }
 	auto XMLNode::GetValue(const char * name) const->XMLValue { return m_node.value(); }
 	auto XMLNode::GetValue(std::string name) const->XMLValue { return name.c_str(); }
+	auto XMLNode::GetValue(const wchar_t * name) const->XMLValue { return GetValue(narrow(name).c_str()); }
+	auto XMLNode::GetValue(std::wstring name) const->XMLValue { return GetValue(name.c_str()); }
 	auto XMLNode::GetAttribute(const char * attr) const->XMLAttribute { return m_node.attribute(attr); }
 	auto XMLNode::GetAttribute(std::string attr) const->XMLAttribute { return GetAttribute(attr.c_str()); }
 	auto XMLNode::GetPugi() const->const decltype(m_node)& { return m_node; }
 	auto XMLNode::GetPugi()->decltype(m_node)& { return m_node; }
+	auto XMLNode::Name() const->std::string { return m_node.name(); }
+	auto XMLNode::Begin() const->Iterator { return m_node.begin(); }
 	auto XMLNode::End() const->Iterator { return m_node.end(); }
+	auto XMLNode::begin() const->Iterator { return Begin(); }
+	auto XMLNode::end() const->Iterator { return End(); }
 	XMLNode::XMLNode(const pugi::xml_node& node) : m_node(node) { }
 	XMLNode::XMLNode(pugi::xml_node_struct* node) : m_node(node) { }
 	XMLNode::operator bool() const { return !m_node.empty(); }

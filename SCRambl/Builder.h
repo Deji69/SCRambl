@@ -12,6 +12,11 @@
 
 namespace SCRambl
 {
+	class BuildConfig
+	{
+
+	};
+
 	namespace BuildSystem
 	{
 		enum class BuildEvent

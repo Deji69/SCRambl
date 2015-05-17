@@ -73,6 +73,9 @@
     <ClCompile Include="XML.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Configuration.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Builder.h">
