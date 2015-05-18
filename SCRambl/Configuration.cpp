@@ -7,7 +7,7 @@ namespace SCRambl
 	/* XMLObject */
 	std::shared_ptr<void> XMLObject::LoadXML(XMLNode node, std::shared_ptr<void> theptr) {
 		if (m_Func) {
-			auto & func = *static_cast<std::function<void(const XMLNode, std::shared_ptr<void> &)>*>(m_Func.get());
+			auto& func = *static_cast<std::function<void(const XMLNode, std::shared_ptr<void> &)>*>(m_Func.get());
 			func(node, theptr);
 		}
 		return theptr;
@@ -18,8 +18,7 @@ namespace SCRambl
 		if (m_Objects.empty()) return;
 		for (auto node : root) {
 			auto it = m_Objects.find(node.Name());
-			if (it != m_Objects.end())
-			{
+			if (it != m_Objects.end()) {
 				auto obj = it->second;
 				auto new_ptr = obj->LoadXML(node, ptr);
 				obj->LoadChildXML(node.Children(), new_ptr);
@@ -27,8 +26,7 @@ namespace SCRambl
 			}
 		}
 	}
-
-	XMLConfig XMLConfig::AddClass(const std::string& name) {
+	XMLConfig& XMLConfig::AddClass(const std::string& name) {
 		auto obj = std::make_shared<XMLObject>();
 		m_Objects.emplace(name, obj);
 		return *obj;

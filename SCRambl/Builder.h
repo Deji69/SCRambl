@@ -52,6 +52,7 @@ namespace SCRambl
 		// paths
 		std::vector<BuildDefinitionPath> m_DefinitionPaths;
 		std::map<const std::string, size_t> m_DefinitionPathMap;
+		std::vector<std::string> m_Definitions;
 
 		//
 		std::map<std::string, ScriptConfig::Shared> m_Scripts;
@@ -60,6 +61,8 @@ namespace SCRambl
 		size_t GetDefinitionPathID(std::string);				// returns -1 on failure
 
 	public:
+		using Shared = std::shared_ptr<BuildConfig>;
+
 		//BuildConfig::BuildConfig(std::string id, std::string name);
 		BuildConfig::BuildConfig(std::string id, std::string name, XMLConfig& config);
 
@@ -71,23 +74,81 @@ namespace SCRambl
 		size_t GetNumDefaultLoads() const { return 0; }
 		std::string GetDefaultLoad(size_t i = 0) const { return ""; }
 		std::string GetDefinitionPath(size_t i) const { return m_DefinitionPaths[i].Path; }
+
+		const std::vector<std::string>& GetDefinitions() const { return m_Definitions; }
+		const std::vector<BuildDefinitionPath>& GetDefinitionPaths() const { return m_DefinitionPaths; }
 	};
 
-	class Build
+	enum class BuildEvent {
+
+	};
+
+	class Build : public TaskSystem::Task<BuildEvent>
 	{
 		friend class Builder;
 
+		Engine& m_Engine;
+		BuildConfig::Shared m_Config;
 		Script m_Script;
 		std::vector<std::string> m_Files;
+
+		// Tasks
+		using TaskMap = std::map<int, std::shared_ptr<TaskSystem::ITask>>;
+		TaskMap m_Tasks;
+		TaskMap::iterator m_CurrentTask;
+		bool m_HaveTask;
+
+		inline void Init() { m_CurrentTask = std::begin(m_Tasks); }
 
 	public:
 		using Shared = std::shared_ptr<Build>;
 
-		Build();
+		Build(Engine&, BuildConfig::Shared);
 		//Build(Script&);
 
 		inline Script& GetScript() { return m_Script; }
 		inline const Script& GetScript() const { return m_Script; }
+
+		template<typename T, typename ID, typename... Params>
+		const std::shared_ptr<T> AddTask(ID id, Params&&... prms) {
+			auto task = std::shared_ptr<T>(new T(m_Engine, std::forward<Params>(prms)...));
+			m_Tasks.emplace(id, task);
+			if (!m_HaveTask) {
+				Init();
+				m_HaveTask = true;
+			}
+			return task;
+		}
+		template<typename ID>
+		bool RemoveTask(ID id) {
+			if (!m_Tasks.empty()) {
+				auto it = std::find(std::begin(m_Tasks), std::end(m_Tasks), id);
+				if (it != std::end(Tasks)) {
+					delete it->second;
+					m_Tasks.erase(it);
+
+					if (m_Tasks.empty()) {
+						m_HaveTask = false;
+						m_CurrentTask = std::end(m_Tasks);
+					}
+					return true;
+				}
+			}
+			return false;
+		}
+
+		template<typename T>
+		inline T & GetCurrentTask()					{ return reinterpret_cast<T&>(*CurrentTask->second); }
+		inline int GetCurrentTaskID() const			{ return std::ref(m_CurrentTask->first); }
+		inline size_t GetNumTasks() const			{ return m_Tasks.size(); }
+		inline void ClearTasks()					{ m_Tasks.clear(); }
+
+		const TaskSystem::Task<BuildEvent> & Run();
+
+	protected:
+		bool IsTaskFinished() override				{ return m_CurrentTask == std::end(m_Tasks); }
+		void ResetTask() override					{ Init(); }
+		void RunTask() override						{ Run(); }
 	};
 
 	class Builder
@@ -101,7 +162,8 @@ namespace SCRambl
 	public:
 		Builder(Engine&);
 
-		Scripts::File::Shared LoadFile(Build&, std::string);
+		Scripts::File::Shared LoadFile(Build::Shared, std::string);
+		bool LoadDefinitions(Build::Shared);
 
 		bool LoadScriptFile(std::string, Script&);
 		bool SetConfig(std::string) const { return true; }

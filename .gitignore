@@ -1,0 +1,10 @@
+﻿
+*.suo
+*.sdf
+*.user
+Debug/
+SCRambl.Console/Debug/
+SCRambl.Console/Release/
+SCRambl.UI/debug/
+SCRambl/Debug/
+ipch/

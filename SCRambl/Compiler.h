@@ -29,6 +29,7 @@ namespace SCRambl
 			inline bool IsRunning()	const			{ return m_State == init || m_State == compiling; }
 			void Init();
 			void Run();
+			void Finish();
 			void Reset();
 			void Compile();
 
@@ -42,12 +43,20 @@ namespace SCRambl
 			inline Scripts::Token GetToken() const {
 				return m_TokenIt.Get();
 			}
-			template<typename T>
-			inline void Output(const T& v, size_t n = sizeof(T)) {
-				m_File.write((char*)&v, n);
+			template<typename T, typename U = T>
+			inline void Output(const U& v) {
+				m_File.write((char*)&v, sizeof(T));
 			}
 			template<typename T>
-			inline void Output(const T* v, size_t n = sizeof(T)) {
+			inline void Output(const T& v, size_t n) {
+				m_File.write((char*)&v, n);
+			}
+			template<typename T, typename U = T>
+			inline void Output(const U* v) {
+				m_File.write((char*)v, sizeof(T));
+			}
+			template<typename T>
+			inline void Output(const T* v, size_t n) {
 				m_File.write((char*)v, n);
 			}
 
@@ -59,6 +68,8 @@ namespace SCRambl
 			Scripts::Tokens &			m_Tokens;
 			Scripts::Tokens::Iterator	m_TokenIt;
 			std::ofstream				m_File;
+
+			std::map<std::string, size_t> m_CommandNames;
 		};
 
 		/*\

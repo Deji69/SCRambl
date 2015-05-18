@@ -63,7 +63,8 @@ namespace SCRambl
 		virtual ~Engine()
 		{ }
 
-		Build InitBuild(Script&, std::vector<std::string> files);
+		Build::Shared InitBuild(Script&, std::vector<std::string> files);
+		bool BuildScript(Build::Shared);
 
 		// Get SCR Commands
 		inline Commands & GetCommands()			{ return m_Commands; }
@@ -100,43 +101,35 @@ namespace SCRambl
 			return std::make_shared<Configuration>(name);
 		}
 
-		/*\
-		 * Engine::AddConfig
-		\*/
+		/*/ Engine::AddConfig /*/
 		void AddConfig(std::shared_ptr<Configuration> config) {
 			//m_Config.emplace(config->GetName(), config);
 		}
 
-		/*\
-		 * Engine::LoadFile
-		\*/
+		/*/ Engine::LoadFile /*/
 		bool LoadFile(const std::string & path, Script& script) {
 			return GetFilePathExtension(path) == "xml" ? LoadXML(path) : m_Builder.LoadScriptFile(path, script);
 		}
 
-		/*\
-		 * Engine::LoadConfigFile - Loads a build file (e.g. build.xml) and applies the buildConfig
-		\*/
+		/*/ Engine::LoadConfigFile - Loads a build file (e.g. build.xml) and applies the buildConfig /*/
 		bool LoadBuildFile(const std::string& path, const std::string& buildConfig = "") {
 			if (LoadXML(path)) {
 				m_Builder.SetConfig(buildConfig);
 				if (auto config = m_Builder.GetConfig()) {
-					auto l = config->GetNumDefaultLoads();
-					for (size_t i = 0; i < l; ++i) {
-						if (!LoadXML(config->GetDefaultLoad(i)))
-							return false;
-					}
 					return true;
 				}
 			}
 			return false;
 		}
 
-		/*\
-		 * Engine::LoadDefinition
-		\*/
+		/*/ Engine::LoadDefinition /*/
 		bool LoadDefinition(std::string filename, std::string * full_path_out = nullptr)
 		{
+			if(LoadXML(filename)) {
+				return true;
+			}
+			return false;
+#if 0
 			auto l = m_Builder.GetConfig()->GetNumDefinitionPaths();
 			for (size_t i = 0; i < l; ++i) {
 				std::string path = m_Builder.GetConfig()->GetDefinitionPath(i) + filename;
@@ -146,11 +139,10 @@ namespace SCRambl
 				}
 			}
 			return false;
+#endif
 		}
 
-		/*\
-		 * Engine::SetFormatter<> - Set, override or cancel the override of a string formatter
-		\*/
+		/*/ Engine::SetFormatter<> - Set, override or cancel the override of a string formatter /*/
 		template<typename T, typename F>
 		void SetFormatter(F &func)
 		{

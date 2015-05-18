@@ -240,7 +240,23 @@ namespace SCRambl
 	}
 
 	/* Build */
-	Build::Build()
+	const TaskSystem::Task<BuildEvent> & Build::Run() {
+		if (m_CurrentTask == std::end(m_Tasks)) m_CurrentTask = std::begin(m_Tasks);
+		auto& it = m_CurrentTask;
+
+		if (it != std::end(m_Tasks)) {
+			auto task = it->second;
+			while (task->IsTaskFinished()) {
+				if (++it == std::end(m_Tasks)) {
+					return *this;
+				}
+				task = it->second;
+			}
+			task->RunTask();
+		}
+		return *this;
+	}
+	Build::Build(Engine& engine, BuildConfig::Shared config) : m_Engine(engine), m_Config(config), m_CurrentTask(std::end(m_Tasks))
 	{ }
 
 	/* BuildConfig */
@@ -301,10 +317,9 @@ namespace SCRambl
 				obj = nullptr;
 		});
 			// <Input>
-			script.AddClass("Input", [](const XMLNode base, std::shared_ptr<void>& obj){
-			}).
+			auto& input = script.AddClass("Input");
 				// <File>
-				AddClass("File", [](const XMLNode base, std::shared_ptr<void>& obj){
+				input.AddClass("File", [](const XMLNode base, std::shared_ptr<void>& obj){
 					auto ptr = std::static_pointer_cast<ScriptConfig>(obj);
 					ptr->Inputs.emplace_back(base.GetValue());
 					if (auto attr = base.GetAttribute("Out")) {
@@ -318,11 +333,25 @@ namespace SCRambl
 	//{ }
 
 	/* Builder */
-	Scripts::File::Shared Builder::LoadFile(Build& build, std::string path) {
-		return build.GetScript().OpenFile(path);
+	bool Builder::LoadDefinitions(Build::Shared build) {
+		auto definitions = GetConfig()->GetDefinitions();
+		for (auto path : GetConfig()->GetDefinitionPaths()) {
+			for (auto def : path.Definitions) {
+				m_Engine.LoadDefinition(path.Path + def);
+			}
+
+			for (auto it = definitions.begin(); it != definitions.end(); ++it) {
+				if (m_Engine.LoadDefinition(*it))
+					it = definitions.erase(it);
+			}
+		}
+		return true;
+	}
+	Scripts::File::Shared Builder::LoadFile(Build::Shared build, std::string path) {
+		return build->GetScript().OpenFile(path);
 	}
 	bool Builder::LoadScriptFile(std::string path, Script& script) {
-
+		return true;
 	}
 	Builder::Builder(Engine& engine) : m_Engine(engine), m_Configuration(engine.AddConfig("BuildConfig")),
 		m_Config(m_Configuration->AddClass("Build", [this](const XMLNode path, std::shared_ptr<void>& obj){
@@ -334,6 +363,8 @@ namespace SCRambl
 
 					// add build configuration
 					auto ptr = std::make_shared<BuildConfig>(id, name, m_Config);
+					if (!m_BuildConfig || path.GetAttribute("Default").GetValue().AsBool())
+						m_BuildConfig = ptr;
 					m_BuildConfigurations.emplace(id, ptr);
 
 					// set for the BuildConfig XML loader

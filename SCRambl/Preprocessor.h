@@ -499,30 +499,30 @@ namespace SCRambl
 		class Task : public TaskSystem::Task<Event>, private Preprocessor
 		{
 			friend Preprocessor;
-			Engine				&	m_Engine;
-			const Information	&	m_Info;
+			Engine& m_Engine;
+			const Information& m_Info;
 
-			inline Engine	&	GetEngine()				{ return m_Engine; }
+			inline Engine & GetEngine() { return m_Engine; }
 
-			inline bool operator()(Event id)			{ return CallEventHandler(id); }
+			inline bool operator()(Event id) { return CallEventHandler(id); }
 
 			template<typename... Args>
-			inline bool operator()(Event id, Args&&... args)	{ return CallEventHandler(id, std::forward<Args>(args)...); }
+			inline bool operator()(Event id, Args&&... args) { return CallEventHandler(id, std::forward<Args>(args)...); }
 
 		public:
-			Task(Engine & engine, Script & script):
+			Task(Engine& engine, Script& script):
 				Preprocessor(*this, engine, script),
 				m_Engine(engine), m_Info(GetInfo())
 			{ }
 
-			const Information & Info() const		{ return m_Info; }
+			const Information & Info() const { return m_Info; }
 
-			bool IsRunning() const					{ return Preprocessor::IsRunning(); }
-			bool IsTaskFinished() final override	{ return Preprocessor::IsFinished(); }
+			bool IsRunning() const { return Preprocessor::IsRunning(); }
+			bool IsTaskFinished() final override { return Preprocessor::IsFinished(); }
 
 		protected:
-			void RunTask() final override			{ Preprocessor::Run(); }
-			void ResetTask() final override			{ Preprocessor::Reset(); }
+			void RunTask() final override { Preprocessor::Run(); }
+			void ResetTask() final override { Preprocessor::Reset(); }
 		};
 	}
 }

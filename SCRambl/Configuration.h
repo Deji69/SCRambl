@@ -31,10 +31,12 @@ namespace SCRambl
 		void LoadChildXML(XMLRange root, std::shared_ptr<void> ptr = nullptr);
 
 	public:
-		XMLConfig AddClass(const std::string&);
+		XMLConfig() { }
+
+		XMLConfig& AddClass(const std::string&);
 		
 		template<typename T>
-		inline XMLConfig & AddClass(const std::string & name, T& func) {
+		inline XMLConfig& AddClass(const std::string & name, T& func) {
 			auto obj = std::make_shared<XMLObject>(func);
 			m_Objects.emplace(name, obj);
 			return *obj;
