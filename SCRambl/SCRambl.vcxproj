@@ -89,6 +89,7 @@
     <ClInclude Include="Constants.h" />
     <ClInclude Include="Delimiters.h" />
     <ClInclude Include="Labels.h" />
+    <ClInclude Include="Linker.h" />
     <ClInclude Include="Scope.h" />
     <ClInclude Include="SCR.h" />
     <ClInclude Include="Scripts-code.h" />
@@ -149,6 +150,7 @@
     <ClCompile Include="Environment.cpp" />
     <ClCompile Include="Exception.cpp" />
     <ClCompile Include="Identifiers.cpp" />
+    <ClCompile Include="Linker.cpp" />
     <ClCompile Include="Macros.cpp" />
     <ClCompile Include="Operators.cpp" />
     <ClCompile Include="Parser.cpp" />

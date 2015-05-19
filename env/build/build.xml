@@ -21,22 +21,26 @@
 				<Path>gtasa/lib/</Path>
 			</IncludePaths>
 			
-			<!-- Build up the script -->
-			<Script Name="main">
-				<Info>
-					<!-- Declare script info pseudo-VARs -->
-					<VAR Type="INT" Name="_NUM_VARS" />
-				</Info>
+			<Parse>
+				<!-- Declare script info pseudo-VARs -->
+				<VAR Type="INT" Name="_NUM_VARS" />
 				
+				<!-- Extract information from command parameters -->
+				<Command Name="SCRIPT_NAME" Type="STRING" Set="ScriptName" Required="true" />
+			</Parse>
+			
+			<!-- Build up the script -->
+			<Script ID="script" Name="($ScriptName)" Ext="cs">
 				<Input>
-					<File Out="($OutputName).cs">($InputFiles[0])</File>
-					<File Out="($OutputName).s">($InputFiles[1...])</File>
+					<File>($InputFiles[0])</File>
 				</Input>
 				<!--<Header Template="gtasa/SCM.sc"></Header>-->
 			</Script>
-			
-			<!-- Send compiler the -o(utput) parameter -->
-			<Compile Output="($OutputFile)" />
+			<Script ID="subscript" Name="($ScriptName)" Ext="s">
+				<Input>
+					<File>($InputFiles[1...])</File>
+				</Input>
+			</Script>
 		</Build>
 		
 		<Build ID="scm_sa" Name="GTA:SA SCM Script" Tasks="parse,compile,link,merge">

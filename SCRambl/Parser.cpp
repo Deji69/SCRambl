@@ -12,10 +12,10 @@ namespace SCRambl
 {
 	namespace Parser
 	{
-		Parser::Parser(Task & task, Engine & engine, Script & script) :
-			m_Task(task), m_Engine(engine), m_Script(script), m_State(init),
-			m_Tokens(script.GetTokens()),
-			m_Labels(script.GetLabels()),
+		Parser::Parser(Task& task, Engine& engine, Build::Shared build) :
+			m_Task(task), m_Engine(engine), m_Build(build), m_State(init),
+			m_Tokens(build->GetScript().GetTokens()),
+			m_Labels(build->GetScript().GetLabels()),
 			m_Commands(m_Engine.GetCommands())
 		{ }
 		void Parser::Init() {
@@ -375,7 +375,5 @@ namespace SCRambl
 				m_Task(Event::Error, Basic::Error(type), params);
 			}
 		}
-	
-
 	}
 }

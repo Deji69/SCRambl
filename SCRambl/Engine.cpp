@@ -3,6 +3,7 @@
 #include "Preprocessor.h"
 #include "Parser.h"
 #include "Compiler.h"
+#include "Linker.h"
 
 using namespace SCRambl;
 
@@ -17,7 +18,7 @@ bool Engine::BuildScript(Build::Shared build) {
 	return true;
 }
 
-Build::Shared Engine::InitBuild(Script& script, std::vector<std::string> files) {
+Build::Shared Engine::InitBuild(std::vector<std::string> files) {
 	auto config = m_Builder.GetConfig();
 	auto build = std::make_shared<Build>(*this, config);
 	m_Builder.LoadDefinitions(build);
@@ -29,9 +30,10 @@ Build::Shared Engine::InitBuild(Script& script, std::vector<std::string> files) 
 		}
 	}
 
-	auto preprocessor_task = build->AddTask<Preprocessor::Task>(preprocessor, std::ref(build->GetScript()));
-	auto parser_task = build->AddTask<Parser::Task>(parser, std::ref(build->GetScript()));
-	auto compiler_task = build->AddTask<Compiler::Task>(compiler, std::ref(build->GetScript()));
+	auto preprocessor_task = build->AddTask<Preprocessor::Task>(preprocessor, build);
+	auto parser_task = build->AddTask<Parser::Task>(parser, build);
+	auto compiler_task = build->AddTask<Compiler::Task>(compiler, build);
+	auto linker_task = build->AddTask<Linker::Task>(linker, build);
 	return build;
 }
 

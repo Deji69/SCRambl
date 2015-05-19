@@ -24,7 +24,7 @@ namespace SCRambl{
 		auto proj_node = node.append_child("Project");
 		proj_node.append_attribute("Name") = GetName().c_str();
 		node = proj_node.append_child("Configuration");
-		node.append_attribute("ID") = GetConfig()->GetID().c_str();
+		//node.append_attribute("ID") = GetConfig()->GetID().c_str();
 		
 		auto files_node = proj_node.append_child("Files");
 

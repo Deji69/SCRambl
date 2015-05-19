@@ -23,10 +23,10 @@ namespace SCRambl
 				bad_state, max_state = bad_state,
 			};
 
-			Compiler(Task & task, Engine & engine, Script & script);
+			Compiler(Task& task, Engine& engine, Build::Shared build);
 
-			inline bool IsFinished() const			{ return m_State == finished; }
-			inline bool IsRunning()	const			{ return m_State == init || m_State == compiling; }
+			inline bool IsFinished() const { return m_State == finished; }
+			inline bool IsRunning()	const { return m_State == init || m_State == compiling; }
 			void Init();
 			void Run();
 			void Finish();
@@ -61,19 +61,19 @@ namespace SCRambl
 			}
 
 		private:
-			State						m_State;
-			Task &						m_Task;
-			Engine &					m_Engine;
-			Script &					m_Script;
-			Scripts::Tokens &			m_Tokens;
-			Scripts::Tokens::Iterator	m_TokenIt;
-			std::ofstream				m_File;
+			State m_State;
+			Task& m_Task;
+			Engine& m_Engine;
+			Build::Shared m_Build;
+			Scripts::Tokens& m_Tokens;
+			Scripts::Tokens::Iterator m_TokenIt;
+			std::ofstream m_File;
 
 			std::map<std::string, size_t> m_CommandNames;
 		};
 
 		/*\
-		 * Compiler::Event - Interesting stuff that the Preprocessor does
+		 * Compiler::Event
 		\*/
 		enum class Event
 		{
@@ -83,33 +83,33 @@ namespace SCRambl
 		};
 
 		/*\
-		 * Compiler::Task - The Task of being a Parser is a tough one (not really, programming is harder)
+		 * Compiler::Task
 		\*/
 		class Task : public TaskSystem::Task<Event>, private Compiler
 		{
 			friend Compiler;
-			Engine				&	m_Engine;
+			Engine& m_Engine;
 
-			inline bool operator()(Event id)					{ return CallEventHandler(id); }
+			inline bool operator()(Event id) { return CallEventHandler(id); }
 			template<typename... Args>
-			inline bool operator()(Event id, Args&&... args)	{ return CallEventHandler(id, std::forward<Args>(args)...); }
+			inline bool operator()(Event id, Args&&... args) { return CallEventHandler(id, std::forward<Args>(args)...); }
 
 		public:
-			Task(Engine& engine, Script& script) :
-				Compiler(*this, engine, script),
+			Task(Engine& engine, Build::Shared build) :
+				Compiler(*this, engine, build),
 				m_Engine(engine)
 			{ }
 
-			inline size_t GetProgressCurrent() const		{ return GetCurrentToken(); }
-			inline size_t GetProgressTotal() const			{ return GetNumTokens(); }
-			//inline Scripts::Token GetToken() const			{ return Compiler::GetToken(); }
+			inline size_t GetProgressCurrent() const { return GetCurrentToken(); }
+			inline size_t GetProgressTotal() const { return GetNumTokens(); }
+			//inline Scripts::Token GetToken() const { return Compiler::GetToken(); }
 
-			bool IsRunning() const					{ return Compiler::IsRunning(); }
-			bool IsTaskFinished() final override	{ return Compiler::IsFinished(); }
+			bool IsRunning() const { return Compiler::IsRunning(); }
+			bool IsTaskFinished() final override { return Compiler::IsFinished(); }
 
 		protected:
-			void RunTask() final override			{ Compiler::Run(); }
-			void ResetTask() final override			{ Compiler::Reset(); }
+			void RunTask() final override { Compiler::Run(); }
+			void ResetTask() final override { Compiler::Reset(); }
 		};
 	}
 }

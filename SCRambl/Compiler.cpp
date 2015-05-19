@@ -11,8 +11,7 @@ namespace SCRambl
 {
 	namespace Compiler
 	{
-		void Compiler::Init()
-		{
+		void Compiler::Init() {
 			m_TokenIt = m_Tokens.Begin();
 			m_Task(Event::Begin);
 			m_State = compiling;
@@ -22,8 +21,7 @@ namespace SCRambl
 			std::string test = "TEST";
 			Output(test.c_str(), test.length());
 		}
-		void Compiler::Reset()
-		{
+		void Compiler::Reset() {
 		}
 		void Compiler::Run()
 		{
@@ -89,8 +87,8 @@ namespace SCRambl
 			}
 		}
 
-		Compiler::Compiler(Task & task, Engine & engine, Script & script) :
-			m_State(init), m_Task(task), m_Engine(engine), m_Script(script), m_Tokens(script.GetTokens())
+		Compiler::Compiler(Task& task, Engine& engine, Build::Shared build) :
+			m_State(init), m_Task(task), m_Engine(engine), m_Build(build), m_Tokens(build->GetScript().GetTokens())
 		{
 		}
 	}

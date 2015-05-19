@@ -26,6 +26,7 @@ namespace SCRambl
 
 		XMLValue();					// null-value
 		XMLValue(std::string);
+		XMLValue(const char*);
 		XMLValue(pugi::xml_text);
 		
 		template<typename T> auto AsNumber(T default_value) const->T;
@@ -45,6 +46,7 @@ namespace SCRambl
 
 		auto Raw() const->std::string;
 
+		auto IsValidVar() const->bool;
 		auto IsValidNumber() const->bool;
 		auto IsValidVersion() const->bool;
 		auto IsValidBool() const->bool;

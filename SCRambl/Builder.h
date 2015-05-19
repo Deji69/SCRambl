@@ -21,28 +21,32 @@ namespace SCRambl
 		BuildDefinitionPath(std::string path);
 	};
 
-	struct InputConfig
-	{
+	struct InputConfig {
+		enum eType {
+			File
+		};
+
 		using Shared = std::shared_ptr<InputConfig>;
-		InputConfig::InputConfig(XMLValue input) : Input(input)
+		InputConfig::InputConfig(XMLValue val, eType type) : Value(val), Type(type)
 		{ }
 
-		XMLValue Input;
-		XMLValue Output;
+		XMLValue Value;
+		eType Type;
 	};
-
-	struct ScriptConfig
-	{
+	struct ScriptConfig {
 		using Shared = std::shared_ptr<ScriptConfig>;
-		ScriptConfig::ScriptConfig(XMLValue name) : Name(name)
+		ScriptConfig::ScriptConfig(XMLValue name, XMLValue ext) : Name(name), Ext(ext)
 		{ }
 
 		XMLValue Name;
+		XMLValue Ext;
 		std::vector<InputConfig> Inputs;
 	};
 
 	class BuildConfig
 	{
+		friend class Build;
+
 		XMLConfiguration::Shared m_Config;
 
 		// attributes
@@ -60,13 +64,17 @@ namespace SCRambl
 		BuildDefinitionPath& AddDefPath(std::string);
 		size_t GetDefinitionPathID(std::string);				// returns -1 on failure
 
+		inline auto GetScripts() const->const decltype(m_Scripts)&  {
+			return m_Scripts;
+		}
+
 	public:
 		using Shared = std::shared_ptr<BuildConfig>;
 
 		//BuildConfig::BuildConfig(std::string id, std::string name);
 		BuildConfig::BuildConfig(std::string id, std::string name, XMLConfig& config);
 
-		ScriptConfig::Shared AddScript(XMLValue);
+		ScriptConfig::Shared AddScript(std::string id, XMLValue name, XMLValue ext = "");
 		void AddDefinitionPath(std::string);
 		void AddDefinitionPath(std::string, const std::vector<std::string>&);
 
@@ -83,13 +91,99 @@ namespace SCRambl
 
 	};
 
+	struct BuildVariable {
+		XMLValue Value;
+		BuildVariable() = default;
+		BuildVariable(XMLValue v) : Value(v) { }
+	};
+
+	class BuildEnvironment
+	{
+		Engine& m_Engine;
+		std::map<std::string, BuildVariable> m_Variables;
+
+	public:
+		BuildEnvironment(Engine&);
+
+		template<typename T>
+		BuildVariable& Set(std::string id, const T& v) {
+			auto it = m_Variables.find(id);
+			if (it != std::end(m_Variables))
+				it->second.Value = m_Engine.Format(v);
+			else
+				it = m_Variables.emplace(id, v);
+			return it;
+		}
+		BuildVariable& Get(std::string id) {
+			return m_Variables[id];
+		}
+		
+		inline std::string Val(XMLValue v) {
+			std::string val, raw = v.AsString();
+			if (raw.size() <= 3) val = raw;
+			else {
+				for (size_t i = 0; i < raw.size(); ++i) {
+					if (raw[i] == '(' && raw[i + 1] == '$') {
+						auto end = raw.find_first_of(')', i + 2);
+						if (end != raw.npos) {
+							size_t arr = 0;
+							auto lbr = raw.find_first_of('[', i);
+							if (lbr != raw.npos) {
+								end = lbr;
+								auto rbr = raw.find_first_of(']', lbr);
+								if (rbr != raw.npos) {
+									arr = std::stoul(raw.substr(lbr, rbr - lbr));
+								}
+								else lbr = rbr;
+							}
+
+							if (lbr != raw.npos) {
+								val += Val(Get(raw.substr(i, lbr - i)).Value.AsList()[arr]);
+							}
+							else {
+								val += Val(Get(raw.substr(i, end - i)).Value);
+							}
+
+							i = end;
+							continue;
+						}
+					}
+					val += raw[i];
+				}
+			}
+			return val;
+		}
+	};
+
 	class Build : public TaskSystem::Task<BuildEvent>
 	{
 		friend class Builder;
 
+		struct BuildScript {
+			std::string ID;
+			std::string Output;
+			std::vector<std::string> Inputs;
+
+			BuildScript() = default;
+			BuildScript(std::string id, std::string output) : ID(id), Output(output)
+			{ }
+		};
+		struct BuildInput {
+			std::string ScriptType;
+			std::string Value;
+			Scripts::File::Shared Input;
+
+			BuildInput() = default;
+			BuildInput(std::string type, std::string value) : ScriptType(type), Value(value)
+			{ }
+		};
+
 		Engine& m_Engine;
+		BuildEnvironment m_Env;
 		BuildConfig::Shared m_Config;
 		Script m_Script;
+		std::vector<BuildScript> m_BuildScripts;
+		std::vector<BuildInput> m_BuildInputs;
 		std::vector<std::string> m_Files;
 
 		// Tasks
@@ -98,13 +192,14 @@ namespace SCRambl
 		TaskMap::iterator m_CurrentTask;
 		bool m_HaveTask;
 
-		inline void Init() { m_CurrentTask = std::begin(m_Tasks); }
+		void Init();
 
 	public:
 		using Shared = std::shared_ptr<Build>;
 
 		Build(Engine&, BuildConfig::Shared);
-		//Build(Script&);
+
+		Scripts::File::Shared AddInput(std::string);
 
 		inline Script& GetScript() { return m_Script; }
 		inline const Script& GetScript() const { return m_Script; }
@@ -161,7 +256,7 @@ namespace SCRambl
 
 	public:
 		Builder(Engine&);
-
+		
 		Scripts::File::Shared LoadFile(Build::Shared, std::string);
 		bool LoadDefinitions(Build::Shared);
 
@@ -169,143 +264,4 @@ namespace SCRambl
 		bool SetConfig(std::string) const { return true; }
 		std::shared_ptr<BuildConfig> GetConfig() const { return m_BuildConfig; }
 	};
-
-	namespace BuildSystem
-	{
-		enum class BuildEvent
-		{
-
-		};
-		enum class FileTypeType
-		{
-
-		};
-
-		class FileType
-		{
-		public:
-			enum Type {
-				source, parsed, compiled, merged
-			};
-
-			FileType(Type type, std::string name, std::string ext);
-
-			inline Type					GetType() const				{ return m_Type; }
-			inline const std::string&	GetName() const				{ return m_Name; }
-			inline const std::string&	GetExtension() const		{ return m_Extension; }
-
-			static bool GetTypeByName(std::string name, Type& out) {
-				static std::map<std::string, Type> s_map = {
-					{ "source", source },
-					{ "parsed", parsed },
-					{ "compiled", compiled },
-					{ "merged", merged }
-				};
-				auto it = s_map.find(name);
-				if (it == s_map.end()) return false;
-				out = it->second;
-				return true;
-			}
-
-		private:
-			Type						m_Type;
-			std::string					m_Name;
-			std::string					m_Extension;
-		};
-
-		class BuildDirectory
-		{
-			std::string					m_DirectoryPath;
-
-		public:
-			BuildDirectory() = default;
-			BuildDirectory(std::string path) : m_DirectoryPath(path)
-			{ }
-
-			inline void SetDirectory(const std::string& path)				{ m_DirectoryPath; }
-			inline const std::string& GetDirectory() const					{ return m_DirectoryPath; }
-
-			inline operator const std::string&() const						{ return m_DirectoryPath; }
-			inline operator std::string&()									{ return m_DirectoryPath; }
-		};
-
-		class BuildConfig
-		{
-			std::string	m_ID;
-			std::string	m_Name;
-
-			std::string m_DefinitionPath;
-			std::vector<BuildDirectory> m_DefinitionPaths;
-			std::set<std::string> m_UsedDefinitionPaths;
-			std::string	m_LibraryPath;
-			std::vector<std::string> m_IncludePaths;
-			std::vector<std::string> m_LoadDefaults;
-
-			std::unordered_map<std::string, std::shared_ptr<FileType>> m_FileTypes;
-
-		public:
-			using Shared = std::shared_ptr < BuildConfig > ;
-
-			BuildConfig(std::string, std::string);
-			BuildConfig(std::string, std::string, Configuration::Config&);
-
-			std::shared_ptr<FileType> AddFileType(FileType::Type, std::string, std::string);
-			std::shared_ptr<FileType> GetFileType(const std::string&);
-			bool SetDefinitionPath(std::string);
-			bool SetLibraryPath(const std::string&);
-			bool AddDefinitionPath(const std::string&);
-			bool AddIncludePath(const std::string&);
-			bool AddDefaultLoad(const std::string &);
-			bool AddDefaultLoadLocally(const std::string &);
-			void OutputFile(const std::string&) const;
-
-			const std::string & GetDefinitionPath() const;
-			const std::string & GetLibraryPath() const;
-
-			inline size_t GetNumDefinitionPaths() const						{ return m_DefinitionPaths.size(); }
-			inline size_t GetNumDefaultLoads() const						{ return m_LoadDefaults.size(); }
-			inline const std::string & GetDefinitionPath(size_t i) const	{ return m_DefinitionPaths[i]; }
-			inline const std::string & GetDefaultLoad(size_t i) const		{ return m_LoadDefaults[i]; }
-			inline const std::string & GetID() const						{ return m_ID; }
-			inline const std::string & GetName() const						{ return m_Name; }
-		};
-
-		class Builder : public TaskSystem::Task < BuildEvent >
-		{
-			Engine& m_Engine;
-			Configuration::Shared m_Config;
-			Configuration::Config& m_ConfigurationConfig;
-			std::unordered_map<std::string, std::shared_ptr<BuildConfig>> m_BuildConfigurations;
-			std::shared_ptr<BuildConfig> m_BuildConfig;
-
-		public:
-			enum State {
-				init, preprocess, parse, compile, link,
-				finished
-			};
-
-			bool LoadScriptFile(const std::string &, Script &);
-			bool SetConfig(const std::string &);
-			std::shared_ptr<BuildConfig> GetConfig() const;
-
-			Builder(Engine &);
-
-		private:
-			State		m_State;
-
-			void Init();
-			void Run();
-
-		protected:
-			void RunTask() override				{ Run(); }
-			bool IsTaskFinished() override		{ return m_State == finished; }
-			void ResetTask() override			{ Init(); }
-
-		public:
-		};
-
-		class Build
-		{
-		};
-	}
 }

@@ -29,28 +29,28 @@ namespace SCRambl
 		class WhitespaceScanner : public Lexer::Scanner
 		{
 		public:
-			bool Scan(Lexer::State & state, Scripts::Position & code) override;
+			bool Scan(Lexer::State& state, Scripts::Position& code) override;
 		};
 
 		/*\ IdentifierScanner - Lexer::Scanner for identifiers \*/
 		class IdentifierScanner : public Lexer::Scanner
 		{
 		public:
-			bool Scan(Lexer::State & state, Scripts::Position & pos) override;
+			bool Scan(Lexer::State& state, Scripts::Position& pos) override;
 		};
 
 		/*\ LabelScanner - Lexer::Scanner for labels \*/
 		class LabelScanner : public Lexer::Scanner
 		{
 		public:
-			bool Scan(Lexer::State & state, Scripts::Position & pos) override;
+			bool Scan(Lexer::State& state, Scripts::Position& pos) override;
 		};
 
 		/*\ DirectiveScanner - Lexer::Scanner for directives \*/
 		class DirectiveScanner : public Lexer::Scanner
 		{
 		public:
-			bool Scan(Lexer::State & state, Scripts::Position & pos) override;
+			bool Scan(Lexer::State& state, Scripts::Position& pos) override;
 		};
 
 		/*\ StringLiteralScanner - Lexer::Scanner for string literals \*/
@@ -61,14 +61,14 @@ namespace SCRambl
 				unterminated
 			};
 
-			bool Scan(Lexer::State & state, Scripts::Position & pos) override;
+			bool Scan(Lexer::State& state, Scripts::Position& pos) override;
 		};
 
 		/*\ CommentScanner - Lexer::Scanner for line comments \*/
 		class CommentScanner : public Lexer::Scanner
 		{
 		public:
-			bool Scan(Lexer::State & state, Scripts::Position & pos) override;
+			bool Scan(Lexer::State& state, Scripts::Position& pos) override;
 		};
 
 		/*\ BlockCommentScanner - Lexer::Scanner for block comments \*/
@@ -81,7 +81,7 @@ namespace SCRambl
 				end_of_file_reached,
 			};
 
-			bool Scan(Lexer::State & state, Scripts::Position & pos) override;
+			bool Scan(Lexer::State& state, Scripts::Position& pos) override;
 		};
 
 		class Task;
@@ -270,37 +270,37 @@ namespace SCRambl
 			friend class Information;
 
 		private:
-			using LexerToken = Lexer::Token < TokenType >;
-			using LexerMachine = Lexer::Lexer < TokenType >;
-			using DirectiveMap = std::unordered_map < std::string, Directive >;
-			using OperatorTable = Operator::Table < Operator::Type, Operator::max_operator >;
-			using OperatorScanner = Operator::Scanner < Operator::Type, Operator::max_operator >;
+			using LexerToken = Lexer::Token<TokenType>;
+			using LexerMachine = Lexer::Lexer<TokenType>;
+			using DirectiveMap = std::unordered_map<std::string, Directive>;
+			using OperatorTable = Operator::Table<Operator::Type, Operator::max_operator>;
+			using OperatorScanner = Operator::Scanner<Operator::Type, Operator::max_operator>;
 			template<typename... T>
-			using TToken = TokenInfo < Tokens::Type, T... > ;
+			using TToken = TokenInfo<Tokens::Type, T...>;
 
-			Engine					&	m_Engine;
-			Task					&	m_Task;
-			Information					m_Information;
+			Engine&	m_Engine;
+			Task& m_Task;
+			Information m_Information;
 
-			BlockCommentScanner			m_BlockCommentScanner;
-			CommentScanner				m_CommentScanner;
-			DirectiveScanner			m_DirectiveScanner;
-			IdentifierScanner			m_IdentifierScanner;
-			Numbers::Scanner			m_NumericScanner;
-			LabelScanner				m_LabelScanner;
-			StringLiteralScanner		m_StringLiteralScanner;
-			WhitespaceScanner			m_WhitespaceScanner;
+			BlockCommentScanner m_BlockCommentScanner;
+			CommentScanner m_CommentScanner;
+			DirectiveScanner m_DirectiveScanner;
+			IdentifierScanner m_IdentifierScanner;
+			Numbers::Scanner m_NumericScanner;
+			LabelScanner m_LabelScanner;
+			StringLiteralScanner m_StringLiteralScanner;
+			WhitespaceScanner m_WhitespaceScanner;
 
-			OperatorTable				m_Operators;
-			OperatorScanner				m_OperatorScanner;
+			OperatorTable m_Operators;
+			OperatorScanner m_OperatorScanner;
 
-			LexerMachine				m_Lexer;
-			LexerToken					m_Token;
-			DirectiveMap				m_Directives;
-			Directive					m_Directive = Directive::INVALID;
-			std::string					m_String;					// last scanned string
-			std::string					m_Identifier;				// last scanned identifier
-			MacroMap					m_Macros;
+			LexerMachine m_Lexer;
+			LexerToken m_Token;
+			DirectiveMap m_Directives;
+			Directive m_Directive = Directive::INVALID;
+			std::string m_String;					// last scanned string
+			std::string	m_Identifier;				// last scanned identifier
+			MacroMap m_Macros;
 			
 			std::stack<Scripts::Token::Shared> m_Delimiters;
 
@@ -316,7 +316,7 @@ namespace SCRambl
 				max_state = bad_state,
 			};
 
-			Preprocessor(Task &, Engine &, Script &);
+			Preprocessor(Task&, Engine&, Build::Shared);
 
 			inline bool IsRunning() const			{ return m_State != finished; }
 			inline bool IsFinished() const			{ return m_State == finished; }
@@ -327,19 +327,19 @@ namespace SCRambl
 			const Information & GetInfo() const		{ return m_Information; }
 
 		private:
-			State								m_State = init;
-			Script							&	m_Script;
-			Scripts::Tokens					&	m_Tokens;
-			Scripts::Position					m_CodePos;
-			Commands							m_Commands;
-			Types::Types						m_Types;
-			bool								m_bScriptIsLoaded;						// if so, we only need to add-in any #include's
-			bool								m_DisableMacroExpansion = false;
-			bool								m_DisableMacroExpansionOnce = false;
-			bool								m_WasLastTokenEOL = false;
-			std::stack<bool>					m_PreprocessorLogic;
-			unsigned long						m_FalseLogicDepth = 0;					// for #if..#endif's ocurring within "#if FALSE"
-			std::unordered_set<std::string>		m_IdentifiersThatAreNotMacros;
+			State m_State = init;
+			Build::Shared m_Build;
+			Scripts::Tokens& m_Tokens;
+			Scripts::Position m_CodePos;
+			Types::Types m_Types;
+			Commands m_Commands;
+			bool m_bScriptIsLoaded;						// if so, we only need to add-in any #include's
+			bool m_DisableMacroExpansion = false;
+			bool m_DisableMacroExpansionOnce = false;
+			bool m_WasLastTokenEOL = false;
+			unsigned long m_FalseLogicDepth = 0;					// for #if..#endif's ocurring within "#if FALSE"
+			std::stack<bool> m_PreprocessorLogic;
+			std::unordered_set<std::string> m_IdentifiersThatAreNotMacros;
 			
 			// Send an error event
 			void SendError(Error);
@@ -452,16 +452,16 @@ namespace SCRambl
 			int ProcessExpression(bool paren = false);
 
 			// Perform unary operation on passed value - returns false if no change could be made as the operator was unsupported
-			static bool ExpressUnary(Operator::Type op, int & val);
+			static bool ExpressUnary(Operator::Type op, int& val);
 
 			// Get current line number
 			inline long GetLineNumber() const			{ return m_CodePos.GetLine(); }
 
 			// Get code of the current line
-			inline CodeLine & GetLineCode()				{ return m_CodePos.GetLine().GetCode(); }
+			inline CodeLine& GetLineCode()				{ return m_CodePos.GetLine().GetCode(); }
 
 			// Returns directive_invalid if it didnt exist
-			inline Directive GetDirective(const std::string & str) const {
+			inline Directive GetDirective(const std::string& str) const {
 				DirectiveMap::const_iterator it;
 				return it = m_Directives.find(str), it != m_Directives.end() ? (*it).second : Directive::INVALID;
 			}
@@ -510,8 +510,8 @@ namespace SCRambl
 			inline bool operator()(Event id, Args&&... args) { return CallEventHandler(id, std::forward<Args>(args)...); }
 
 		public:
-			Task(Engine& engine, Script& script):
-				Preprocessor(*this, engine, script),
+			Task(Engine& engine, Build::Shared build):
+				Preprocessor(*this, engine, build),
 				m_Engine(engine), m_Info(GetInfo())
 			{ }
 

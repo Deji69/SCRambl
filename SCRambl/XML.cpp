@@ -247,6 +247,7 @@ namespace SCRambl
 	auto XMLValue::Raw() const->std::string { return m_str; }
 	XMLValue::XMLValue() { }
 	XMLValue::XMLValue(std::string str) : m_str(str) { }
+	XMLValue::XMLValue(const char* str) : m_str(str) { }
 	XMLValue::XMLValue(pugi::xml_text txt) : m_str(txt.as_string()) { }
 	/* XMLAttribute */
 	auto XMLAttribute::GetValue() const->XMLValue { return m_attr.as_string(); }

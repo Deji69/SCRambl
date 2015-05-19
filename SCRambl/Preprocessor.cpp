@@ -9,10 +9,10 @@ namespace SCRambl
 {
 	namespace Preprocessor
 	{
-		Preprocessor::Preprocessor(Task & task, Engine & engine, Script & script) :
+		Preprocessor::Preprocessor(Task& task, Engine& engine, Build::Shared build) :
 			m_State(init), m_Task(task),
-			m_Engine(engine), m_Script(script),
-			m_Tokens(script.GetTokens()),
+			m_Engine(engine), m_Build(build),
+			m_Tokens(build->GetScript().GetTokens()),
 			m_Lexer(),
 			m_OperatorScanner(m_Operators),
 			m_Information(m_CodePos)
@@ -101,7 +101,7 @@ namespace SCRambl
 				switch (m_State) {
 				case init:
 					m_Task(Event::Begin);
-					m_CodePos = m_Script.GetCode();
+					m_CodePos = m_Build->GetScript().GetCode();
 					m_State = lexing;
 					break;
 				default:
@@ -157,7 +157,7 @@ namespace SCRambl
 			case TokenType::Label: {
 				auto name = range.Format();
 				auto label = Scripts::Label::Make(name);
-				m_Script.GetLabels().Insert(range.Format(), label);
+				m_Build->GetScript().GetLabels().Insert(range.Format(), label);
 				AddToken<Tokens::Label::Info>(pos, Tokens::Type::Label, range, label);
 				m_Task(Event::AddedToken, range);
 				break;
@@ -216,8 +216,8 @@ namespace SCRambl
 									if (macrosThatAreNotMacros.find(macro) == macrosThatAreNotMacros.end()) {
 										macrosThatAreNotMacros.emplace(macro);
 										bool b = m_CodePos == start_pos;
-										m_CodePos = m_Script.GetCode().Erase(m_Token.Begin(), m_Token.End());
-										m_CodePos = m_Script.GetCode().Insert(m_CodePos, macro->GetCode());
+										m_CodePos = m_Build->GetScript().GetCode().Erase(m_Token.Begin(), m_Token.End());
+										m_CodePos = m_Build->GetScript().GetCode().Insert(m_CodePos, macro->GetCode());
 										if (b) start_pos = m_CodePos;
 										continue;
 									}
@@ -228,7 +228,7 @@ namespace SCRambl
 							++m_CodePos;
 						}
 
-						m_Macros.Define(name, m_Script.GetCode().Copy(start_pos, m_CodePos, code));
+						m_Macros.Define(name, m_Build->GetScript().GetCode().Copy(start_pos, m_CodePos, code));
 					}
 					else m_Macros.Define(name);
 				}
@@ -277,7 +277,7 @@ namespace SCRambl
 			case Directive::INCLUDE:
 				if (Lex() == Lexer::Result::found_token && m_Token == TokenType::String)
 				{
-					if (m_Script.Include(m_CodePos, m_String))
+					if (m_Build->GetScript().Include(m_CodePos, m_String))
 					{
 						m_State = lexing;
 						return;
@@ -337,7 +337,7 @@ namespace SCRambl
 		}
 		void Preprocessor::HandleComment() {
 			// handle it with care by deleting the shit out of it
-			m_CodePos = m_Script.GetCode().Erase(m_Token.Begin(), m_Token.End());
+			m_CodePos = m_Build->GetScript().GetCode().Erase(m_Token.Begin(), m_Token.End());
 
 			// that felt good... add a single space in its place as an extra sign of indignity...
 			m_CodePos.Insert(' ');
@@ -408,7 +408,7 @@ namespace SCRambl
 				return;
 			}
 		}
-		bool Preprocessor::ExpressUnary(Operator::Type op, int & val) {
+		bool Preprocessor::ExpressUnary(Operator::Type op, int& val) {
 			switch (op) {
 			default: return false;
 			case Operator::not:
@@ -916,7 +916,7 @@ namespace SCRambl
 						\*/
 					case TokenType::Directive:
 						// get the directive identifier and look up its ID
-						m_Directive = GetDirective(m_Script.GetCode().Select(m_Token.Inside(), m_Token.End()));
+						m_Directive = GetDirective(m_Build->GetScript().GetCode().Select(m_Token.Inside(), m_Token.End()));
 
 						// if the source is being skipped, wait until we have a related directive
 						if (!GetSourceControl() && !DoesDirectiveIgnoreSourceControl(m_Directive))
@@ -937,7 +937,7 @@ namespace SCRambl
 
 					case TokenType::String:
 						// save the string
-						m_String = m_Script.GetCode().Select(m_Token.Inside(), m_Token.End());
+						m_String = m_Build->GetScript().GetCode().Select(m_Token.Inside(), m_Token.End());
 						m_String = m_String.substr(0, m_String.find_last_not_of('\0') + 1);
 						break;
 
@@ -968,10 +968,10 @@ namespace SCRambl
 									identifiersThatAreNotMacros.emplace(m_Identifier);
 
 									// remove the identifier from code
-									m_CodePos = m_Script.GetCode().Erase(m_Token.Begin(), m_Token.End());
+									m_CodePos = m_Build->GetScript().GetCode().Erase(m_Token.Begin(), m_Token.End());
 
 									// insert the macro code
-									m_CodePos = m_Script.GetCode().Insert(m_CodePos, macro->GetCode().Symbols());
+									m_CodePos = m_Build->GetScript().GetCode().Insert(m_CodePos, macro->GetCode().Symbols());
 									// continue parsing until we have a REAL token
 									continue;
 								}
@@ -1015,7 +1015,7 @@ namespace SCRambl
 		// Scanners - BORING! ;)
 
 		// Scan nothing (as useless as it sounds)
-		bool WhitespaceScanner::Scan(Lexer::State & state, Scripts::Position & code) {
+		bool WhitespaceScanner::Scan(Lexer::State& state, Scripts::Position& code) {
 			if (state == Lexer::State::before) {
 				if (code->GetType() == Symbol::whitespace) {
 					// remove excess whitespace (?)
@@ -1029,7 +1029,7 @@ namespace SCRambl
 			return false;
 		}
 		// Scan identifiers
-		bool IdentifierScanner::Scan(Lexer::State & state, Scripts::Position & pos) {
+		bool IdentifierScanner::Scan(Lexer::State& state, Scripts::Position& pos) {
 			switch (state) {
 				// return true if the symbol can only be an identifier
 			case Lexer::State::before:
@@ -1056,7 +1056,7 @@ namespace SCRambl
 			return false;
 		}
 		// Scan labels
-		bool LabelScanner::Scan(Lexer::State & state, Scripts::Position & pos) {
+		bool LabelScanner::Scan(Lexer::State& state, Scripts::Position& pos) {
 			switch (state) {
 				// return true if the symbol can only be an identifier
 			case Lexer::State::before:
@@ -1085,7 +1085,7 @@ namespace SCRambl
 			return false;
 		}
 		// Scan directives
-		bool DirectiveScanner::Scan(Lexer::State & state, Scripts::Position & pos) {
+		bool DirectiveScanner::Scan(Lexer::State& state, Scripts::Position& pos) {
 			switch (state) {
 				// check prefix
 			case Lexer::State::before:
@@ -1113,7 +1113,7 @@ namespace SCRambl
 			return false;
 		}
 		// Scan string literals
-		bool StringLiteralScanner::Scan(Lexer::State & state, Scripts::Position & pos) {
+		bool StringLiteralScanner::Scan(Lexer::State& state, Scripts::Position& pos) {
 			switch (state) {
 			case Lexer::State::before:
 				if (pos == '"') {
@@ -1149,7 +1149,7 @@ namespace SCRambl
 			return false;
 		}
 		// Scan line comments
-		bool CommentScanner::Scan(Lexer::State & state, Scripts::Position & pos) {
+		bool CommentScanner::Scan(Lexer::State& state, Scripts::Position& pos) {
 			switch (state)
 			{
 				// return number of matched prefix chars
@@ -1174,7 +1174,7 @@ namespace SCRambl
 			return false;
 		}
 		// Scan block comments
-		bool BlockCommentScanner::Scan(Lexer::State & state, Scripts::Position & pos) {
+		bool BlockCommentScanner::Scan(Lexer::State& state, Scripts::Position& pos) {
 			char last_char = '\0';
 			switch (state) {
 				// check for opening of block comment sequence

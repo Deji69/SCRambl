@@ -29,33 +29,31 @@ namespace SCRambl
 	class Engine : public TaskSystem::Task<EngineEvent>
 	{
 		//using TaskEntry = std::pair<int, TypeSystem::Task>;
-		using TaskMap = std::map < int, std::shared_ptr<TaskSystem::ITask> >;
-		using FormatMap = std::map < const std::type_info*, std::shared_ptr<IFormatter> >;
-		using ConfigMap = std::map < std::string, std::shared_ptr<XMLConfiguration> >;
+		using TaskMap = std::map<int, std::shared_ptr<TaskSystem::ITask>>;
+		using FormatMap = std::map<const std::type_info*, std::shared_ptr<IFormatter>>;
+		using ConfigMap = std::map<std::string, std::shared_ptr<XMLConfiguration>>;
 
 		// Configuration
-		ConfigMap				m_Config;
+		ConfigMap m_Config;
 
 		// Tasks
-		TaskMap					Tasks;
-		TaskMap::iterator		CurrentTask;
-		//TaskSystem::Task<TaskSystem::Event>::State	LastTaskState;
-		bool					HaveTask;
+		bool HaveTask;
+		TaskMap Tasks;
+		TaskMap::iterator CurrentTask;
 
 		// BuildSystem
 		Builder	m_Builder;
 
 		// Message formatting
-		FormatMap				Formatters;
+		FormatMap Formatters;
+
+		Constants m_Constants;
+		Commands m_Commands;
+		Types::Types m_Types;
 
 		inline void Init() {
 			CurrentTask = std::begin(Tasks);
 		}
-
-		Constants				m_Constants;
-		Commands				m_Commands;
-		Types::Types			m_Types;
-
 		bool LoadXML(const std::string & path);
 
 	public:
@@ -63,7 +61,7 @@ namespace SCRambl
 		virtual ~Engine()
 		{ }
 
-		Build::Shared InitBuild(Script&, std::vector<std::string> files);
+		Build::Shared InitBuild(std::vector<std::string> files);
 		bool BuildScript(Build::Shared);
 
 		// Get SCR Commands

@@ -126,7 +126,7 @@ namespace SCRambl
 		\*/
 		class Parser
 		{
-			using LabelMap = std::unordered_map < std::string, std::shared_ptr<Scripts::Label> > ;
+			using LabelMap = std::unordered_map<std::string, std::shared_ptr<Scripts::Label>>;
 
 		public:
 			enum State {
@@ -134,7 +134,7 @@ namespace SCRambl
 				bad_state, max_state = bad_state,
 			};
 
-			Parser(Task & task, Engine & engine, Script & script);
+			Parser(Task& task, Engine& engine, Build::Shared build);
 
 			bool IsFinished() const;
 			bool IsRunning() const;
@@ -191,7 +191,7 @@ namespace SCRambl
 					m_CommandVector.emplace_back(m_CurrentCommand);
 				}
 
-				m_Script.GetDeclarations().emplace_back(Tokens::CreateToken <Tokens::Command::Decl<Command>>(cmdid, m_CurrentCommand));
+				m_Build->GetScript().GetDeclarations().emplace_back(Tokens::CreateToken <Tokens::Command::Decl<Command>>(cmdid, m_CurrentCommand));
 
 				m_ParsingCommandArgs = false;
 			}
@@ -225,35 +225,35 @@ namespace SCRambl
 			void Init();
 			void Parse();
 
-			State								m_State = init;
-			Engine							&	m_Engine;
-			Task							&	m_Task;
-			Script							&	m_Script;
-			Scripts::Tokens					&	m_Tokens;
-			Scripts::Tokens::Iterator			m_TokenIt;
-			Scripts::Tokens::Iterator			m_CommandTokenIt;
-			Scripts::Tokens::Iterator::CVector	m_CommandTokens;			// positions of all parsed command tokens
-			Scripts::Tokens::Iterator::CVector	m_LabelTokens;
-			std::map<Scripts::Label::Shared, LabelRef>	m_LabelReferences;
-			Scripts::Labels					&	m_Labels;
-			Commands						&	m_Commands;
-			Commands							m_ExtraCommands;
-			Types::Types						m_Types;
-			Command::Shared						m_CurrentCommand;
-			Command::Arg::Iterator				m_CommandArgIt;
-			size_t								m_NumCommandArgs;
-			size_t								m_NumOverloadFailures;
-			Commands::Vector					m_OverloadCommands;
-			Commands::Vector::iterator			m_OverloadCommandsIt;
-			Jump::Vector						m_Jumps;
+			State m_State = init;
+			Engine& m_Engine;
+			Task& m_Task;
+			Build::Shared m_Build;
+			Scripts::Tokens& m_Tokens;
+			Scripts::Tokens::Iterator m_TokenIt;
+			Scripts::Tokens::Iterator m_CommandTokenIt;
+			Scripts::Tokens::Iterator::CVector m_CommandTokens;			// positions of all parsed command tokens
+			Scripts::Tokens::Iterator::CVector m_LabelTokens;
+			Scripts::Labels& m_Labels;
+			Types::Types m_Types;
+			size_t m_NumCommandArgs;
+			size_t m_NumOverloadFailures;
+			Commands& m_Commands;
+			Commands m_ExtraCommands;
+			Command::Shared	m_CurrentCommand;
+			Command::Arg::Iterator m_CommandArgIt;
+			Commands::Vector m_OverloadCommands;
+			Commands::Vector::iterator m_OverloadCommandsIt;
+			Jump::Vector m_Jumps;
 
-			std::vector<std::shared_ptr<const Command>>		m_CommandVector;
-			std::unordered_map<std::string, size_t>			m_CommandMap;
+			std::map<Scripts::Label::Shared, LabelRef> m_LabelReferences;
+			std::vector<std::shared_ptr<const Command>> m_CommandVector;
+			std::unordered_map<std::string, size_t> m_CommandMap;
 
 			// Status
-			bool							m_OnNewLine;
-			bool							m_ParsingCommandArgs;
-			bool							m_EndOfCommandArgs;
+			bool m_OnNewLine;
+			bool m_ParsingCommandArgs;
+			bool m_EndOfCommandArgs;
 		};
 		
 		/*\
@@ -271,28 +271,28 @@ namespace SCRambl
 		class Task : public TaskSystem::Task<Event>, private Parser
 		{
 			friend Parser;
-			Engine				&	m_Engine;
+			Engine&	m_Engine;
 
-			inline bool operator()(Event id)					{ return CallEventHandler(id); }
+			inline bool operator()(Event id) { return CallEventHandler(id); }
 			template<typename... Args>
-			inline bool operator()(Event id, Args&&... args)	{ return CallEventHandler(id, std::forward<Args>(args)...); }
+			inline bool operator()(Event id, Args&&... args) { return CallEventHandler(id, std::forward<Args>(args)...); }
 
 		public:
-			Task(Engine & engine, Script & script) :
-				Parser(*this, engine, script),
+			Task(Engine& engine, Build::Shared build) :
+				Parser(*this, engine, build),
 				m_Engine(engine)
 			{ }
 
-			inline size_t GetProgressCurrent() const		{ return GetCurrentToken(); }
-			inline size_t GetProgressTotal() const			{ return GetNumTokens(); }
-			inline Scripts::Token GetToken() const			{ return Parser::GetToken(); }
+			inline size_t GetProgressCurrent() const { return GetCurrentToken(); }
+			inline size_t GetProgressTotal() const { return GetNumTokens(); }
+			inline Scripts::Token GetToken() const { return Parser::GetToken(); }
 
-			bool IsRunning() const					{ return Parser::IsRunning(); }
-			bool IsTaskFinished() final override	{ return Parser::IsFinished(); }
+			bool IsRunning() const { return Parser::IsRunning(); }
+			bool IsTaskFinished() final override { return Parser::IsFinished(); }
 
 		protected:
-			void RunTask() final override			{ Parser::Run(); }
-			void ResetTask() final override			{ Parser::Reset(); }
+			void RunTask() final override { Parser::Run(); }
+			void ResetTask() final override { Parser::Reset(); }
 		};
 	}
 }
