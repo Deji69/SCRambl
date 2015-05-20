@@ -249,6 +249,9 @@
     <ClInclude Include="Linker.h">
       <Filter>Header</Filter>
     </ClInclude>
+    <ClInclude Include="BuildConfig.h">
+      <Filter>Header</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header">

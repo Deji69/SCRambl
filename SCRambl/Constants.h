@@ -10,7 +10,7 @@
 
 namespace SCRambl
 {
-	class Engine;
+	class Build;
 
 	class Constants {
 	public:
@@ -22,13 +22,14 @@ namespace SCRambl
 		using EnumMap = std::unordered_multimap < std::string, std::shared_ptr<SCR::Enum> > ;
 
 	private:
-		Engine			&	m_Engine;
-		ConstantMap			m_ConstantMap;
-		EnumMap				m_EnumMap;
-		std::shared_ptr<Configuration> m_Config;
+		ConstantMap m_ConstantMap;
+		EnumMap	m_EnumMap;
+		std::shared_ptr<XMLConfiguration> m_Config;
 
 	public:
-		Constants(Engine & engine);
+		Constants();
+
+		void Init(Build&);
 
 		template<typename R, typename T = R>
 		std::shared_ptr < SCR::Constant<R> > AddConstant(std::string name, T value);

@@ -46,10 +46,10 @@ namespace SCRambl
 
 		// Message formatting
 		FormatMap Formatters;
-
-		Constants m_Constants;
-		Commands m_Commands;
-		Types::Types m_Types;
+		
+		//Constants m_Constants;
+		//Commands m_Commands;
+		//Types::Types m_Types;
 
 		inline void Init() {
 			CurrentTask = std::begin(Tasks);
@@ -65,9 +65,9 @@ namespace SCRambl
 		bool BuildScript(Build::Shared);
 
 		// Get SCR Commands
-		inline Commands & GetCommands()			{ return m_Commands; }
+		//inline Commands & GetCommands()			{ return m_Commands; }
 		// Get SCR Types
-		inline Types::Types & GetTypes()		{ return m_Types; }
+		//inline Types::Types & GetTypes() { return m_Types; }
 
 		/*\
 		 * Engine::GetBuildConfig

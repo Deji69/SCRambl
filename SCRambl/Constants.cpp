@@ -8,39 +8,36 @@
 #include "Constants.h"
 #include "Engine.h"
 #include "SCR.h"
+#include "Builder.h"
 
 namespace SCRambl
 {
-	Constants::Constants(Engine & eng) : m_Engine(eng) {
-		m_Config = eng.AddConfiguration("Constants");
-		auto& conf_constant = m_Config->AddClass("Constant", [this](const pugi::xml_node xml, std::shared_ptr<void> & obj){
-			auto attr_name = xml.attribute("Name");
-			if (!attr_name.empty()) {
-				auto name = attr_name.as_string();
-				auto attr_val = xml.attribute("Value");
-				if (!attr_val.empty()) {
-					auto constant = this->AddConstant<long>(name, attr_val.as_int());
+	void Constants::Init(Build& build) {
+		m_Config = build.AddConfig("Constants");
+		auto& conf_constant = m_Config->AddClass("Constant", [this](const XMLNode xml, std::shared_ptr<void> & obj){
+			if (auto attr_name = xml.GetAttribute("Name")) {
+				auto name = attr_name.GetValue().AsString();
+				if (auto attr_val = xml.GetAttribute("Value")) {
+					auto constant = this->AddConstant<long>(name, attr_val.GetValue().AsNumber<long>());
 					obj = constant;
 					return;
 				}
 			}
 			obj = nullptr;
 		});
-		auto& conf_enum = m_Config->AddClass("Enum", [this](const pugi::xml_node xml, std::shared_ptr<void> & obj){
-			auto attr_name = xml.attribute("Name");
-			if (!attr_name.empty()) {
-				auto name = attr_name.as_string();
+		auto& conf_enum = m_Config->AddClass("Enum", [this](const XMLNode xml, std::shared_ptr<void> & obj){
+			if (auto attr_name = xml.GetAttribute("Name")) {
+				auto name = attr_name.GetValue().AsString();
 				obj = this->AddEnum(name);
 			}
 		});
-		conf_enum.AddClass("Constant", [this](const pugi::xml_node xml, std::shared_ptr<void> & obj){
-			auto attr_name = xml.attribute("Name");
-			if (!attr_name.empty()) {
-				auto name = attr_name.as_string();
-				auto attr_val = xml.attribute("Value");
+		conf_enum.AddClass("Constant", [this](const XMLNode xml, std::shared_ptr<void> & obj){
+			;
+			if (auto attr_name = xml.GetAttribute("Name")) {
+				auto name = attr_name.GetValue().AsString();
 				SCR::Enumerator::Shared enumerator;
-				if (!attr_val.empty()) {
-					enumerator = this->AddEnumerator(std::static_pointer_cast<SCR::Enum>(obj), name, attr_val.as_int());
+				if (auto attr_val = xml.GetAttribute("Value")) {
+					enumerator = this->AddEnumerator(std::static_pointer_cast<SCR::Enum>(obj), name, attr_val.GetValue().AsNumber<long>());
 				}
 				else {
 					enumerator = this->AddEnumerator(std::static_pointer_cast<SCR::Enum>(obj), name);
@@ -48,4 +45,5 @@ namespace SCRambl
 			}
 		});
 	}
+	Constants::Constants() { }
 }

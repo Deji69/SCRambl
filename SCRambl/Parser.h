@@ -219,7 +219,7 @@ namespace SCRambl
 
 			inline Types::Type::Shared GetType(const std::string& name) {
 				auto ptr = m_Types.GetType(name);
-				return ptr ? ptr : m_Engine.GetTypes().GetType(name);
+				return ptr ? ptr : m_Build->GetTypes().GetType(name);
 			}
 
 			void Init();
@@ -235,7 +235,7 @@ namespace SCRambl
 			Scripts::Tokens::Iterator::CVector m_CommandTokens;			// positions of all parsed command tokens
 			Scripts::Tokens::Iterator::CVector m_LabelTokens;
 			Scripts::Labels& m_Labels;
-			Types::Types m_Types;
+			Types::Types& m_Types;
 			size_t m_NumCommandArgs;
 			size_t m_NumOverloadFailures;
 			Commands& m_Commands;
@@ -249,6 +249,8 @@ namespace SCRambl
 			std::map<Scripts::Label::Shared, LabelRef> m_LabelReferences;
 			std::vector<std::shared_ptr<const Command>> m_CommandVector;
 			std::unordered_map<std::string, size_t> m_CommandMap;
+
+			std::vector<Scripts::Token::Shared> m_CommandArgTokens;
 
 			// Status
 			bool m_OnNewLine;

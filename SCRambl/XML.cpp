@@ -191,6 +191,7 @@ namespace SCRambl
 	}
 	template<> auto XMLValue::AsNumber(int v) const->int { return sto<int>(m_str, v, [](std::string str){ return std::stoi(str); }); }
 	template<> auto XMLValue::AsNumber(long v) const->long { return sto<long>(m_str, v, [](std::string str){ return std::stol(str, nullptr, 0); }); }
+	template<> auto XMLValue::AsNumber(unsigned int v) const->unsigned int { return sto<unsigned long>(m_str, v, [](std::string str){ return std::stoul(str, nullptr, 0); }); }
 	template<> auto XMLValue::AsNumber(unsigned long v) const->unsigned long { return sto<unsigned long>(m_str, v, [](std::string str){ return std::stoul(str, nullptr, 0); }); }
 	template<> auto XMLValue::AsNumber(long long v) const->long long { return sto<long long>(m_str, v, [](std::string str){ return std::stoll(str, nullptr, 0); }); }
 	template<> auto XMLValue::AsNumber(unsigned long long v) const->unsigned long long { return sto<unsigned long long>(m_str, v, [](std::string str){ return std::stoull(str, nullptr, 0); }); }
@@ -241,7 +242,7 @@ namespace SCRambl
 		if (!str.empty()) vec.emplace_back(str);
 		return vec;
 	}
-	auto XMLValue::AsString(std::string default_value) const->std::string {
+	auto XMLValue::AsString(const std::string& default_value) const->const std::string& {
 		return m_str.empty() ? default_value : m_str;
 	}
 	auto XMLValue::Raw() const->std::string { return m_str; }

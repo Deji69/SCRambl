@@ -6,8 +6,48 @@
 namespace SCRambl
 {
 	/* Build */
+	void Build::LoadDefinitions() {
+		auto loads = m_Config->GetDefinitions();
+		size_t defs_not_loaded = loads.size();
+		for (auto& defpath : m_Config->GetDefinitionPaths()) {
+			for (auto& def : defpath.Definitions) {
+				if (!LoadXML(defpath.Path + def))
+					++defs_not_loaded;
+			}
+
+			for (auto it = loads.begin(); it != loads.end(); ++it) {
+				if (LoadXML(defpath.Path + *it)) {
+					it = loads.erase(it);
+					--defs_not_loaded;
+				}
+			}
+		}
+		//defs_not_loaded = 0;
+	}
+	bool Build::LoadXML(std::string path) {
+		XML xml(path);
+		if (xml) {
+			// load configurations
+			if (m_ConfigMap.size()) {
+				for (auto node : xml.Children()) {
+					if (!node.Name().empty()) {
+						// find configuration
+						auto it = m_ConfigMap.find(node.Name());
+						if (it != m_ConfigMap.end()) {
+							// load from node
+							it->second->LoadXML(node);
+						}
+					}
+				}
+			}
+			return true;
+		}
+		return false;
+	}
 	void Build::Init() {
 		m_CurrentTask = std::begin(m_Tasks);
+
+		LoadDefinitions();
 
 		for (auto& scr : m_Config->GetScripts()) {
 			m_BuildScripts.emplace_back(scr.first, m_Env.Val(scr.second->Name) + m_Env.Val(scr.second->Ext));
@@ -17,8 +57,18 @@ namespace SCRambl
 		// TODO:
 		return m_Script.OpenFile(input);
 	}
+	std::shared_ptr<XMLConfiguration> Build::AddConfig(const std::string & name)
+	{
+		if (name.empty()) return nullptr;
+		auto it = m_ConfigMap.find(name);
+		if (it != m_ConfigMap.end()) return it->second;
+		auto config = std::make_shared<XMLConfiguration>(name);
+		m_ConfigMap.emplace(name, config);
+		return config;
+	}
 	const TaskSystem::Task<BuildEvent> & Build::Run() {
-		if (m_CurrentTask == std::end(m_Tasks)) Init();
+		if (m_CurrentTask == std::end(m_Tasks))
+			Init();
 		auto& it = m_CurrentTask;
 
 		if (it != std::end(m_Tasks)) {
@@ -35,7 +85,11 @@ namespace SCRambl
 	}
 	Build::Build(Engine& engine, BuildConfig::Shared config) : m_Env(engine), m_Engine(engine),
 		m_Config(config), m_CurrentTask(std::end(m_Tasks))
-	{ }
+	{
+		m_Commands.Init(*this);
+		m_Types.Init(*this);
+		m_Constants.Init(*this);
+	}
 
 	/* BuildEnvironment */
 	BuildEnvironment::BuildEnvironment(Engine& engine) : m_Engine(engine) { }
@@ -47,7 +101,7 @@ namespace SCRambl
 		return ptr;
 	}
 	void BuildConfig::AddDefinitionPath(std::string path, const std::vector<std::string>& defs) {
-		auto defpath = AddDefPath(path);
+		auto& defpath = AddDefPath(path);
 		std::remove_copy_if(defs.begin(), defs.end(), std::back_inserter(defpath.Definitions), VectorContainPred<std::string>(defpath.Definitions));
 	}
 	void BuildConfig::AddDefinitionPath(std::string path) {
@@ -67,13 +121,31 @@ namespace SCRambl
 		auto it = m_DefinitionPathMap.find(path);
 		return it != m_DefinitionPathMap.end() ? it->second : -1;
 	}
+	template<ParseObjectConfig::ActionType TAction>
+	void AddEnvironmentHandler(XMLConfig& config, std::string str) {
+		config.AddClass(str, [](const XMLNode base, std::shared_ptr<void>& obj) {
+			if (auto ptr = std::static_pointer_cast<ParseObjectConfig>(obj)) {
+				if (auto attr = base.GetAttribute("Var")) {
+					ParseObjectConfig::Action action;
+					action.Type = TAction;
+					action.Var = attr.GetValue();
+					ptr->Actions.emplace_back(action);
+				}
+			}
+		});
+	}
+	void AddEnvironmentXMLHandlers(XMLConfig& config) {
+		AddEnvironmentHandler<ParseObjectConfig::ActionType::Set>(config, "Set");
+		AddEnvironmentHandler<ParseObjectConfig::ActionType::Inc>(config, "Inc");
+		AddEnvironmentHandler<ParseObjectConfig::ActionType::Dec>(config, "Dec");
+	}
 	BuildConfig::BuildConfig(std::string id, std::string name, XMLConfig& config) : m_ID(id), m_Name(name) {
 		// <DefinitionPath>...</DefinitionPath>
 		auto& defpath = config.AddClass("DefinitionPath", [](const XMLNode base, std::shared_ptr<void>& obj) {
 			auto ptr = std::static_pointer_cast<BuildConfig>(obj);
 			if (auto attr = base.GetAttribute("Path")) {
 				std::vector<std::string> defs;
-				for (auto child : base) {
+				for (auto child : base.Children()) {
 					if (child.Name() == "Definition") {
 						auto str = child.GetValue().AsString();
 						if (!str.empty()) {
@@ -92,9 +164,47 @@ namespace SCRambl
 		// <Parse>
 		auto& parse = config.AddClass("Parse");
 			// <Command>
-			parse.AddClass("Command", [](const XMLNode base, std::shared_ptr<void>& obj){
-
+			auto& parsecmd = parse.AddClass("Command", [](const XMLNode base, std::shared_ptr<void>& obj){
+				auto ptr = std::static_pointer_cast<BuildConfig>(obj);
+				if (auto attr = base.GetAttribute("Name")) {
+					ParseObjectConfig::Shared config = std::make_shared<ParseObjectConfig>();
+					config->Name = attr.GetValue();
+					config->Required = base.GetAttribute("Required").GetValue();
+					config->Type = base.GetAttribute("Type").GetValue();
+					ptr->m_ParseCommandNames.emplace_back(attr.GetValue(), config);
+					obj = config;
+				}
 			});
+			AddEnvironmentXMLHandlers(parsecmd);
+			// </Command>
+			// <Variable>
+			auto& parsevar = parse.AddClass("Variable", [](const XMLNode base, std::shared_ptr<void>& obj){
+				auto ptr = std::static_pointer_cast<BuildConfig>(obj);
+				if (auto attr = base.GetAttribute("Name")) {
+					ParseObjectConfig::Shared config = std::make_shared<ParseObjectConfig>();
+					config->Name = attr.GetValue();
+					config->Required = base.GetAttribute("Required").GetValue();
+					config->Type = base.GetAttribute("Type").GetValue();
+					ptr->m_ParseVariableNames.emplace_back(attr.GetValue(), config);
+					obj = config;
+				}
+			});
+			AddEnvironmentXMLHandlers(parsevar);
+			// </Variable>
+			// <Label>
+			auto& parselabel = parse.AddClass("Label", [](const XMLNode base, std::shared_ptr<void>& obj){
+				auto ptr = std::static_pointer_cast<BuildConfig>(obj);
+				if (auto attr = base.GetAttribute("Name")) {
+					ParseObjectConfig::Shared config = std::make_shared<ParseObjectConfig>();
+					config->Name = attr.GetValue();
+					config->Required = base.GetAttribute("Required").GetValue();
+					config->Type = base.GetAttribute("Type").GetValue();
+					ptr->m_ParseLabelNames.emplace_back(attr.GetValue(), config);
+					obj = config;
+				}
+			});
+			AddEnvironmentXMLHandlers(parselabel);
+			// </Label>
 		// </Parse>
 
 		// <Script>
@@ -164,4 +274,9 @@ namespace SCRambl
 	/* DefinitionPath */
 	BuildDefinitionPath::BuildDefinitionPath(std::string path) : Path(path)
 	{ }
+
+	/* build_xmlvalue_less */
+	bool build_xmlvalue_less::operator()(const XMLValue& lhs, const XMLValue& rhs) const {
+		return env.Val(lhs) < env.Val(rhs);
+	}
 }

@@ -16,7 +16,8 @@ namespace SCRambl
 			m_Task(task), m_Engine(engine), m_Build(build), m_State(init),
 			m_Tokens(build->GetScript().GetTokens()),
 			m_Labels(build->GetScript().GetLabels()),
-			m_Commands(m_Engine.GetCommands())
+			m_Commands(build->GetCommands()),
+			m_Types(build->GetTypes())
 		{ }
 		void Parser::Init() {
 			m_TokenIt = m_Tokens.Begin();
@@ -102,7 +103,7 @@ namespace SCRambl
 			}
 		}
 		void Parser::Parse() {
-			auto& types = m_Engine.GetTypes();
+			auto& types = m_Build->GetTypes();
 			auto ptr = *m_TokenIt;
 			auto type = ptr->GetToken()->GetType<Tokens::Type>();
 			bool newline = false;
@@ -135,6 +136,19 @@ namespace SCRambl
 				auto range = token.GetValue<0>();
 				auto name = range.Format();
 
+				if (IsCommandParsing() && !AreCommandArgsParsed()) {
+					if (m_CommandArgIt->IsReturn()) {
+						BREAK();
+					}
+					else {
+						auto& type = m_CommandArgIt->GetType();
+						if (type.HasValueType(Types::ValueSet::Text)) {
+							val_type = Types::ValueSet::Text;
+							break;
+						}
+					}
+				}
+
 				if (auto type = GetType(name)) {
 					
 				}
@@ -151,9 +165,9 @@ namespace SCRambl
 				else if (m_Commands.FindCommands(name, vec) > 0) {
 					// make a token and store it
 					if (vec.size() == 1)
-						m_TokenIt.Get()->SetToken(Tokens::CreateToken < Tokens::Command::Info<Command> >(Tokens::Type::Command, range, vec[0]));
+						m_TokenIt.Get()->SetToken(Tokens::CreateToken<Tokens::Command::Info<Command>>(Tokens::Type::Command, range, vec[0]));
 					else
-						m_TokenIt.Get()->SetToken(Tokens::CreateToken < Tokens::Command::OverloadInfo<Command> >(Tokens::Type::CommandOverload, range, vec));
+						m_TokenIt.Get()->SetToken(Tokens::CreateToken<Tokens::Command::OverloadInfo<Command>>(Tokens::Type::CommandOverload, range, vec));
 						//m_TokenIt.Get().SetToken(ScriptsTokens::MakeShared < Tokens::Command::OverloadInfo<Command> >(range.Begin(), Tokens::Type::CommandOverload, range, vec));
 
 					if (ParseCommandOverloads(vec)) {
@@ -324,7 +338,17 @@ namespace SCRambl
 			}
 
 			if (IsCommandParsing() && !just_found_command) {
+				switch (val_type) {
+				case Types::ValueSet::Null:
+					break;
+				case Types::ValueSet::Text:
+					break;
+				}
 				NextCommandArg();
+			}
+
+			if (AreCommandArgsParsed()) {
+
 			}
 
 			m_OnNewLine = newline;

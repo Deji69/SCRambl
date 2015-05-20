@@ -79,5 +79,5 @@ const TaskSystem::Task<EngineEvent> & Engine::Run() {
 Engine::Engine() :
 HaveTask(false),
 // in that order...
-m_Builder(*this), m_Constants(*this), m_Types(*this), m_Commands(*this)
+m_Builder(*this)
 { }

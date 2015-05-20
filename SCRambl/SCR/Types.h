@@ -161,6 +161,14 @@ namespace SCR
 		inline const Extension	&	Extend() const					{ return *static_cast<Extension*>(this); }
 		inline TType				GetType() const					{ return m_Type; }
 
+		bool HasValueType(TValType type) const {
+			for (auto val : m_Values) {
+				if (val->GetValueType() == type)
+					return true;
+			}
+			return false;
+		}
+
 		template<typename TValue = Value, typename ...TArgs>
 		inline std::shared_ptr<TValue> AddValue(TArgs&&... args) {
 			auto shared = std::make_shared<TValue>(std::forward<TArgs>(args)...);

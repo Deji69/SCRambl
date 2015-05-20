@@ -30,16 +30,16 @@ namespace SCRambl
 		XMLValue(pugi::xml_text);
 		
 		template<typename T> auto AsNumber(T default_value) const->T;
-		template<> auto AsNumber(int) const->int;
+		/*template<> auto AsNumber(int) const->int;	
 		template<> auto AsNumber(long) const->long;
 		template<> auto AsNumber(unsigned long) const->unsigned long;
 		template<> auto AsNumber(long long) const->long long;
 		template<> auto AsNumber(unsigned long long) const->unsigned long long;
 		template<> auto AsNumber(float) const->float;
-		template<> auto AsNumber(double) const->double;
+		template<> auto AsNumber(double) const->double;*/
 		template<typename T> inline auto AsNumber() const->T { return AsNumber<T>(0); }
 
-		auto AsString(std::string default_value = "") const->std::string;
+		auto AsString(const std::string& default_value = "") const->const std::string&;
 		auto AsVersion(VersionStruct default_value = 0) const->VersionStruct;
 		auto AsBool(bool default_value = false) const->bool;
 		auto AsList(char sep = ',', char delim = '"') const->Vector;

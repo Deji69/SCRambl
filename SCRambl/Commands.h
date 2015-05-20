@@ -15,6 +15,7 @@
 namespace SCRambl
 {
 	class Engine;
+	class Build;
 
 	// Use SCR Command's and SCR CommandArg's with our own TypeExt's
 	typedef SCR::Command<SCR::CommandArg<Types::Type>> Command;
@@ -27,20 +28,20 @@ namespace SCRambl
 			none, uppercase, lowercase
 		};
 
-		using Map = std::unordered_multimap < std::string, Command::Shared >;
-		using Vector = std::vector < Command::Shared >;
+		using Map = std::unordered_multimap<std::string, Command::Shared>;
+		using Vector = std::vector<Command::Shared>;
 
 	private:
-		//Engine							&	m_Engine;
-		std::shared_ptr<Configuration>		m_Config;
-		bool								m_UseCaseConversion;
-		Casing								m_SourceCasing = Casing::none;
-		Casing								m_DestCasing = Casing::none;
-		Map									m_Map;
+		std::shared_ptr<XMLConfiguration> m_Config;
+		bool m_UseCaseConversion;
+		Casing m_SourceCasing = Casing::none;
+		Casing m_DestCasing = Casing::none;
+		Map	m_Map;
 
 	public:
 		Commands();
-		Commands(Engine & engine);
+
+		void Init(Build& build);
 
 		// Get casing by name - or rather, the first character - whatever
 		inline Casing GetCasingByName(std::string name) const {

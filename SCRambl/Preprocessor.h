@@ -331,8 +331,8 @@ namespace SCRambl
 			Build::Shared m_Build;
 			Scripts::Tokens& m_Tokens;
 			Scripts::Position m_CodePos;
-			Types::Types m_Types;
-			Commands m_Commands;
+			Types::Types& m_Types;
+			Commands& m_Commands;
 			bool m_bScriptIsLoaded;						// if so, we only need to add-in any #include's
 			bool m_DisableMacroExpansion = false;
 			bool m_DisableMacroExpansionOnce = false;
@@ -407,7 +407,7 @@ namespace SCRambl
 
 			inline Types::Type::Shared GetType(const std::string& name) {
 				auto ptr = m_Types.GetType(name);
-				return ptr ? ptr : m_Engine.GetTypes().GetType(name);
+				return ptr ? ptr : m_Build->GetTypes().GetType(name);
 			}
 
 			// Lex main code

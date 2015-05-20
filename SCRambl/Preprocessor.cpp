@@ -15,7 +15,8 @@ namespace SCRambl
 			m_Tokens(build->GetScript().GetTokens()),
 			m_Lexer(),
 			m_OperatorScanner(m_Operators),
-			m_Information(m_CodePos)
+			m_Information(m_CodePos),
+			m_Commands(build->GetCommands()), m_Types(build->GetTypes())
 		{
 			Reset();
 

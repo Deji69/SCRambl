@@ -2,19 +2,17 @@
 #include "Types.h"
 #include "Commands.h"
 #include "Engine.h"
+#include "Builder.h"
 
 namespace SCRambl
 {
-	Commands::Commands()
-	{ }
-	Commands::Commands(Engine & eng)
-	{
-		auto& types = eng.GetTypes();
+	void Commands::Init(Build& build) {
+		auto& types = build.GetTypes();
 		auto& usecc = m_UseCaseConversion;
 		auto& ccdest = m_DestCasing;
 		auto& ccsrc = m_SourceCasing;
 
-		m_Config = eng.AddConfiguration("Commands");
+		m_Config = build.AddConfig("Commands");
 
 		m_Config->AddClass("Case", [this, &usecc, &ccdest, &ccsrc](const pugi::xml_node xml, std::shared_ptr<void> & obj){
 			usecc = xml.attribute("Convert").as_bool();
@@ -26,7 +24,7 @@ namespace SCRambl
 			auto command = AddCommand(xml.attribute("Name").as_string(), xml.attribute("ID").as_ullong());
 			obj = command;
 		}).AddClass("Args");
-		args.AddClass("Arg", [this,&types](const pugi::xml_node xml, std::shared_ptr<void> & obj){
+		args.AddClass("Arg", [this, &types](const pugi::xml_node xml, std::shared_ptr<void> & obj){
 			// retrieve the object poiter as a SCR command we know it to be
 			auto& command = *std::static_pointer_cast<SCRambl::Command>(obj);
 			if (auto type = types.GetType(xml.attribute("Type").as_string())) {
@@ -38,4 +36,6 @@ namespace SCRambl
 			}
 		});
 	}
+	Commands::Commands()
+	{ }
 }

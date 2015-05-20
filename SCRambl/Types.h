@@ -15,7 +15,7 @@
 
 namespace SCRambl
 {
-	class Engine;
+	class Build;
 
 	namespace Types
 	{
@@ -29,10 +29,10 @@ namespace SCRambl
 
 		// Value set
 		enum class ValueSet {
-			Null, Number, Variable, Text, Label,
+			Null, Number, Variable, Label, Text,
 			INVALID
 		};
-		static ValueSet		GetValueTypeByName(std::string name);
+		static ValueSet GetValueTypeByName(std::string name);
 
 		// Internal data types
 		class DataType {
@@ -159,8 +159,7 @@ namespace SCRambl
 
 		template<DataSourceID> class DataAttributeSet;
 
-		template<>
-		class DataAttributeSet<DataSourceID::Value> : public AttributeSet<DataAttributeID>
+		template<> class DataAttributeSet<DataSourceID::Value> : public AttributeSet<DataAttributeID>
 		{
 		public:
 			using Shared = std::shared_ptr < DataAttributeSet > ;
@@ -385,7 +384,7 @@ namespace SCRambl
 		class NumberValue : public Value
 		{
 		public:
-			using Shared = std::shared_ptr < NumberValue > ;
+			using Shared = std::shared_ptr<NumberValue>;
 
 			NumberValue(Type::Shared type, NumberValueType numtype, size_t size) : Value(type, ValueSet::Number, size), m_Type(numtype)
 			{ }
@@ -473,14 +472,15 @@ namespace SCRambl
 #endif
 
 		class Types {
-			Configuration::Shared		m_Config;
-			Type::Storage				m_Types;
-			std::multimap<ValueSet, Value::Shared>	m_Values;
-			std::vector<Translation<>::Shared>		m_Translations;
+			XMLConfiguration::Shared m_Config;
+			Type::Storage m_Types;
+			std::multimap<ValueSet, Value::Shared> m_Values;
+			std::vector<Translation<>::Shared> m_Translations;
 			
 		public:
-			Types() = default;
-			Types(Engine &);
+			Types();
+			
+			void Init(Build&);
 
 			DataSourceID GetDataSource(std::string name) {
 				static const DataSourceSet s_set;

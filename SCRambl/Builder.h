@@ -9,84 +9,13 @@
 #include "Tasks.h"
 #include "Configuration.h"
 #include "Scripts.h"
+#include "BuildConfig.h"
+#include "Commands.h"
+#include "Constants.h"
+#include "Types.h"
 
 namespace SCRambl
 {
-	struct BuildDefinitionPath
-	{
-		std::string Path;
-		std::vector<std::string> Definitions;
-
-		//BuildDefinitionPath() = default;
-		BuildDefinitionPath(std::string path);
-	};
-
-	struct InputConfig {
-		enum eType {
-			File
-		};
-
-		using Shared = std::shared_ptr<InputConfig>;
-		InputConfig::InputConfig(XMLValue val, eType type) : Value(val), Type(type)
-		{ }
-
-		XMLValue Value;
-		eType Type;
-	};
-	struct ScriptConfig {
-		using Shared = std::shared_ptr<ScriptConfig>;
-		ScriptConfig::ScriptConfig(XMLValue name, XMLValue ext) : Name(name), Ext(ext)
-		{ }
-
-		XMLValue Name;
-		XMLValue Ext;
-		std::vector<InputConfig> Inputs;
-	};
-
-	class BuildConfig
-	{
-		friend class Build;
-
-		XMLConfiguration::Shared m_Config;
-
-		// attributes
-		std::string m_ID;
-		std::string m_Name;
-		
-		// paths
-		std::vector<BuildDefinitionPath> m_DefinitionPaths;
-		std::map<const std::string, size_t> m_DefinitionPathMap;
-		std::vector<std::string> m_Definitions;
-
-		//
-		std::map<std::string, ScriptConfig::Shared> m_Scripts;
-
-		BuildDefinitionPath& AddDefPath(std::string);
-		size_t GetDefinitionPathID(std::string);				// returns -1 on failure
-
-		inline auto GetScripts() const->const decltype(m_Scripts)&  {
-			return m_Scripts;
-		}
-
-	public:
-		using Shared = std::shared_ptr<BuildConfig>;
-
-		//BuildConfig::BuildConfig(std::string id, std::string name);
-		BuildConfig::BuildConfig(std::string id, std::string name, XMLConfig& config);
-
-		ScriptConfig::Shared AddScript(std::string id, XMLValue name, XMLValue ext = "");
-		void AddDefinitionPath(std::string);
-		void AddDefinitionPath(std::string, const std::vector<std::string>&);
-
-		size_t GetNumDefinitionPaths() const { return m_DefinitionPaths.size(); }
-		size_t GetNumDefaultLoads() const { return 0; }
-		std::string GetDefaultLoad(size_t i = 0) const { return ""; }
-		std::string GetDefinitionPath(size_t i) const { return m_DefinitionPaths[i].Path; }
-
-		const std::vector<std::string>& GetDefinitions() const { return m_Definitions; }
-		const std::vector<BuildDefinitionPath>& GetDefinitionPaths() const { return m_DefinitionPaths; }
-	};
-
 	enum class BuildEvent {
 
 	};
@@ -100,7 +29,7 @@ namespace SCRambl
 	class BuildEnvironment
 	{
 		Engine& m_Engine;
-		std::map<std::string, BuildVariable> m_Variables;
+		mutable std::map<std::string, BuildVariable> m_Variables;
 
 	public:
 		BuildEnvironment(Engine&);
@@ -117,8 +46,11 @@ namespace SCRambl
 		BuildVariable& Get(std::string id) {
 			return m_Variables[id];
 		}
+		const BuildVariable& Get(std::string id) const {
+			return m_Variables[id];
+		}
 		
-		inline std::string Val(XMLValue v) {
+		inline std::string Val(XMLValue v) const {
 			std::string val, raw = v.AsString();
 			if (raw.size() <= 3) val = raw;
 			else {
@@ -178,9 +110,16 @@ namespace SCRambl
 			{ }
 		};
 
+		using ConfigMap = std::map<std::string, std::shared_ptr<XMLConfiguration>>;
+
 		Engine& m_Engine;
+		Constants m_Constants;
+		Commands m_Commands;
+		Types::Types m_Types;
 		BuildEnvironment m_Env;
 		BuildConfig::Shared m_Config;
+		ConfigMap m_ConfigMap;
+
 		Script m_Script;
 		std::vector<BuildScript> m_BuildScripts;
 		std::vector<BuildInput> m_BuildInputs;
@@ -193,6 +132,7 @@ namespace SCRambl
 		bool m_HaveTask;
 
 		void Init();
+		void LoadDefinitions();
 
 	public:
 		using Shared = std::shared_ptr<Build>;
@@ -200,9 +140,15 @@ namespace SCRambl
 		Build(Engine&, BuildConfig::Shared);
 
 		Scripts::File::Shared AddInput(std::string);
+		std::shared_ptr<XMLConfiguration> AddConfig(const std::string& name);
+		bool LoadXML(std::string path);
 
 		inline Script& GetScript() { return m_Script; }
 		inline const Script& GetScript() const { return m_Script; }
+		inline Commands& GetCommands() { return m_Commands; }
+		inline const Commands& GetCommands() const { return m_Commands; }
+		inline Types::Types& GetTypes() { return m_Types; }
+		inline const Types::Types& GetTypes() const { return m_Types; }
 
 		template<typename T, typename ID, typename... Params>
 		const std::shared_ptr<T> AddTask(ID id, Params&&... prms) {

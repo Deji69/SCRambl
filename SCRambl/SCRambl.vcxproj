@@ -83,6 +83,7 @@
   <ItemGroup>
     <ClInclude Include="..\SCRambl.h" />
     <ClInclude Include="Attributes.h" />
+    <ClInclude Include="BuildConfig.h" />
     <ClInclude Include="Builder.h" />
     <ClInclude Include="Commands.h" />
     <ClInclude Include="Compiler.h" />
