@@ -75,7 +75,7 @@ namespace SCRambl
 				
 				Output<uint32_t>(cmd.GetNumArgs());
 
-				for (auto n = 0; n < cmd.GetNumArgs(); ++n) {
+				for (size_t n = 0; n < cmd.GetNumArgs(); ++n) {
 					auto& arg = command->GetArg(n);
 					
 				}

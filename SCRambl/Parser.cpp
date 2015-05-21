@@ -154,7 +154,9 @@ namespace SCRambl
 						if (val_vec.size()) {
 							Types::Value::Shared val;
 							for (auto v : val_vec) {
-								
+								auto& stringval = v->Extend<Types::StringValue>();
+								auto translation = stringval.GetTranslation();
+								ASSERT(translation);
 							}
 
 							auto symbol = Tokens::CreateToken<Tokens::String::Value<Types::Value::Shared>>(val, name);

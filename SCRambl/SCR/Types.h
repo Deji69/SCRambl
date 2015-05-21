@@ -169,7 +169,7 @@ namespace SCR
 			}
 			return false;
 		}
-		std::vector<Value::Shared> GetValueTypes(TValType type) const {
+		std::vector<typename Value::Shared> GetValueTypes(TValType type) const {
 			std::vector<Value::Shared> vec;
 			for (auto val : m_Values) {
 				if (val->GetValueType() == type)

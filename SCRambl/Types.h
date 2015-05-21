@@ -347,21 +347,21 @@ namespace SCRambl
 				return GetSize() >= size;
 			}
 			
-			inline size_t GetSize() const							{ return m_Size; }
-			inline Type::Shared GetType() const						{ return m_Type; }
+			inline size_t GetSize() const { return m_Size; }
+			inline Type::Shared GetType() const { return m_Type; }
 
-			inline Translation<>::Shared GetTranslation() const		{ return m_Translation; }
-			inline void SetTranslation(Translation<>::Shared v)		{ m_Translation = v; }
+			inline Translation<>::Shared GetTranslation() const { return m_Translation; }
+			inline void SetTranslation(Translation<>::Shared v) { m_Translation = v; }
 
 			template<typename T>
-			inline T& Extend()										{ return *static_cast<T*>(this); }
+			inline T& Extend() { return *static_cast<T*>(this); }
 			template<typename T>
-			inline const T& Extend() const							{ return *static_cast<T*>(this); }
+			inline const T& Extend() const { return *static_cast<T*>(this); }
 
 		private:
-			Type::Shared			m_Type;
-			size_t					m_Size;
-			Translation<>::Shared	m_Translation = nullptr;
+			Type::Shared m_Type;
+			size_t m_Size;
+			Translation<>::Shared m_Translation = nullptr;
 		};
 
 		/*\
@@ -401,6 +401,24 @@ namespace SCRambl
 			NumberValueType			m_Type;
 		};
 
+		/*\
+		 * String Value
+		\*/
+		class StringValue : public Value {
+		public:
+			using Shared = std::shared_ptr<StringValue>;
+
+			StringValue(Type::Shared type, size_t size) : Value(type, ValueSet::Text, size)
+			{ }
+
+			template<typename T, typename... TArgs>
+			inline std::shared_ptr<T> CreateToken(TArgs&&... args) {
+				return std::make_shared<T>(Tokens::Type::String, *this, std::forward<TArgs>(args)...);
+			}
+
+		private:
+		};
+		
 		/*\
 		 * Label Value
 		\*/
