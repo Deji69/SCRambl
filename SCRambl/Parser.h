@@ -12,6 +12,7 @@
 #include "Preprocessor.h"
 #include "Labels.h"
 #include "TokensB.h"
+#include "Types.h"
 
 namespace SCRambl
 {
@@ -32,8 +33,8 @@ namespace SCRambl
 			Command = Tokens::Identifier::EXTRA,
 		};
 
-		using CommandInfo = Tokens::Identifier::Info < ParsedType, Command::Shared >;
-		using OLCommandInfo = Tokens::Identifier::Info < ParsedType, Commands::Vector >;
+		using CommandInfo = Tokens::Command::Info<Command>;
+		using OLCommandInfo = Tokens::Command::OverloadInfo<Commands::Vector>;
 
 		/*\ Parser::Symbols - Symbolic data for parsed scripts \*/
 		class Symbols
@@ -48,7 +49,7 @@ namespace SCRambl
 
 			class Data
 			{
-				Types::ValueToken			m_ValToken;
+				Tokens::ValueToken<Types::Value::Shared>::Shared m_ValToken;
 			};
 
 			class FileFunctions
@@ -179,7 +180,8 @@ namespace SCRambl
 			}
 			void FinishCommandParsing() {
 				auto tok = m_CommandTokenIt.Get()->GetToken<Tokens::Command::Info<Command>>();
-				m_CommandTokenIt.Get()->GetSymbol() = Tokens::CreateToken<Tokens::Command::Call<Command>>(*tok, m_NumCommandArgs);
+				auto symbol = Tokens::CreateToken<Tokens::Command::Call<Command>>(*tok, m_NumCommandArgs);
+				m_CommandTokenIt.Get()->GetSymbol() = symbol;
 
 				size_t cmdid = m_CommandVector.size();
 				auto it = m_CommandMap.empty() ? m_CommandMap.end() : m_CommandMap.find(m_CurrentCommand->GetName());
@@ -191,10 +193,16 @@ namespace SCRambl
 					m_CommandVector.emplace_back(m_CurrentCommand);
 				}
 
+				for (auto argtok : m_CommandArgTokens) {
+					symbol->AddArg(argtok->GetSymbol());
+				}
+				m_CommandArgTokens.clear();
+
 				m_Build->GetScript().GetDeclarations().emplace_back(Tokens::CreateToken <Tokens::Command::Decl<Command>>(cmdid, m_CurrentCommand));
 
 				m_ParsingCommandArgs = false;
 			}
+			//Types::Translation<>::Shared FigureOutTranslation()
 			void MarkOverloadIncompatible() {
 				m_OverloadCommandsIt = m_OverloadCommands.erase(m_OverloadCommandsIt);
 			}
@@ -223,6 +231,7 @@ namespace SCRambl
 			}
 
 			void Init();
+			void Finish();
 			void Parse();
 
 			State m_State = init;
@@ -249,6 +258,7 @@ namespace SCRambl
 			std::map<Scripts::Label::Shared, LabelRef> m_LabelReferences;
 			std::vector<std::shared_ptr<const Command>> m_CommandVector;
 			std::unordered_map<std::string, size_t> m_CommandMap;
+			std::multimap<const std::string, Scripts::Tokens::Iterator> m_CommandTokenMap;
 
 			std::vector<Scripts::Token::Shared> m_CommandArgTokens;
 

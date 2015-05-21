@@ -16,10 +16,14 @@ namespace SCRambl
 			m_Task(Event::Begin);
 			m_State = compiling;
 
-			m_File.open("script.scrmbl", std::ios::out | std::ios::binary);
+			auto name = m_Build->GetEnvVar("ScriptName").AsString();
+			if (name.empty())
+				BREAK();
+			m_File.open(name + ".scrmbl", std::ios::out | std::ios::binary);
+			
 			Output<uint64_t>(GetTime());
-			std::string test = "TEST";
-			Output(test.c_str(), test.length());
+			Output<uint8_t>(name.size());
+			Output(name.c_str(), name.size());
 		}
 		void Compiler::Reset() {
 		}
@@ -63,16 +67,24 @@ namespace SCRambl
 
 				auto it = m_CommandNames.find(command->GetName());
 				if (it != m_CommandNames.end()) {
-					Output<uint32_t>(it->second);
+					Output<int32_t>(it->second);
 				}
 				else {
-					Output<uint32_t>(m_CommandNames.size());
-					m_CommandNames.emplace(command->GetName(), m_CommandNames.size());
+					Output<int32_t>(AddCommandName(command->GetName()));
 				}
 				
 				Output<uint32_t>(cmd.GetNumArgs());
-				break;
+
+				for (auto n = 0; n < cmd.GetNumArgs(); ++n) {
+					auto& arg = command->GetArg(n);
+					
 				}
+				break;
+			}
+			case Tokens::Type::Identifier: {
+
+				break;
+			}
 			case Tokens::Type::LabelRef: {
 				break;
 				}
@@ -81,7 +93,8 @@ namespace SCRambl
 			++m_TokenIt;
 		}
 		void Compiler::Finish() {
-			for (auto name : m_CommandNames) {
+			for (auto name : m_CommandNameVec) {
+				Output<int32_t>(name.second);
 				Output(name.first.c_str(), name.first.size());
 				Output<uint8_t>(0);
 			}

@@ -50,8 +50,14 @@ namespace SCRambl
 		LoadDefinitions();
 
 		for (auto& scr : m_Config->GetScripts()) {
-			m_BuildScripts.emplace_back(scr.first, m_Env.Val(scr.second->Name) + m_Env.Val(scr.second->Ext));
+			m_BuildScripts.emplace_back(scr.first, m_Env.Val(scr.second->Name).AsString() + m_Env.Val(scr.second->Ext).AsString());
 		}
+	}
+	bool Build::IsCommandArgParsed(Command::Shared command, unsigned long index) const {
+		if (index < command->GetNumArgs()) {
+			auto& arg = command->GetArg(index);
+		}
+		return true;
 	}
 	Scripts::File::Shared Build::AddInput(std::string input) {
 		// TODO:
@@ -92,6 +98,42 @@ namespace SCRambl
 	}
 
 	/* BuildEnvironment */
+	XMLValue BuildEnvironment::Val(XMLValue v) const {
+		std::string val, raw = v.AsString();
+		if (raw.size() <= 3) val = raw;
+		else {
+			for (size_t i = 0; i < raw.size(); ++i) {
+				if (raw[i] == '(' && raw[i + 1] == '$') {
+					i += 2;
+					auto end = raw.find_first_of(')', i);
+					if (end != raw.npos) {
+						size_t arr = 0;
+						auto lbr = raw.find_first_of('[', i);
+						if (lbr != raw.npos) {
+							end = lbr;
+							auto rbr = raw.find_first_of(']', lbr);
+							if (rbr != raw.npos) {
+								arr = std::stoul(raw.substr(lbr, rbr - lbr));
+							}
+							else lbr = rbr;
+						}
+
+						if (lbr != raw.npos) {
+							val += Val(Get(raw.substr(i, lbr - i)).Value.AsList()[arr]).AsString();
+						}
+						else {
+							val += Val(Get(raw.substr(i, end - i)).Value).AsString();
+						}
+
+						i = end;
+						continue;
+					}
+				}
+				val += raw[i];
+			}
+		}
+		return m_Engine.Format(val);
+	}
 	BuildEnvironment::BuildEnvironment(Engine& engine) : m_Engine(engine) { }
 
 	/* BuildConfig */
@@ -277,6 +319,6 @@ namespace SCRambl
 
 	/* build_xmlvalue_less */
 	bool build_xmlvalue_less::operator()(const XMLValue& lhs, const XMLValue& rhs) const {
-		return env.Val(lhs) < env.Val(rhs);
+		return env.Val(lhs).AsString() < env.Val(rhs).AsString();
 	}
 }

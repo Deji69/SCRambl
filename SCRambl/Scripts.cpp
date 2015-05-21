@@ -277,7 +277,7 @@ namespace SCRambl
 	}
 
 	/* Scripts::Position */
-	Position::Position()
+	Position::Position() : m_pCode(nullptr)
 	{ }
 	Position::Position(Code & code) : Position(&code)
 	{ }

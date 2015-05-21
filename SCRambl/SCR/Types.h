@@ -159,6 +159,7 @@ namespace SCR
 
 		inline Extension		&	Extend()						{ return *static_cast<Extension*>(this); }
 		inline const Extension	&	Extend() const					{ return *static_cast<Extension*>(this); }
+		inline std::string			GetName() const					{ return m_Name; }
 		inline TType				GetType() const					{ return m_Type; }
 
 		bool HasValueType(TValType type) const {
@@ -167,6 +168,14 @@ namespace SCR
 					return true;
 			}
 			return false;
+		}
+		std::vector<Value::Shared> GetValueTypes(TValType type) const {
+			std::vector<Value::Shared> vec;
+			for (auto val : m_Values) {
+				if (val->GetValueType() == type)
+					vec.emplace_back(val);
+			}
+			return vec;
 		}
 
 		template<typename TValue = Value, typename ...TArgs>

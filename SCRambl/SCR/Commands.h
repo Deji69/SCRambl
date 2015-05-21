@@ -79,6 +79,9 @@ namespace SCR
 			m_Args.emplace_back(type, m_Args.size(), isRet);
 		}
 
+		inline TArgType& GetArg(size_t i) { return m_Args[i]; }
+		inline const TArgType& GetArg(size_t i) const { return m_Args[i]; }
+
 		inline typename ArgList::const_iterator	BeginArg() const		{ return m_Args.begin(); }
 		inline typename ArgList::iterator		BeginArg()				{ return m_Args.begin(); }
 		inline typename ArgList::const_iterator	EndArg() const			{ return m_Args.end(); }

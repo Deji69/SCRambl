@@ -58,9 +58,13 @@ namespace SCRambl
 		{ }
 
 		template<std::size_t N>
-		inline const typename std::tuple_element<N, std::tuple<TValueType...>>::type & GetValue() const		{ return std::get<N>(m_Value); }
+		inline const typename std::tuple_element<N, std::tuple<TValueType...>>::type & GetValue() const {
+			return std::get<N>(m_Value);
+		}
 		template<std::size_t N>
-		inline typename std::tuple_element<N, std::tuple<TValueType...>>::type & GetValue() 				{ return std::get<N>(m_Value); }
+		inline typename std::tuple_element<N, std::tuple<TValueType...>>::type & GetValue() {
+			return std::get<N>(m_Value);
+		}
 	};
 	
 	enum class TokenType {

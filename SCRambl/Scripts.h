@@ -573,8 +573,8 @@ namespace SCRambl
 		Scripts::Tokens& GetTokens() { return m_Tokens; }
 
 		// X
-		inline std::vector<std::shared_ptr<TokenSymbol>> & GetDeclarations() { throw; }
-		inline const std::vector<std::shared_ptr<TokenSymbol>> & GetDeclarations() const { throw; }
+		inline std::vector<std::shared_ptr<TokenSymbol>> & GetDeclarations() { return m_Declarations; }
+		inline const std::vector<std::shared_ptr<TokenSymbol>> & GetDeclarations() const { return m_Declarations; }
 
 	private:
 		bool ProcessCodeLine(const std::string&, CodeLine&, bool = false);
@@ -589,5 +589,7 @@ namespace SCRambl
 		Scripts::LScript* m_LScript;
 		Scripts::File::Shared m_File;
 		Scripts::Code::Shared m_Code;
+
+		std::vector<std::shared_ptr<TokenSymbol>> m_Declarations;
 	};
 }

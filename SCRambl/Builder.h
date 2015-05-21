@@ -24,6 +24,99 @@ namespace SCRambl
 		XMLValue Value;
 		BuildVariable() = default;
 		BuildVariable(XMLValue v) : Value(v) { }
+
+		template<typename T> BuildVariable& operator=(const T& v) {
+			Value = v;
+			return *this;
+		}
+		template<typename T> BuildVariable& operator+(T v) {
+			Value = Value.AsNumber<T>() + v;
+			return *this;
+		}
+		template<typename T> BuildVariable& operator-(T v) {
+			Value = Value.AsNumber<T>() - v;
+			return *this;
+		}
+		template<typename T> BuildVariable& operator*(T v) {
+			Value = Value.AsNumber<T>() * v;
+			return *this;
+		}
+		template<typename T> BuildVariable& operator/(T v) {
+			Value = Value.AsNumber<T>() / v;
+			return *this;
+		}
+		template<typename T> BuildVariable& operator%(T v) {
+			Value = Value.AsNumber<T>() % v;
+			return *this;
+		}
+		template<typename T> BuildVariable& operator&(T v) {
+			Value = Value.AsNumber<T>() & v;
+			return *this;
+		}
+		template<typename T> BuildVariable& operator|(T v) {
+			Value = Value.AsNumber<T>() | v;
+			return *this;
+		}
+		template<typename T> BuildVariable& operator^(T v) {
+			Value = Value.AsNumber<T>() & v;
+			return *this;
+		}
+		template<typename T> BuildVariable& operator<<(T v) {
+			Value = Value.AsNumber<T>() << v;
+			return *this;
+		}
+		template<typename T> BuildVariable& operator>>(T v) {
+			Value = Value.AsNumber<T>() >> v;
+			return *this;
+		}
+		template<typename T> BuildVariable& operator+=(T v) {
+			return (*this = *this + v);
+		}
+		template<typename T> BuildVariable& operator-=(T v) {
+			return (*this = *this - v);
+		}
+		template<typename T> BuildVariable& operator*=(T v) {
+			return (*this = *this * v);
+		}
+		template<typename T> BuildVariable& operator/=(T v) {
+			return (*this = *this / v);
+		}
+		template<typename T> BuildVariable& operator%=(T v) {
+			return (*this = *this % v);
+		}
+		template<typename T> BuildVariable& operator&=(T v) {
+			return (*this = *this & v);
+		}
+		template<typename T> BuildVariable& operator|=(T v) {
+			return (*this = *this | v);
+		}
+		template<typename T> BuildVariable& operator^=(T v) {
+			return (*this = *this ^ v);
+		}
+		template<typename T> BuildVariable& operator<<=(T v) {
+			return (*this = *this << v);
+		}
+		template<typename T> BuildVariable& operator>>=(T v) {
+			return (*this = *this >> v);
+		}
+		BuildVariable& operator++() {
+			Value = Value.AsNumber<long long>() + 1;
+			return *this;
+		}
+		BuildVariable operator++(int) {
+			BuildVariable v = *this;
+			++(*this);
+			return v;
+		}
+		BuildVariable& operator--() {
+			Value = Value.AsNumber<long long>() - 1;
+			return *this;
+		}
+		BuildVariable operator--(int) {
+			BuildVariable v = *this;
+			--(*this);
+			return v;
+		}
 	};
 
 	class BuildEnvironment
@@ -35,55 +128,69 @@ namespace SCRambl
 		BuildEnvironment(Engine&);
 
 		template<typename T>
-		BuildVariable& Set(std::string id, const T& v) {
-			auto it = m_Variables.find(id);
+		BuildVariable& Set(XMLValue id, const T& v) {
+			auto it = m_Variables.find(Val(id).AsString());
 			if (it != std::end(m_Variables))
-				it->second.Value = m_Engine.Format(v);
+				it->second.Value = Val(v);
 			else
-				it = m_Variables.emplace(id, v);
-			return it;
+				it = m_Variables.emplace(Val(id).AsString(), Val(v)).first;
+			return it->second;
 		}
-		BuildVariable& Get(std::string id) {
-			return m_Variables[id];
+		BuildVariable& Get(XMLValue id) {
+			return m_Variables[Val(id).AsString()];
 		}
-		const BuildVariable& Get(std::string id) const {
-			return m_Variables[id];
+		const BuildVariable& Get(XMLValue id) const {
+			return m_Variables[Val(id).AsString()];
 		}
-		
-		inline std::string Val(XMLValue v) const {
-			std::string val, raw = v.AsString();
-			if (raw.size() <= 3) val = raw;
-			else {
-				for (size_t i = 0; i < raw.size(); ++i) {
-					if (raw[i] == '(' && raw[i + 1] == '$') {
-						auto end = raw.find_first_of(')', i + 2);
-						if (end != raw.npos) {
-							size_t arr = 0;
-							auto lbr = raw.find_first_of('[', i);
-							if (lbr != raw.npos) {
-								end = lbr;
-								auto rbr = raw.find_first_of(']', lbr);
-								if (rbr != raw.npos) {
-									arr = std::stoul(raw.substr(lbr, rbr - lbr));
-								}
-								else lbr = rbr;
-							}
 
-							if (lbr != raw.npos) {
-								val += Val(Get(raw.substr(i, lbr - i)).Value.AsList()[arr]);
-							}
-							else {
-								val += Val(Get(raw.substr(i, end - i)).Value);
-							}
-
-							i = end;
-							continue;
-						}
-					}
-					val += raw[i];
-				}
+		XMLValue Val(XMLValue v) const;
+	
+		void DoAction(const ParseObjectConfig::Action& action, XMLValue v) {
+			using ActionType = ParseObjectConfig::ActionType;
+			switch (action.Type) {
+			case ActionType::Clear:
+				Set(action.Var, "");
+				break;
+			case ActionType::Set:
+				Set(action.Var, v);
+				break;
+			case ActionType::Inc:
+				++Get(action.Var);
+				break;
+			case ActionType::Dec:
+				++Get(action.Var);
+				break;
+			case ActionType::Add:
+				Get(action.Var) += XMLValue(Val(v)).AsNumber<long long>();
+				break;
+			case ActionType::Sub:
+				Get(Val(action.Var)) -= XMLValue(Val(v)).AsNumber<long long>();
+				break;
+			case ActionType::Mul:
+				Get(Val(action.Var)) *= XMLValue(Val(v)).AsNumber<long long>();
+				break;
+			case ActionType::Div:
+				Get(Val(action.Var)) /= XMLValue(Val(v)).AsNumber<long long>();
+				break;
+			case ActionType::Mod:
+				Get(Val(action.Var)) %= XMLValue(Val(v)).AsNumber<long long>();
+				break;
+			case ActionType::And:
+				Get(Val(action.Var)) &= XMLValue(Val(v)).AsNumber<long long>();
+				break;
+			case ActionType::Or:
+				Get(Val(action.Var)) |= XMLValue(Val(v)).AsNumber<long long>();
+				break;
+			case ActionType::Xor:
+				Get(Val(action.Var)) ^= XMLValue(Val(v)).AsNumber<long long>();
+				break;
+			case ActionType::Shl:
+				Get(Val(action.Var)) <<= XMLValue(Val(v)).AsNumber<long long>();
+				break;
+			case ActionType::Shr:
+				Get(Val(action.Var)) >>= XMLValue(Val(v)).AsNumber<long long>();
+				break;
 			}
-			return val;
 		}
 	};
 
@@ -142,6 +249,9 @@ namespace SCRambl
 		Scripts::File::Shared AddInput(std::string);
 		std::shared_ptr<XMLConfiguration> AddConfig(const std::string& name);
 		bool LoadXML(std::string path);
+		XMLValue GetEnvVar(std::string var) const { return m_Env.Get(var).Value; }
+
+		bool IsCommandArgParsed(Command::Shared, unsigned long arg_index) const;
 
 		inline Script& GetScript() { return m_Script; }
 		inline const Script& GetScript() const { return m_Script; }
@@ -149,6 +259,54 @@ namespace SCRambl
 		inline const Commands& GetCommands() const { return m_Commands; }
 		inline Types::Types& GetTypes() { return m_Types; }
 		inline const Types::Types& GetTypes() const { return m_Types; }
+
+		void DoParseActions(std::string val, const ParseObjectConfig::ActionVec& vec) {
+			for (auto& action : vec) {
+				m_Env.DoAction(action, val);
+			}
+		}
+
+		//template<typename TMap = std::multimap<const std::string, Scripts::Tokens::Iterator>>
+		//void ParseCommands(const TMap& map) {
+		void ParseCommands(const std::multimap<const std::string, Scripts::Tokens::Iterator>& map) {
+			for (auto& parsecmd : m_Config->GetParseCommands()) {
+				auto v = m_Env.Val(parsecmd.first).AsString();
+				auto rg = map.equal_range(v);
+				if (rg.first != rg.second) {
+					for (auto it = rg.first; it != rg.second; ++it) {
+						bool check_arg = false, check_type = false;
+						bool found_type = false;
+						auto type = m_Env.Val(parsecmd.second->Type).AsString();
+						if (!type.empty()) {
+							check_type = true;
+						}
+
+						auto argit = it->second;
+						++argit;
+						auto& cmdtok = it->second->GetToken()->Get<Tokens::Command::Info<Command>>();
+						auto cmd = cmdtok.GetValue<Tokens::Command::CommandType>();
+						for (unsigned long i = 0; i < cmd->GetNumArgs(); ++i, ++argit) {
+							if (cmd->GetArg(i).GetType().GetName() == type) {
+								found_type = true;
+								check_type = false;
+								break;
+							}
+						}
+
+						if (!check_type && !check_arg) {
+							if (found_type) {
+								auto& tok = argit->GetToken()->Get<Tokens::Identifier::Info<>>();
+								auto range = tok.GetValue<Tokens::Identifier::ScriptRange>();
+								DoParseActions(range.Format(), parsecmd.second->Actions);
+							}
+						}
+					}
+				}
+				else if (parsecmd.second->Required.AsBool()) {
+					BREAK();
+				}
+			}
+		}
 
 		template<typename T, typename ID, typename... Params>
 		const std::shared_ptr<T> AddTask(ID id, Params&&... prms) {

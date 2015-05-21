@@ -61,6 +61,18 @@ namespace SCRambl
 			}
 
 		private:
+			inline void AddCommandName(std::string name, size_t id) {
+				m_CommandNames.emplace(name, id);
+				m_CommandNameVec.emplace_back(name, id);
+			}
+			inline int32_t AddCommandName(std::string name) {
+				int32_t i = m_CommandNameVec.size();
+				m_CommandNames.emplace(name, i);
+				m_CommandNameVec.emplace_back(name, i);
+				return i;
+			}
+
+		private:
 			State m_State;
 			Task& m_Task;
 			Engine& m_Engine;
@@ -69,7 +81,8 @@ namespace SCRambl
 			Scripts::Tokens::Iterator m_TokenIt;
 			std::ofstream m_File;
 
-			std::map<std::string, size_t> m_CommandNames;
+			std::map<std::string, int32_t> m_CommandNames;
+			std::vector<std::pair<std::string, int32_t>> m_CommandNameVec;
 		};
 
 		/*\

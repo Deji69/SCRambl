@@ -21,19 +21,22 @@ namespace SCRambl
 		 * Tokens::ValueToken
 		 * TValue - Value type
 		\*/
-		template<typename TValue>
+		template<typename TValueType>
 		class ValueToken : public Symbol
 		{
 		public:
 			using Shared = std::shared_ptr < ValueToken >;
 
-			ValueToken(Tokens::Type type, const TValue & value_type) : Symbol(type), m_ValueType(value_type)
+			ValueToken(Tokens::Type tokentype, TValueType valuetype) : Symbol(tokentype), m_ValueType(valuetype)
 			{ }
 			inline virtual ~ValueToken()
 			{ }
 
+			TValueType GetValueType() const { return m_ValueType; }
+			virtual size_t GetSize() const = 0;
+
 		private:
-			const TValue &		m_ValueType;
+			TValueType m_ValueType;
 		};
 
 		/*\
@@ -47,19 +50,19 @@ namespace SCRambl
 		class Directive {
 		public:
 			static const enum Parameter { TokenType, ScriptRange };
-			using Info = TokenInfo < Type, Scripts::Range >;
+			using Info = TokenInfo<Type, Scripts::Range>;
 		};
 		class Identifier {
 		public:
-			static const enum Parameter { TokenType, ScriptRange, EXTRA };
+			static const enum Parameter { ScriptRange, EXTRA };
 			static const size_t c_Extra = EXTRA;
-			template<typename TType = Type, typename ...TData>
-			using Info = TokenInfo < TType, Scripts::Range, TData... >;
+			template<typename ...TData>
+			using Info = TokenInfo<Type, Scripts::Range, TData...>;
 		};
 		class Label {
 		public:
 			static const enum Parameter { ScriptRange, LabelValue };
-			using Info = TokenInfo < Type, Scripts::Range, Scripts::Label::Shared >;
+			using Info = TokenInfo<Type, Scripts::Range, Scripts::Label::Shared>;
 			//static const enum RefParameter { ScriptRange, LabelValue };
 			//using RefInfo = TokenInfo < Type, Scripts::Range, Scripts::Label::Shared >;
 
@@ -93,24 +96,36 @@ namespace SCRambl
 			/*\
 			 * Preprocessor::Number::Value - Carries all symbolic data for a number value
 			\*/
-			template<typename TValue>
-			class Value : public ValueToken<TValue>
+			template<typename TValueType>
+			class Value : public ValueToken<TValueType>
 			{
 				Numbers::Type			m_Type;
 				Numbers::IntegerType	m_IntegerValue;
 				Numbers::FloatType		m_FloatValue;
 
 			public:
-				using Shared = std::shared_ptr < ValueToken >;
+				using Shared = std::shared_ptr<ValueToken>;
 
-				Value(Type type, const TValue & value_type, Numbers::Type num_type) : ValueToken(type, value_type),
+				Value(TValueType valtype, Numbers::Type num_type) : ValueToken(Type::Number, valtype),
 					m_Type(num_type)
 				{ }
-				Value(Type type, const TValue & value_type, const Info<Numbers::IntegerType>& info) : Value(type, value_type, info.GetValue<ValueType>()) {
+				Value(TValueType valtype, const Info<Numbers::IntegerType>& info) : Value(valtype, info.GetValue<ValueType>()) {
 					m_IntegerValue = info.GetValue<NumberValue>();
 				}
-				Value(Type type, const TValue & value_type, const Info<Numbers::FloatType>& info) : Value(type, value_type, info.GetValue<ValueType>()) {
+				Value(TValueType valtype, const Info<Numbers::FloatType>& info) : Value(valtype, info.GetValue<ValueType>()) {
 					m_FloatValue = info.GetValue<NumberValue>();
+				}
+
+				virtual size_t GetSize() const override {
+					switch (m_Type) {
+					case Numbers::Type::Float: return 4;
+					case Numbers::Type::Byte: return 1;
+					case Numbers::Type::Word: return 2;
+					case Numbers::Type::Integer: return 4;
+					case Numbers::Type::DWord: return 4;
+					}
+					BREAK();
+					return 0;
 				}
 			};
 		};
@@ -151,8 +166,9 @@ namespace SCRambl
 			template<typename TCommandType>
 			class Call : public Symbol
 			{
-				Shared<const TCommandType>		m_Command;
-				size_t							m_NumArgs;
+				Shared<const TCommandType> m_Command;
+				size_t m_NumArgs;
+				std::vector<Shared<Symbol>> m_Args;
 
 			public:
 				Call(const Info<TCommandType>& info, size_t num_args) : Symbol(Type::CommandCall),
@@ -164,12 +180,29 @@ namespace SCRambl
 
 				inline Shared<const TCommandType> GetCommand() const	{ return m_Command; }
 				inline size_t GetNumArgs() const						{ return m_NumArgs; }
+
+				inline void AddArg(Shared<Symbol> symbol) { m_Args.emplace_back(symbol); }
 			};
 		};
 		class String {
 		public:
 			static const enum Parameter { ScriptRange, StringValue };
 			using Info = TokenInfo < Type, Scripts::Range, std::string >;
+
+			template<typename TValueType>
+			class Value : public ValueToken<TValueType>
+			{
+				std::string m_Value;
+
+			public:
+				Value(TValueType value, std::string val) : ValueToken(Type::String, value), m_Value(val)
+				{ }
+				Value(TValueType value, const Info& info) : Value(info.GetValue<StringValue>())
+				{ }
+
+				const std::string& GetValue() const { return m_Value; }
+				virtual size_t GetSize() const { return m_Value.size(); }
+			};
 		};
 		class Delimiter {
 		public:

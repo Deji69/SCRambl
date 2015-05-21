@@ -20,7 +20,6 @@ namespace SCRambl
 	namespace Types
 	{
 		typedef unsigned long long TypeID;
-		typedef Tokens::ValueToken<class Value> ValueToken;
 
 		// Type set
 		enum class TypeSet {
@@ -32,6 +31,8 @@ namespace SCRambl
 			Null, Number, Variable, Label, Text,
 			INVALID
 		};
+
+
 		static ValueSet GetValueTypeByName(std::string name);
 
 		// Internal data types

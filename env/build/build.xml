@@ -26,7 +26,7 @@
 				<!--<VAR Type="INT" Name="_NUM_VARS" />-->
 				
 				<!-- Extract information from command parameters -->
-				<Command Name="SCRIPT_NAME" Type="STRING" Required="true">
+				<Command Name="SCRIPT_NAME" Arg="0" Type="TEXT_LABEL" Required="true">
 					<Set Var="ScriptName" />
 				</Command>
 			</Parse>

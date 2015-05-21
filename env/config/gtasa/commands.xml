@@ -3296,7 +3296,7 @@
         </Command>
         <Command Name="script_name" ID="0x3A4">
             <Args>
-                <Arg Type="TEXT_LABEL" Desc="" />
+                <Arg Type="TEXT_LABEL" Desc="Set script name" />
             </Args>
         </Command>
         <Command Name="save_int_to_debug_file" ID="0x3A7">

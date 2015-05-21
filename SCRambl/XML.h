@@ -28,6 +28,8 @@ namespace SCRambl
 		XMLValue(std::string);
 		XMLValue(const char*);
 		XMLValue(pugi::xml_text);
+		template<typename T>
+		XMLValue(T v) : XMLValue(std::to_string(v)) { }
 		
 		template<typename T> auto AsNumber(T default_value) const->T;
 		/*template<> auto AsNumber(int) const->int;	

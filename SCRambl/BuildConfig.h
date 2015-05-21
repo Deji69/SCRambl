@@ -50,7 +50,7 @@ namespace SCRambl
 	struct ParseObjectConfig {
 		using Shared = std::shared_ptr<ParseObjectConfig>;
 		enum class ActionType {
-			Set, Inc, Dec, 
+			Clear, Set, Inc, Dec, Add, Sub, Mul, Div, Mod, And, Or, Xor, Shl, Shr, Not
 		};
 
 		struct Action {
@@ -62,10 +62,11 @@ namespace SCRambl
 			{ }
 		};
 
+		using ActionVec = std::vector<Action>;
 		XMLValue Name;
 		XMLValue Type;
 		XMLValue Required;
-		std::vector<Action> Actions;
+		ActionVec Actions;
 	};
 
 	class BuildConfig
@@ -84,10 +85,11 @@ namespace SCRambl
 		std::vector<std::string> m_Definitions;
 
 		//
+		using ParseNameVec = std::vector<std::pair<XMLValue, ParseObjectConfig::Shared>>;
 		std::map<std::string, ScriptConfig::Shared> m_Scripts;
-		std::vector<std::pair<XMLValue, ParseObjectConfig::Shared>> m_ParseCommandNames;
-		std::vector<std::pair<XMLValue, ParseObjectConfig::Shared>> m_ParseVariableNames;
-		std::vector<std::pair<XMLValue, ParseObjectConfig::Shared>> m_ParseLabelNames;
+		ParseNameVec m_ParseCommandNames;
+		ParseNameVec m_ParseVariableNames;
+		ParseNameVec m_ParseLabelNames;
 
 		BuildDefinitionPath& AddDefPath(std::string);
 		size_t GetDefinitionPathID(std::string);				// returns -1 on failure
@@ -95,6 +97,11 @@ namespace SCRambl
 		inline auto GetScripts() const->const decltype(m_Scripts)&  {
 			return m_Scripts;
 		}
+
+	protected:
+		const ParseNameVec& GetParseCommands() const { return m_ParseCommandNames; }
+		const ParseNameVec& GetParseVariables() const { return m_ParseVariableNames; }
+		const ParseNameVec& GetParseLabels() const { return m_ParseLabelNames; }
 
 	public:
 		using Shared = std::shared_ptr<BuildConfig>;

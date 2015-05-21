@@ -10,7 +10,8 @@ namespace SCRambl
 			
 		}
 		void Linker::Init() {
-
+			//auto scriptName = m_Build->CreateOutputFile();
+			
 		}
 		void Linker::Reset() {
 		}
