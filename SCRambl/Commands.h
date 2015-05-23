@@ -9,16 +9,65 @@
 #include <unordered_map>
 #include "utils.h"
 #include "Configuration.h"
-#include "SCR.h"
 #include "Types.h"
+#include "Values.h"
 
 namespace SCRambl
 {
 	class Engine;
 	class Build;
 
-	// Use SCR Command's and SCR CommandArg's with our own TypeExt's
-	typedef SCR::Command<SCR::CommandArg<Types::Type>> Command;
+	class CommandArg
+	{
+		Types::Type::Shared m_Type;
+		size_t m_Index;						// nth arg
+		bool m_IsReturn = false;
+
+	public:
+		using Type = Types::Type;
+		using Shared = std::shared_ptr<CommandArg>;
+		using CShared = std::shared_ptr<const CommandArg>;
+		using Vector = std::vector<CommandArg>;
+		using Iterator = Vector::iterator;
+
+		CommandArg(Types::Type::Shared type, size_t index, bool isRet = false) : m_Type(type), m_Index(index), m_IsReturn(isRet)
+		{ }
+
+		inline bool IsReturn() const { return m_IsReturn; }
+		inline size_t GetIndex() const { return m_Index; }
+		inline Types::Type::Shared GetType() const { return m_Type; }
+	};
+
+	class Command
+	{
+	public:
+		typedef CommandArg Arg;
+		typedef std::shared_ptr<Command> Shared;
+		typedef std::vector<Arg> ArgVector;
+
+	private:
+		size_t m_Index;				// unique index/hash
+		std::string m_Name;			// command name/id
+		ArgVector m_Args;
+
+	public:
+		Command(std::string name, size_t index) : m_Name(name), m_Index(index)
+		{ }
+
+		void AddArg(Arg::Type::Shared type, bool isRet = false) {
+			m_Args.emplace_back(type, m_Args.size(), isRet);
+		}
+
+		inline Arg& GetArg(size_t i) { return m_Args[i]; }
+		inline const Arg& GetArg(size_t i) const { return m_Args[i]; }
+
+		inline ArgVector::const_iterator BeginArg() const { return m_Args.begin(); }
+		inline ArgVector::iterator BeginArg() { return m_Args.begin(); }
+		inline ArgVector::const_iterator EndArg() const	{ return m_Args.end(); }
+		inline ArgVector::iterator EndArg() { return m_Args.end(); }
+		inline size_t GetNumArgs() const { return m_Args.size(); }
+		inline std::string GetName() const { return m_Name; }
+	};
 
 	/*\ Commands - SCR command manager \*/
 	class Commands
@@ -52,7 +101,7 @@ namespace SCRambl
 			return Casing::none;
 		}
 
-		inline std::shared_ptr<Command> AddCommand(std::string name, unsigned long long opcode) {
+		inline Command::Shared AddCommand(std::string name, size_t opcode) {
 			if (name.empty()) return nullptr;
 
 			if (m_SourceCasing != m_DestCasing) {

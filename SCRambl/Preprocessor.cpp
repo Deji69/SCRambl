@@ -293,7 +293,7 @@ namespace SCRambl
 					[this](const LexerToken& tok){ return tok == TokenType::Number && m_NumericScanner.Is<int>(); },
 					[this](const LexerToken& tok){ SendError(Error::dir_expected_command_id, m_Directive); }
 					)) {
-					unsigned long long opcode = m_NumericScanner.Get<long long>();
+					auto opcode = m_NumericScanner.Get<size_t>();
 
 					if (Lex(TokenType::Identifier, [this](const LexerToken& tok){
 						SendError(Error::dir_expected_identifier, m_Directive);
@@ -317,7 +317,7 @@ namespace SCRambl
 									str = str.substr(1);
 								}
 								if (auto type = GetType(str)) {
-									command->AddArg(type->Extend(), isret);
+									command->AddArg(type, isret);
 								}
 								if (!Lexpect(TokenType::Separator)) break;
 							} while (Lex() == Lexer::Result::found_token);

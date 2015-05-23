@@ -136,6 +136,7 @@
     <ClInclude Include="utils\MurmurHash3.h" />
     <ClInclude Include="utils\utf8.h" />
     <ClInclude Include="utils\xml.h" />
+    <ClInclude Include="Values.h" />
     <ClInclude Include="Variables.h" />
     <ClInclude Include="XML.h" />
   </ItemGroup>

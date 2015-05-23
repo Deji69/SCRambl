@@ -286,7 +286,7 @@ namespace SCRambl
 						auto& cmdtok = it->second->GetToken()->Get<Tokens::Command::Info<Command>>();
 						auto cmd = cmdtok.GetValue<Tokens::Command::CommandType>();
 						for (unsigned long i = 0; i < cmd->GetNumArgs(); ++i, ++argit) {
-							if (cmd->GetArg(i).GetType().GetName() == type) {
+							if (cmd->GetArg(i).GetType()->GetName() == type) {
 								found_type = true;
 								check_type = false;
 								break;

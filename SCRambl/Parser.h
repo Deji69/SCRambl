@@ -32,6 +32,11 @@ namespace SCRambl
 		enum class CommandParam {
 			Command = Tokens::Identifier::EXTRA,
 		};
+		enum States {
+			state_neutral, state_parsing_type, state_parsing_command, state_parsing_label, state_parsing_variable,
+			state_parsing_type_varlist,
+			state_parsing_command_args,
+		};
 
 		using CommandInfo = Tokens::Command::Info<Command>;
 		using OLCommandInfo = Tokens::Command::OverloadInfo<Commands::Vector>;
@@ -128,6 +133,30 @@ namespace SCRambl
 		class Parser
 		{
 			using LabelMap = std::unordered_map<std::string, std::shared_ptr<Scripts::Label>>;
+
+			States m_ParseState = state_neutral;
+
+			struct ParseState {
+				using TMap = std::map<States, ParseState>;
+				std::function<bool(ParseState*)> Func;
+				TMap Map;
+
+				template<typename TFunc>
+				ParseState(TFunc func) : Func(func)
+				{ }
+				template<typename TFunc>
+				ParseState(TFunc func, TMap map) : Func(func), Map(map)
+				{ }
+			};
+
+			States Parse_Neutral();
+			States Parse_Neutral_CheckIdentifier(IToken::Shared);
+			States Parse_Type();
+			States Parse_Type_Varlist();
+			States Parse_Command();
+			States Parse_Command_Args();
+			States Parse_Label();
+			States Parse_Variable();
 
 		public:
 			enum State {

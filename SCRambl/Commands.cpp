@@ -28,7 +28,7 @@ namespace SCRambl
 			// retrieve the object poiter as a SCR command we know it to be
 			auto& command = *std::static_pointer_cast<SCRambl::Command>(obj);
 			if (auto type = types.GetType(xml.attribute("Type").as_string())) {
-				command.AddArg(type->Extend(), xml.attribute("Out").as_bool());
+				command.AddArg(std::static_pointer_cast<Types::Type>(type)->Extend(), xml.attribute("Out").as_bool());
 			}
 			else {
 				std::string name = xml.attribute("Type").as_string();

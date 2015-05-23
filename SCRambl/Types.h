@@ -21,17 +21,13 @@ namespace SCRambl
 	{
 		typedef unsigned long long TypeID;
 
-		// Type set
 		enum class TypeSet {
 			Basic, Extended, Variable
 		};
-
-		// Value set
 		enum class ValueSet {
-			Null, Number, Variable, Label, Text,
+			Null, Number, Variable, Text, Label, Command,
 			INVALID
 		};
-
 
 		static ValueSet GetValueTypeByName(std::string name);
 
@@ -79,25 +75,138 @@ namespace SCRambl
 		};
 
 		/*\
-		 * Types::Type - SCR Type extension
+		 * Types::Type
 		\*/
-		class Type : public SCR::Type<TypeSet, ValueSet, Type> {
+		class Type {
 		public:
-			using Value = Type::Value;
+			typedef std::shared_ptr<Type> Shared;
+			typedef std::shared_ptr<const Type> CShared;
+			typedef std::unique_ptr<Type> Unique;
+			typedef std::unique_ptr<const Type> CUnique;
 
-			//typedef std::shared_ptr<TypeExt> Shared;
+			template<typename TMainType>
+			class MatchSpec {
+				TMainType				m_Type;
 
-			/*inline bool IsNull() const					{ return GetValueType() == ValueSet::Null; }
-			inline bool IsNumber() const				{ return GetValueType() == ValueSet::Number; }
-			inline bool IsVariable() const				{ return GetValueType() == ValueSet::Variable; }
-			inline bool IsText() const					{ return GetValueType() == ValueSet::Text; }
-			inline bool IsLabel() const					{ return GetValueType() == ValueSet::Label; }*/
-			inline bool IsBasicType() const				{ return GetType() == TypeSet::Basic; }
-			inline bool IsExtendedType() const			{ return GetType() == TypeSet::Extended; }
-			inline bool IsVariableType() const			{ return GetType() == TypeSet::Variable; }
+			public:
+				MatchSpec(TMainType type) : m_Type(type)
+				{ }
+
+				bool DoesMatch(TMainType type)
+				{
+
+				}
+			};
+
+			class Value {
+			public:
+				using Shared = std::shared_ptr<Value>;
+
+			private:
+				ValueSet m_ValType;
+
+				inline ValueSet GetType() const { return m_ValType; }
+
+			protected:
+				virtual bool TestCompatibility(const Value &) const {
+					return true;
+				}
+
+			public:
+				Value(ValueSet valtype) : m_ValType(valtype)
+				{ }
+				inline virtual ~Value() { }
+
+				inline ValueSet GetValueType() const			{ return m_ValType; }
+
+				template<typename TValueExtension>
+				bool IsCompatible(const Value & lhs) const {
+					return lhs.GetType() == GetType() && TestCompatibility(static_cast<TValueExtension>(lhs));
+				}
+				template<>
+				bool IsCompatible<Value>(const Value & lhs) const {
+					return lhs.GetType() == GetType() && TestCompatibility(lhs);
+				}
+
+				static inline Value::Shared MakeShared(ValueSet type) { return std::make_shared<Value>(type); }
+			};
+
+			using SharedValue = Value::Shared;
+
+			class Storage {
+			public:
+				using Map = std::unordered_map<std::string, std::shared_ptr<Type>>;
+				using Vector = std::vector<std::shared_ptr<Type>>;
+
+				Storage() { }
+
+				Type::Shared Add(std::string name, TypeSet type) {
+					auto ptr = Type::MakeShared(name, type);
+					m_Map.emplace(name, ptr);
+					m_Vector.push_back(ptr);
+					return ptr;
+				}
+				Type::Shared Get(std::string name) {
+					auto it = m_Map.find(name);
+					return it != m_Map.end() ? it->second : nullptr;
+				}
+
+			private:
+				Map			m_Map;
+				Vector		m_Vector;
+			};
+
+			Type(std::string name, TypeSet type) : m_Name(name), m_Type(type)
+			{ }
+			inline virtual ~Type() { }
+
+			inline std::string GetName() const { return m_Name; }
+			inline TypeSet GetType() const { return m_Type; }
+			inline bool IsBasicType() const { return GetType() == TypeSet::Basic; }
+			inline bool IsExtendedType() const { return GetType() == TypeSet::Extended; }
+			inline bool IsVariableType() const { return GetType() == TypeSet::Variable; }
+
+			bool HasValueType(ValueSet type) const {
+				for (auto val : m_Values) {
+					if (val->GetValueType() == type)
+						return true;
+				}
+				return false;
+			}
+			template<typename TValue = Value>
+			std::vector<std::shared_ptr<TValue>> GetValueTypes(ValueSet type) const {
+				std::vector<std::shared_ptr<TValue>> vec;
+				for (auto val : m_Values) {
+					if (val->GetValueType() == type)
+						vec.emplace_back(std::static_pointer_cast<TValue>(val));
+				}
+				return vec;
+			}
+			
+			template<typename TValue = Value, typename ...TArgs>
+			inline std::shared_ptr<TValue> AddValue(TArgs&&... args) {
+				auto shared = std::make_shared<TValue>(std::forward<TArgs>(args)...);
+				m_Values.emplace_back(shared);
+				return shared;
+			}
+
+			/*\
+			 * Types::Types::AllValues - Calls the requested function for each Value this Type contains
+			\*/
+			template<typename TValue = Value, typename TFunc>
+			void AllValues(TFunc func) {
+				for (auto i : m_Values) {
+					func(std::static_pointer_cast<TValue>(i));
+				}
+			}
+
+			static inline Type::Shared MakeShared(std::string name, TypeSet type) { return std::make_shared<Type>(name, type); }
+
+		private:
+			std::string m_Name;
+			TypeSet m_Type;
+			std::vector<SharedValue> m_Values;
 		};
-
-		//typedef SCR::Type<TypeSet, Values, Type> SCRType;
 
 		class TypeCompat {
 		public:
@@ -126,21 +235,9 @@ namespace SCRambl
 		enum class DataSourceID {
 			None, Value, Number, Text, Command, Variable, Label,
 		};
-		
 		enum class DataAttributeID {
 			None, ID, Value, Size, Offset, Index, Name
 		};
-
-		/*template<DataAttributeID TID, typename T>
-		class DataAttribute : Attribute<TID, T> {
-			
-
-		public:
-			DataAttribute()
-			{ }
-
-		private:
-		};*/
 
 		class DataSourceSet : public AttributeSet < DataSourceID >
 		{
@@ -160,10 +257,11 @@ namespace SCRambl
 
 		template<DataSourceID> class DataAttributeSet;
 
-		template<> class DataAttributeSet<DataSourceID::Value> : public AttributeSet<DataAttributeID>
+		template<>
+		class DataAttributeSet<DataSourceID::Value> : public AttributeSet<DataAttributeID>
 		{
 		public:
-			using Shared = std::shared_ptr < DataAttributeSet > ;
+			using Shared = std::shared_ptr<DataAttributeSet>;
 
 			DataAttributeSet() : AttributeSet(DataAttributeID::None)
 			{
@@ -173,17 +271,17 @@ namespace SCRambl
 		};
 
 		template<>
-		class DataAttributeSet<DataSourceID::Number> : public DataAttributeSet < DataSourceID::Value >
+		class DataAttributeSet<DataSourceID::Number> : public DataAttributeSet<DataSourceID::Value>
 		{ };
 		template<>
-		class DataAttributeSet<DataSourceID::Text> : public DataAttributeSet < DataSourceID::Value >
+		class DataAttributeSet<DataSourceID::Text> : public DataAttributeSet<DataSourceID::Value>
 		{ };
 
 		template<>
 		class DataAttributeSet<DataSourceID::Command> : public AttributeSet<DataAttributeID>
 		{
 		public:
-			using Shared = std::shared_ptr < DataAttributeSet >;
+			using Shared = std::shared_ptr<DataAttributeSet>;
 
 			DataAttributeSet() : AttributeSet(DataAttributeID::None)
 			{
@@ -195,7 +293,7 @@ namespace SCRambl
 		class DataAttributeSet<DataSourceID::Label> : public AttributeSet<DataAttributeID>
 		{
 		public:
-			using Shared = std::shared_ptr < DataAttributeSet >;
+			using Shared = std::shared_ptr<DataAttributeSet>;
 
 			DataAttributeSet() : AttributeSet(DataAttributeID::None)
 			{
@@ -207,7 +305,7 @@ namespace SCRambl
 		class DataAttributeSet<DataSourceID::Variable> : public AttributeSet<DataAttributeID>
 		{
 		public:
-			using Shared = std::shared_ptr < DataAttributeSet >;
+			using Shared = std::shared_ptr<DataAttributeSet>;
 
 			DataAttributeSet() : AttributeSet(DataAttributeID::None)
 			{
@@ -222,7 +320,7 @@ namespace SCRambl
 		class Translation
 		{
 		public:
-			using Shared = std::shared_ptr < Translation >;
+			using Shared = std::shared_ptr<Translation>;
 			
 			class Data
 			{
@@ -245,8 +343,8 @@ namespace SCRambl
 						Value(const T & val) : m_Value(val)
 						{ }
 
-						inline operator T&()				{ return m_Value; }
-						inline operator const T&() const	{ return m_Value; }
+						inline operator T&() { return m_Value; }
+						inline operator const T&() const { return m_Value; }
 					};
 
 					Field(TDataType type, TDataSource src, TDataAttribute attr) :
@@ -262,21 +360,21 @@ namespace SCRambl
 					}
 
 					template<typename T>
-					std::shared_ptr<T>		GetValue() const							{ return std::static_pointer_cast<T>(m_Value); }
+					std::shared_ptr<T> GetValue() const { return std::static_pointer_cast<T>(m_Value); }
 
-					inline TDataType GetDataType() const			{ return m_Type; }
-					inline TDataSource GetDataSource() const		{ return m_Source; }
-					inline TDataAttribute GetDataAttribute() const	{ return m_Attribute; }
-					inline bool HasSizeLimit() const				{ return m_SizeLimit; }
-					inline size_t GetSizeLimit() const				{ return m_Size; }
+					inline TDataType GetDataType() const { return m_Type; }
+					inline TDataSource GetDataSource() const { return m_Source; }
+					inline TDataAttribute GetDataAttribute() const { return m_Attribute; }
+					inline bool HasSizeLimit() const { return m_SizeLimit; }
+					inline size_t GetSizeLimit() const { return m_Size; }
 
 				private:
-					TDataType					m_Type;
-					TDataSource					m_Source;
-					TDataAttribute				m_Attribute;
-					bool						m_SizeLimit;
-					size_t						m_Size;
-					std::shared_ptr<IValue>		m_Value;
+					TDataType m_Type;
+					TDataSource m_Source;
+					TDataAttribute m_Attribute;
+					bool m_SizeLimit;
+					size_t m_Size;
+					std::shared_ptr<IValue> m_Value;
 				};
 
 				using FieldShared = typename Field::Shared;
@@ -299,16 +397,16 @@ namespace SCRambl
 			Translation(Type::Shared type, ValueSet valuetype, size_t size) : m_Type(type), m_ValueType(valuetype), m_Size(size)
 			{ }
 
-			Data & AddData() {
+			Data& AddData() {
 				m_Data.emplace_back();
 				return m_Data.back();
 			}
 
 		private:
-			Type::Shared			m_Type;
-			ValueSet				m_ValueType;
-			size_t					m_Size;
-			std::vector<Data>		m_Data;
+			Type::Shared m_Type;
+			ValueSet m_ValueType;
+			size_t m_Size;
+			std::vector<Data> m_Data;
 		};
 
 		/*\
@@ -317,25 +415,24 @@ namespace SCRambl
 		enum class ValueAttributeID {
 			None, Value, Size
 		};
-		template<typename TAttrID = ValueAttributeID>
-		class ValueAttributes : public AttributeSet<TAttrID>
+		class ValueAttributes : public AttributeSet<ValueAttributeID>
 		{
 
 		public:
-			ValueAttributes() : AttributeSet(TAttrID::None)
+			ValueAttributes() : AttributeSet(ValueAttributeID::None)
 			{
-				AddAttribute("Value", TAttrID::Value);
-				AddAttribute("Size", TAttrID::Size);
+				AddAttribute("Value", ValueAttributeID::Value);
+				AddAttribute("Size", ValueAttributeID::Size);
 			}
 		};
 
 		/*\
 		 * Value of Type for translation
 		\*/
-		class Value : public Type::Value, public ValueAttributes<>
+		class Value : public Type::Value, public ValueAttributes
 		{
 		public:
-			using Shared = std::shared_ptr < Value > ;
+			using Shared = std::shared_ptr<Value>;
 
 			Value(Type::Shared type, ValueSet valtype) : Type::Value(valtype), m_Type(type), m_Size(0)
 			{ }
@@ -424,6 +521,20 @@ namespace SCRambl
 		\*/
 		class LabelValue : Value
 		{
+		};
+
+		class CommandValue : public Value
+		{
+		public:
+			using Shared = std::shared_ptr<CommandValue>;
+
+			CommandValue(Type::Shared type, size_t size) : Value(type, ValueSet::Command, size)
+			{ }
+
+			template<typename T, typename... TArgs>
+			inline std::shared_ptr<T> CreateToken(TArgs&&... args) {
+				return std::make_shared<T>(Tokens::Type::CommandCall, *this, std::forward<TArgs>(args)...);
+			}
 		};
 
 #if 0

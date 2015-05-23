@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <vector>
 
+#if 0
 namespace SCR
 {
 	//class BasicType;
@@ -29,7 +30,7 @@ namespace SCR
 			Standard
 		};
 		enum class Values {
-			Null, Number, Variable, Text, Label
+			Null, Number, Variable, Text, Label,
 		};
 
 		template<typename TClass, TClass TVal> class Value;
@@ -66,10 +67,9 @@ namespace SCR
 		typedef Value<Values, Values::Label> LabelValue;
 	};
 
-	template<typename TType = Default::Types, typename TValType = Default::Values, typename TExtension = void>
+	template<typename TType = Default::Types, typename TValType = Default::Values>
 	class Type {
 	public:
-		typedef TExtension Extension;
 		typedef std::shared_ptr<Type> Shared;
 		typedef std::shared_ptr<const Type> CShared;
 		typedef std::unique_ptr<Type> Unique;
@@ -87,45 +87,6 @@ namespace SCR
 			{
 
 			}
-		};
-
-		class Value {
-		public:
-			typedef std::shared_ptr<Value> Shared;
-
-		private:
-			TValType			m_ValType;
-
-			inline TValType GetType() const					{ return m_ValType; }
-
-		protected:
-			virtual bool TestCompatibility(const Value &) const {
-				return true;
-			}
-
-		public:
-			Value(TValType valtype) : m_ValType(valtype)
-			{ }
-			inline virtual ~Value() { }
-
-			inline TValType GetValueType() const			{ return m_ValType; }
-
-			template<typename TValueExtension>
-			bool IsCompatible(const Value & lhs) const
-			{
-				return lhs.GetType() == GetType() && TestCompatibility(static_cast<TValueExtension>(lhs));
-			}
-			template<>
-			bool IsCompatible<Value>(const Value & lhs) const
-			{
-				return lhs.GetType() == GetType() && TestCompatibility(lhs);
-			}
-
-			template<typename TExtension>
-			inline TExtension		&	Extend()						{ return *static_cast<TExtension*>(this); }
-			inline const TExtension	&	Extend() const					{ return *static_cast<TExtension*>(this); }
-
-			static inline typename Type::Shared MakeShared(TValType type)				{ return std::make_shared<Value>(type); }
 		};
 
 		typedef typename Value::Shared SharedValue;
@@ -157,10 +118,10 @@ namespace SCR
 		{ }
 		inline virtual ~Type() { }
 
-		inline Extension		&	Extend()						{ return *static_cast<Extension*>(this); }
-		inline const Extension	&	Extend() const					{ return *static_cast<Extension*>(this); }
-		inline std::string			GetName() const					{ return m_Name; }
-		inline TType				GetType() const					{ return m_Type; }
+		inline Extension& Extend() { return *static_cast<Extension*>(this); }
+		inline const Extension& Extend() const { return *static_cast<Extension*>(this); }
+		inline std::string GetName() const { return m_Name; }
+		inline TType GetType() const { return m_Type; }
 
 		bool HasValueType(TValType type) const {
 			for (auto val : m_Values) {
@@ -520,3 +481,4 @@ namespace SCR
 		}
 	};*/
 }
+#endif

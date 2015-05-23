@@ -90,7 +90,6 @@ namespace SCRambl
 					}*/
 				};
 
-
 				auto& type = m_Config->AddClass("Type", [this](const XMLNode vec, std::shared_ptr<void> & obj){
 					// store the command to the object pointer so we can access it again
 					auto type = AddType(vec.GetAttribute("NAME").GetValue().AsString(), TypeSet::Basic);
@@ -100,26 +99,34 @@ namespace SCRambl
 
 				auto& value = type.AddClass("Number", [this](const XMLNode vec, std::shared_ptr<void> & obj){
 					auto type = std::static_pointer_cast<Type>(obj);
-					std::string str = vec.GetAttribute("TYPE").GetValue().AsString();
+					std::string str = vec.GetAttribute("Type").GetValue().AsString();
 
 					NumberValueType numtype = NumberValueType::Integer;
 					if (str == "float") numtype = NumberValueType::Float;
 
-					auto value = type->AddValue<NumberValue>(type, numtype, vec.GetAttribute("SIZE").GetValue().AsNumber<int>(0));
+					auto value = type->AddValue<NumberValue>(type, numtype, vec.GetAttribute("Size").GetValue().AsNumber<int>(0));
 					AddValue(ValueSet::Number, value);
 					obj = value;
 				});
-				value.AddClass("Size", size_fun);
+				//value.AddClass("Size", size_fun);
 
 				auto& text = type.AddClass("Text", [this](const XMLNode vec, std::shared_ptr<void> & obj){
 					auto type = std::static_pointer_cast<Type>(obj);
 					auto text = type->AddValue<Value>(type, ValueSet::Text);
 					//AddValue(ValueSet::Text, text);
-					auto size_attr = vec.GetAttribute("SIZE");
+					auto size_attr = vec.GetAttribute("Size");
 					if (size_attr) {
 						auto str = size_attr.GetValue().AsString();
 					}
 					obj = text;
+				});
+				auto& command = type.AddClass("Command", [this](const XMLNode vec, std::shared_ptr<void>& obj) {
+					auto type = std::static_pointer_cast<Type>(obj);
+					auto cmd = type->AddValue<Value>(type, ValueSet::Command);
+					auto size_attr = vec.GetAttribute("Size");
+					if (size_attr) {
+						auto value = type->AddValue<CommandValue>(type, size_attr.GetValue().AsNumber<uint32_t>());
+					}
 				});
 				//text.AddClass("Size", size_fun);
 

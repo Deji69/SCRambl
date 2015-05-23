@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <!-- 
-	This file is always loaded in order: VariableTypes, Types, ExtendedTypes, Translations
+	This file is always loaded in order: VariableTypes, BasicTypes, ExtendedTypes, Translations
 	
 	
 	Type Encoding Process
@@ -12,23 +12,23 @@
 
 <SCRambl Version="1.0" FileVersion="0.0.0.0">
 	<VariableTypes>
-		<Type NAME="LVAR" Scope="local">
+		<Type Name="LVAR" Scope="local">
 			<Width>32</Width>
 			<Limit What="Index">32</Limit>
 		</Type>
-		<Type NAME="VAR" Scope="global">
+		<Type Name="VAR" Scope="global">
 			<Width>32</Width>
-			<Limit WHAT="Index">9216</Limit>
+			<Limit What="Index">9216</Limit>
 		</Type>
-		<Type NAME="LVAR_ARRAY" TYPE="LVAR">
+		<Type Name="LVAR_ARRAY" Type="LVAR">
 			<Array />
 			<Width>16</Width>
-			<Limit WHAT="Index">255</Limit>
+			<Limit What="Index">255</Limit>
 		</Type>
-		<Type NAME="VAR_ARRAY" TYPE="VAR">
+		<Type Name="VAR_ARRAY" Type="VAR">
 			<Array />
 			<Width>16</Width>
-			<Limit WHAT="Index">255</Limit>
+			<Limit What="Index">255</Limit>
 		</Type>
 	</VariableTypes>
 	
@@ -56,48 +56,48 @@
 				/> - End array type specification
 			</Type> - End Type declaration
 		-->
-		<Type NAME="NONE" />
-		<Type NAME="INT">
+		<Type Name="NONE" />
+		<Type Name="INT">
 			<!-- 8 bit integer number -->
-			<Number TYPE="int" SIZE="8" />
+			<Number Type="int" Size="8" />
 			<!-- 16 bit integer number -->
-			<Number TYPE="int" SIZE="16" />
+			<Number Type="int" Size="16" />
 			<!-- 32 bit integer number -->
-			<Number TYPE="int" SIZE="32" />
+			<Number Type="int" Size="32" />
 		</Type>
-		<Type NAME="FLOAT">
+		<Type Name="FLOAT">
 			<!-- 32 bit floating-point number -->
-			<Number TYPE="float" SIZE="32" />
+			<Number Type="float" Size="32" />
 			
 			<!-- GTA III only -->
-			<!--<Number TYPE="float" SIZE="16" MODE="packed" />
-			<Number TYPE="float" SIZE="24" MODE="packed" />
-			<Number TYPE="float" SIZE="16" MODE="fixed" />-->
+			<!--<Number Type="float" Size="16" Mode="packed" />
+			<Number Type="float" Size="24" Mode="packed" />
+			<Number Type="float" Size="16" Mode="fixed" />-->
 			<!-- Hypothetical -->
-			<!--<Number TYPE="float" SIZE="64" />-->
+			<!--<Number Type="float" Size="64" />-->
 		</Type>
-		<Type NAME="TEXT_LABEL">
+		<Type Name="TEXT_LABEL">
 			<!-- 8 character text string -->
-			<Text SIZE="8" MODE="static" />
+			<Text Size="8" Mode="static" Terminate="null" />
 			<!-- 16 character text string -->
-			<Text SIZE="16" MODE="static" />
+			<Text Size="16" Mode="static" Terminate="null" />
 		</Type>
-		<Type NAME="STRING">
+		<Type Name="STRING">
 			<!-- Variable-length text string with 255-character limit -->
-			<Text SIZE="255" MODE="variable" />
+			<Text Size="255" Mode="variable" Terminate="null" />
 		</Type>
 		
-		<Type NAME="COMMAND">
-			<!-- Command with 16 bit ID -->
-			<Command TYPE="ID" SIZE="16" />
+		<Type Name="COMMAND">
+			<!-- Command with 16 bit integer ID -->
+			<Command Type="int" Size="16" />
 		</Type>
 		
-		<Type NAME="LABEL">
+		<Type Name="LABEL">
 			<!-- Label pointer with 32 bit range -->
-			<Label SIZE="32" />
+			<Label Size="32" />
 			
 			<!-- 32 bit integer number (loose matching) -->
-			<Number MATCH="loose" TYPE="int" SIZE="32" />
+			<Number Match="loose" Type="int" Size="32" />
 		</Type>
 		
 		<!--
@@ -116,37 +116,37 @@
 				/> - End array type specification
 			</Type> - End Type declaration
 		-->
-		<Type NAME="VAR_INT">
-			<Variable TYPE="VAR" BASIC="INT" />
-			<Array TYPE="VAR_ARRAY" BASIC="INT" />
+		<Type Name="VAR_INT">
+			<Variable Type="VAR" Basic="INT" />
+			<Array Type="VAR_ARRAY" Basic="INT" />
 		</Type>
-		<Type NAME="VAR_FLOAT">
-			<Variable TYPE="VAR" BASIC="FLOAT" />
-			<Array TYPE="VAR_ARRAY" BASIC="FLOAT" />
+		<Type Name="VAR_FLOAT">
+			<Variable Type="VAR" Basic="FLOAT" />
+			<Array Type="VAR_ARRAY" Basic="FLOAT" />
 		</Type>
-		<Type NAME="VAR_TEXT_LABEL">
-			<Variable TYPE="VAR" BASIC="TEXT_LABEL" />
-			<Array TYPE="VAR_ARRAY" BASIC="TEXT_LABEL" />
+		<Type Name="VAR_TEXT_LABEL">
+			<Variable Type="VAR" Basic="TEXT_LABEL" />
+			<Array Type="VAR_ARRAY" Basic="TEXT_LABEL" />
 		</Type>
-		<Type NAME="VAR_STRING">
-			<Variable TYPE="VAR" BASIC="STRING" />
-			<Array TYPE="VAR_ARRAY" BASIC="STRING" />
+		<Type Name="VAR_STRING">
+			<Variable Type="VAR" Basic="STRING" />
+			<Array Type="VAR_ARRAY" Basic="STRING" />
 		</Type>
-		<Type NAME="LVAR_INT">
-			<Variable TYPE="LVAR" BASIC="INT" />
-			<Array TYPE="LVAR_ARRAY" BASIC="INT" />
+		<Type Name="LVAR_INT">
+			<Variable Type="LVAR" Basic="INT" />
+			<Array Type="LVAR_ARRAY" Basic="INT" />
 		</Type>
-		<Type NAME="LVAR_FLOAT">
-			<Variable TYPE="LVAR" BASIC="FLOAT" />
-			<Array TYPE="LVAR_ARRAY" BASIC="FLOAT" />
+		<Type Name="LVAR_FLOAT">
+			<Variable Type="LVAR" Basic="FLOAT" />
+			<Array Type="LVAR_ARRAY" Basic="FLOAT" />
 		</Type>
-		<Type NAME="LVAR_TEXT_LABEL">
-			<Variable TYPE="LVAR" BASIC="TEXT_LABEL" />
-			<Array TYPE="LVAR_ARRAY" BASIC="TEXT_LABEL" />
+		<Type Name="LVAR_TEXT_LABEL">
+			<Variable Type="LVAR" Basic="TEXT_LABEL" />
+			<Array Type="LVAR_ARRAY" Basic="TEXT_LABEL" />
 		</Type>
-		<Type NAME="LVAR_STRING">
-			<Variable TYPE="LVAR" BASIC="STRING" />
-			<Array TYPE="LVAR_ARRAY" BASIC="STRING" />
+		<Type Name="LVAR_STRING">
+			<Variable Type="LVAR" Basic="STRING" />
+			<Array Type="LVAR_ARRAY" Basic="STRING" />
 		</Type>
 	</BasicTypes>
 	
@@ -156,25 +156,25 @@
 		Each Type needs a 'Basic' value representing an already declared type
 	-->
 	<ExtendedTypes>
-		<Type Name="CONST" BASIC="INT">
+		<Type Name="CONST" Basic="INT">
 			<Identifier>
 			</Identifier>
 		</Type>
-		<Type Name="MODEL" BASIC="CONST">
+		<Type Name="MODEL" Basic="CONST">
 			<Width>16</Width>
 		</Type>
-		<Type Name="ENUM" BASIC="CONST">
+		<Type Name="ENUM" Basic="CONST">
 			
 		</Type>
-		<Type Name="BUFFER" BASIC="TEXT_LABEL">
+		<Type Name="BUFFER" Basic="TEXT_LABEL">
 			<Size>128</Size>
 		</Type>
 		
 		<!-- Hacky -->
 		<!--
-		<Type NAME="VAR_LABEL" BASIC="VAR_INT">
-			<Variable TYPE="VAR" BASIC="LABEL" />
-			<Array TYPE="VAR_ARRAY" BASIC="LABEL" />
+		<Type Name="VAR_LABEL" Basic="VAR_INT">
+			<Variable Type="VAR" Basic="LABEL" />
+			<Array Type="VAR_ARRAY" Basic="LABEL" />
 			
 		</Type>
 		-->
@@ -303,18 +303,14 @@
 		<Translate Type="TEXT_LABEL" Size="8">
 			<Data>
 				<Int8>9</Int8>
-				<!-- Use only 7 bytes and ensure the 8th is the terminator -->
-				<String Size="7" Source="Text" Attribute="Value" />
-				<Int8>0</Int8>
+				<String Size="8" Source="Text" Attribute="Value" />
 			</Data>
 		</Translate>
 		
 		<Translate Type="TEXT_LABEL" Size="16">
 			<Data>
 				<Int8>15</Int8>
-				<!-- Use only 15 bytes and ensure the 16th is the terminator -->
-				<String Size="15" Source="Text" Attribute="Value" />
-				<Int8>0</Int8>
+				<String Size="16" Source="Text" Attribute="Value" />
 			</Data>
 		</Translate>
 		
@@ -323,7 +319,6 @@
 				<Int8>14</Int8>
 				<Int8 Source="Text" Attribute="Size" />
 				<String Source="Text" Attribute="Value" />
-				<Int8>0</Int8>
 			</Data>
 		</Translate>
 		

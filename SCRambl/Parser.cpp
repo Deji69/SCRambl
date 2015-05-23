@@ -74,7 +74,7 @@ namespace SCRambl
 					NextCommandOverload();
 			}
 		}
-		bool Parser::ParseCommandOverloads(const Commands::Vector & vec) {
+		bool Parser::ParseCommandOverloads(const Commands::Vector& vec) {
 			if (vec.size() == 1) {
 				m_CurrentCommand = vec[0];
 			}
@@ -106,7 +106,107 @@ namespace SCRambl
 				m_ParsingCommandArgs = true;
 			}
 		}
+		
+		States Parser::Parse_Neutral_CheckIdentifier(IToken::Shared tok) {
+			Commands::Vector vec;
+			auto& token = tok->Get<Tokens::Identifier::Info<>>();
+			auto range = token.GetValue<Tokens::Identifier::ScriptRange>();
+			auto name = range.Format();
+
+			if (auto type = GetType(name)) {
+				return state_parsing_type;
+			}
+			else if (auto ptr = m_Labels.Find(name)) {
+				// this is a label pointer!
+				m_Jumps.emplace_back(ptr, m_TokenIt);
+
+				auto tok = Tokens::CreateToken<Tokens::Label::Info>(Tokens::Type::LabelRef, range, ptr);
+				m_TokenIt.Get()->SetToken(tok);
+				m_TokenIt.Get()->GetSymbol() = Tokens::CreateToken<Tokens::Label::Jump<Scripts::Label>>(tok);
+
+				AddLabelRef(ptr, m_TokenIt);
+				return state_parsing_label;
+			}
+			else if (m_Commands.FindCommands(name, vec) > 0) {
+				// make a token and store it
+				if (vec.size() == 1)
+					m_TokenIt.Get()->SetToken(Tokens::CreateToken<Tokens::Command::Info<Command>>(Tokens::Type::Command, range, vec[0]));
+				else
+					m_TokenIt.Get()->SetToken(Tokens::CreateToken<Tokens::Command::OverloadInfo<Command>>(Tokens::Type::CommandOverload, range, vec));
+
+				if (ParseCommandOverloads(vec)) {
+					BeginCommandParsing();
+					m_CommandTokens.emplace_back(m_TokenIt);
+				}
+				else BREAK();
+				return state_parsing_command;
+			}
+			else if (false /*check variables */) {
+
+				return state_parsing_variable;
+			}
+			else if (IsCommandParsing()/* && m_CommandArgIt->GetType().IsCompatible()*/) {
+
+			}
+			else {
+				SendError(Error::invalid_identifier, range);
+			}
+			return state_neutral;
+		}
+		States Parser::Parse_Neutral() {
+			States new_state = state_neutral;
+			switch (m_TokenIt->GetToken()->GetType<Tokens::Type>()) {
+			case Tokens::Type::Identifier:
+				new_state = Parse_Neutral_CheckIdentifier(m_TokenIt->GetToken());
+				break;
+			}
+			if (new_state == state_neutral)
+				++m_TokenIt;
+			return new_state;
+		}
+		States Parser::Parse_Command() {
+			return state_parsing_command_args;
+		}
+		States Parser::Parse_Command_Args() {
+			/*if (IsCommandParsing() && !AreCommandArgsParsed()) {
+				if (m_CommandArgIt->IsReturn()) {
+					auto& vars = m_Build->GetScript().GetLScript()->GetVariables();
+					if (auto var = vars.Find(name)) {
+						// TODO: something
+					}
+					//else BREAK();
+				}
+				else {
+					auto type = m_CommandArgIt->GetType();
+					auto val_vec = type->GetValueTypes<>(Types::ValueSet::Text);
+					if (val_vec.size()) {
+						Types::Value::Shared val;
+						for (auto v : val_vec) {
+							auto stringval = std::static_pointer_cast<Types::StringValue>(v);
+							auto translation = stringval->GetTranslation();
+							ASSERT(translation);
+						}
+
+						auto symbol = Tokens::CreateToken<Tokens::String::Value<Types::Value::Shared>>(val, name);
+						m_TokenIt->GetSymbol() = symbol;
+						break;
+					}
+				}
+			}*/
+		}
 		void Parser::Parse() {
+			States newstate = m_ParseState;
+			do {
+				static std::function<States()> funcs[] = {
+					Parse_Neutral, Parse_Type, Parse_Command, Parse_Label, Parse_Variable,
+					Parse_Type_Varlist,
+					Parse_Command_Args,
+				};
+				newstate = funcs[m_ParseState = newstate]();
+			} while (newstate != m_ParseState);
+			return;
+
+
 			auto& types = m_Build->GetTypes();
 			auto ptr = *m_TokenIt;
 			auto type = ptr->GetToken()->GetType<Tokens::Type>();
@@ -149,13 +249,13 @@ namespace SCRambl
 						//else BREAK();
 					}
 					else {
-						auto& type = m_CommandArgIt->GetType();
-						auto val_vec = type.GetValueTypes(Types::ValueSet::Text);
+						auto type = m_CommandArgIt->GetType();
+						auto val_vec = type->GetValueTypes<>(Types::ValueSet::Text);
 						if (val_vec.size()) {
 							Types::Value::Shared val;
 							for (auto v : val_vec) {
-								auto& stringval = v->Extend<Types::StringValue>();
-								auto translation = stringval.GetTranslation();
+								auto stringval = std::static_pointer_cast<Types::StringValue>(v);
+								auto translation = stringval->GetTranslation();
 								ASSERT(translation);
 							}
 
@@ -251,7 +351,6 @@ namespace SCRambl
 				std::vector<Types::Value::Shared> vec;
 				// Number of compatible Value's
 				size_t n;
-
 				if (IsCommandParsing() && !AreCommandArgsParsed()) {
 					auto& type = m_CommandArgIt->GetType();
 					n = types.GetValues(Types::ValueSet::Number, size, vec, [&best_value_match, &smallest_fitting_value_size, is_int, &vec](Types::Value::Shared value){
@@ -405,7 +504,6 @@ namespace SCRambl
 			return m_TokenIt.Get();
 		}
 
-		// Printf-styled error reporting
 		void Parser::SendError(Error type)
 		{
 			if (m_State == overloading) {
