@@ -360,13 +360,25 @@ namespace SCRambl
 						Delimiter type;
 
 						switch (*m_CodePos) {
+						case '<':
+							OpenDelimiter(m_CodePos, type = Delimiter::Cast);
+							break;
+						case '>':
+							CloseDelimiter(m_CodePos, type = Delimiter::Cast);
+							open = false;
+							break;
+						case '[':
+							OpenDelimiter(m_CodePos, type = Delimiter::Subscript);
+							break;
+						case ']':
+							CloseDelimiter(m_CodePos, type = Delimiter::Subscript);
+							open = false;
+							break;
 						case '{':
-							OpenDelimiter(m_CodePos, Delimiter::Scope);
+							OpenDelimiter(m_CodePos, type = Delimiter::Scope);
 							break;
 						case '}':
-							type = Delimiter::Scope;
-							CloseDelimiter(m_CodePos, Delimiter::Scope);
-
+							CloseDelimiter(m_CodePos, type = Delimiter::Scope);
 							open = false;
 							break;
 						}

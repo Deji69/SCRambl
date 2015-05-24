@@ -497,15 +497,12 @@ namespace SCRambl
 		private:
 			NumberValueType			m_Type;
 		};
-
-		/*\
-		 * String Value
-		\*/
-		class StringValue : public Value {
+		class TextValue : public Value {
 		public:
-			using Shared = std::shared_ptr<StringValue>;
+			using Shared = std::shared_ptr<TextValue>;
 
-			StringValue(Type::Shared type, size_t size) : Value(type, ValueSet::Text, size)
+			TextValue(Type::Shared type, size_t size, XMLValue mode = "", XMLValue terminate = "") : Value(type, ValueSet::Text, size),
+				m_Mode(mode), m_Terminate(terminate)
 			{ }
 
 			template<typename T, typename... TArgs>
@@ -514,15 +511,22 @@ namespace SCRambl
 			}
 
 		private:
+			XMLValue m_Mode;
+			XMLValue m_Terminate;
 		};
-		
-		/*\
-		 * Label Value
-		\*/
-		class LabelValue : Value
+		class LabelValue : public Value
 		{
-		};
+		public:
+			using Shared = std::shared_ptr<LabelValue>;
 
+			LabelValue(Type::Shared type, size_t size) : Value(type, ValueSet::Label, size)
+			{ }
+
+			template<typename T, typename... TArgs>
+			inline std::shared_ptr<T> CreateToken(TArgs&&... args) {
+				return std::make_shared<T>(Tokens::Type::LabelRef, *this, std::forward<TArgs>(args)...);
+			}
+		};
 		class CommandValue : public Value
 		{
 		public:
@@ -535,6 +539,9 @@ namespace SCRambl
 			inline std::shared_ptr<T> CreateToken(TArgs&&... args) {
 				return std::make_shared<T>(Tokens::Type::CommandCall, *this, std::forward<TArgs>(args)...);
 			}
+		};
+		class VariableValue : public Value {
+
 		};
 
 #if 0

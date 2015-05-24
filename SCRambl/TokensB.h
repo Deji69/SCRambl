@@ -9,6 +9,7 @@
 #include "Tokens.h"
 #include "Numbers.h"
 #include "Labels.h"
+#include "Symbols.h"
 
 namespace SCRambl
 {
@@ -213,8 +214,8 @@ namespace SCRambl
 		class Character {
 		public:
 			static const enum Parameter { ScriptPosition, CharacterValue };
-			template<typename TCharacterType>
-			using Info = TokenInfo < Type, Scripts::Position, TCharacterType >;
+			template<typename TCharType>
+			using Info = TokenInfo<Type, Scripts::Position, TCharType>;
 		};
 
 		template<typename TTokenType, typename... TArgs>

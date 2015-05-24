@@ -99,80 +99,30 @@ namespace SCRambl
 
 				auto& value = type.AddClass("Number", [this](const XMLNode vec, std::shared_ptr<void> & obj){
 					auto type = std::static_pointer_cast<Type>(obj);
-					std::string str = vec.GetAttribute("Type").GetValue().AsString();
+					NumberValueType numtype = vec["Type"]->AsString() == "float" ? numtype = NumberValueType::Float : NumberValueType::Integer;
 
-					NumberValueType numtype = NumberValueType::Integer;
-					if (str == "float") numtype = NumberValueType::Float;
-
-					auto value = type->AddValue<NumberValue>(type, numtype, vec.GetAttribute("Size").GetValue().AsNumber<int>(0));
+					auto value = type->AddValue<NumberValue>(type, numtype, vec["Size"]->AsNumber<uint32_t>(0));
 					AddValue(ValueSet::Number, value);
 					obj = value;
 				});
-				//value.AddClass("Size", size_fun);
-
 				auto& text = type.AddClass("Text", [this](const XMLNode vec, std::shared_ptr<void> & obj){
 					auto type = std::static_pointer_cast<Type>(obj);
-					auto text = type->AddValue<Value>(type, ValueSet::Text);
-					//AddValue(ValueSet::Text, text);
-					auto size_attr = vec.GetAttribute("Size");
-					if (size_attr) {
-						auto str = size_attr.GetValue().AsString();
-					}
-					obj = text;
+					auto value = type->AddValue<TextValue>(type, vec["Size"]->AsNumber<uint32_t>(), *vec["Mode"]);
+					AddValue(ValueSet::Text, value);
+					obj = value;
 				});
 				auto& command = type.AddClass("Command", [this](const XMLNode vec, std::shared_ptr<void>& obj) {
 					auto type = std::static_pointer_cast<Type>(obj);
-					auto cmd = type->AddValue<Value>(type, ValueSet::Command);
-					auto value = type->AddValue<CommandValue>(type, vec.GetAttribute("Size").GetValue().AsNumber<uint32_t>());
+					auto value = type->AddValue<CommandValue>(type, vec["Size"]->AsNumber<uint32_t>());
 					AddValue(ValueSet::Command, value);
 					obj = value;
 				});
-				//text.AddClass("Size", size_fun);
-
-				/*auto& variable = type.AddClass("Variable", [this](const pugi::xml_node vec, std::shared_ptr<void> & obj){
-				auto type = std::static_pointer_cast<SCRambl::SCR::Type>(obj);
-				auto type_attr = vec.attribute("Type");
-				auto value_attr = vec.attribute("Value");
-				auto var_type = GetType(type_attr.as_string());
-				auto val_type = GetType(value_attr.as_string());
-
-				auto var = type->AddValue<SCR::Type::Variable>(*var_type, *val_type);
-				obj = var;
+				auto& label = type.AddClass("Label", [this](const XMLNode vec, std::shared_ptr<void>& obj) {
+					auto type = std::static_pointer_cast<Type>(obj);
+					auto value = type->AddValue<LabelValue>(type, vec["Size"]->AsNumber<uint32_t>());
+					AddValue(ValueSet::Label, value);
+					obj = value;
 				});
-				auto& array = type.AddClass("Array", [this](const pugi::xml_node vec, std::shared_ptr<void> & obj){
-				auto type = std::static_pointer_cast<SCRambl::SCR::Type>(obj);
-				auto type_attr = vec.attribute("Type");
-				auto value_attr = vec.attribute("Value");
-				auto var_type = GetType(type_attr.as_string());
-				auto val_type = GetType(value_attr.as_string());
-
-				if (var_type && val_type)
-				{
-				auto array = type->AddValue<SCR::Type::Variable>(*var_type, *val_type);
-				obj = array;
-				}
-				else obj = nullptr;
-				});*/
-
-				//AddSizeAttribute(value);
-				//AddSizeAttribute(string);
-
-				/*value.AddClass("Width", [this](const pugi::xml_node vec, std::shared_ptr<void> & obj){
-				auto value = std::static_pointer_cast<SCRambl::SCR::Type::Number>(obj);
-				bool is_variable = false;
-				if (auto attr = vec.attribute("Variable"))
-				is_variable = attr.as_bool(false);
-				Numbers::IntegerType size;
-				auto result = Numbers::StringToInt(vec.first_child().value(), size);
-				if (result == Numbers::ConvertResult::success) {
-				value->AddSize(size, is_variable);
-				}
-				});
-
-				value.AddClass("Float", [this](const pugi::xml_node vec, std::shared_ptr<void> & obj){
-				auto value = std::static_pointer_cast<SCRambl::SCR::Type::Number>(obj);
-				value->SetFloat(true);
-				});*/
 			}
 			m_Config = build.AddConfig("ExtendedTypes");
 			{

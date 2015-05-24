@@ -57,15 +57,18 @@ namespace SCRambl
 	class XMLAttribute
 	{
 		pugi::xml_attribute m_attr;
+		mutable XMLValue m_value;
 
 	public:
 		XMLAttribute() = default;
 		XMLAttribute(const XMLAttribute&) = default;
 		XMLAttribute(const decltype(m_attr)& attr);
 		XMLAttribute(pugi::xml_attribute_struct* attr);
+		XMLValue& operator*() const;
+		XMLValue* operator->() const;
 		operator bool() const;
 
-		auto GetValue() const->XMLValue;
+		auto GetValue() const->XMLValue&;
 		auto GetPugi() const->const decltype(m_attr)&;
 		auto GetPugi()->decltype(m_attr)&;
 	};
@@ -73,6 +76,8 @@ namespace SCRambl
 	class XMLNode
 	{
 		pugi::xml_node m_node;
+		mutable XMLAttribute m_attr;
+		mutable XMLValue m_value;
 
 	public:
 		typedef XMLNodeIterator Iterator;
@@ -82,6 +87,10 @@ namespace SCRambl
 		XMLNode(const decltype(m_node)& node);
 		XMLNode(pugi::xml_node_struct* node);
 		operator bool() const;
+		XMLValue& operator*() const;
+		XMLValue* operator->() const;
+		XMLAttribute& operator[](std::string i) const;
+		XMLAttribute& operator[](const char* i) const;
 
 		auto Begin() const->Iterator;
 		auto End() const->Iterator;
@@ -93,9 +102,9 @@ namespace SCRambl
 		auto GetNode(std::string) const->XMLNode;
 		auto GetNode(const wchar_t*) const->XMLNode;
 		auto GetNode(const char*) const->XMLNode;
-		auto GetValue() const->XMLValue;
-		auto GetAttribute(std::string) const->XMLAttribute;
-		auto GetAttribute(const char*) const->XMLAttribute;
+		auto GetValue() const->XMLValue&;
+		auto GetAttribute(std::string) const->XMLAttribute&;
+		auto GetAttribute(const char*) const->XMLAttribute&;
 		auto GetPugi() const->const decltype(m_node)&;
 		auto GetPugi()->decltype(m_node)&;
 	};

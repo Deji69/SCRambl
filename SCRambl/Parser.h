@@ -136,6 +136,9 @@ namespace SCRambl
 		{
 			using LabelMap = std::unordered_map<std::string, std::shared_ptr<Scripts::Label>>;
 
+			using CharacterInfo = Tokens::Character::Info<Character>;
+			using IdentifierInfo = Tokens::Identifier::Info<>;
+
 			States m_ParseState = state_neutral;
 
 			struct ParseState {
@@ -186,11 +189,18 @@ namespace SCRambl
 				auto it = m_TokenIt + 1;
 				if (it != m_Tokens.End()) {
 					auto tok = it->GetToken();
+					auto ty = tok->GetType<Tokens::Type>();
 					if (type == Tokens::Type::None || type == tok->GetType<Tokens::Type>()) {
 						return tok;
 					}
 				}
 				return nullptr;
+			}
+			std::shared_ptr<Tokens::Number::Info<Numbers::IntegerType>> GetIntInfo(IToken::Shared ptr) {
+				return Tokens::Number::GetValueType(*ptr) == Numbers::Integer ? std::static_pointer_cast<Tokens::Number::Info<Numbers::IntegerType>>(ptr) : nullptr;
+			}
+			std::shared_ptr<Tokens::Number::Info<Numbers::FloatType>> GetFloatInfo(IToken::Shared ptr) {
+				return Tokens::Number::GetValueType(*ptr) == Numbers::Float ? std::static_pointer_cast<Tokens::Number::Info<Numbers::FloatType>>(ptr) : nullptr;
 			}
 
 		public:

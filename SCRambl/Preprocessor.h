@@ -242,7 +242,7 @@ namespace SCRambl
 		{
 		public:
 			enum Type {
-				None, Scope
+				None, Scope, Subscript, Cast
 			};
 
 			Delimiter() = default;
@@ -290,6 +290,8 @@ namespace SCRambl
 			LabelScanner m_LabelScanner;
 			StringLiteralScanner m_StringLiteralScanner;
 			WhitespaceScanner m_WhitespaceScanner;
+
+			
 
 			OperatorTable m_Operators;
 			OperatorScanner m_OperatorScanner;

@@ -251,19 +251,30 @@ namespace SCRambl
 	XMLValue::XMLValue(const char* str) : m_str(str) { }
 	XMLValue::XMLValue(pugi::xml_text txt) : m_str(txt.as_string()) { }
 	/* XMLAttribute */
-	auto XMLAttribute::GetValue() const->XMLValue { return m_attr.as_string(); }
+	auto XMLAttribute::GetValue() const->XMLValue& {
+		m_value = m_attr.as_string();
+		return m_value;
+	}
 	auto XMLAttribute::GetPugi()->decltype(m_attr)& { return m_attr; }
 	XMLAttribute::XMLAttribute(const decltype(m_attr)& attr) : m_attr(attr) { }
 	XMLAttribute::XMLAttribute(pugi::xml_attribute_struct* attr) : m_attr(attr) { }
+	XMLValue& XMLAttribute::operator*() const { return GetValue(); }
+	XMLValue* XMLAttribute::operator->() const { return &GetValue(); }
 	XMLAttribute::operator bool() const { return !m_attr.empty(); }
 	/* XMLNode */
 	auto XMLNode::GetNode(const char * name) const->XMLNode { return m_node ? m_node.child(name) : XMLNode(); }
 	auto XMLNode::GetNode(std::string name) const->XMLNode { return GetNode(name.c_str()); }
 	auto XMLNode::GetNode(const wchar_t * name) const->XMLNode { return GetNode(narrow(name)); }
 	auto XMLNode::GetNode(std::wstring name) const->XMLNode { return GetNode(name.c_str()); }
-	auto XMLNode::GetValue() const->XMLValue { return m_node.text(); }
-	auto XMLNode::GetAttribute(const char * attr) const->XMLAttribute { return m_node.attribute(attr); }
-	auto XMLNode::GetAttribute(std::string attr) const->XMLAttribute { return GetAttribute(attr.c_str()); }
+	auto XMLNode::GetValue() const->XMLValue& {
+		m_value = m_node.text();
+		return m_value;
+	}
+	auto XMLNode::GetAttribute(const char * attr) const->XMLAttribute& {
+		m_attr = m_node.attribute(attr);
+		return m_attr;
+	}
+	auto XMLNode::GetAttribute(std::string attr) const->XMLAttribute& { return GetAttribute(attr.c_str()); }
 	auto XMLNode::GetPugi() const->const decltype(m_node)& { return m_node; }
 	auto XMLNode::GetPugi()->decltype(m_node)& { return m_node; }
 	auto XMLNode::Children() const->XMLRange {
@@ -277,6 +288,14 @@ namespace SCRambl
 	auto XMLNode::end() const->Iterator { return End(); }
 	XMLNode::XMLNode(const pugi::xml_node& node) : m_node(node) { }
 	XMLNode::XMLNode(pugi::xml_node_struct* node) : m_node(node) { }
+	XMLValue& XMLNode::operator*() const {
+		return GetValue();
+	}
+	XMLValue* XMLNode::operator->() const {
+		return &GetValue();
+	}
+	XMLAttribute& XMLNode::operator[](std::string i) const { return GetAttribute(i); }
+	XMLAttribute& XMLNode::operator[](const char* i) const { return GetAttribute(i); }
 	XMLNode::operator bool() const { return !m_node.empty(); }
 	/* XMLNodeIterator */
 	bool XMLNodeIterator::operator==(const XMLNodeIterator& rhs) const { return m_it == rhs.m_it; }

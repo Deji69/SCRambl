@@ -178,10 +178,11 @@ namespace SCRambl
 			return state_parsing_variable;
 		}
 		States Parser::Parse_Type_Varlist() {
-			auto tok = std::static_pointer_cast<Tokens::Identifier::Info<>>(m_TokenIt->GetToken());
+			auto tok = std::static_pointer_cast<IdentifierInfo>(m_TokenIt->GetToken());
 			if (tok->GetType() == Tokens::Type::Character) {
-				auto token = std::static_pointer_cast<Tokens::Character::Info<Character>>(tok);
-				if (token->GetValue<Tokens::Character::Parameter::CharacterValue>() != Character::EOL) {
+				auto token = std::static_pointer_cast<CharacterInfo>(m_TokenIt->GetToken());
+				auto ty = token->GetValue<Tokens::Character::Parameter::CharacterValue>();
+				if (ty != Character::EOL) {
 
 				}
 				else SendError(Error::invalid_character, token->GetValue<Tokens::Character::Parameter::CharacterValue>());
@@ -193,12 +194,26 @@ namespace SCRambl
 			}
 			else {
 				auto name = tok->GetValue<Tokens::Identifier::ScriptRange>().Format();
+				size_t array_size = 0;
 				if (auto next = PeekToken(Tokens::Type::Delimiter)) {
 					auto info = std::static_pointer_cast<Tokens::Delimiter::Info<Delimiter>>(next);
 					auto delimtype = info->GetValue<Tokens::Delimiter::Parameter::DelimiterType>();
+					if (delimtype != Delimiter::Subscript) {
+						//SendError();
+						BREAK();
+					}
+					++m_TokenIt;
+					if (next = PeekToken(Tokens::Type::Delimiter)) {
+						auto intinfo = GetIntInfo(next);
+						if (!intinfo) {
+							//SendError(Error::expected_integer_constant);
+						}
+						++m_TokenIt;
+						array_size = static_cast<unsigned long long>(intinfo->GetValue<Tokens::Number::NumberValue>());
+					}
 				}
 
-				if (!m_Build->AddScriptVariable(name, m_TypeParseState.type)) {
+				if (!m_Build->AddScriptVariable(name, m_TypeParseState.type, array_size)) {
 					//SendError();
 					BREAK();
 				}
@@ -296,7 +311,7 @@ namespace SCRambl
 						if (val_vec.size()) {
 							Types::Value::Shared val;
 							for (auto v : val_vec) {
-								auto stringval = std::static_pointer_cast<Types::StringValue>(v);
+								auto stringval = std::static_pointer_cast<Types::TextValue>(v);
 								auto translation = stringval->GetTranslation();
 								ASSERT(translation);
 							}
