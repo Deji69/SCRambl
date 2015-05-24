@@ -260,6 +260,8 @@ namespace SCRambl
 		inline Types::Types& GetTypes() { return m_Types; }
 		inline const Types::Types& GetTypes() const { return m_Types; }
 
+		bool AddScriptVariable(std::string name, Types::Type::Shared type);
+
 		void DoParseActions(std::string val, const ParseObjectConfig::ActionVec& vec) {
 			for (auto& action : vec) {
 				m_Env.DoAction(action, val);

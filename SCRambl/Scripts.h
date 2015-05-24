@@ -22,99 +22,7 @@
 
 namespace SCRambl
 {
-	//typedef std::list<class Scripts::Line> CodeList;
-	//using TokenSymbol = Tokens::Symbol;
 	typedef SCRambl::Tokens::Symbol TokenSymbol;
-
-	/*class Script
-	{
-	public:
-		using Code = Scripts::Code;
-		using File = Scripts::File;
-		using Line = Scripts::Line;
-		using Column = Scripts::Column;
-		using Range = Scripts::Range;
-		using Position = Scripts::Position;
-		using Label = Scripts::Label;
-		using Token = Scripts::Token;
-		using Tokens = Scripts::Tokens;
-		using TokenLine = Scripts::TokenLine;
-		using TokenMap = Scripts::TokenMap;
-		using CodeList = Scripts::CodeList;
-		using Files = Scripts::Files;
-		template<typename TObj, typename TKey = std::string, typename TCont = std::unordered_map<TKey, TObj>>
-		using Scope = Scripts::Scope<TObj, TKey, TCont>;
-		using Labels = Scripts::Labels;
-
-	private:
-		std::shared_ptr<File>						m_File;
-		Code										m_Code;
-		Tokens										m_Tokens;
-		//TokenList									m_TokenMap;
-		Labels										m_LabelScope;
-		std::vector<std::shared_ptr<TokenSymbol>>	m_Declarations;
-
-		// Initialise script for parsing with current code
-		void Init();
-
-		void Error(int code, const std::string &);
-
-		void ReadFile(std::ifstream &, Code &);
-
-		// DEBUG
-#ifdef _DEBUG
-	public:
-#endif
-		void OutputFile() {
-			std::ofstream file("script.txt");
-			if (file)
-			{
-				for (Scripts::Position pos(&m_Code); pos; ++pos)
-				{
-					char c = *pos;
-					file << (c ? c : '\n');
-				}
-			}
-			file.flush();
-		}
-
-		bool ProcessCodeLine(const std::string&, CodeLine&, bool = false);
-
-	public:
-		// Default construction
-		Script();
-		// Construct script parser with code from memory
-		Script(const CodeList &);
-		// Destructor
-		virtual ~Script();
-
-		// GenerateTokenMap
-		TokenMap::Shared GenerateTokenMap();
-
-		// Set code
-		void SetCode(const void *);
-
-		// Load file into code lines
-		void LoadFile(const std::string &);
-
-		// Include file in specific code line
-		Position Include(Position &, const std::string &);
-
-		// OK?
-		inline bool OK() const							{ return true; }
-		// Number of source lines
-		inline size_t GetNumLines() const				{ return m_Code.NumLines(); }
-		// Get the almighty source code list
-		inline Code & GetCode()							{ return m_Code; }
-		// Get the informative token list
-		inline Tokens & GetTokens()						{ return m_Tokens; }
-		inline const Tokens & GetTokens() const			{ return m_Tokens; }
-		// Get symbolic declarations
-		inline std::vector<std::shared_ptr<TokenSymbol>> &			GetDeclarations()				{ return m_Declarations; }
-		inline const std::vector<std::shared_ptr<TokenSymbol>> &	GetDeclarations() const			{ return m_Declarations; }
-		//
-		inline Scope<Label::Shared> & GetLabels()		{ return m_LabelScope; }
-	};*/
 
 	namespace Scripts
 	{
@@ -158,28 +66,6 @@ namespace SCRambl
 			std::string m_Path;
 			long m_NumLines = 0;
 		};
-		/*class File
-		{
-			const File			*	m_Parent = nullptr;
-			
-			Code				*	m_Code;					// code source
-			Position				m_Begin;				// beginning of this file in code source
-			Position				m_End;					// end of this file in code source
-			Files					m_Includes;				// included files
-			
-			long					m_NumLines = 0;
-			std::string				m_Path;
-
-		public:
-			File(std::string, Code *);
-			File(std::string, Code *, Position, const File *);
-
-			inline long GetNumLines() const { return m_NumLines; }
-			inline const std::string & GetPath() const { return m_Path; }
-
-			void ReadFile(std::ifstream &);
-			File & IncludeFile(Position &, const std::string &);
-		};*/
 		
 		/*\
 		 * Scripts::Token - Script token wrapper
@@ -500,7 +386,7 @@ namespace SCRambl
 		};
 
 		using Labels = Scope<std::shared_ptr<Label>>;
-		using Variables = Scope<std::shared_ptr<Variable<Types::Type>>>;
+		using Variables = Scope<std::shared_ptr<Variable>>;
 
 		//template<typename T> typedef Variable<T> Variable;
 		//template<typename T> typedef Scope<Variable<T>::Shared> Variables;
@@ -560,6 +446,10 @@ namespace SCRambl
 
 		// Get the labels
 		Scripts::Labels& GetLabels() { return m_LScript ? m_LScript->GetLabels() : m_Labels ; }
+
+		// Get the variables
+		Scripts::Variables& GetVariables() { return m_Variables; }
+		const Scripts::Variables& GetVariables() const { return m_Variables; }
 
 		// Get the current local script
 		Scripts::LScript* GetLScript() { return m_LScript; }

@@ -14,24 +14,24 @@ namespace SCRambl
 
 		m_Config = build.AddConfig("Commands");
 
-		m_Config->AddClass("Case", [this, &usecc, &ccdest, &ccsrc](const pugi::xml_node xml, std::shared_ptr<void> & obj){
-			usecc = xml.attribute("Convert").as_bool();
-			ccdest = this->GetCasingByName(xml.attribute("To").as_string());
-			ccsrc = this->GetCasingByName(xml.attribute("From").as_string());
+		m_Config->AddClass("Case", [this, &usecc, &ccdest, &ccsrc](const XMLNode xml, std::shared_ptr<void>& obj){
+			usecc = xml.GetAttribute("Convert").GetValue().AsBool();
+			ccdest = GetCasingByName(xml.GetAttribute("To").GetValue().AsString());
+			ccsrc = GetCasingByName(xml.GetAttribute("From").GetValue().AsString());
 		});
-		auto& args = m_Config->AddClass("Command", [this](const pugi::xml_node xml, std::shared_ptr<void> & obj){
+		auto& args = m_Config->AddClass("Command", [this](const XMLNode xml, std::shared_ptr<void> & obj){
 			// store the command to the object pointer so we can access it again
-			auto command = AddCommand(xml.attribute("Name").as_string(), xml.attribute("ID").as_ullong());
+			auto command = AddCommand(xml.GetAttribute("Name").GetValue().AsString(), xml.GetAttribute("ID").GetValue().AsNumber<size_t>());
 			obj = command;
 		}).AddClass("Args");
-		args.AddClass("Arg", [this, &types](const pugi::xml_node xml, std::shared_ptr<void> & obj){
+		args.AddClass("Arg", [this, &types](const XMLNode xml, std::shared_ptr<void>& obj){
 			// retrieve the object poiter as a SCR command we know it to be
 			auto& command = *std::static_pointer_cast<SCRambl::Command>(obj);
-			if (auto type = types.GetType(xml.attribute("Type").as_string())) {
-				command.AddArg(std::static_pointer_cast<Types::Type>(type)->Extend(), xml.attribute("Out").as_bool());
+			if (auto type = types.GetType(xml.GetAttribute("Type").GetValue().AsString())) {
+				command.AddArg(std::static_pointer_cast<Types::Type>(type), xml.GetAttribute("Out").GetValue().AsBool());
 			}
 			else {
-				std::string name = xml.attribute("Type").as_string();
+				auto name = xml.GetAttribute("Type").GetValue().AsString();
 				name.size();
 			}
 		});

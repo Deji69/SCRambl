@@ -86,8 +86,8 @@ namespace SCRambl
 		public:
 			static const enum Parameter { ScriptRange, ValueType, NumberValue };
 			template<typename TNumberType>
-			using Info = TokenInfo < Type, Scripts::Range, Numbers::Type, TNumberType >;
-			using TypelessInfo = TokenInfo < Type, Scripts::Range, Numbers::Type >;
+			using Info = TokenInfo<Type, Scripts::Range, Numbers::Type, TNumberType>;
+			using TypelessInfo = TokenInfo<Type, Scripts::Range, Numbers::Type>;
 
 			static Numbers::Type GetValueType(const IToken& token) {
 				return token.Get<const TypelessInfo>().GetValue<ValueType>();

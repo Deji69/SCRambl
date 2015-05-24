@@ -3,6 +3,7 @@
 	Written in SCR for SCRambl 1.0.40+
 */
 
+VAR_INT var1
 SCRIPT_NAME tool
 {
 	LVAR_INT lvar1[2] pVehicleStruct

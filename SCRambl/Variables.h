@@ -6,17 +6,22 @@
 /**********************************************************/
 #pragma once
 #include <memory>
-#include "SCR.h"
+#include "Types.h"
 
 namespace SCRambl
 {
-	template<typename T>
-	class Variable : public SCR::Variable<T>
+	class Variable
 	{
+		std::string	m_Name;
+		Types::Type::Shared m_Type;
+
 	public:
 		using Shared = std::shared_ptr<Variable>;
 
-		Variable(std::string name, typename T::Shared type) : SCR::Variable<T>(name, type)
+		Variable(std::string name, Types::Type::Shared type) : m_Name(name), m_Type(type)
 		{ }
+
+		inline const std::string& Name() const { return m_Name; }
+		inline Types::Type::Shared Type() const { return m_Type; }
 	};
 }

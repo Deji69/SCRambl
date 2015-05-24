@@ -472,7 +472,7 @@ namespace SCRambl
 			None, Value, Size
 		};
 
-		class NumberValueAttributes : public ValueAttributes<NumberValueAttributeID>
+		class NumberValueAttributes : public ValueAttributes
 		{
 		public:
 			NumberValueAttributes()

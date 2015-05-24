@@ -22,17 +22,5 @@
 
 namespace SCR
 {
-	template<typename TType = Default::BasicType>
-	class Variable
-	{
-		std::string					m_Name;
-		typename TType::Shared		m_Type;
-
-	public:
-		Variable(std::string name, typename TType::Shared type) : m_Name(name), m_Type(type)
-		{ }
-
-		inline typename TType::Shared Type() const			{ return m_Type; }
-		inline const std::string& Name() const				{ return m_Name; }
-	};
+	
 }

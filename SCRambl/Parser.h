@@ -36,6 +36,7 @@ namespace SCRambl
 			state_neutral, state_parsing_type, state_parsing_command, state_parsing_label, state_parsing_variable,
 			state_parsing_type_varlist,
 			state_parsing_command_args,
+			max_state
 		};
 
 		using CommandInfo = Tokens::Command::Info<Command>;
@@ -79,6 +80,7 @@ namespace SCRambl
 				invalid_identifier		= 1000,
 				label_on_line			= 1001,
 				unsupported_value_type	= 1002,
+				expected_identifier		= 1003,
 
 				// fatal errors
 				fatal_begin = 4000,
@@ -149,6 +151,28 @@ namespace SCRambl
 				{ }
 			};
 
+			struct TypeParseState {
+				struct TypeVarDeclaration {
+					Scripts::Tokens::Iterator var_iterator;
+					size_t array_size;
+
+					TypeVarDeclaration(Scripts::Tokens::Iterator it) {
+						
+					}
+				};
+
+				Types::Type::Shared type;
+				Scripts::Tokens::Iterator type_iterator;
+				IToken::Shared token;
+				std::vector<TypeVarDeclaration> var_declarations;
+
+				TypeParseState()
+				{ }
+				TypeParseState(Types::Type::Shared type_, IToken::Shared token_) : type(type_), token(token_)
+				{
+				}
+			} m_TypeParseState;
+
 			States Parse_Neutral();
 			States Parse_Neutral_CheckIdentifier(IToken::Shared);
 			States Parse_Type();
@@ -157,6 +181,17 @@ namespace SCRambl
 			States Parse_Command_Args();
 			States Parse_Label();
 			States Parse_Variable();
+
+			IToken::Shared PeekToken(Tokens::Type type = Tokens::Type::None) {
+				auto it = m_TokenIt + 1;
+				if (it != m_Tokens.End()) {
+					auto tok = it->GetToken();
+					if (type == Tokens::Type::None || type == tok->GetType<Tokens::Type>()) {
+						return tok;
+					}
+				}
+				return nullptr;
+			}
 
 		public:
 			enum State {

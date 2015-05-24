@@ -114,8 +114,11 @@ namespace SCRambl
 			auto name = range.Format();
 
 			if (auto type = GetType(name)) {
+				m_TypeParseState = TypeParseState(type, tok);
 				return state_parsing_type;
 			}
+
+
 			else if (auto ptr = m_Labels.Find(name)) {
 				// this is a label pointer!
 				m_Jumps.emplace_back(ptr, m_TokenIt);
@@ -164,6 +167,44 @@ namespace SCRambl
 				++m_TokenIt;
 			return new_state;
 		}
+		States Parser::Parse_Type() {
+			++m_TokenIt;
+			return state_parsing_type_varlist;
+		}
+		States Parser::Parse_Label() {
+			return state_parsing_label;
+		}
+		States Parser::Parse_Variable() {
+			return state_parsing_variable;
+		}
+		States Parser::Parse_Type_Varlist() {
+			auto tok = std::static_pointer_cast<Tokens::Identifier::Info<>>(m_TokenIt->GetToken());
+			if (tok->GetType() == Tokens::Type::Character) {
+				auto token = std::static_pointer_cast<Tokens::Character::Info<Character>>(tok);
+				if (token->GetValue<Tokens::Character::Parameter::CharacterValue>() != Character::EOL) {
+
+				}
+				else SendError(Error::invalid_character, token->GetValue<Tokens::Character::Parameter::CharacterValue>());
+				return state_neutral;
+			}
+			if (tok->GetType() != Tokens::Type::Identifier) {
+				SendError(Error::expected_identifier);
+				BREAK();
+			}
+			else {
+				auto name = tok->GetValue<Tokens::Identifier::ScriptRange>().Format();
+				if (auto next = PeekToken(Tokens::Type::Delimiter)) {
+					auto info = std::static_pointer_cast<Tokens::Delimiter::Info<Delimiter>>(next);
+					auto delimtype = info->GetValue<Tokens::Delimiter::Parameter::DelimiterType>();
+				}
+
+				if (!m_Build->AddScriptVariable(name, m_TypeParseState.type)) {
+					//SendError();
+					BREAK();
+				}
+			}
+			return state_parsing_type_varlist;
+		}
 		States Parser::Parse_Command() {
 			return state_parsing_command_args;
 		}
@@ -193,17 +234,18 @@ namespace SCRambl
 					}
 				}
 			}*/
+			return state_parsing_command_args;
 		}
 		void Parser::Parse() {
 			States newstate = m_ParseState;
 			do {
-				static std::function<States()> funcs[] = {
-					Parse_Neutral, Parse_Type, Parse_Command, Parse_Label, Parse_Variable,
-					Parse_Type_Varlist,
-					Parse_Command_Args,
+				static States(Parser::*funcs[States::max_state])() = {
+					&Parser::Parse_Neutral, &Parser::Parse_Type, &Parser::Parse_Command, &Parser::Parse_Label, &Parser::Parse_Variable,
+					&Parser::Parse_Type_Varlist,
+					&Parser::Parse_Command_Args,
 				};
-				newstate = funcs[m_ParseState = newstate]();
-			} while (newstate != m_ParseState);
+				newstate = (this->*funcs[m_ParseState = newstate])();
+			} while (newstate != m_ParseState && newstate != state_neutral);
 			return;
 
 

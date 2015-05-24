@@ -6,6 +6,11 @@
 namespace SCRambl
 {
 	/* Build */
+	bool Build::AddScriptVariable(std::string name, Types::Type::Shared type) {
+		auto& vars = m_Script.GetVariables();
+		vars.Insert(name, name, type);
+		return true;
+	}
 	void Build::LoadDefinitions() {
 		auto loads = m_Config->GetDefinitions();
 		size_t defs_not_loaded = loads.size();

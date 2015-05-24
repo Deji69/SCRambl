@@ -215,7 +215,8 @@
 		<!-- (Just a suggestion...) -->
 		<!-- <Translate Type="COMMAND_EXT">
 			<Data>
-				<Int16>0xFFFF</Int16>
+				<!--<Int16>0x7FFF</Int16>--/>v
+				<Int8>0x7F</Int8>
 				<Int32 Source="Command.Hash" />
 			</Data>
 		</Translate> -->

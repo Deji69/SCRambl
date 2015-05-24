@@ -15,7 +15,7 @@ namespace SCRambl
 		friend class TokenBase;
 
 	public:
-		using Shared = std::shared_ptr < IToken > ;
+		using Shared = std::shared_ptr<IToken>;
 
 	protected:
 		IToken() = default;
@@ -33,7 +33,7 @@ namespace SCRambl
 	template<typename TTokenType>
 	class TokenBase : public IToken
 	{
-		TTokenType			m_Type;
+		TTokenType m_Type;
 
 	private:
 		using IToken::Get;
@@ -51,18 +51,18 @@ namespace SCRambl
 	{
 		using IToken::Get;
 
-		std::tuple<TValueType...>	m_Value;
+		std::tuple<TValueType...> m_Value;
 
 	public:
 		TokenInfo(TTokenType type, TValueType... val) : TokenBase(type), m_Value(val...)
 		{ }
 
 		template<std::size_t N>
-		inline const typename std::tuple_element<N, std::tuple<TValueType...>>::type & GetValue() const {
+		inline const typename std::tuple_element<N, std::tuple<TValueType...>>::type& GetValue() const {
 			return std::get<N>(m_Value);
 		}
 		template<std::size_t N>
-		inline typename std::tuple_element<N, std::tuple<TValueType...>>::type & GetValue() {
+		inline typename std::tuple_element<N, std::tuple<TValueType...>>::type& GetValue() {
 			return std::get<N>(m_Value);
 		}
 	};

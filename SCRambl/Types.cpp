@@ -92,7 +92,7 @@ namespace SCRambl
 
 				auto& type = m_Config->AddClass("Type", [this](const XMLNode vec, std::shared_ptr<void> & obj){
 					// store the command to the object pointer so we can access it again
-					auto type = AddType(vec.GetAttribute("NAME").GetValue().AsString(), TypeSet::Basic);
+					auto type = AddType(vec.GetAttribute("Name").GetValue().AsString(), TypeSet::Basic);
 					obj = type;
 					//std::cout << "Type: name " << type->GetName() << ", id " << type->GetID() << "\n";
 				});
@@ -123,10 +123,9 @@ namespace SCRambl
 				auto& command = type.AddClass("Command", [this](const XMLNode vec, std::shared_ptr<void>& obj) {
 					auto type = std::static_pointer_cast<Type>(obj);
 					auto cmd = type->AddValue<Value>(type, ValueSet::Command);
-					auto size_attr = vec.GetAttribute("Size");
-					if (size_attr) {
-						auto value = type->AddValue<CommandValue>(type, size_attr.GetValue().AsNumber<uint32_t>());
-					}
+					auto value = type->AddValue<CommandValue>(type, vec.GetAttribute("Size").GetValue().AsNumber<uint32_t>());
+					AddValue(ValueSet::Command, value);
+					obj = value;
 				});
 				//text.AddClass("Size", size_fun);
 
