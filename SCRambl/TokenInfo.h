@@ -23,11 +23,11 @@ namespace SCRambl
 
 	public:
 		template<typename T>
-		inline T & Get()								{ return *static_cast<T*>(this); }
+		inline T & Get() { return *static_cast<T*>(this); }
 		template<typename T>
-		inline const T & Get() const					{ return *static_cast<T*>(this); }
+		inline const T & Get() const { return *static_cast<T*>(this); }
 		template<typename T>
-		inline T GetType() const						{ return static_cast<const TokenBase<T>*>(this)->GetType(); }
+		inline T GetType() const { return static_cast<const TokenBase<T>*>(this)->GetType(); }
 	};
 
 	template<typename TTokenType>
@@ -43,7 +43,7 @@ namespace SCRambl
 		{ }
 		virtual ~TokenBase() { }
 
-		inline TTokenType				GetType() const				{ return m_Type; }
+		inline TTokenType GetType() const { return m_Type; }
 	};
 
 	template<typename TTokenType, typename... TValueType>

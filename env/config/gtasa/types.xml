@@ -12,22 +12,23 @@
 
 <SCRambl Version="1.0" FileVersion="0.0.0.0">
 	<VariableTypes>
-		<Type Name="LVAR" Scope="local">
+		<Type Name="LVAR" Scope="subscript">
 			<Width>32</Width>
 			<Limit What="Index">32</Limit>
 		</Type>
 		<Type Name="VAR" Scope="global">
 			<Width>32</Width>
+			<Init What="Index">2</Init>
 			<Limit What="Index">9216</Limit>
 		</Type>
-		<Type Name="LVAR_ARRAY" Type="LVAR">
-			<Array />
+		<Type Name="LVAR_ARRAY" Type="LVAR" Array="true">
 			<Width>16</Width>
+			<Index Base="1" />
 			<Limit What="Index">255</Limit>
 		</Type>
-		<Type Name="VAR_ARRAY" Type="VAR">
-			<Array />
+		<Type Name="VAR_ARRAY" Type="VAR" Array="true">
 			<Width>16</Width>
+			<Index Base="1" />
 			<Limit What="Index">255</Limit>
 		</Type>
 	</VariableTypes>

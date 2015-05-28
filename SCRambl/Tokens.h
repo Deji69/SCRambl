@@ -19,7 +19,7 @@ namespace SCRambl
 		\*/
 		enum class Type : char {
 			None, Directive,
-			Command, CommandDecl, CommandCall, CommandOverload,
+			Command, CommandDecl, CommandCall, CommandOverload, Variable,
 			Identifier, Label, LabelRef, Number, Operator, String, Character, Delimiter
 		};
 

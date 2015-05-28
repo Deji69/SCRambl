@@ -113,6 +113,7 @@ namespace SCRambl
 			enum ID {
 				// involuntary errors (errors that should be impossible)
 				internal_invalid_unary_operator		= 500,
+				internal_unable_to_allocate_token	= 501,
 
 				// normal errors
 				invalid_directive						= 1000,
@@ -137,6 +138,7 @@ namespace SCRambl
 				expected_closing_paren,					// 1019
 				expected_opening_paren,					// 1020
 				expected_separator,						// 1021
+				expr_unmatched_closing_delimiter,		// 1022
 
 				// fatal errors
 				fatal_begin								= 4000,

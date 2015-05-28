@@ -357,30 +357,40 @@ namespace SCRambl
 					else if (m_CodePos->IsDelimiter()) {
 						// only for "range" delimiting - these are independent from tokens using scanners (their contents are separate tokens)
 						bool open = true;
+						bool success = true;
 						Delimiter type;
 
 						switch (*m_CodePos) {
 						case '<':
-							OpenDelimiter(m_CodePos, type = Delimiter::Cast);
+							success = OpenDelimiter(m_CodePos, type = Delimiter::Cast);
 							break;
 						case '>':
-							CloseDelimiter(m_CodePos, type = Delimiter::Cast);
+							success = CloseDelimiter(m_CodePos, type = Delimiter::Cast);
 							open = false;
 							break;
 						case '[':
-							OpenDelimiter(m_CodePos, type = Delimiter::Subscript);
+							success = OpenDelimiter(m_CodePos, type = Delimiter::Subscript);
 							break;
 						case ']':
-							CloseDelimiter(m_CodePos, type = Delimiter::Subscript);
+							success = CloseDelimiter(m_CodePos, type = Delimiter::Subscript);
 							open = false;
 							break;
 						case '{':
-							OpenDelimiter(m_CodePos, type = Delimiter::Scope);
+							success = OpenDelimiter(m_CodePos, type = Delimiter::Scope);
 							break;
 						case '}':
-							CloseDelimiter(m_CodePos, type = Delimiter::Scope);
+							success = CloseDelimiter(m_CodePos, type = Delimiter::Scope);
 							open = false;
 							break;
+						default:
+							BREAK();
+							break;
+						}
+
+						if (!success) {
+							if (open) SendError(Error::internal_unable_to_allocate_token);
+							else SendError(Error::expr_unmatched_closing_delimiter);
+							BREAK();
 						}
 					}
 				}

@@ -25,7 +25,7 @@ namespace SCRambl
 			Basic, Extended, Variable
 		};
 		enum class ValueSet {
-			Null, Number, Variable, Text, Label, Command,
+			Null, Number, Variable, Array, Text, Label, Command,
 			INVALID
 		};
 
@@ -541,7 +541,28 @@ namespace SCRambl
 			}
 		};
 		class VariableValue : public Value {
+		public:
+			using Shared = std::shared_ptr<VariableValue>;
 
+			VariableValue(Type::Shared type, size_t size) : Value(type, ValueSet::Variable, size)
+			{ }
+			
+			template<typename T, typename... TArgs>
+			inline std::shared_ptr<T> CreateToken(TArgs&&... args) {
+				return std::make_shared<T>(Tokens::Type::Variable, *this, std::forward<TArgs>(args)...);
+			}
+		};
+		class ArrayValue : public Value {
+		public:
+			using Shared = std::shared_ptr<ArrayValue>;
+
+			ArrayValue(Type::Shared type, size_t size) : Value(type, ValueSet::Array, size)
+			{ }
+
+			template<typename T, typename... TArgs>
+			inline std::shared_ptr<T> CreateToken(TArgs&&... args) {
+				return std::make_shared<T>(Tokens::Type::Array, *this, std::forward<TArgs>(args)...);
+			}
 		};
 
 #if 0
@@ -669,7 +690,7 @@ namespace SCRambl
 			inline void AddValue(ValueSet valtype, Value::Shared value) {
 				m_Values.emplace(valtype, value);
 			}
-
+			
 			inline Translation<>::Shared AddTranslation(Type::Shared type, ValueSet valuetype, size_t size) {
 				m_Translations.emplace_back(std::make_shared<Translation<>>(type, valuetype, size));
 				return m_Translations.back();
@@ -715,6 +736,9 @@ namespace SCRambl
 				});
 				return i;
 			}
+		
+		private:
+			void AddValueAttributes(XMLConfig&);
 		};
 	}
 }

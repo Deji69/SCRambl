@@ -144,7 +144,7 @@ namespace SCRambl
 				else BREAK();
 				return state_parsing_command;
 			}
-			else if (false /*check variables */) {
+			else if (auto ptr = m_Build->GetScriptVariable(name)) {
 
 				return state_parsing_variable;
 			}
@@ -178,46 +178,33 @@ namespace SCRambl
 			return state_parsing_variable;
 		}
 		States Parser::Parse_Type_Varlist() {
-			auto tok = std::static_pointer_cast<IdentifierInfo>(m_TokenIt->GetToken());
-			if (tok->GetType() == Tokens::Type::Character) {
-				auto token = std::static_pointer_cast<CharacterInfo>(m_TokenIt->GetToken());
-				auto ty = token->GetValue<Tokens::Character::Parameter::CharacterValue>();
-				if (ty != Character::EOL) {
-
-				}
-				else SendError(Error::invalid_character, token->GetValue<Tokens::Character::Parameter::CharacterValue>());
+			// end of var declarations?
+			if (IsEOLReached()) {
 				return state_neutral;
 			}
-			if (tok->GetType() != Tokens::Type::Identifier) {
+			else if (IsCharacter(m_TokenIt->GetToken())) {
+				SendError(Error::invalid_character, GetCharacterValue(m_TokenIt->GetToken()));
+				return state_neutral;
+			}
+
+			// expect an identifier for a var name
+			if (GetCurrentTokenType() != Tokens::Type::Identifier) {
 				SendError(Error::expected_identifier);
 				BREAK();
 			}
 			else {
-				auto name = tok->GetValue<Tokens::Identifier::ScriptRange>().Format();
+				// collect var declaration info
+				auto name = GetIdentifierName(m_TokenIt->GetToken());
 				size_t array_size = 0;
-				if (auto next = PeekToken(Tokens::Type::Delimiter)) {
-					auto info = std::static_pointer_cast<Tokens::Delimiter::Info<Delimiter>>(next);
-					auto delimtype = info->GetValue<Tokens::Delimiter::Parameter::DelimiterType>();
-					if (delimtype != Delimiter::Subscript) {
-						//SendError();
-						BREAK();
-					}
-					++m_TokenIt;
-					if (next = PeekToken(Tokens::Type::Delimiter)) {
-						auto intinfo = GetIntInfo(next);
-						if (!intinfo) {
-							//SendError(Error::expected_integer_constant);
-						}
-						++m_TokenIt;
-						array_size = static_cast<unsigned long long>(intinfo->GetValue<Tokens::Number::NumberValue>());
-					}
-				}
+				GetDelimitedArrayIntegerConstant(array_size);
 
-				if (!m_Build->AddScriptVariable(name, m_TypeParseState.type, array_size)) {
+				auto var = m_Build->AddScriptVariable(name, m_TypeParseState.type, array_size);
+				if (!var) {
 					//SendError();
 					BREAK();
 				}
 			}
+			++m_TokenIt;
 			return state_parsing_type_varlist;
 		}
 		States Parser::Parse_Command() {

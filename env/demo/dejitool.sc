@@ -3,8 +3,9 @@
 	Written in SCR for SCRambl 1.0.40+
 */
 
-//VAR_INT var1
-//SCRIPT_NAME tool
+VAR_INT var1
+var1 = 0
+SCRIPT_NAME tool
 {
 	LVAR_INT lvar1[2] pVehicleStruct
 	#define CEntity_wModelIndex 0x22

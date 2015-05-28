@@ -185,22 +185,86 @@ namespace SCRambl
 			States Parse_Label();
 			States Parse_Variable();
 
-			IToken::Shared PeekToken(Tokens::Type type = Tokens::Type::None) {
-				auto it = m_TokenIt + 1;
+			inline bool IsEOLReached() const {
+				return IsCharacterEOL(m_TokenIt->GetToken());
+			}
+			inline Tokens::Type GetCurrentTokenType() const {
+				return m_TokenIt->GetToken()->GetType<Tokens::Type>();
+			}
+
+			IToken::Shared PeekToken(Tokens::Type type = Tokens::Type::None, size_t off = 1) {
+				auto it = m_TokenIt + off;
 				if (it != m_Tokens.End()) {
 					auto tok = it->GetToken();
 					auto ty = tok->GetType<Tokens::Type>();
-					if (type == Tokens::Type::None || type == tok->GetType<Tokens::Type>()) {
+					if (type == Tokens::Type::None || type == ty) {
 						return tok;
 					}
 				}
 				return nullptr;
 			}
-			std::shared_ptr<Tokens::Number::Info<Numbers::IntegerType>> GetIntInfo(IToken::Shared ptr) {
-				return Tokens::Number::GetValueType(*ptr) == Numbers::Integer ? std::static_pointer_cast<Tokens::Number::Info<Numbers::IntegerType>>(ptr) : nullptr;
+
+			// Sends errors and returns default if fail
+			template<typename T>
+			static T GetIntegerConstant(IToken::Shared toke, T default_val = 0) {
+				auto intinfo = GetIntInfo(toke);
+				if (!intinfo)
+					BREAK();
+				else
+					return static_cast<T>(intinfo->GetValue<SCRambl::Tokens::Number::NumberValue>());
+				return default_val;
 			}
-			std::shared_ptr<Tokens::Number::Info<Numbers::FloatType>> GetFloatInfo(IToken::Shared ptr) {
-				return Tokens::Number::GetValueType(*ptr) == Numbers::Float ? std::static_pointer_cast<Tokens::Number::Info<Numbers::FloatType>>(ptr) : nullptr;
+
+			static std::shared_ptr<Tokens::Number::Info<Numbers::IntegerType>> GetIntInfo(IToken::Shared ptr) {
+				return Tokens::Number::IsTypeInt(*ptr) ? std::static_pointer_cast<Tokens::Number::Info<Numbers::IntegerType>>(ptr) : nullptr;
+			}
+			static std::shared_ptr<Tokens::Number::Info<Numbers::FloatType>> GetFloatInfo(IToken::Shared ptr) {
+				return Tokens::Number::IsTypeFloat(*ptr) ? std::static_pointer_cast<Tokens::Number::Info<Numbers::FloatType>>(ptr) : nullptr;
+			}
+
+			static std::string GetIdentifierName(IToken::Shared toke) {
+				auto token = std::static_pointer_cast<Tokens::Identifier::Info<>>(toke);
+				return token->GetValue<Tokens::Identifier::ScriptRange>().Format();
+			}
+			static std::string GetTextString(IToken::Shared toke) {
+				auto token = std::static_pointer_cast<Tokens::String::Info>(toke);
+				return token->GetValue<Tokens::String::ScriptRange>().Format();
+			}
+
+			static Character GetCharacterValue(IToken::Shared toke) {
+				auto token = std::static_pointer_cast<CharacterInfo>(toke);
+				return token->GetValue<Tokens::Character::Parameter::CharacterValue>();
+			}
+			static bool IsCharacter(IToken::Shared toke) {
+				auto tok = std::static_pointer_cast<CharacterInfo>(toke);
+				return tok->GetType() == Tokens::Type::Character;
+			}
+			static bool IsCharacterEOL(IToken::Shared toke) {
+				auto tok = std::static_pointer_cast<CharacterInfo>(toke);
+				return IsCharacter(tok) && tok->GetValue<Tokens::Character::Parameter::CharacterValue>() == Character::EOL;
+			}
+			static bool IsSubscriptDelimiter(IToken::Shared toke) {
+				auto info = std::static_pointer_cast<Tokens::Delimiter::Info<Delimiter>>(toke);
+				auto delimtype = info->GetValue<Tokens::Delimiter::Parameter::DelimiterType>();
+				return delimtype == Delimiter::Subscript;
+			}
+
+			bool GetDelimitedArrayIntegerConstant(size_t& i) {
+				bool b = false;
+				auto next = PeekToken(Tokens::Type::Delimiter);
+				if (next) {
+					if (!IsSubscriptDelimiter(next)) {
+						//SendError();
+						BREAK();
+					}
+					if (next = PeekToken(Tokens::Type::Number, 2)) {
+						i = GetIntegerConstant<size_t>(next);
+						b = true;
+						++m_TokenIt;
+					}
+					++m_TokenIt;
+				}
+				return b;
 			}
 
 		public:

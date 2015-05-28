@@ -7,8 +7,16 @@ namespace SCRambl
 {
 	/* Build */
 	Variable::Shared Build::AddScriptVariable(std::string name, Types::Type::Shared type, size_t array_size) {
-		auto var = Variable::MakeShared(name, type, array_size);
-		m_Script.GetVariables().Insert(name, var);
+		if (type->HasValueType(array_size ? Types::ValueSet::Array : Types::ValueSet::Variable)) {
+			auto var = Variable::MakeShared(name, type, array_size);
+			m_Script.GetVariables().Insert(name, var);
+			return var;
+		}
+		else BREAK();
+		return nullptr;
+	}
+	Variable::Shared Build::GetScriptVariable(std::string name) {
+		auto var = m_Script.GetVariables().Find(name);
 		return var;
 	}
 	void Build::LoadDefinitions() {

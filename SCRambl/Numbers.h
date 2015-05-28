@@ -82,14 +82,15 @@ namespace SCRambl
 			//template<typename T>
 			//inline const T& GetValue() const		{ return GetValue<T>(); }
 
-			inline operator long long() const		{ return GetValue<long long>(); }
-			inline operator long() const			{ return GetValue<long>(); }
-			inline operator short() const			{ return GetValue<short>(); }
-			inline operator char() const				{ return GetValue<char>(); }
-			inline operator unsigned long long() const	{ return GetValue<unsigned long long>(); }
-			inline operator unsigned long() const		{ return GetValue<unsigned long>(); }
-			inline operator unsigned short() const		{ return GetValue<unsigned short>(); }
-			inline operator unsigned char() const		{ return GetValue<unsigned char>(); }
+			inline operator long long() const { return GetValue<long long>(); }
+			inline operator long() const { return GetValue<long>(); }
+			inline operator short() const { return GetValue<short>(); }
+			inline operator char() const { return GetValue<char>(); }
+			inline operator unsigned long long() const { return GetValue<unsigned long long>(); }
+			inline operator unsigned long() const { return GetValue<unsigned long>(); }
+			inline operator unsigned short() const { return GetValue<unsigned short>(); }
+			inline operator unsigned char() const { return GetValue<unsigned char>(); }
+			inline operator size_t() const { return GetValue<size_t>(); }
 		};
 		class FloatType
 		{

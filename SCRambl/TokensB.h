@@ -45,12 +45,12 @@ namespace SCRambl
 		\*/
 		class None {
 		public:
-			static const enum Parameter { TokenType };
+			static const enum Parameter { };
 			using Info = TokenInfo < Type >;
 		};
 		class Directive {
 		public:
-			static const enum Parameter { TokenType, ScriptRange };
+			static const enum Parameter { ScriptRange };
 			using Info = TokenInfo<Type, Scripts::Range>;
 		};
 		class Identifier {
@@ -92,6 +92,19 @@ namespace SCRambl
 
 			static Numbers::Type GetValueType(const IToken& token) {
 				return token.Get<const TypelessInfo>().GetValue<ValueType>();
+			}
+			static bool IsTypeInt(const IToken& token) {
+				switch (token.Get<const TypelessInfo>().GetValue<ValueType>()) {
+				case Numbers::Type::Integer:
+				case Numbers::Type::DWord:
+				case Numbers::Type::Word:
+				case Numbers::Type::Byte:
+					return true;
+				}
+				return false;
+			}
+			static bool IsTypeFloat(const IToken& token) {
+				return token.Get<const TypelessInfo>().GetValue<ValueType>() == Numbers::Type::Float;
 			}
 
 			/*\
@@ -149,8 +162,8 @@ namespace SCRambl
 			 \*/
 			template<typename TCommandType>
 			class Decl : public Symbol {
-				size_t						m_ID;
-				Shared<const TCommandType>	m_Command;
+				size_t m_ID;
+				Shared<const TCommandType> m_Command;
 
 			public:
 				Decl(size_t id, Shared<const TCommandType> ptr) : Symbol(Type::CommandDecl),

@@ -36,7 +36,56 @@ namespace SCRambl
 		}
 #endif
 
+		void Types::AddValueAttributes(XMLConfig& type) {
+			auto& value = type.AddClass("Number", [this](const XMLNode vec, std::shared_ptr<void> & obj){
+				auto type = std::static_pointer_cast<Type>(obj);
+				NumberValueType numtype = vec["Type"]->AsString() == "float" ? numtype = NumberValueType::Float : NumberValueType::Integer;
+
+				auto value = type->AddValue<NumberValue>(type, numtype, vec["Size"]->AsNumber<uint32_t>(0));
+				AddValue(ValueSet::Number, value);
+				obj = value;
+			});
+			auto& text = type.AddClass("Text", [this](const XMLNode vec, std::shared_ptr<void> & obj){
+				auto type = std::static_pointer_cast<Type>(obj);
+				auto value = type->AddValue<TextValue>(type, vec["Size"]->AsNumber<uint32_t>(), *vec["Mode"]);
+				AddValue(ValueSet::Text, value);
+				obj = value;
+			});
+			auto& command = type.AddClass("Command", [this](const XMLNode vec, std::shared_ptr<void>& obj) {
+				auto type = std::static_pointer_cast<Type>(obj);
+				auto value = type->AddValue<CommandValue>(type, vec["Size"]->AsNumber<uint32_t>());
+				AddValue(ValueSet::Command, value);
+				obj = value;
+			});
+			auto& label = type.AddClass("Label", [this](const XMLNode vec, std::shared_ptr<void>& obj) {
+				auto type = std::static_pointer_cast<Type>(obj);
+				auto value = type->AddValue<LabelValue>(type, vec["Size"]->AsNumber<uint32_t>());
+				AddValue(ValueSet::Label, value);
+				obj = value;
+			});
+			auto& variable = type.AddClass("Variable", [this](const XMLNode vec, std::shared_ptr<void>& obj) {
+				auto type = std::static_pointer_cast<Type>(obj);
+				auto value = type->AddValue<VariableValue>(type, vec["Size"]->AsNumber<uint32_t>());
+				AddValue(ValueSet::Variable, value);
+				obj = value;
+			});
+			auto& array_var = type.AddClass("Array", [this](const XMLNode vec, std::shared_ptr<void>& obj) {
+				auto type = std::static_pointer_cast<Type>(obj);
+				auto value = type->AddValue<ArrayValue>(type, vec["Size"]->AsNumber<uint32_t>());
+				AddValue(ValueSet::Array, value);
+				obj = value;
+			});
+		}
+
 		void Types::Init(Build& build) {
+
+			m_Config = build.AddConfig("VariableTypes");
+			{
+				auto& vartype = m_Config->AddClass("VariableTypes", [this](const XMLNode vec, std::shared_ptr<void>& obj) {
+					auto type = AddType(vec.GetAttribute("Name").GetValue().AsString(), TypeSet::Variable);
+					obj = type;
+				});
+			}
 
 			/*m_Config = m_Engine.AddConfig("VariableTypes");
 			{
@@ -77,6 +126,8 @@ namespace SCRambl
 			vartype->SetIsArray(true);
 			});
 			}*/
+			
+			
 			m_Config = build.AddConfig("BasicTypes");
 			{
 				static const auto size_fun = [this](const XMLNode vec, std::shared_ptr<void> & obj){
@@ -96,33 +147,7 @@ namespace SCRambl
 					obj = type;
 					//std::cout << "Type: name " << type->GetName() << ", id " << type->GetID() << "\n";
 				});
-
-				auto& value = type.AddClass("Number", [this](const XMLNode vec, std::shared_ptr<void> & obj){
-					auto type = std::static_pointer_cast<Type>(obj);
-					NumberValueType numtype = vec["Type"]->AsString() == "float" ? numtype = NumberValueType::Float : NumberValueType::Integer;
-
-					auto value = type->AddValue<NumberValue>(type, numtype, vec["Size"]->AsNumber<uint32_t>(0));
-					AddValue(ValueSet::Number, value);
-					obj = value;
-				});
-				auto& text = type.AddClass("Text", [this](const XMLNode vec, std::shared_ptr<void> & obj){
-					auto type = std::static_pointer_cast<Type>(obj);
-					auto value = type->AddValue<TextValue>(type, vec["Size"]->AsNumber<uint32_t>(), *vec["Mode"]);
-					AddValue(ValueSet::Text, value);
-					obj = value;
-				});
-				auto& command = type.AddClass("Command", [this](const XMLNode vec, std::shared_ptr<void>& obj) {
-					auto type = std::static_pointer_cast<Type>(obj);
-					auto value = type->AddValue<CommandValue>(type, vec["Size"]->AsNumber<uint32_t>());
-					AddValue(ValueSet::Command, value);
-					obj = value;
-				});
-				auto& label = type.AddClass("Label", [this](const XMLNode vec, std::shared_ptr<void>& obj) {
-					auto type = std::static_pointer_cast<Type>(obj);
-					auto value = type->AddValue<LabelValue>(type, vec["Size"]->AsNumber<uint32_t>());
-					AddValue(ValueSet::Label, value);
-					obj = value;
-				});
+				AddValueAttributes(type);
 			}
 			m_Config = build.AddConfig("ExtendedTypes");
 			{
@@ -142,6 +167,7 @@ namespace SCRambl
 					obj = type;
 					//std::cout << "Type: name " << type->GetName() << ", id " << type->GetID() << "\n";
 				});
+				AddValueAttributes(extype);
 			}
 			m_Config = build.AddConfig("Translations");
 			{
