@@ -133,29 +133,6 @@ namespace SCRambl
 
 			using SharedValue = Value::Shared;
 
-			class Storage {
-			public:
-				using Map = std::unordered_map<std::string, std::shared_ptr<Type>>;
-				using Vector = std::vector<std::shared_ptr<Type>>;
-
-				Storage() { }
-
-				Type::Shared Add(std::string name, TypeSet type) {
-					auto ptr = Type::MakeShared(name, type);
-					m_Map.emplace(name, ptr);
-					m_Vector.push_back(ptr);
-					return ptr;
-				}
-				Type::Shared Get(std::string name) {
-					auto it = m_Map.find(name);
-					return it != m_Map.end() ? it->second : nullptr;
-				}
-
-			private:
-				Map			m_Map;
-				Vector		m_Vector;
-			};
-
 			Type(std::string name, TypeSet type) : m_Name(name), m_Type(type)
 			{ }
 			inline virtual ~Type() { }
@@ -207,6 +184,83 @@ namespace SCRambl
 			TypeSet m_Type;
 			std::vector<SharedValue> m_Values;
 		};
+
+
+		class Basic : public Type
+		{
+		public:
+			using Shared = std::shared_ptr<Basic>;
+
+			Basic(std::string name) : Type(name, TypeSet::Basic)
+			{ }
+		};
+
+		class Variable : public Type
+		{
+			XMLValue m_Scope;
+			XMLValue m_IsArray;
+
+			// <MinIndex>
+			XMLValue m_MinIndex = 1;
+			// <MaxIndex>
+			XMLValue m_MaxIndex = LONG_MAX;
+
+		public:
+			using Shared = std::shared_ptr<Variable>;
+
+			Variable(std::string name, XMLValue scope, XMLValue isarray) : Type(name, TypeSet::Variable),
+				m_Scope(scope), m_IsArray(isarray)
+			{ }
+
+			XMLValue Scope() const { return m_Scope; }
+			XMLValue IsArray() const { return m_IsArray; }
+			XMLValue MinIndex() const { return m_MinIndex; }
+			XMLValue MaxIndex() const { return m_MinIndex; }
+		};
+
+		class Extended : public Type
+		{
+			Basic::Shared m_BasicType;
+
+		public:
+			Extended(std::string name, Basic::Shared basic = nullptr) : Type(name, TypeSet::Basic),
+				m_BasicType(basic)
+			{ }
+		};
+
+		class Storage {
+		public:
+			using Map = std::unordered_map<std::string, std::shared_ptr<Type>>;
+			using Vector = std::vector<std::shared_ptr<Type>>;
+
+			Storage() { }
+
+			template<typename T, typename... TArgs>
+			std::shared_ptr<T> Add(std::string name, TArgs&&... args) {
+				auto ptr = std::make_shared<T>(name, args...);
+				m_Map.emplace(name, ptr);
+				m_Vector.push_back(ptr);
+				return ptr;
+			}
+			inline Type::Shared AddBasic(std::string name) {
+				return Add<Basic>(name);
+			}
+			inline Type::Shared AddExtended(std::string name, Basic::Shared basic = nullptr) {
+				return Add<Extended>(name, basic);
+			}
+			inline Type::Shared AddVariable(std::string name, XMLValue scope, bool is_array = false) {
+				return Add<Variable>(name, scope, is_array);
+			}
+			Type::Shared Get(std::string name) {
+				auto it = m_Map.find(name);
+				return it != m_Map.end() ? it->second : nullptr;
+			}
+
+		private:
+			Map			m_Map;
+			Vector		m_Vector;
+		};
+
 
 		class TypeCompat {
 		public:
@@ -631,7 +685,7 @@ namespace SCRambl
 
 		class Types {
 			XMLConfiguration::Shared m_Config;
-			Type::Storage m_Types;
+			Storage m_Types;
 			std::multimap<ValueSet, Value::Shared> m_Values;
 			std::vector<Translation<>::Shared> m_Translations;
 			
@@ -680,9 +734,17 @@ namespace SCRambl
 				return DataAttributeID::None;
 			}
 
-			inline Type::Shared AddType(std::string name, TypeSet typeset) {
-				auto shared = m_Types.Add(name, typeset);
+			inline Type::Shared AddType(std::string name) {
+				auto shared = m_Types.AddBasic(name);
 				return shared;
+			}
+			inline Type::Shared AddExtendedType(std::string name, Basic::Shared basic = nullptr) {
+				auto type = m_Types.AddExtended(name, basic);
+				return type;
+			}
+			inline Type::Shared AddVariableType(std::string name, XMLValue scope, bool is_array = false) {
+				auto type = m_Types.AddVariable(name, scope, is_array);
+				return type;
 			}
 			inline Type::Shared GetType(std::string name) {
 				return m_Types.Get(name);

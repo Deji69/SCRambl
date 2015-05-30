@@ -82,7 +82,9 @@ namespace SCRambl
 			m_Config = build.AddConfig("VariableTypes");
 			{
 				auto& vartype = m_Config->AddClass("VariableTypes", [this](const XMLNode vec, std::shared_ptr<void>& obj) {
-					auto type = AddType(vec.GetAttribute("Name").GetValue().AsString(), TypeSet::Variable);
+					auto scope = vec.GetAttribute("Scope").GetValue();
+					auto isarray = vec.GetAttribute("IsArray").GetValue();
+					auto type = AddVariableType(vec.GetAttribute("Name").GetValue().AsString(), scope, isarray.AsBool(false));
 					obj = type;
 				});
 			}
@@ -94,7 +96,7 @@ namespace SCRambl
 			SCR::VarScope scope;
 			unsigned long id = 0;
 			if (auto attr = vec.attribute("ID"))
-			id = attr.as_uint();
+				id = attr.as_uint();
 
 			std::string name = vec.attribute("Name").as_string();
 
@@ -143,7 +145,7 @@ namespace SCRambl
 
 				auto& type = m_Config->AddClass("Type", [this](const XMLNode vec, std::shared_ptr<void> & obj){
 					// store the command to the object pointer so we can access it again
-					auto type = AddType(vec.GetAttribute("Name").GetValue().AsString(), TypeSet::Basic);
+					auto type = AddType(vec.GetAttribute("Name").GetValue().AsString());
 					obj = type;
 					//std::cout << "Type: name " << type->GetName() << ", id " << type->GetID() << "\n";
 				});
@@ -161,7 +163,7 @@ namespace SCRambl
 						id = hasher(vec.GetAttribute(attr.GetValue().AsString()).GetValue().AsString());
 					}
 
-					auto type = AddType(vec.GetAttribute("Name").GetValue().AsString(), TypeSet::Extended);
+					auto type = AddExtendedType(vec.GetAttribute("Name").GetValue().AsString());
 
 					// store the type to the object pointer so we can access it again
 					obj = type;

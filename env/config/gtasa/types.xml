@@ -13,23 +13,19 @@
 <SCRambl Version="1.0" FileVersion="0.0.0.0">
 	<VariableTypes>
 		<Type Name="LVAR" Scope="subscript">
-			<Width>32</Width>
-			<Limit What="Index">32</Limit>
+			<MaxIndex>32</MaxIndex>
 		</Type>
 		<Type Name="VAR" Scope="global">
-			<Width>32</Width>
-			<Init What="Index">2</Init>
-			<Limit What="Index">9216</Limit>
+			<MinIndex>2</MinIndex>
+			<MaxIndex>9216</MaxIndex>
 		</Type>
 		<Type Name="LVAR_ARRAY" Type="LVAR" Array="true">
-			<Width>16</Width>
-			<Index Base="1" />
-			<Limit What="Index">255</Limit>
+			<MinIndex>1</MinIndex>
+			<MaxIndex>255</MaxIndex>
 		</Type>
 		<Type Name="VAR_ARRAY" Type="VAR" Array="true">
-			<Width>16</Width>
-			<Index Base="1" />
-			<Limit What="Index">255</Limit>
+			<MinIndex>1</MinIndex>
+			<MaxIndex>255</MaxIndex>
 		</Type>
 	</VariableTypes>
 	
@@ -89,8 +85,8 @@
 		</Type>
 		
 		<Type Name="COMMAND">
-			<!-- Command with 16 bit integer ID -->
-			<Command Type="int" Size="16" />
+			<!-- Command with 15 bit integer ID (last bit used as NOT modifier) -->
+			<Command Type="int" Size="15" />
 		</Type>
 		
 		<Type Name="LABEL">
@@ -154,21 +150,17 @@
 	<!--
 	Extended Types:
 		These are internal extensions of the basic type set, which build upon the basic language
-		Each Type needs a 'Basic' value representing an already declared type
+		(X) Each Type needs a 'Basic' value representing an already declared type (X)
 	-->
 	<ExtendedTypes>
 		<Type Name="CONST" Basic="INT">
-			<Identifier>
-			</Identifier>
+			<Constant Enum="Model" />
+			<Constant Enum="TaskStatus" />
+			<Constant Enum="PedEvent" />
+			<Constant Enum="AudioEvent" />
 		</Type>
-		<Type Name="MODEL" Basic="CONST">
-			<Width>16</Width>
-		</Type>
-		<Type Name="ENUM" Basic="CONST">
-			
-		</Type>
-		<Type Name="BUFFER" Basic="TEXT_LABEL">
-			<Size>128</Size>
+		<Type Name="BUFFER">
+			<Text Size="128" Mode="static" />
 		</Type>
 		
 		<!-- Hacky -->
@@ -176,7 +168,6 @@
 		<Type Name="VAR_LABEL" Basic="VAR_INT">
 			<Variable Type="VAR" Basic="LABEL" />
 			<Array Type="VAR_ARRAY" Basic="LABEL" />
-			
 		</Type>
 		-->
 	</ExtendedTypes>
@@ -216,7 +207,7 @@
 		<!-- (Just a suggestion...) -->
 		<!-- <Translate Type="COMMAND_EXT">
 			<Data>
-				<!--<Int16>0x7FFF</Int16>--/>v
+				<!--<Int16>0x7FFF</Int16>--/
 				<Int8>0x7F</Int8>
 				<Int32 Source="Command.Hash" />
 			</Data>
