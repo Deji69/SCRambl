@@ -86,6 +86,12 @@ namespace SCRambl
 		}
 	};
 
+	static inline size_t lengthcompare(const std::string& a, const std::string& b) {
+		size_t l = 0;
+		while (a.length() > l && b.length() > l && a[l] == b[l]) ++l;
+		return l;
+	}
+
 	// trim from start
 	static inline std::string &ltrim(std::string &s)
 	{

@@ -118,7 +118,6 @@ namespace SCRambl
 				return state_parsing_type;
 			}
 
-
 			else if (auto ptr = m_Labels.Find(name)) {
 				// this is a label pointer!
 				m_Jumps.emplace_back(ptr, m_TokenIt);
@@ -144,8 +143,7 @@ namespace SCRambl
 				else BREAK();
 				return state_parsing_command;
 			}
-			else if (auto ptr = m_Build->GetScriptVariable(name)) {
-
+			else if (auto m_Variable = m_Build->GetScriptVariable(name)) {
 				return state_parsing_variable;
 			}
 			else if (IsCommandParsing()/* && m_CommandArgIt->GetType().IsCompatible()*/) {
@@ -156,11 +154,23 @@ namespace SCRambl
 			}
 			return state_neutral;
 		}
+		States Parser::Parse_Neutral_CheckDelimiter(IToken::Shared tok) {
+			if (IsScopeDelimiterClosing(tok)) {
+				if (!m_Build->OpenScope())
+					BREAK();
+			}
+			else if (IsScopeDelimiter(tok)) {
+				m_Build->CloseScope();
+			}
+		}
 		States Parser::Parse_Neutral() {
 			States new_state = state_neutral;
 			switch (m_TokenIt->GetToken()->GetType<Tokens::Type>()) {
 			case Tokens::Type::Identifier:
 				new_state = Parse_Neutral_CheckIdentifier(m_TokenIt->GetToken());
+				break;
+			case Tokens::Type::Delimiter:
+				new_state = Parse_Neutral_CheckDelimiter(m_TokenIt->GetToken());
 				break;
 			}
 			if (new_state == state_neutral)
@@ -175,6 +185,7 @@ namespace SCRambl
 			return state_parsing_label;
 		}
 		States Parser::Parse_Variable() {
+			
 			return state_parsing_variable;
 		}
 		States Parser::Parse_Type_Varlist() {

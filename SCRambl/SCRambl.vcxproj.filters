@@ -210,9 +210,6 @@
     <ClInclude Include="Labels.h">
       <Filter>Header</Filter>
     </ClInclude>
-    <ClInclude Include="Scope.h">
-      <Filter>Header\SCR</Filter>
-    </ClInclude>
     <ClInclude Include="Attributes.h">
       <Filter>Header</Filter>
     </ClInclude>
@@ -253,6 +250,9 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="Values.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="ScriptObjects.h">
       <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>

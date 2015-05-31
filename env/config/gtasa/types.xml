@@ -12,7 +12,7 @@
 
 <SCRambl Version="1.0" FileVersion="0.0.0.0">
 	<VariableTypes>
-		<Type Name="LVAR" Scope="subscript">
+		<Type Name="LVAR" Scope="local">
 			<MaxIndex>32</MaxIndex>
 		</Type>
 		<Type Name="VAR" Scope="global">

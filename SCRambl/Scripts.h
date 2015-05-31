@@ -19,6 +19,7 @@
 #include "Labels.h"
 #include "Types.h"
 #include "Variables.h"
+#include "ScriptObjects.h"
 
 namespace SCRambl
 {
@@ -346,52 +347,13 @@ namespace SCRambl
 			TokenLine::Shared GetLine(int);
 		};
 
-		/*\
-		 * Scripts::Scope - Scope of variables, labels, you name it
-		\*/
-		template<typename TObj, typename TKey = std::string, typename TCont = std::unordered_map<TKey, TObj>>
-		class Scope
-		{
-		public:
-			using Container = TCont;
-			using Iterator = typename Container::iterator;
-			using ReverseIterator = typename Container::reverse_iterator;
-			using ConstIterator = typename Container::reverse_iterator;
-
-		private:
-			Container			m_Stuff;
-
-		public:
-			Scope() = default;
-			inline virtual ~Scope() { }
-
-			template<typename... TArgs>
-			inline void Insert(const TKey & key, TArgs&&... obj) {
-				m_Stuff.emplace(key, std::forward<TArgs>(obj)...);
-			}
-
-			inline Iterator Begin() {
-				return m_Stuff.begin();
-			}
-			inline Iterator End() {
-				return m_Stuff.end();
-			}
-			inline Iterator begin()				{ return Begin(); }
-			inline Iterator end()				{ return End(); }
-
-			inline TObj Find(const TKey & key) {
-				auto it = m_Stuff.find(key);
-				return it == m_Stuff.end() ? nullptr : it->second;
-			}
-		};
-
-		using Labels = Scope<std::shared_ptr<Label>>;
-		using Variables = Scope<std::shared_ptr<Variable>>;
+		using Labels = Scope<Label>;
+		//using Variables = Scope<std::shared_ptr<Variable>>;
 
 		//template<typename T> typedef Variable<T> Variable;
 		//template<typename T> typedef Scope<Variable<T>::Shared> Variables;
 
-		class LScript
+		/*class LScript
 		{
 		public:
 			using Shared = std::shared_ptr<LScript>;
@@ -408,7 +370,7 @@ namespace SCRambl
 			Variables		m_Variables;
 		};
 
-		typedef std::vector<LScript> LScripts;
+		typedef std::vector<LScript> LScripts;*/
 	}
 
 	class Script
@@ -439,25 +401,25 @@ namespace SCRambl
 		Scripts::TokenMap::Shared GenerateTokenMap();
 
 		// Get number of (additional) local scripts
-		size_t NumLScripts() const { return m_LScripts.size(); }
+		//size_t NumLScripts() const { return m_LScripts.size(); }
 
 		// Get the code list
 		Scripts::Code& GetCode() { return *m_Code; }
 
 		// Get the labels
-		Scripts::Labels& GetLabels() { return m_LScript ? m_LScript->GetLabels() : m_Labels ; }
-
+		Scripts::Labels& GetLabels() { return /*m_LScript ? m_LScript->GetLabels() :*/ m_Labels ; }
+											  
 		// Get the variables
-		Scripts::Variables& GetVariables() { return m_Variables; }
-		const Scripts::Variables& GetVariables() const { return m_Variables; }
+		//Scripts::Variables& GetVariables() { return m_Variables; }
+		//const Scripts::Variables& GetVariables() const { return m_Variables; }
 
 		// Get the current local script
-		Scripts::LScript* GetLScript() { return m_LScript; }
-		const Scripts::LScript* GetLScript() const { return m_LScript; }
+		//Scripts::LScript* GetLScript() { return m_LScript; }
+		//const Scripts::LScript* GetLScript() const { return m_LScript; }
 
 		// Get one of the local scripts
-		Scripts::LScript* GetLScript(size_t i) { return &m_LScripts[i]; }
-		const Scripts::LScript* GetLScript(size_t i) const { return &m_LScripts[i]; }
+		//Scripts::LScript* GetLScript(size_t i) { return &m_LScripts[i]; }
+		//const Scripts::LScript* GetLScript(size_t i) const { return &m_LScripts[i]; }
 
 		// Get the tokens
 		Scripts::Tokens& GetTokens() { return m_Tokens; }
@@ -471,12 +433,12 @@ namespace SCRambl
 
 		Scripts::Tokens m_Tokens;
 		Scripts::Files m_Files;
-		Scripts::LScripts m_LScripts;
+		//Scripts::LScripts m_LScripts;
 		Scripts::Labels m_Labels;
-		Scripts::Variables m_Variables;
+		//Scripts::Variables m_Variables;
 		
-		Scripts::LScript m_LScriptMain;
-		Scripts::LScript* m_LScript;
+		//Scripts::LScript m_LScriptMain;
+		//Scripts::LScript* m_LScript;
 		Scripts::File::Shared m_File;
 		Scripts::Code::Shared m_Code;
 

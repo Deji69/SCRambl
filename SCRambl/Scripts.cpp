@@ -28,10 +28,10 @@ namespace SCRambl
 	}
 
 	/* LScript */
-	LScript::LScript() {}
+	//LScript::LScript() {}
 
 	/* Script */
-	Script::Script() : m_LScript(&m_LScriptMain)
+	Script::Script() //: m_LScript(&m_LScriptMain)
 	{ }
 	void Script::SetCode(const void * data) {
 		const char * cdata = static_cast<const char*>(data);

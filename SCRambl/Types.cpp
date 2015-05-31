@@ -36,6 +36,25 @@ namespace SCRambl
 		}
 #endif
 
+		/* Type */
+		bool Type::HasValueType(ValueSet type) const {
+			for (auto val : m_Values) {
+				if (val->GetValueType() == type)
+					return true;
+			}
+			return false;
+		}
+		Basic* Type::ToBasic() { return IsBasicType() ? static_cast<Basic*>(this) : nullptr; }
+		Extended* Type::ToExtended() { return IsBasicType() ? static_cast<Extended*>(this) : nullptr; }
+		Variable* Type::ToVariable() { return IsBasicType() ? static_cast<Variable*>(this) : nullptr; }
+		const Basic* Type::ToBasic() const { return IsBasicType() ? static_cast<const Basic*>(this) : nullptr; }
+		const Extended* Type::ToExtended() const { return IsBasicType() ? static_cast<const Extended*>(this) : nullptr; }
+		const Variable* Type::ToVariable() const { return IsBasicType() ? static_cast<const Variable*>(this) : nullptr; }
+		bool Type::IsBasicType() const { return GetType() == TypeSet::Basic; }
+		bool Type::IsExtendedType() const { return GetType() == TypeSet::Extended; }
+		bool Type::IsVariableType() const { return GetType() == TypeSet::Variable; }
+
+		/* Types */
 		void Types::AddValueAttributes(XMLConfig& type) {
 			auto& value = type.AddClass("Number", [this](const XMLNode vec, std::shared_ptr<void> & obj){
 				auto type = std::static_pointer_cast<Type>(obj);

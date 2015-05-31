@@ -136,6 +136,7 @@ namespace SCRambl
 		{
 			using LabelMap = std::unordered_map<std::string, std::shared_ptr<Scripts::Label>>;
 
+			using DelimiterInfo = Tokens::Delimiter::Info<Delimiter>;
 			using CharacterInfo = Tokens::Character::Info<Character>;
 			using IdentifierInfo = Tokens::Identifier::Info<>;
 
@@ -178,6 +179,7 @@ namespace SCRambl
 
 			States Parse_Neutral();
 			States Parse_Neutral_CheckIdentifier(IToken::Shared);
+			States Parse_Neutral_CheckDelimiter(IToken::Shared);
 			States Parse_Type();
 			States Parse_Type_Varlist();
 			States Parse_Command();
@@ -247,6 +249,15 @@ namespace SCRambl
 				auto info = std::static_pointer_cast<Tokens::Delimiter::Info<Delimiter>>(toke);
 				auto delimtype = info->GetValue<Tokens::Delimiter::Parameter::DelimiterType>();
 				return delimtype == Delimiter::Subscript;
+			}
+			static bool IsScopeDelimiter(IToken::Shared toke) {
+				auto info = std::static_pointer_cast<Tokens::Delimiter::Info<Delimiter>>(toke);
+				auto delimtype = info->GetValue<Tokens::Delimiter::Parameter::DelimiterType>();
+				return delimtype == Delimiter::Subscript;
+			}
+			static bool IsScopeDelimiterClosing(IToken::Shared toke) {
+				auto tok = std::static_pointer_cast<DelimiterInfo>(toke);
+				return IsScopeDelimiter(toke) && tok->GetValue<Tokens::Delimiter::ScriptRange>().End() == tok->GetValue<Tokens::Delimiter::ScriptPosition>();
 			}
 
 			bool GetDelimitedArrayIntegerConstant(size_t& i) {
@@ -381,10 +392,11 @@ namespace SCRambl
 			Scripts::Tokens::Iterator m_CommandTokenIt;
 			Scripts::Tokens::Iterator::CVector m_CommandTokens;			// positions of all parsed command tokens
 			Scripts::Tokens::Iterator::CVector m_LabelTokens;
-			Scripts::Labels& m_Labels;
+			//Scripts::Labels& m_Labels;
 			Types::Types& m_Types;
 			size_t m_NumCommandArgs;
 			size_t m_NumOverloadFailures;
+			ScriptVariable m_Variable;
 			Commands& m_Commands;
 			Commands m_ExtraCommands;
 			Command::Shared	m_CurrentCommand;

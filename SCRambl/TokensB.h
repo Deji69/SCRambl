@@ -63,9 +63,7 @@ namespace SCRambl
 		class Label {
 		public:
 			static const enum Parameter { ScriptRange, LabelValue };
-			using Info = TokenInfo<Type, Scripts::Range, Scripts::Label::Shared>;
-			//static const enum RefParameter { ScriptRange, LabelValue };
-			//using RefInfo = TokenInfo < Type, Scripts::Range, Scripts::Label::Shared >;
+			using Info = TokenInfo<Type, Scripts::Range, Scripts::Label*>;
 
 			/*\
 			 * Tokens::Command::Call - Carries symbolic data for a command call

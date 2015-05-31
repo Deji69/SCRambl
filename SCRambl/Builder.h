@@ -9,6 +9,7 @@
 #include "Tasks.h"
 #include "Configuration.h"
 #include "Scripts.h"
+#include "ScriptObjects.h"
 #include "BuildConfig.h"
 #include "Commands.h"
 #include "Constants.h"
@@ -19,6 +20,9 @@ namespace SCRambl
 	enum class BuildEvent {
 
 	};
+
+	using ScriptVariable = ScriptObject<Variable>;
+	using ScriptLabel = ScriptObject<Scripts::Label>;
 
 	struct BuildVariable {
 		XMLValue Value;
@@ -232,6 +236,9 @@ namespace SCRambl
 		std::vector<BuildInput> m_BuildInputs;
 		std::vector<std::string> m_Files;
 
+		//
+		ScriptObjects<Variable> m_Variables;
+
 		// Tasks
 		using TaskMap = std::map<int, std::shared_ptr<TaskSystem::ITask>>;
 		TaskMap m_Tasks;
@@ -259,9 +266,13 @@ namespace SCRambl
 		inline const Commands& GetCommands() const { return m_Commands; }
 		inline Types::Types& GetTypes() { return m_Types; }
 		inline const Types::Types& GetTypes() const { return m_Types; }
+		inline ScriptObjects<Variable>& GetVariables() { return m_Variables; }
+		inline const ScriptObjects<Variable>& GetVariables() const { return m_Variables; }
 
-		Variable::Shared AddScriptVariable(std::string name, Types::Type::Shared type, size_t array_size);
-		Variable::Shared GetScriptVariable(std::string name);
+		inline bool OpenScope() { return m_Variables.BeginScope() != nullptr; }
+		inline void CloseScope() { m_Variables.EndScope(); }
+		ScriptVariable AddScriptVariable(std::string name, Types::Type::Shared type, size_t array_size);
+		ScriptVariable GetScriptVariable(std::string name);
 
 		void DoParseActions(std::string val, const ParseObjectConfig::ActionVec& vec) {
 			for (auto& action : vec) {

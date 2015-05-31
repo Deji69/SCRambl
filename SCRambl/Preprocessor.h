@@ -391,6 +391,8 @@ namespace SCRambl
 				if (token->GetValue<Tokens::Delimiter::DelimiterType>() == type) {
 					// replace the token with an updated Scripts::Range
 					token = Tokens::CreateToken<Tokens::Delimiter::Info<Delimiter>>(Tokens::Type::Delimiter, pos, Scripts::Range(token->GetValue<Tokens::Delimiter::ScriptRange>().Begin(), pos), type);
+					// mark the closing position
+					AddToken<Tokens::Delimiter::Info<Delimiter>>(pos, Tokens::Type::Delimiter, pos, Scripts::Range(token->GetValue<Tokens::Delimiter::ScriptRange>().Begin(), pos), type);
 					m_Delimiters.pop();
 					return true;
 				}
@@ -444,7 +446,7 @@ namespace SCRambl
 			inline Scripts::Token::Shared AddToken(Scripts::Position pos, Tokens::Type token, TArgs&&... args)
 			{
 				m_WasLastTokenEOL = false;
-				return m_Tokens.Add < T >(pos, token, std::forward<TArgs&&>(args)...);
+				return m_Tokens.Add<T>(pos, token, std::forward<TArgs&&>(args)...);
 			}
 			/*template<typename... TArgs>
 			inline std::shared_ptr<Token<TArgs...>> AddToken(PreprocessingToken::Type token, TArgs... args)

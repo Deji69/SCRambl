@@ -74,6 +74,10 @@ namespace SCRambl
 			}
 		};
 
+		class Basic;
+		class Extended;
+		class Variable;
+
 		/*\
 		 * Types::Type
 		\*/
@@ -139,19 +143,19 @@ namespace SCRambl
 
 			inline std::string GetName() const { return m_Name; }
 			inline TypeSet GetType() const { return m_Type; }
-			inline bool IsBasicType() const { return GetType() == TypeSet::Basic; }
-			inline bool IsExtendedType() const { return GetType() == TypeSet::Extended; }
-			inline bool IsVariableType() const { return GetType() == TypeSet::Variable; }
+			bool IsBasicType() const;
+			bool IsExtendedType() const;
+			bool IsVariableType() const;
+			Basic* ToBasic();
+			Extended* ToExtended();
+			Variable* ToVariable();
+			const Basic* ToBasic() const;
+			const Extended* ToExtended() const;
+			const Variable* ToVariable() const;
 
-			bool HasValueType(ValueSet type) const {
-				for (auto val : m_Values) {
-					if (val->GetValueType() == type)
-						return true;
-				}
-				return false;
-			}
+			bool HasValueType(ValueSet type) const;
 			template<typename TValue = Value>
-			std::vector<std::shared_ptr<TValue>> GetValueTypes(ValueSet type) const {
+			inline std::vector<std::shared_ptr<TValue>> GetValueTypes(ValueSet type) const {
 				std::vector<std::shared_ptr<TValue>> vec;
 				for (auto val : m_Values) {
 					if (val->GetValueType() == type)
@@ -167,9 +171,7 @@ namespace SCRambl
 				return shared;
 			}
 
-			/*\
-			 * Types::Types::AllValues - Calls the requested function for each Value this Type contains
-			\*/
+			/*\ Types::Types::AllValues - Calls the requested function for each Value this Type contains \*/
 			template<typename TValue = Value, typename TFunc>
 			void AllValues(TFunc func) {
 				for (auto i : m_Values) {
@@ -193,6 +195,10 @@ namespace SCRambl
 
 			Basic(std::string name) : Type(name, TypeSet::Basic)
 			{ }
+		
+		protected:
+			Basic(std::string name, bool) : Type(name, TypeSet::Extended)
+			{ }
 		};
 
 		class Variable : public Type
@@ -213,6 +219,7 @@ namespace SCRambl
 			{ }
 
 			XMLValue Scope() const { return m_Scope; }
+			bool IsGlobal() const { return lengthcompare(m_Scope.AsString("local"), "local") == 0; }
 			XMLValue IsArray() const { return m_IsArray; }
 			XMLValue MinIndex() const { return m_MinIndex; }
 			XMLValue MaxIndex() const { return m_MinIndex; }
@@ -220,10 +227,10 @@ namespace SCRambl
 
 		class Extended : public Type
 		{
-			Basic::Shared m_BasicType;
+			Type::Shared m_BasicType;
 
 		public:
-			Extended(std::string name, Basic::Shared basic = nullptr) : Type(name, TypeSet::Basic),
+			Extended(std::string name, Type::Shared basic = nullptr) : Type(name, TypeSet::Extended),
 				m_BasicType(basic)
 			{ }
 		};
@@ -367,9 +374,7 @@ namespace SCRambl
 			}
 		};
 
-		/*\
-		 * Translation
-		\*/
+		/*\ Translation \*/
 		template<typename TDataType = DataType, typename TDataSource = DataSourceID, typename TDataAttribute = DataAttributeID>
 		class Translation
 		{
@@ -463,9 +468,7 @@ namespace SCRambl
 			std::vector<Data> m_Data;
 		};
 
-		/*\
-		 * AttributeSet of a Value
-		\*/
+		/*\ AttributeSet of a Value \*/
 		enum class ValueAttributeID {
 			None, Value, Size
 		};
@@ -480,9 +483,7 @@ namespace SCRambl
 			}
 		};
 
-		/*\
-		 * Value of Type for translation
-		\*/
+		/*\ Value of Type for translation \*/
 		class Value : public Type::Value, public ValueAttributes
 		{
 		public:
@@ -515,9 +516,7 @@ namespace SCRambl
 			Translation<>::Shared m_Translation = nullptr;
 		};
 
-		/*\
-		 * Number Value
-		\*/
+		/*\ Number Value \*/
 		enum class NumberValueType {
 			Integer, Float
 		};

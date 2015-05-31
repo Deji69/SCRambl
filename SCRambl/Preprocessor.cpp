@@ -157,8 +157,7 @@ namespace SCRambl
 			}
 			case TokenType::Label: {
 				auto name = range.Format();
-				auto label = Scripts::Label::Make(name);
-				m_Build->GetScript().GetLabels().Insert(range.Format(), label);
+				auto label = m_Build->GetScript().GetLabels().Add(name, name);
 				AddToken<Tokens::Label::Info>(pos, Tokens::Type::Label, range, label);
 				m_Task(Event::AddedToken, range);
 				break;
