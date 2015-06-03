@@ -238,6 +238,7 @@ namespace SCRambl
 
 		//
 		ScriptObjects<Variable> m_Variables;
+		ScriptObjects<Scripts::Label> m_Labels;
 
 		// Tasks
 		using TaskMap = std::map<int, std::shared_ptr<TaskSystem::ITask>>;
@@ -273,6 +274,12 @@ namespace SCRambl
 		inline void CloseScope() { m_Variables.EndScope(); }
 		ScriptVariable AddScriptVariable(std::string name, Types::Type::Shared type, size_t array_size);
 		ScriptVariable GetScriptVariable(std::string name);
+		ScriptLabel AddScriptLabel(std::string name) {
+			return m_Labels.Add(name, name);
+		}
+		ScriptLabel GetScriptLabel(std::string name) {
+			return m_Labels.Find(name);
+		}
 
 		void DoParseActions(std::string val, const ParseObjectConfig::ActionVec& vec) {
 			for (auto& action : vec) {

@@ -15,7 +15,7 @@ namespace SCRambl
 		Parser::Parser(Task& task, Engine& engine, Build::Shared build) :
 			m_Task(task), m_Engine(engine), m_Build(build), m_State(init),
 			m_Tokens(build->GetScript().GetTokens()),
-			m_Labels(build->GetScript().GetLabels()),
+			//m_Labels(build->GetScript().GetLabels()),
 			m_Commands(build->GetCommands()),
 			m_Types(build->GetTypes())
 		{ }
@@ -118,7 +118,7 @@ namespace SCRambl
 				return state_parsing_type;
 			}
 
-			else if (auto ptr = m_Labels.Find(name)) {
+			else if (auto ptr = m_Build->GetScriptLabel(name)) {
 				// this is a label pointer!
 				m_Jumps.emplace_back(ptr, m_TokenIt);
 

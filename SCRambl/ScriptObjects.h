@@ -13,29 +13,8 @@
 
 namespace SCRambl
 {
-	/*\
-	 * ScriptObj - A script object
-	\*/
 	template<typename TObj, typename TKey = std::string>
-	class ScriptObject
-	{
-		TObj* m_Object = nullptr;
-
-
-	public:
-		ScriptObject() = default;
-		ScriptObject(TObj* obj) : m_Object(obj)
-		{ }
-		ScriptObject(TObj& obj) : m_Object(&obj)
-		{ }
-		virtual ~ScriptObject() = default;
-
-		inline TObj& Get() const { return *m_Object; }
-		inline TObj* Ptr() const { return m_Object; }
-
-		inline operator bool() const { return Ptr() != nullptr; }
-		inline TObj* operator->() const { return Ptr(); }
-	};
+	class ScriptObject;
 	
 	/*\
 	 * Scope - Scope of variables, labels, you name it
@@ -67,9 +46,8 @@ namespace SCRambl
 		Scope() = default;
 		virtual ~Scope() { }
 
-		template<typename... TArgs>
-		inline ScriptObject Add(const TKey & key, TArgs&&... objargs) {
-			auto pair = m_Stuff.emplace(key, ScriptObject(objargs...));
+		inline ScriptObject Add(const TKey& key, TObj* obj) {
+			auto pair = m_Stuff.emplace(key, objargs);
 			return pair.second ? *pair.first->second : nullptr;
 		}
 
@@ -104,7 +82,8 @@ namespace SCRambl
 	{
 	public:
 		using Key = TKey;
-		using Object = ScriptObject<TObj, Key>;
+		using Object = TObj;
+		using ScriptObject = ScriptObject<Object, Key>;
 		using ObjectScope = Scope<Object, Key>;
 		using Pair = std::pair<Object, ObjectScope*>;
 		using Map = std::unordered_map<Key, Pair>;
@@ -113,27 +92,32 @@ namespace SCRambl
 		virtual ~ScriptObjects() = default;
 
 		template<typename... TArgs>
-		Object Add(Key key, TArgs&&... args) {
+		ScriptObject Add(Key key, bool global = false, TArgs&&... args) {
+			// create object
 			m_Objects.emplace_back(args...);
-			m_Map.emplace(key, m_Objects.back())
-			return m_Objects.back();
+			auto& obj = m_Objects.back();
+			// add to scope
+			if (global) m_Global.Add(key, obj);
+			else m_Scope.back().Add(key, obj);
+			// add to global map
+			m_Map.emplace(key, std::make_pair<Pair>(obj, global ? &m_Global : &m_Scope.back()));
+			return obj;
 		}
-		std::pair<Object, ObjectScope*> Find(Key key) {
-			static std::pair<Object, ObjectScope*> def(nullptr, nullptr);
+		Object Find(Key key) {
 			auto it = m_Map.find(key);
-			return it == m_Map.end() ? def : it->second;
+			return it == m_Map.end() ? Object(nullptr) : Object(it->second.first);
 		}
 
-		ObjectScope* BeginScope() {
+		const ObjectScope* BeginScope() {
 			m_Scope.emplace_back();
 			return Scope();
 		}
-		ObjectScope* EndScope() {
+		const ObjectScope* EndScope() {
 			ASSERT(ScopeDepth() > 0);
 			m_Scope.erase(m_Scope.end());
 			return Scope();
 		}
-		ObjectScope* Scope() { return ScopeDepth() > 0 ? &m_Scope.back() : nullptr; }
+		const ObjectScope* Scope() const { return ScopeDepth() > 0 ? &m_Scope.back() : nullptr; }
 		size_t ScopeDepth() { return m_Scope.size(); }
 		
 		ObjectScope& Global() { return m_Global; }
@@ -141,9 +125,39 @@ namespace SCRambl
 
 	private:
 		Map m_Map;
-		std::vector<Object> m_Objects;
+		std::vector<ScriptObject> m_Objects;
 		
 		ObjectScope m_Global;
 		std::vector<ObjectScope> m_Scope;
+	};
+
+	/*\
+	 * ScriptObj - A script object
+	\*/
+	template<typename TObj, typename TKey>
+	class ScriptObject
+	{
+		TObj m_Object;
+		Scope<TObj, TKey>* m_Scope = nullptr;
+
+	public:
+		ScriptObject() = default;
+		template<typename... TArgs>
+		ScriptObject(TArgs&&... args) : m_Object(args...)
+		{ }
+		template<typename... TArgs>
+		ScriptObject(Scope<TObj, TKey>* scope, TArgs&&... args) : m_Object(args...), m_Scope(scope)
+		{ }
+		virtual ~ScriptObject() = default;
+
+		inline TObj& Get() { return m_Object; }
+		inline const TObj& Get() const { return m_Object; }
+
+		inline TObj* Ptr() { return &m_Object; }
+		inline const TObj* Ptr() const { return &m_Object; }
+
+		inline Scope<TObj, TKey>* GetScope() const { return m_Scope; }
+
+		inline TObj* operator->() const { return Ptr(); }
 	};
 }

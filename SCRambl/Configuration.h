@@ -139,7 +139,7 @@ namespace SCRambl
 		};
 		class Object : public Config {
 			friend class Configuration;
-			std::shared_ptr<void>		m_Func;
+			std::shared_ptr<void> m_Func;
 
 		public:
 			Object() = default;

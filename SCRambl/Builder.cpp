@@ -21,7 +21,7 @@ namespace SCRambl
 		return nullptr;
 	}
 	ScriptVariable Build::GetScriptVariable(std::string name) {
-		auto var = m_Script.GetVariables().Find(name);
+		auto var = m_Variables.Find(name);
 		return var;
 	}
 	void Build::LoadDefinitions() {
