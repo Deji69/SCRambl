@@ -23,7 +23,7 @@ namespace SCRambl
 				bad_state, max_state = bad_state,
 			};
 
-			Linker(Task& task, Engine& engine, Build::Shared build);
+			Linker(Task& task, Engine& engine, Build* build);
 
 			void Run();
 
@@ -57,7 +57,7 @@ namespace SCRambl
 			State m_State = init;
 			Engine& m_Engine;
 			Task& m_Task;
-			Build::Shared m_Build;
+			Build* m_Build;
 			std::ifstream m_Input;
 			std::ofstream m_File;
 		};
@@ -78,7 +78,7 @@ namespace SCRambl
 		class Task : public TaskSystem::Task<Event>, private Linker
 		{
 		public:
-			Task(Engine& engine, Build::Shared build) :
+			Task(Engine& engine, Build* build) :
 				Linker(*this, engine, build),
 				m_Engine(engine)
 			{ }

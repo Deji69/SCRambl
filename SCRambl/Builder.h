@@ -233,7 +233,7 @@ namespace SCRambl
 		Commands m_Commands;
 		Types::Types m_Types;
 		BuildEnvironment m_Env;
-		BuildConfig::Shared m_Config;
+		BuildConfig* m_Config;
 		ConfigMap m_ConfigMap;
 
 		Script m_Script;
@@ -259,7 +259,7 @@ namespace SCRambl
 	public:
 		using Shared = std::shared_ptr<Build>;
 
-		Build(Engine&, BuildConfig::Shared);
+		Build(Engine&, BuildConfig*);
 		~Build() {
 			for (auto ptr : m_Symbols) {
 				delete ptr;
@@ -303,7 +303,7 @@ namespace SCRambl
 			return m_Labels.Find(name);
 		}
 		ScriptLabel* GetScriptLabel(Scripts::Label* label) {
-			
+			return m_Labels.Find(label);
 		}
 
 		template<typename TTokenType, typename... TArgs>
@@ -410,19 +410,19 @@ namespace SCRambl
 	class Builder
 	{
 		Engine& m_Engine;
-		XMLConfiguration::Shared m_Configuration;
+		XMLConfiguration* m_Configuration;
 		XMLConfig& m_Config;
-		std::unordered_map<std::string, std::shared_ptr<BuildConfig>> m_BuildConfigurations;
-		std::shared_ptr<BuildConfig> m_BuildConfig;
+		std::unordered_map<std::string, BuildConfig> m_BuildConfigurations;
+		BuildConfig* m_BuildConfig;
 
 	public:
 		Builder(Engine&);
 		
-		Scripts::File::Shared LoadFile(Build::Shared, std::string);
-		bool LoadDefinitions(Build::Shared);
+		Scripts::File::Shared LoadFile(Build*, std::string);
+		bool LoadDefinitions(Build*);
 
 		bool LoadScriptFile(std::string, Script&);
 		bool SetConfig(std::string) const { return true; }
-		std::shared_ptr<BuildConfig> GetConfig() const { return m_BuildConfig; }
+		BuildConfig* GetConfig() const { return m_BuildConfig; }
 	};
 }

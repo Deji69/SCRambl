@@ -78,7 +78,7 @@ namespace SCRambl
 		using Vector = std::vector<Command*>;
 
 	private:
-		std::shared_ptr<XMLConfiguration> m_Config;
+		XMLConfiguration* m_Config;
 		bool m_UseCaseConversion;
 		Casing m_SourceCasing = Casing::none;
 		Casing m_DestCasing = Casing::none;

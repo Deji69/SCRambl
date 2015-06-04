@@ -8,8 +8,8 @@ namespace SCRambl
 	/* Build */
 	ScriptVariable* Build::AddScriptVariable(std::string name, Types::Type* type, size_t array_size) {
 		if (type->HasValueType(array_size ? Types::ValueSet::Array : Types::ValueSet::Variable)) {
-			auto& var = m_Variables.Add(type, name, array_size);
-			return &var;
+			auto var = m_Variables.Add(type, name, array_size);
+			return var;
 		}
 		else BREAK();
 		return nullptr;
@@ -47,7 +47,7 @@ namespace SCRambl
 						auto it = m_ConfigMap.find(node.Name());
 						if (it != m_ConfigMap.end()) {
 							// load from node
-							it->second->LoadXML(node);
+							it->second.LoadXML(node);
 						}
 					}
 				}
@@ -103,7 +103,7 @@ namespace SCRambl
 		}
 		return *this;
 	}
-	Build::Build(Engine& engine, BuildConfig::Shared config) : m_Env(engine), m_Engine(engine),
+	Build::Build(Engine& engine, BuildConfig* config) : m_Env(engine), m_Engine(engine),
 		m_Config(config), m_CurrentTask(std::end(m_Tasks))
 	{
 		m_Commands.Init(*this);
@@ -286,7 +286,7 @@ namespace SCRambl
 	//{ }
 
 	/* Builder */
-	bool Builder::LoadDefinitions(Build::Shared build) {
+	bool Builder::LoadDefinitions(Build* build) {
 		auto definitions = GetConfig()->GetDefinitions();
 		for (auto path : GetConfig()->GetDefinitionPaths()) {
 			for (auto def : path.Definitions) {
@@ -300,14 +300,14 @@ namespace SCRambl
 		}
 		return true;
 	}
-	Scripts::File::Shared Builder::LoadFile(Build::Shared build, std::string path) {
+	Scripts::File::Shared Builder::LoadFile(Build* build, std::string path) {
 		return build->AddInput(path);
 	}
 	bool Builder::LoadScriptFile(std::string path, Script& script) {
 		return true;
 	}
 	Builder::Builder(Engine& engine) : m_Engine(engine), m_Configuration(engine.AddConfig("BuildConfig")),
-		m_Config(m_Configuration->AddClass("Build", [this](const XMLNode path, std::shared_ptr<void>& obj){
+		m_Config(m_Configuration->AddClass("Build", [this](const XMLNode path, void*& obj){
 			// get attributes
 			if (auto attr = path.GetAttribute("ID")) {
 				auto id = attr.GetValue().AsString();
@@ -315,13 +315,16 @@ namespace SCRambl
 					auto name = attr.GetValue().AsString();
 
 					// add build configuration
-					auto ptr = std::make_shared<BuildConfig>(id, name, m_Config);
-					if (!m_BuildConfig || path.GetAttribute("Default").GetValue().AsBool())
-						m_BuildConfig = ptr;
-					m_BuildConfigurations.emplace(id, ptr);
+					auto pair = m_BuildConfigurations.emplace(id, BuildConfig(id, name, m_Config));
+					if (pair.second) {
+						auto ptr = &pair.first->second;
+						if (!m_BuildConfig || path.GetAttribute("Default").GetValue().AsBool())
+							m_BuildConfig = ptr;
 
-					// set for the BuildConfig XML loader
-					obj = ptr;
+						// set for the BuildConfig XML loader
+						obj = ptr;
+					}
+					else obj = nullptr;
 				}
 			}
 		}))

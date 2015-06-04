@@ -11,16 +11,15 @@ enum BuildTask {
 	preprocessor, parser, compiler, linker, finished
 };
 
-bool Engine::BuildScript(Build::Shared build) {
+bool Engine::BuildScript(Build* build) {
 	auto state = build->Run().GetState();
 
-	
 	return true;
 }
 
-Build::Shared Engine::InitBuild(std::vector<std::string> files) {
+Build* Engine::InitBuild(std::vector<std::string> files) {
 	auto config = m_Builder.GetConfig();
-	auto build = std::make_shared<Build>(*this, config);
+	auto build = new Build(*this, config);
 	m_Builder.LoadDefinitions(build);
 
 	for (auto path : files) {
@@ -48,7 +47,7 @@ bool Engine::LoadXML(const std::string& path) {
 					auto it = m_Config.find(node.Name());
 					if (it != m_Config.end()) {
 						// load from node
-						it->second->LoadXML(node);
+						it->second.LoadXML(node);
 					}
 				}
 			}

@@ -127,9 +127,14 @@ namespace SCRambl
 
 			//using SharedValue = Value::Shared;
 
+			// TODO: meh
 			Type(std::string name, TypeSet type) : m_Name(name), m_Type(type)
 			{ }
-			inline virtual ~Type() { }
+			inline virtual ~Type() {
+				for (auto val : m_Values) {
+					delete val;
+				}
+			}
 
 			virtual bool IsGlobal() const { return true; }
 			inline bool IsScoped() const { return !IsGlobal(); }
@@ -150,31 +155,32 @@ namespace SCRambl
 			template<typename TValue = Value>
 			inline std::vector<TValue*> GetValueTypes(ValueSet type) const {
 				std::vector<TValue*> vec;
-				for (auto& val : m_Values) {
-					if (val.GetValueType() == type)
-						vec.emplace_back(&val);
+				for (auto val : m_Values) {
+					if (val->GetValueType() == type)
+						vec.emplace_back(val);
 				}
 				return vec;
 			}
 			
-			template<typename TValue = Value, typename ...TArgs>
+			template<typename TValue = Value, typename... TArgs>
 			inline TValue* AddValue(TArgs&&... args) {
-				m_Values.push_back(std::make_shared<TValue>(std::forward<TArgs>(args)...));
-				return static_cast<TValue*>(m_Values.back().get());
+				auto val = new TValue(std::forward<TArgs>(args)...);
+				m_Values.push_back(val);
+				return val;
 			}
 
 			/*\ Types::Types::AllValues - Calls the requested function for each Value this Type contains \*/
 			template<typename TValue = Value, typename TFunc>
 			void AllValues(TFunc func) {
 				for (auto v : m_Values) {
-					func(static_cast<TValue*>(v.get()));
+					func(static_cast<TValue*>(v));
 				}
 			}
 
 		private:
 			std::string m_Name;
 			TypeSet m_Type;
-			std::vector<std::shared_ptr<Value>> m_Values;
+			std::vector<Value*> m_Values;
 		};
 
 		class Basic : public Type

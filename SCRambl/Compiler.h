@@ -23,7 +23,7 @@ namespace SCRambl
 				bad_state, max_state = bad_state,
 			};
 
-			Compiler(Task& task, Engine& engine, Build::Shared build);
+			Compiler(Task& task, Engine& engine, Build* build);
 
 			inline bool IsFinished() const { return m_State == finished; }
 			inline bool IsRunning()	const { return m_State == init || m_State == compiling; }
@@ -76,7 +76,7 @@ namespace SCRambl
 			State m_State;
 			Task& m_Task;
 			Engine& m_Engine;
-			Build::Shared m_Build;
+			Build* m_Build;
 			Scripts::Tokens& m_Tokens;
 			Scripts::Tokens::Iterator m_TokenIt;
 			std::ofstream m_File;
@@ -108,7 +108,7 @@ namespace SCRambl
 			inline bool operator()(Event id, Args&&... args) { return CallEventHandler(id, std::forward<Args>(args)...); }
 
 		public:
-			Task(Engine& engine, Build::Shared build) :
+			Task(Engine& engine, Build* build) :
 				Compiler(*this, engine, build),
 				m_Engine(engine)
 			{ }

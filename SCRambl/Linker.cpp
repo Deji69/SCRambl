@@ -24,7 +24,7 @@ namespace SCRambl
 				break;
 			}
 		}
-		Linker::Linker(Task& task, Engine& engine, Build::Shared build) : m_Engine(engine), m_Task(task), m_Build(build)
+		Linker::Linker(Task& task, Engine& engine, Build* build) : m_Engine(engine), m_Task(task), m_Build(build)
 		{ }
 	}
 }

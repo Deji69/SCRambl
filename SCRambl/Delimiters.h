@@ -59,7 +59,7 @@ namespace SCRambl
 		}*/
 
 	private:
-		std::shared_ptr<Configuration> m_config;
+		Configuration* m_config;
 		std::vector<Delimiter> m_delimiters;
 		std::unordered_map<std::string, Delimiter *> m_openingDelims;
 		std::unordered_map<std::string, Delimiter *> m_closingDelims;

@@ -85,11 +85,17 @@ namespace SCRambl
 			(type->IsGlobal() ? Global() : Local()).Add(key, obj.Ptr());
 			// add to global map
 			m_Map.emplace(key, &obj);
+			// add to object map
+			m_ObjectMap.emplace(obj.Ptr(), &obj);
 			return &obj;
 		}
-		ScriptObject* Find(Key key) {
+		ScriptObject* Find(Key key) const {
 			auto it = m_Map.find(key);
 			return it == m_Map.end() ? nullptr : it->second;
+		}
+		ScriptObject* Find(const Object* obj) const {
+			auto it = m_ObjectMap.find(obj);
+			return it == m_ObjectMap.end() ? nullptr : it->second;
 		}
 
 		size_t LocalDepth() const { return m_Scopes.size(); }
@@ -126,6 +132,7 @@ namespace SCRambl
 		}
 
 		Map m_Map;
+		std::map<const Object*, ScriptObject*> m_ObjectMap;
 		std::vector<ScriptObject> m_Objects;
 		
 		ObjectScope m_Global;

@@ -64,13 +64,10 @@ namespace SCRambl
 			static const enum Parameter { ScriptRange, LabelValue };
 			using Info = TokenInfo<Type, Scripts::Range, Scripts::Label*>;
 
-			/*\
-			 * Tokens::Command::Call - Carries symbolic data for a command call
-			\*/
-			template<typename TLabelType>
+			/* Tokens::Command::Call - Carries symbolic data for a command call */
 			class Jump : public Symbol
 			{
-				TLabelType* m_Label;
+				const Scripts::Label* m_Label;
 				size_t m_Offset;
 
 			public:

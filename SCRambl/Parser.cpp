@@ -121,11 +121,12 @@ namespace SCRambl
 
 			else if (auto ptr = m_Build.GetScriptLabel(name)) {
 				// this is a label pointer!
-				m_Jumps.emplace_back(ptr, m_TokenIt);
+				m_Jumps.emplace_back(ptr->Ptr(), m_TokenIt);
 
-				auto tok = CreateToken<Tokens::Label::Info>(Tokens::Type::LabelRef, range, ptr);
+				auto tok = CreateToken<Tokens::Label::Info>(Tokens::Type::LabelRef, range, ptr->Ptr());
 				m_TokenIt.Get()->SetToken(tok);
-				m_TokenIt.Get()->GetSymbol() = CreateSymbol<Tokens::Label::Jump<Scripts::Label>>(tok);
+				auto sym = CreateSymbol<Tokens::Label::Jump>(tok, 0);
+				m_TokenIt.Get()->SetSymbol(sym);
 
 				AddLabelRef(ptr, m_TokenIt);
 				return state_parsing_label;
@@ -163,6 +164,7 @@ namespace SCRambl
 				m_Build.CloseVarScope();
 			}
 			else BREAK();
+			return state_neutral;
 		}
 		States Parser::Parse_Neutral() {
 			States new_state = state_neutral;
@@ -286,9 +288,11 @@ namespace SCRambl
 
 				val_type = Types::ValueSet::Label;
 				
-				m_Build.GetLabels();
-				AddLabel(label, m_TokenIt);
-				m_LabelTokens.emplace_back(m_TokenIt);
+				auto scriptLabel = m_Build.GetScriptLabel(label);
+				if (scriptLabel) {
+					AddLabel(scriptLabel, m_TokenIt);
+					m_LabelTokens.emplace_back(m_TokenIt);
+				}
 				//m_UnusedLabels
 				break;
 			}
@@ -317,7 +321,7 @@ namespace SCRambl
 								ASSERT(translation);
 							}
 
-							auto symbol = CreateToken<Tokens::String::Value<Types::Value*>>(val, name);
+							auto symbol = CreateSymbol<Tokens::String::Value<Types::Value*>>(val, name);
 							m_TokenIt->GetSymbol() = symbol;
 
 							val_type = Types::ValueSet::Text;
@@ -340,9 +344,9 @@ namespace SCRambl
 					// this is a label pointer!
 					m_Jumps.emplace_back(ptr->Ptr(), m_TokenIt);
 
-					auto tok = CreateToken<Tokens::Label::Info>(Tokens::Type::LabelRef, range, ptr);
+					auto tok = CreateToken<Tokens::Label::Info>(Tokens::Type::LabelRef, range, ptr->Ptr());
 					m_TokenIt.Get()->SetToken(tok);
-					m_TokenIt.Get()->GetSymbol() = CreateSymbol<Tokens::Label::Jump<ScriptLabel>>(tok);
+					m_TokenIt.Get()->SetSymbol(CreateSymbol<Tokens::Label::Jump>(tok));
 
 					AddLabelRef(ptr, m_TokenIt);
 				}
@@ -452,12 +456,12 @@ namespace SCRambl
 				if (best_value_match) {
 					// Now create a token for the value itself
 					auto number_val = static_cast<Types::NumberValue*>(best_value_match);
-					auto val_token = is_int
-						? CreateToken<Tokens::Number::Value<Types::NumberValue*>>(number_val, ptr->GetToken<Tokens::Number::Info<Numbers::IntegerType>>())
-						: CreateToken<Tokens::Number::Value<Types::NumberValue*>>(number_val, ptr->GetToken<Tokens::Number::Info<Numbers::FloatType>>());
+					auto val_symbol = is_int
+						? CreateSymbol<Tokens::Number::Value<Types::NumberValue*>>(number_val, *ptr->GetToken<Tokens::Number::Info<Numbers::IntegerType>>())
+						: CreateSymbol<Tokens::Number::Value<Types::NumberValue*>>(number_val, *ptr->GetToken<Tokens::Number::Info<Numbers::FloatType>>());
 
 					// Store it back in the script token
-					m_TokenIt.Get()->GetSymbol() = val_token;
+					m_TokenIt.Get()->GetSymbol() = val_symbol;
 				}
 				else {
 					// TODO: something

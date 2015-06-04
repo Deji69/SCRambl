@@ -100,7 +100,7 @@ namespace SCRambl
 			}
 		}
 
-		Compiler::Compiler(Task& task, Engine& engine, Build::Shared build) :
+		Compiler::Compiler(Task& task, Engine& engine, Build* build) :
 			m_State(init), m_Task(task), m_Engine(engine), m_Build(build), m_Tokens(build->GetScript().GetTokens())
 		{
 		}

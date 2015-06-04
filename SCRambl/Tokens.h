@@ -34,12 +34,12 @@ namespace SCRambl
 			inline virtual ~Symbol()
 			{ }
 
-			inline Type GetType() const		{ return m_Type; }
+			inline Type GetType() const { return m_Type; }
 
 			template<typename  T>
-			inline T& Extend()				{ return static_cast<T&>(*this); }
+			inline T& Extend() { return static_cast<T&>(*this); }
 			template<typename  T>
-			inline const T& Extend() const	{ return static_cast<T&>(*this); }
+			inline const T& Extend() const { return static_cast<T&>(*this); }
 
 		private:
 			Type				m_Type;

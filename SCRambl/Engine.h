@@ -29,9 +29,9 @@ namespace SCRambl
 	class Engine : public TaskSystem::Task<EngineEvent>
 	{
 		//using TaskEntry = std::pair<int, TypeSystem::Task>;
-		using TaskMap = std::map<int, std::shared_ptr<TaskSystem::ITask>>;
-		using FormatMap = std::map<const std::type_info*, std::shared_ptr<IFormatter>>;
-		using ConfigMap = std::map<std::string, std::shared_ptr<XMLConfiguration>>;
+		using TaskMap = std::map<int, TaskSystem::ITask*>;
+		using FormatMap = std::map<const std::type_info*, IFormatter*>;
+		using ConfigMap = std::map<std::string, XMLConfiguration>;
 
 		// Configuration
 		ConfigMap m_Config;
@@ -61,8 +61,8 @@ namespace SCRambl
 		virtual ~Engine()
 		{ }
 
-		Build::Shared InitBuild(std::vector<std::string> files);
-		bool BuildScript(Build::Shared);
+		Build* InitBuild(std::vector<std::string> files);
+		bool BuildScript(Build*);
 
 		// Get SCR Commands
 		//inline Commands & GetCommands()			{ return m_Commands; }
@@ -72,7 +72,7 @@ namespace SCRambl
 		/*\
 		 * Engine::GetBuildConfig
 		\*/
-		inline std::shared_ptr<BuildConfig> GetBuildConfig() const {
+		inline BuildConfig* GetBuildConfig() const {
 			return m_Builder.GetConfig();
 		}
 
@@ -86,21 +86,20 @@ namespace SCRambl
 		/*\
 		 * Engine::AddConfig - Returns shared Configuration element
 		\*/
-		std::shared_ptr<XMLConfiguration> AddConfig(const std::string & name)
+		XMLConfiguration* AddConfig(const std::string & name)
 		{
 			if (name.empty()) return nullptr;
 			if (m_Config.find(name) != m_Config.end()) return nullptr;
-			auto config = std::make_shared<XMLConfiguration>(name);
-			m_Config.emplace(name, config);
-			return config;
+			auto pr = m_Config.emplace(name, name);
+			return pr.second ? &pr.first->second : nullptr;
 		}
 
-		std::shared_ptr<Configuration> AddConfiguration(const std::string & name) {
-			return std::make_shared<Configuration>(name);
+		Configuration* AddConfiguration(const std::string & name) {
+			return new Configuration(name);
 		}
 
 		/*/ Engine::AddConfig /*/
-		void AddConfig(std::shared_ptr<Configuration> config) {
+		void AddConfig(Configuration* config) {
 			//m_Config.emplace(config->GetName(), config);
 		}
 
@@ -144,14 +143,14 @@ namespace SCRambl
 		template<typename T, typename F>
 		void SetFormatter(F &func)
 		{
-			Formatters[&typeid(T)] = std::make_shared<Formatter<T>>(func);
+			Formatters[&typeid(T)] = new Formatter<T>(func);
 		}
 
 		/*\
 		 * Engine::AddTask<> - Add task to the running engine
 		\*/
 		template<typename T, typename ID, typename... Params>
-		const std::shared_ptr<T> AddTask(ID id, Params&&... prms)
+		const T* AddTask(ID id, Params&&... prms)
 		{
 			auto task = std::shared_ptr<T>(new T(*this, std::forward<Params>(prms)...));
 			Tasks.emplace(id, task);

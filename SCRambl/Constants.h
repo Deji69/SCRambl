@@ -18,13 +18,13 @@ namespace SCRambl
 			Null, Integer, Float, String, Enumerator
 		};
 
-		using ConstantMap = std::unordered_multimap < std::string, std::pair<ConstantType, std::shared_ptr<SCR::IConstant>> >;
-		using EnumMap = std::unordered_multimap < std::string, std::shared_ptr<SCR::Enum> > ;
+		using ConstantMap = std::unordered_multimap<std::string, std::pair<ConstantType, SCR::IConstant*>>;
+		using EnumMap = std::unordered_multimap<std::string, SCR::Enum* > ;
 
 	private:
 		ConstantMap m_ConstantMap;
 		EnumMap	m_EnumMap;
-		std::shared_ptr<XMLConfiguration> m_Config;
+		XMLConfiguration* m_Config;
 
 	public:
 		Constants();
@@ -32,32 +32,32 @@ namespace SCRambl
 		void Init(Build&);
 
 		template<typename R, typename T = R>
-		std::shared_ptr < SCR::Constant<R> > AddConstant(std::string name, T value);
+		SCR::Constant<R>* AddConstant(std::string name, T value);
 
 		template<>
-		std::shared_ptr < SCR::Constant<long> > AddConstant(std::string name, long val) {
+		SCR::Constant<long>* AddConstant(std::string name, long val) {
 			if (name.empty()) return nullptr;
-			auto ptr = std::make_shared < SCR::Constant<long> >(name, val);
+			auto ptr = new SCR::Constant<long>(name, val);
 			if (ptr) m_ConstantMap.emplace(name, std::make_pair(Integer, ptr));
 			return ptr;
 		}
 		template<>
-		std::shared_ptr < SCR::Constant<long> > AddConstant(std::string name, int val) {
+		SCR::Constant<long>* AddConstant(std::string name, int val) {
 			return AddConstant<long, long>(name, val);
 		}
 
-		SCR::Enum::Shared AddEnum(std::string name) {
-			auto ptr = std::make_shared < SCR::Enum >(name);
+		SCR::Enum* AddEnum(std::string name) {
+			auto ptr = new SCR::Enum(name);
 			if (ptr) m_EnumMap.emplace(name, ptr);
 			return ptr;
 		}
 
-		SCR::Enum::EnumeratorShared AddEnumerator(SCR::Enum::Shared enu, std::string name) {
+		SCR::Enumerator* AddEnumerator(SCR::Enum* enu, std::string name) {
 			auto ptr = enu->AddEnumerator(name);
 			if (ptr) m_ConstantMap.emplace(name, std::make_pair(Enumerator, ptr));
 			return ptr;
 		}
-		SCR::Enum::EnumeratorShared AddEnumerator(SCR::Enum::Shared enu, std::string name, long val) {
+		SCR::Enumerator*AddEnumerator(SCR::Enum* enu, std::string name, long val) {
 			auto ptr = enu->AddEnumerator(name, val);
 			if (ptr) m_ConstantMap.emplace(name, std::make_pair(Enumerator, ptr));
 			return ptr;

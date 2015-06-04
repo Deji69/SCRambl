@@ -277,16 +277,18 @@ namespace SCRambl
 			}
 
 			std::vector<IToken*> m_ParserTokens;
-			std::vector<Symbol*> m_ParserSymbols;
+			std::vector<Tokens::Symbol*> m_ParserSymbols;
 			template<typename TTokenType, typename... TArgs>
 			TTokenType* CreateToken(TArgs&&... args) {
-				m_ParserTokens.emplace_back(new TTokenType(args...));
-				return m_ParserTokens.back();
+				auto token = new TTokenType(args...);
+				m_ParserTokens.emplace_back(token);
+				return token;
 			}
 			template<typename TSymbolType, typename... TArgs>
 			TSymbolType* CreateSymbol(TArgs&&... args) {
-				m_ParserSymbols.emplace_back(new TSymbolType(args...));
-				return m_ParserSymbols.back();
+				auto symbol = new TSymbolType(args...);
+				m_ParserSymbols.emplace_back(symbol);
+				return symbol;
 			}
 
 		public:

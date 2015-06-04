@@ -103,6 +103,12 @@ namespace SCRambl
 				if (m_Token) delete m_Token;
 				m_Token = tok;
 			}
+
+			template<typename T>
+			inline void SetSymbol(T sym) {
+				if (m_Symbol) delete m_Symbol;
+				m_Symbol = sym;
+			}
 			
 			inline IToken* GetToken() { return m_Token; }
 			inline const IToken* GetToken() const { return GetToken(); }
