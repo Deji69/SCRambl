@@ -55,7 +55,7 @@ namespace SCRambl
 
 			class Data
 			{
-				Tokens::ValueToken<Types::Value::Shared>::Shared m_ValToken;
+				Tokens::ValueToken<Types::Value*>* m_ValToken;
 			};
 
 			class FileFunctions
@@ -107,13 +107,12 @@ namespace SCRambl
 		\*/
 		class Jump : public Symbolic {
 			Scripts::Tokens::Iterator m_TokenIt;
-			Scripts::Label::Shared m_Dest;
+			Scripts::Label* m_Dest;
 
 		public:
-			using Shared = std::shared_ptr < Jump > ;
-			using Vector = std::vector < Jump > ;
+			using Vector = std::vector<Jump>;
 
-			Jump(Scripts::Label::Shared dest, Scripts::Tokens::Iterator it) :
+			Jump(Scripts::Label* dest, Scripts::Tokens::Iterator it) :
 				m_Dest(dest), m_TokenIt(it)
 			{ }
 		};
@@ -165,21 +164,20 @@ namespace SCRambl
 					}
 				};
 
-				Types::Type::Shared type;
+				Types::Type* type;
 				Scripts::Tokens::Iterator type_iterator;
-				IToken::Shared token;
+				IToken* token;
 				std::vector<TypeVarDeclaration> var_declarations;
 
 				TypeParseState()
 				{ }
-				TypeParseState(Types::Type::Shared type_, IToken::Shared token_) : type(type_), token(token_)
-				{
-				}
+				TypeParseState(Types::Type* type_, IToken* token_) : type(type_), token(token_)
+				{ }
 			} m_TypeParseState;
 
 			States Parse_Neutral();
-			States Parse_Neutral_CheckIdentifier(IToken::Shared);
-			States Parse_Neutral_CheckDelimiter(IToken::Shared);
+			States Parse_Neutral_CheckIdentifier(IToken*);
+			States Parse_Neutral_CheckDelimiter(IToken*);
 			States Parse_Type();
 			States Parse_Type_Varlist();
 			States Parse_Command();
@@ -194,7 +192,7 @@ namespace SCRambl
 				return m_TokenIt->GetToken()->GetType<Tokens::Type>();
 			}
 
-			IToken::Shared PeekToken(Tokens::Type type = Tokens::Type::None, size_t off = 1) {
+			IToken* PeekToken(Tokens::Type type = Tokens::Type::None, size_t off = 1) {
 				auto it = m_TokenIt + off;
 				if (it != m_Tokens.End()) {
 					auto tok = it->GetToken();
@@ -208,7 +206,7 @@ namespace SCRambl
 
 			// Sends errors and returns default if fail
 			template<typename T>
-			static T GetIntegerConstant(IToken::Shared toke, T default_val = 0) {
+			static T GetIntegerConstant(IToken* toke, T default_val = 0) {
 				auto intinfo = GetIntInfo(toke);
 				if (!intinfo)
 					BREAK();
@@ -217,46 +215,46 @@ namespace SCRambl
 				return default_val;
 			}
 
-			static std::shared_ptr<Tokens::Number::Info<Numbers::IntegerType>> GetIntInfo(IToken::Shared ptr) {
-				return Tokens::Number::IsTypeInt(*ptr) ? std::static_pointer_cast<Tokens::Number::Info<Numbers::IntegerType>>(ptr) : nullptr;
+			static Tokens::Number::Info<Numbers::IntegerType>* GetIntInfo(IToken* ptr) {
+				return Tokens::Number::IsTypeInt(*ptr) ? static_cast<Tokens::Number::Info<Numbers::IntegerType>*>(ptr) : nullptr;
 			}
-			static std::shared_ptr<Tokens::Number::Info<Numbers::FloatType>> GetFloatInfo(IToken::Shared ptr) {
-				return Tokens::Number::IsTypeFloat(*ptr) ? std::static_pointer_cast<Tokens::Number::Info<Numbers::FloatType>>(ptr) : nullptr;
+			static Tokens::Number::Info<Numbers::FloatType>* GetFloatInfo(IToken* ptr) {
+				return Tokens::Number::IsTypeFloat(*ptr) ? static_cast<Tokens::Number::Info<Numbers::FloatType>*>(ptr) : nullptr;
 			}
 
-			static std::string GetIdentifierName(IToken::Shared toke) {
-				auto token = std::static_pointer_cast<Tokens::Identifier::Info<>>(toke);
+			static std::string GetIdentifierName(IToken* toke) {
+				auto token = static_cast<Tokens::Identifier::Info<>*>(toke);
 				return token->GetValue<Tokens::Identifier::ScriptRange>().Format();
 			}
-			static std::string GetTextString(IToken::Shared toke) {
-				auto token = std::static_pointer_cast<Tokens::String::Info>(toke);
+			static std::string GetTextString(IToken* toke) {
+				auto token = static_cast<Tokens::String::Info*>(toke);
 				return token->GetValue<Tokens::String::ScriptRange>().Format();
 			}
 
-			static Character GetCharacterValue(IToken::Shared toke) {
-				auto token = std::static_pointer_cast<CharacterInfo>(toke);
+			static Character GetCharacterValue(IToken* toke) {
+				auto token = static_cast<CharacterInfo*>(toke);
 				return token->GetValue<Tokens::Character::Parameter::CharacterValue>();
 			}
-			static bool IsCharacter(IToken::Shared toke) {
-				auto tok = std::static_pointer_cast<CharacterInfo>(toke);
+			static bool IsCharacter(IToken* toke) {
+				auto tok = static_cast<CharacterInfo*>(toke);
 				return tok->GetType() == Tokens::Type::Character;
 			}
-			static bool IsCharacterEOL(IToken::Shared toke) {
-				auto tok = std::static_pointer_cast<CharacterInfo>(toke);
+			static bool IsCharacterEOL(IToken* toke) {
+				auto tok = static_cast<CharacterInfo*>(toke);
 				return IsCharacter(tok) && tok->GetValue<Tokens::Character::Parameter::CharacterValue>() == Character::EOL;
 			}
-			static bool IsSubscriptDelimiter(IToken::Shared toke) {
-				auto info = std::static_pointer_cast<Tokens::Delimiter::Info<Delimiter>>(toke);
+			static bool IsSubscriptDelimiter(IToken* toke) {
+				auto info = static_cast<Tokens::Delimiter::Info<Delimiter>*>(toke);
 				auto delimtype = info->GetValue<Tokens::Delimiter::Parameter::DelimiterType>();
 				return delimtype == Delimiter::Subscript;
 			}
-			static bool IsScopeDelimiter(IToken::Shared toke) {
-				auto info = std::static_pointer_cast<Tokens::Delimiter::Info<Delimiter>>(toke);
+			static bool IsScopeDelimiter(IToken* toke) {
+				auto info = static_cast<Tokens::Delimiter::Info<Delimiter>*>(toke);
 				auto delimtype = info->GetValue<Tokens::Delimiter::Parameter::DelimiterType>();
 				return delimtype == Delimiter::Subscript;
 			}
-			static bool IsScopeDelimiterClosing(IToken::Shared toke) {
-				auto tok = std::static_pointer_cast<DelimiterInfo>(toke);
+			static bool IsScopeDelimiterClosing(IToken* toke) {
+				auto tok = static_cast<DelimiterInfo*>(toke);
 				return IsScopeDelimiter(toke) && tok->GetValue<Tokens::Delimiter::ScriptRange>().End() == tok->GetValue<Tokens::Delimiter::ScriptPosition>();
 			}
 
@@ -278,13 +276,26 @@ namespace SCRambl
 				return b;
 			}
 
+			std::vector<IToken*> m_ParserTokens;
+			std::vector<Symbol*> m_ParserSymbols;
+			template<typename TTokenType, typename... TArgs>
+			TTokenType* CreateToken(TArgs&&... args) {
+				m_ParserTokens.emplace_back(new TTokenType(args...));
+				return m_ParserTokens.back();
+			}
+			template<typename TSymbolType, typename... TArgs>
+			TSymbolType* CreateSymbol(TArgs&&... args) {
+				m_ParserSymbols.emplace_back(new TSymbolType(args...));
+				return m_ParserSymbols.back();
+			}
+
 		public:
 			enum State {
 				init, parsing, overloading, finished,
 				bad_state, max_state = bad_state,
 			};
 
-			Parser(Task& task, Engine& engine, Build::Shared build);
+			Parser(Task& task, Engine& engine, Build& build);
 
 			bool IsFinished() const;
 			bool IsRunning() const;
@@ -329,7 +340,7 @@ namespace SCRambl
 			}
 			void FinishCommandParsing() {
 				auto tok = m_CommandTokenIt.Get()->GetToken<Tokens::Command::Info<Command>>();
-				auto symbol = Tokens::CreateToken<Tokens::Command::Call<Command>>(*tok, m_NumCommandArgs);
+				auto symbol = m_Build.CreateSymbol<Tokens::Command::Call<Command>>(*tok, m_NumCommandArgs);
 				m_CommandTokenIt.Get()->GetSymbol() = symbol;
 
 				size_t cmdid = m_CommandVector.size();
@@ -347,7 +358,7 @@ namespace SCRambl
 				}
 				m_CommandArgTokens.clear();
 
-				m_Build->GetScript().GetDeclarations().emplace_back(Tokens::CreateToken <Tokens::Command::Decl<Command>>(cmdid, m_CurrentCommand));
+				m_Build.GetScript().GetDeclarations().emplace_back(m_Build.CreateSymbol<Tokens::Command::Decl<Command>>(cmdid, m_CurrentCommand));
 
 				m_ParsingCommandArgs = false;
 			}
@@ -361,10 +372,10 @@ namespace SCRambl
 			size_t GetNumberOfOverloadFailures() const {
 				return m_NumOverloadFailures;
 			}
-			void AddLabel(Scripts::Label::Shared label, Scripts::Tokens::Iterator it) {
+			void AddLabel(ScriptLabel* label, Scripts::Tokens::Iterator it) {
 				m_LabelReferences.emplace(label, LabelRef(it, false));
 			}
-			void AddLabelRef(Scripts::Label::Shared label, Scripts::Tokens::Iterator it) {
+			void AddLabelRef(ScriptLabel* label, Scripts::Tokens::Iterator it) {
 				auto iter = m_LabelReferences.find(label);
 				if (iter == m_LabelReferences.end()) {
 					m_LabelReferences.emplace(label, LabelRef(it, true));
@@ -374,9 +385,9 @@ namespace SCRambl
 				}
 			}
 
-			inline Types::Type::Shared GetType(const std::string& name) {
+			inline Types::Type* GetType(const std::string& name) {
 				auto ptr = m_Types.GetType(name);
-				return ptr ? ptr : m_Build->GetTypes().GetType(name);
+				return ptr ? ptr : m_Build.GetTypes().GetType(name);
 			}
 
 			void Init();
@@ -386,7 +397,7 @@ namespace SCRambl
 			State m_State = init;
 			Engine& m_Engine;
 			Task& m_Task;
-			Build::Shared m_Build;
+			Build& m_Build;
 			Scripts::Tokens& m_Tokens;
 			Scripts::Tokens::Iterator m_TokenIt;
 			Scripts::Tokens::Iterator m_CommandTokenIt;
@@ -396,21 +407,21 @@ namespace SCRambl
 			Types::Types& m_Types;
 			size_t m_NumCommandArgs;
 			size_t m_NumOverloadFailures;
-			ScriptVariable m_Variable;
+			ScriptVariable* m_Variable = nullptr;
 			Commands& m_Commands;
 			Commands m_ExtraCommands;
-			Command::Shared	m_CurrentCommand;
+			Command* m_CurrentCommand;
 			Command::Arg::Iterator m_CommandArgIt;
 			Commands::Vector m_OverloadCommands;
 			Commands::Vector::iterator m_OverloadCommandsIt;
 			Jump::Vector m_Jumps;
 
-			std::map<Scripts::Label::Shared, LabelRef> m_LabelReferences;
+			std::map<ScriptLabel*, LabelRef> m_LabelReferences;
 			std::vector<std::shared_ptr<const Command>> m_CommandVector;
 			std::unordered_map<std::string, size_t> m_CommandMap;
 			std::multimap<const std::string, Scripts::Tokens::Iterator> m_CommandTokenMap;
 
-			std::vector<Scripts::Token::Shared> m_CommandArgTokens;
+			std::vector<Scripts::Token*> m_CommandArgTokens;
 
 			// Status
 			bool m_OnNewLine;
@@ -440,8 +451,8 @@ namespace SCRambl
 			inline bool operator()(Event id, Args&&... args) { return CallEventHandler(id, std::forward<Args>(args)...); }
 
 		public:
-			Task(Engine& engine, Build::Shared build) :
-				Parser(*this, engine, build),
+			Task(Engine& engine, Build* build) :
+				Parser(*this, engine, *build),
 				m_Engine(engine)
 			{ }
 

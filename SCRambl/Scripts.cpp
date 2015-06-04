@@ -137,15 +137,15 @@ namespace SCRambl
 		return pos;
 	}
 
-	TokenMap::Shared Script::GenerateTokenMap() {
-		auto map = std::make_shared<TokenMap>();
-		decltype(map->AddLine(0)) line = nullptr;
+	TokenMap Script::GenerateTokenMap() {
+		TokenMap map;
+		decltype(map.AddLine(0)) line = nullptr;
 		int nline = -1;
 		for (auto ptr : m_Tokens) {
 			auto curr_line = ptr->GetPosition().GetLine();
 
 			if (nline == -1 || curr_line != nline)
-				line = map->AddLine(nline = curr_line);
+				line = map.AddLine(nline = curr_line);
 
 			line->AddToken(ptr);
 		}
@@ -263,17 +263,19 @@ namespace SCRambl
 	*/
 
 	/* Scripts::TokenMap */
-	TokenLine::Shared TokenMap::AddLine(int line) {
+	TokenLine* TokenMap::AddLine(long long line) {
 		auto it = m_Map.find(line);
 		if (it != m_Map.end())
-			return it->second;
-		auto ptr = std::make_shared<TokenLine>();
-		m_Map.emplace(line, ptr);
-		return ptr;
+			return &it->second;
+		auto pr = m_Map.emplace(line, TokenLine());
+		if (pr.second) {
+			return &pr.first->second;
+		}
+		return nullptr;
 	}
-	TokenLine::Shared TokenMap::GetLine(int line) {
+	TokenLine* TokenMap::GetLine(long long line) {
 		auto it = m_Map.find(line);
-		return it != m_Map.end() ? it->second : nullptr;
+		return it != m_Map.end() ? &it->second : nullptr;
 	}
 
 	/* Scripts::Position */

@@ -24,6 +24,11 @@ namespace SCRambl
 	using ScriptVariable = ScriptObject<Variable>;
 	using ScriptLabel = ScriptObject<Scripts::Label>;
 
+	template<typename TTokenType>
+	TTokenType* CreateToken() {
+
+	}
+
 	struct BuildVariable {
 		XMLValue Value;
 		BuildVariable() = default;
@@ -221,7 +226,7 @@ namespace SCRambl
 			{ }
 		};
 
-		using ConfigMap = std::map<std::string, std::shared_ptr<XMLConfiguration>>;
+		using ConfigMap = std::map<std::string, XMLConfiguration>;
 
 		Engine& m_Engine;
 		Constants m_Constants;
@@ -235,6 +240,8 @@ namespace SCRambl
 		std::vector<BuildScript> m_BuildScripts;
 		std::vector<BuildInput> m_BuildInputs;
 		std::vector<std::string> m_Files;
+		std::vector<IToken*> m_Tokens;
+		std::vector<Tokens::Symbol*> m_Symbols;
 
 		//
 		ScriptObjects<Variable> m_Variables;
@@ -253,32 +260,61 @@ namespace SCRambl
 		using Shared = std::shared_ptr<Build>;
 
 		Build(Engine&, BuildConfig::Shared);
+		~Build() {
+			for (auto ptr : m_Symbols) {
+				delete ptr;
+			}
+		}
 
 		Scripts::File::Shared AddInput(std::string);
-		std::shared_ptr<XMLConfiguration> AddConfig(const std::string& name);
+		XMLConfiguration* AddConfig(const std::string& name);
 		bool LoadXML(std::string path);
 		XMLValue GetEnvVar(std::string var) const { return m_Env.Get(var).Value; }
 
-		bool IsCommandArgParsed(Command::Shared, unsigned long arg_index) const;
+		bool IsCommandArgParsed(Command*, unsigned long arg_index) const;
 
+		// Script
 		inline Script& GetScript() { return m_Script; }
 		inline const Script& GetScript() const { return m_Script; }
+
+		// Commands
 		inline Commands& GetCommands() { return m_Commands; }
 		inline const Commands& GetCommands() const { return m_Commands; }
+
+		// Types
 		inline Types::Types& GetTypes() { return m_Types; }
 		inline const Types::Types& GetTypes() const { return m_Types; }
+
+		// Variables
 		inline ScriptObjects<Variable>& GetVariables() { return m_Variables; }
 		inline const ScriptObjects<Variable>& GetVariables() const { return m_Variables; }
+		inline const ScriptVariable::Scope& OpenVarScope() { return m_Variables.BeginLocal(); }
+		inline const ScriptVariable::Scope& CloseVarScope() { return m_Variables.EndLocal(); }
+		ScriptVariable* AddScriptVariable(std::string name, Types::Type* type, size_t array_size);
+		ScriptVariable* GetScriptVariable(std::string name);
 
-		inline bool OpenScope() { return m_Variables.BeginScope() != nullptr; }
-		inline void CloseScope() { m_Variables.EndScope(); }
-		ScriptVariable AddScriptVariable(std::string name, Types::Type::Shared type, size_t array_size);
-		ScriptVariable GetScriptVariable(std::string name);
-		ScriptLabel AddScriptLabel(std::string name) {
-			return m_Labels.Add(name, name);
+		// Labels
+		inline ScriptObjects<Scripts::Label>& GetLabels() { return m_Labels; }
+		inline const ScriptObjects<Scripts::Label>& GetLabels() const { return m_Labels; }
+		ScriptLabel* AddScriptLabel(Types::Type* type, std::string name) {
+			return m_Labels.Add(type, name);
 		}
-		ScriptLabel GetScriptLabel(std::string name) {
+		ScriptLabel* GetScriptLabel(std::string name) {
 			return m_Labels.Find(name);
+		}
+		ScriptLabel* GetScriptLabel(Scripts::Label* label) {
+			
+		}
+
+		template<typename TTokenType, typename... TArgs>
+		Scripts::Token* CreateToken(Scripts::Position pos, TArgs&&... args) {
+			return m_Script.GetTokens().Add<TTokenType>(pos, args...);
+		}
+		template<typename TSymbolType, typename... TArgs>
+		TSymbolType* CreateSymbol(TArgs&&... args) {
+			auto ptr = new TSymbolType(args...);
+			m_Symbols.emplace_back(ptr);
+			return ptr;
 		}
 
 		void DoParseActions(std::string val, const ParseObjectConfig::ActionVec& vec) {
@@ -358,17 +394,17 @@ namespace SCRambl
 		}
 
 		template<typename T>
-		inline T & GetCurrentTask()					{ return reinterpret_cast<T&>(*CurrentTask->second); }
-		inline int GetCurrentTaskID() const			{ return std::ref(m_CurrentTask->first); }
-		inline size_t GetNumTasks() const			{ return m_Tasks.size(); }
-		inline void ClearTasks()					{ m_Tasks.clear(); }
+		inline T & GetCurrentTask() { return reinterpret_cast<T&>(*CurrentTask->second); }
+		inline int GetCurrentTaskID() const { return std::ref(m_CurrentTask->first); }
+		inline size_t GetNumTasks() const { return m_Tasks.size(); }
+		inline void ClearTasks() { m_Tasks.clear(); }
 
 		const TaskSystem::Task<BuildEvent> & Run();
 
 	protected:
-		bool IsTaskFinished() override				{ return m_CurrentTask == std::end(m_Tasks); }
-		void ResetTask() override					{ Init(); }
-		void RunTask() override						{ Run(); }
+		bool IsTaskFinished() override { return m_CurrentTask == std::end(m_Tasks); }
+		void ResetTask() override { Init(); }
+		void RunTask() override { Run(); }
 	};
 
 	class Builder

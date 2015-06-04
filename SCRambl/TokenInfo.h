@@ -9,15 +9,14 @@
 
 namespace SCRambl
 {
+	namespace Types { class Type; }
+
 	class IToken
 	{
 		template<typename>
 		friend class TokenBase;
 
 	public:
-		using Shared = std::shared_ptr<IToken>;
-
-	protected:
 		IToken() = default;
 		virtual ~IToken() { }
 
@@ -25,7 +24,7 @@ namespace SCRambl
 		template<typename T>
 		inline T & Get() { return *static_cast<T*>(this); }
 		template<typename T>
-		inline const T & Get() const { return *static_cast<T*>(this); }
+		inline const T & Get() const { return *static_cast<const T*>(this); }
 		template<typename T>
 		inline T GetType() const { return static_cast<const TokenBase<T>*>(this)->GetType(); }
 	};

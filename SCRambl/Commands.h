@@ -19,30 +19,27 @@ namespace SCRambl
 
 	class CommandArg
 	{
-		Types::Type::Shared m_Type;
+		Types::Type* m_Type;
 		size_t m_Index;						// nth arg
 		bool m_IsReturn = false;
 
 	public:
 		using Type = Types::Type;
-		using Shared = std::shared_ptr<CommandArg>;
-		using CShared = std::shared_ptr<const CommandArg>;
 		using Vector = std::vector<CommandArg>;
 		using Iterator = Vector::iterator;
 
-		CommandArg(Types::Type::Shared type, size_t index, bool isRet = false) : m_Type(type), m_Index(index), m_IsReturn(isRet)
+		CommandArg(Type* type, size_t index, bool isRet = false) : m_Type(type), m_Index(index), m_IsReturn(isRet)
 		{ }
 
 		inline bool IsReturn() const { return m_IsReturn; }
 		inline size_t GetIndex() const { return m_Index; }
-		inline Types::Type::Shared GetType() const { return m_Type; }
+		inline Type* GetType() const { return m_Type; }
 	};
 
 	class Command
 	{
 	public:
 		typedef CommandArg Arg;
-		typedef std::shared_ptr<Command> Shared;
 		typedef std::vector<Arg> ArgVector;
 
 	private:
@@ -54,7 +51,7 @@ namespace SCRambl
 		Command(std::string name, size_t index) : m_Name(name), m_Index(index)
 		{ }
 
-		void AddArg(Arg::Type::Shared type, bool isRet = false) {
+		void AddArg(Arg::Type* type, bool isRet = false) {
 			m_Args.emplace_back(type, m_Args.size(), isRet);
 		}
 
@@ -77,8 +74,8 @@ namespace SCRambl
 			none, uppercase, lowercase
 		};
 
-		using Map = std::unordered_multimap<std::string, Command::Shared>;
-		using Vector = std::vector<Command::Shared>;
+		using Map = std::unordered_multimap<std::string, Command*>;
+		using Vector = std::vector<Command*>;
 
 	private:
 		std::shared_ptr<XMLConfiguration> m_Config;
@@ -86,6 +83,7 @@ namespace SCRambl
 		Casing m_SourceCasing = Casing::none;
 		Casing m_DestCasing = Casing::none;
 		Map	m_Map;
+		std::vector<Command> m_Commands;
 
 	public:
 		Commands();
@@ -101,7 +99,7 @@ namespace SCRambl
 			return Casing::none;
 		}
 
-		inline Command::Shared AddCommand(std::string name, size_t opcode) {
+		inline Command* AddCommand(std::string name, size_t opcode) {
 			if (name.empty()) return nullptr;
 
 			if (m_SourceCasing != m_DestCasing) {
@@ -109,9 +107,10 @@ namespace SCRambl
 					std::transform(name.begin(), name.end(), name.begin(), m_DestCasing == Casing::lowercase ? std::tolower : std::toupper);
 			}
 
-			auto command = std::make_shared<Command>(name, opcode);
-			m_Map.emplace(name, command);
-			return command;
+			m_Commands.emplace_back(name, opcode);
+			auto ptr = &m_Commands.back();
+			m_Map.emplace(name, ptr);
+			return ptr;
 		}
 
 		// Passes each command handle matching the name to the supplied function
@@ -136,8 +135,8 @@ namespace SCRambl
 		
 		// Finds all commands matching the name and stores them in a passed vector of command handles
 		// Returns the number of commands found
-		inline long FindCommands(std::string name, Vector & vec) {
-			return ForCommandsNamed(name, [&vec](Command::Shared ptr){ vec.push_back(ptr); });
+		inline long FindCommands(std::string name, Vector& vec) {
+			return ForCommandsNamed(name, [&vec](Command* ptr){ vec.push_back(ptr); });
 		}
 	};
 }

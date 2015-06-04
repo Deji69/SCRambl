@@ -10,6 +10,7 @@
 #include "Numbers.h"
 #include "Labels.h"
 #include "Symbols.h"
+#include "ScriptObjects.h"
 
 namespace SCRambl
 {
@@ -26,8 +27,6 @@ namespace SCRambl
 		class ValueToken : public Symbol
 		{
 		public:
-			using Shared = std::shared_ptr < ValueToken >;
-
 			ValueToken(Tokens::Type tokentype, TValueType valuetype) : Symbol(tokentype), m_ValueType(valuetype)
 			{ }
 			inline virtual ~ValueToken()
@@ -46,7 +45,7 @@ namespace SCRambl
 		class None {
 		public:
 			static const enum Parameter { };
-			using Info = TokenInfo < Type >;
+			using Info = TokenInfo<Type>;
 		};
 		class Directive {
 		public:
@@ -71,11 +70,11 @@ namespace SCRambl
 			template<typename TLabelType>
 			class Jump : public Symbol
 			{
-				Shared<TLabelType>				m_Label;
-				size_t							m_Offset;
+				TLabelType* m_Label;
+				size_t m_Offset;
 
 			public:
-				Jump(std::shared_ptr<const Info> info, size_t off = 0) : Symbol(Type::CommandCall),
+				Jump(const Info* info, size_t off = 0) : Symbol(Type::CommandCall),
 					m_Label(info->GetValue<LabelValue>()),
 					m_Offset(off)
 				{ }
@@ -111,12 +110,12 @@ namespace SCRambl
 			template<typename TValueType>
 			class Value : public ValueToken<TValueType>
 			{
-				Numbers::Type			m_Type;
-				Numbers::IntegerType	m_IntegerValue;
-				Numbers::FloatType		m_FloatValue;
+				Numbers::Type m_Type;
+				Numbers::IntegerType m_IntegerValue;
+				Numbers::FloatType m_FloatValue;
 
 			public:
-				using Shared = std::shared_ptr<ValueToken>;
+				//using Shared = std::shared_ptr<ValueToken>;
 
 				Value(TValueType valtype, Numbers::Type num_type) : ValueToken(Type::Number, valtype),
 					m_Type(num_type)
@@ -151,9 +150,9 @@ namespace SCRambl
 		public:
 			static const enum Parameter { ScriptRange, CommandType };
 			template<typename TCommandType>
-			using Info = TokenInfo < Type, Scripts::Range, Shared<TCommandType> >;
-			template<typename TCommandType, typename TCont = std::vector<Shared<TCommandType>>>
-			using OverloadInfo = TokenInfo < Type, Scripts::Range, TCont > ;
+			using Info = TokenInfo<Type, Scripts::Range, TCommandType*>;
+			template<typename TCommandType, typename TCont = std::vector<TCommandType*>>
+			using OverloadInfo = TokenInfo<Type, Scripts::Range, TCont>;
 
 			/*\
 			 * Tokens::Command:Decl - Carries symbolic data for a command declaration
@@ -161,15 +160,15 @@ namespace SCRambl
 			template<typename TCommandType>
 			class Decl : public Symbol {
 				size_t m_ID;
-				Shared<const TCommandType> m_Command;
+				const TCommandType* m_Command;
 
 			public:
-				Decl(size_t id, Shared<const TCommandType> ptr) : Symbol(Type::CommandDecl),
+				Decl(size_t id, const TCommandType* ptr) : Symbol(Type::CommandDecl),
 					m_ID(id), m_Command(ptr)
 				{ }
 
-				inline size_t GetID() const									{ return m_ID; }
-				inline Shared<const TCommandType>& GetCommand()	const		{ return m_Command; }
+				inline size_t GetID() const { return m_ID; }
+				inline const TCommandType* GetCommand()	const { return m_Command; }
 			};
 
 			/*\
@@ -178,9 +177,9 @@ namespace SCRambl
 			template<typename TCommandType>
 			class Call : public Symbol
 			{
-				Shared<const TCommandType> m_Command;
+				const TCommandType* m_Command;
 				size_t m_NumArgs;
-				std::vector<Shared<Symbol>> m_Args;
+				std::vector<Symbol*> m_Args;
 
 			public:
 				Call(const Info<TCommandType>& info, size_t num_args) : Symbol(Type::CommandCall),
@@ -190,16 +189,16 @@ namespace SCRambl
 					//Command::
 				}
 
-				inline Shared<const TCommandType> GetCommand() const	{ return m_Command; }
+				inline const TCommandType* GetCommand() const	{ return m_Command; }
 				inline size_t GetNumArgs() const						{ return m_NumArgs; }
 
-				inline void AddArg(Shared<Symbol> symbol) { m_Args.emplace_back(symbol); }
+				inline void AddArg(Symbol* symbol) { m_Args.emplace_back(symbol); }
 			};
 		};
 		class String {
 		public:
 			static const enum Parameter { ScriptRange, StringValue };
-			using Info = TokenInfo < Type, Scripts::Range, std::string >;
+			using Info = TokenInfo<Type, Scripts::Range, std::string>;
 
 			template<typename TValueType>
 			class Value : public ValueToken<TValueType>
@@ -220,7 +219,7 @@ namespace SCRambl
 		public:
 			static const enum Parameter { ScriptPosition, ScriptRange, DelimiterType };
 			template<typename TDelimiterType>
-			using Info = TokenInfo < Type, Scripts::Position, Scripts::Range, TDelimiterType >;
+			using Info = TokenInfo<Type, Scripts::Position, Scripts::Range, TDelimiterType>;
 		};
 		class Character {
 		public:
@@ -229,12 +228,12 @@ namespace SCRambl
 			using Info = TokenInfo<Type, Scripts::Position, TCharType>;
 		};
 
-		template<typename TTokenType, typename... TArgs>
-		static Shared<TTokenType> CreateToken(TArgs&&... args) {
+		/*template<typename TTokenType, typename... TArgs>
+		static TTokenType* CreateToken(TArgs&&... args) {
 			return std::make_shared<TTokenType>(args...);
-		}
+		}*/
 		template<typename T>
-		static T& GetToken(IToken::Shared token) {
+		static T& GetToken(IToken* token) {
 			return token->Get<T>();
 		}
 	}

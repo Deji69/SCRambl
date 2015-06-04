@@ -12,12 +12,12 @@ namespace SCRambl
 {
 	namespace Parser
 	{
-		Parser::Parser(Task& task, Engine& engine, Build::Shared build) :
+		Parser::Parser(Task& task, Engine& engine, Build& build) :
 			m_Task(task), m_Engine(engine), m_Build(build), m_State(init),
-			m_Tokens(build->GetScript().GetTokens()),
-			//m_Labels(build->GetScript().GetLabels()),
-			m_Commands(build->GetCommands()),
-			m_Types(build->GetTypes())
+			m_Tokens(build.GetScript().GetTokens()),
+			//m_Labels(build.GetScript().GetLabels()),
+			m_Commands(build.GetCommands()),
+			m_Types(build.GetTypes())
 		{ }
 		void Parser::Init() {
 			m_TokenIt = m_Tokens.Begin();
@@ -28,7 +28,7 @@ namespace SCRambl
 			m_OnNewLine = true;
 		}
 		void Parser::Finish() {
-			m_Build->ParseCommands(m_CommandTokenMap);
+			m_Build.ParseCommands(m_CommandTokenMap);
 		}
 		void Parser::Run() {
 			switch (m_State) {
@@ -57,7 +57,8 @@ namespace SCRambl
 				// replace overload token with single command token
 				auto& token = m_CommandTokenIt->GetToken()->Get<Tokens::Identifier::Info<>>();
 				auto range = token.GetValue<Tokens::Identifier::ScriptRange>();
-				m_CommandTokenIt->SetToken(Scripts::Tokens::MakeShared<CommandInfo>(range.Begin(), Tokens::Type::Command, range, m_CurrentCommand)->GetToken());
+				// TODO: fix this weirdness
+				m_CommandTokenIt->SetToken(m_Build.CreateToken<CommandInfo>(range.Begin(), Tokens::Type::Command, range, m_CurrentCommand)->GetToken());
 				
 				m_State = parsing;
 				return;
@@ -107,7 +108,7 @@ namespace SCRambl
 			}
 		}
 		
-		States Parser::Parse_Neutral_CheckIdentifier(IToken::Shared tok) {
+		States Parser::Parse_Neutral_CheckIdentifier(IToken* tok) {
 			Commands::Vector vec;
 			auto& token = tok->Get<Tokens::Identifier::Info<>>();
 			auto range = token.GetValue<Tokens::Identifier::ScriptRange>();
@@ -118,13 +119,13 @@ namespace SCRambl
 				return state_parsing_type;
 			}
 
-			else if (auto ptr = m_Build->GetScriptLabel(name)) {
+			else if (auto ptr = m_Build.GetScriptLabel(name)) {
 				// this is a label pointer!
 				m_Jumps.emplace_back(ptr, m_TokenIt);
 
-				auto tok = Tokens::CreateToken<Tokens::Label::Info>(Tokens::Type::LabelRef, range, ptr);
+				auto tok = CreateToken<Tokens::Label::Info>(Tokens::Type::LabelRef, range, ptr);
 				m_TokenIt.Get()->SetToken(tok);
-				m_TokenIt.Get()->GetSymbol() = Tokens::CreateToken<Tokens::Label::Jump<Scripts::Label>>(tok);
+				m_TokenIt.Get()->GetSymbol() = CreateSymbol<Tokens::Label::Jump<Scripts::Label>>(tok);
 
 				AddLabelRef(ptr, m_TokenIt);
 				return state_parsing_label;
@@ -132,9 +133,9 @@ namespace SCRambl
 			else if (m_Commands.FindCommands(name, vec) > 0) {
 				// make a token and store it
 				if (vec.size() == 1)
-					m_TokenIt.Get()->SetToken(Tokens::CreateToken<Tokens::Command::Info<Command>>(Tokens::Type::Command, range, vec[0]));
+					m_TokenIt.Get()->SetToken(CreateToken<Tokens::Command::Info<Command>>(Tokens::Type::Command, range, vec[0]));
 				else
-					m_TokenIt.Get()->SetToken(Tokens::CreateToken<Tokens::Command::OverloadInfo<Command>>(Tokens::Type::CommandOverload, range, vec));
+					m_TokenIt.Get()->SetToken(CreateToken<Tokens::Command::OverloadInfo<Command>>(Tokens::Type::CommandOverload, range, vec));
 
 				if (ParseCommandOverloads(vec)) {
 					BeginCommandParsing();
@@ -143,7 +144,7 @@ namespace SCRambl
 				else BREAK();
 				return state_parsing_command;
 			}
-			else if (auto m_Variable = m_Build->GetScriptVariable(name)) {
+			else if (auto m_Variable = m_Build.GetScriptVariable(name)) {
 				return state_parsing_variable;
 			}
 			else if (IsCommandParsing()/* && m_CommandArgIt->GetType().IsCompatible()*/) {
@@ -154,14 +155,14 @@ namespace SCRambl
 			}
 			return state_neutral;
 		}
-		States Parser::Parse_Neutral_CheckDelimiter(IToken::Shared tok) {
+		States Parser::Parse_Neutral_CheckDelimiter(IToken* tok) {
 			if (IsScopeDelimiterClosing(tok)) {
-				if (!m_Build->OpenScope())
-					BREAK();
+				m_Build.OpenVarScope();
 			}
 			else if (IsScopeDelimiter(tok)) {
-				m_Build->CloseScope();
+				m_Build.CloseVarScope();
 			}
+			else BREAK();
 		}
 		States Parser::Parse_Neutral() {
 			States new_state = state_neutral;
@@ -209,7 +210,7 @@ namespace SCRambl
 				size_t array_size = 0;
 				GetDelimitedArrayIntegerConstant(array_size);
 
-				auto var = m_Build->AddScriptVariable(name, m_TypeParseState.type, array_size);
+				auto var = m_Build.AddScriptVariable(name, m_TypeParseState.type, array_size);
 				if (!var) {
 					//SendError();
 					BREAK();
@@ -224,7 +225,7 @@ namespace SCRambl
 		States Parser::Parse_Command_Args() {
 			/*if (IsCommandParsing() && !AreCommandArgsParsed()) {
 				if (m_CommandArgIt->IsReturn()) {
-					auto& vars = m_Build->GetScript().GetLScript()->GetVariables();
+					auto& vars = m_Build.GetScript().GetLScript()->GetVariables();
 					if (auto var = vars.Find(name)) {
 						// TODO: something
 					}
@@ -262,7 +263,7 @@ namespace SCRambl
 			return;
 
 
-			auto& types = m_Build->GetTypes();
+			auto& types = m_Build.GetTypes();
 			auto ptr = *m_TokenIt;
 			auto type = ptr->GetToken()->GetType<Tokens::Type>();
 			bool newline = false;
@@ -284,6 +285,8 @@ namespace SCRambl
 				}
 
 				val_type = Types::ValueSet::Label;
+				
+				m_Build.GetLabels();
 				AddLabel(label, m_TokenIt);
 				m_LabelTokens.emplace_back(m_TokenIt);
 				//m_UnusedLabels
@@ -297,24 +300,24 @@ namespace SCRambl
 
 				if (IsCommandParsing() && !AreCommandArgsParsed()) {
 					if (m_CommandArgIt->IsReturn()) {
-						auto& vars = m_Build->GetScript().GetLScript()->GetVariables();
-						if (auto var = vars.Find(name)) {
+						//auto& vars = m_Build.GetScript().GetLScript()->GetVariables();
+						//if (auto var = vars.Find(name)) {
 							// TODO: something
-						}
+						//}
 						//else BREAK();
 					}
 					else {
 						auto type = m_CommandArgIt->GetType();
 						auto val_vec = type->GetValueTypes<>(Types::ValueSet::Text);
 						if (val_vec.size()) {
-							Types::Value::Shared val;
+							Types::Value* val;
 							for (auto v : val_vec) {
-								auto stringval = std::static_pointer_cast<Types::TextValue>(v);
+								auto stringval = static_cast<Types::TextValue*>(v);
 								auto translation = stringval->GetTranslation();
 								ASSERT(translation);
 							}
 
-							auto symbol = Tokens::CreateToken<Tokens::String::Value<Types::Value::Shared>>(val, name);
+							auto symbol = CreateToken<Tokens::String::Value<Types::Value*>>(val, name);
 							m_TokenIt->GetSymbol() = symbol;
 
 							val_type = Types::ValueSet::Text;
@@ -324,7 +327,7 @@ namespace SCRambl
 				}
 
 				if (auto type = GetType(name)) {
-					/*auto& vars = m_Build->GetScript().GetLScript()->GetVariables();
+					/*auto& vars = m_Build.GetScript().GetLScript()->GetVariables();
 					if (++m_TokenIt != m_Tokens.End()) {
 						auto& token = m_TokenIt->GetToken()->Get<Tokens::Identifier::Info<>>();
 						auto name = token.GetValue<0>().Format();
@@ -333,22 +336,22 @@ namespace SCRambl
 					}
 					else BREAK();*/
 				}
-				else if (auto ptr = m_Labels.Find(name)) {
+				else if (auto ptr = m_Build.GetScriptLabel(name)) {
 					// this is a label pointer!
-					m_Jumps.emplace_back(ptr, m_TokenIt);
+					m_Jumps.emplace_back(ptr->Ptr(), m_TokenIt);
 
-					auto tok = Tokens::CreateToken<Tokens::Label::Info>(Tokens::Type::LabelRef, range, ptr);
+					auto tok = CreateToken<Tokens::Label::Info>(Tokens::Type::LabelRef, range, ptr);
 					m_TokenIt.Get()->SetToken(tok);
-					m_TokenIt.Get()->GetSymbol() = Tokens::CreateToken<Tokens::Label::Jump<Scripts::Label>>(tok);
+					m_TokenIt.Get()->GetSymbol() = CreateSymbol<Tokens::Label::Jump<ScriptLabel>>(tok);
 
 					AddLabelRef(ptr, m_TokenIt);
 				}
 				else if (m_Commands.FindCommands(name, vec) > 0) {
 					// make a token and store it
 					if (vec.size() == 1)
-						m_TokenIt.Get()->SetToken(Tokens::CreateToken<Tokens::Command::Info<Command>>(Tokens::Type::Command, range, vec[0]));
+						m_TokenIt.Get()->SetToken(CreateToken<Tokens::Command::Info<Command>>(Tokens::Type::Command, range, vec[0]));
 					else
-						m_TokenIt.Get()->SetToken(Tokens::CreateToken<Tokens::Command::OverloadInfo<Command>>(Tokens::Type::CommandOverload, range, vec));
+						m_TokenIt.Get()->SetToken(CreateToken<Tokens::Command::OverloadInfo<Command>>(Tokens::Type::CommandOverload, range, vec));
 						//m_TokenIt.Get().SetToken(ScriptsTokens::MakeShared < Tokens::Command::OverloadInfo<Command> >(range.Begin(), Tokens::Type::CommandOverload, range, vec));
 
 					if (ParseCommandOverloads(vec)) {
@@ -399,23 +402,23 @@ namespace SCRambl
 				}
 				
 				// 
-				Types::Value::Shared best_value_match;
+				Types::Value* best_value_match;
 				size_t smallest_fitting_value_size = 0;
 
 				// Contain compatible Value's
-				std::vector<Types::Value::Shared> vec;
+				std::vector<Types::Value*> vec;
 				// Number of compatible Value's
 				size_t n;
 				if (IsCommandParsing() && !AreCommandArgsParsed()) {
-					auto& type = m_CommandArgIt->GetType();
-					n = types.GetValues(Types::ValueSet::Number, size, vec, [&best_value_match, &smallest_fitting_value_size, is_int, &vec](Types::Value::Shared value){
+					auto type = m_CommandArgIt->GetType();
+					n = types.GetValues(Types::ValueSet::Number, size, vec, [&best_value_match, &smallest_fitting_value_size, is_int, &vec](Types::Value* value){
 						// Keep this value?
 						auto& num_value = value->Extend<Types::NumberValue>();
 						if (num_value.GetNumberType() != (is_int ? Types::NumberValueType::Integer : Types::NumberValueType::Float))
 							return false;
 
 						// Oh, is this the only one we need?
-						auto &ntype = value->GetType();
+						auto ntype = value->GetType();
 						if (!best_value_match || smallest_fitting_value_size > value->GetSize()) {
 							best_value_match = value;
 							smallest_fitting_value_size = value->GetSize();
@@ -431,7 +434,7 @@ namespace SCRambl
 				else
 				{
 					// TODO: figure out what to keep
-					n = types.GetValues(Types::ValueSet::Number, size, vec, [this, is_int, &vec](Types::Value::Shared value){
+					n = types.GetValues(Types::ValueSet::Number, size, vec, [this, is_int, &vec](Types::Value* value){
 						// Keep this value?
 						auto& num_value = value->Extend<Types::NumberValue>();
 						if (num_value.GetNumberType() != (is_int ? Types::NumberValueType::Integer : Types::NumberValueType::Float))
@@ -448,10 +451,10 @@ namespace SCRambl
 				// Do we have a chosen Value?
 				if (best_value_match) {
 					// Now create a token for the value itself
-					auto number_val = std::static_pointer_cast<Types::NumberValue>(best_value_match);
+					auto number_val = static_cast<Types::NumberValue*>(best_value_match);
 					auto val_token = is_int
-						? Tokens::CreateToken<Tokens::Number::Value<Types::NumberValue::Shared>>(number_val, ptr->GetToken()->Get<Tokens::Number::Info<Numbers::IntegerType>>())
-						: Tokens::CreateToken<Tokens::Number::Value<Types::NumberValue::Shared>>(number_val, ptr->GetToken()->Get<Tokens::Number::Info<Numbers::FloatType>>());
+						? CreateToken<Tokens::Number::Value<Types::NumberValue*>>(number_val, ptr->GetToken<Tokens::Number::Info<Numbers::IntegerType>>())
+						: CreateToken<Tokens::Number::Value<Types::NumberValue*>>(number_val, ptr->GetToken<Tokens::Number::Info<Numbers::FloatType>>());
 
 					// Store it back in the script token
 					m_TokenIt.Get()->GetSymbol() = val_token;

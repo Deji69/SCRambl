@@ -29,18 +29,17 @@ namespace SCRambl
 		class Symbol
 		{
 		public:
+			Symbol(Type type) : m_Type(type)
+			{ }
+			inline virtual ~Symbol()
+			{ }
+
 			inline Type GetType() const		{ return m_Type; }
 
 			template<typename  T>
 			inline T& Extend()				{ return static_cast<T&>(*this); }
 			template<typename  T>
 			inline const T& Extend() const	{ return static_cast<T&>(*this); }
-
-		protected:
-			Symbol(Type type) : m_Type(type)
-			{ }
-			inline virtual ~Symbol()
-			{ }
 
 		private:
 			Type				m_Type;

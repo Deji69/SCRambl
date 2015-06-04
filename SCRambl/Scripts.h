@@ -73,42 +73,46 @@ namespace SCRambl
 		\*/
 		class Token
 		{
-			Position						m_Position;
-			IToken::Shared					m_Token = nullptr;
-			std::shared_ptr<TokenSymbol>	m_Symbol = nullptr;
+			Position m_Position;
+			IToken*	m_Token = nullptr;
+			TokenSymbol* m_Symbol = nullptr;
 
 		public:
-			typedef std::shared_ptr<Token> Shared;
-
-			Token(Position pos, IToken::Shared tok) :
+			Token(Position pos, IToken* tok) :
 				m_Position(pos),
 				m_Token(tok)
 			{ }
-			Token(Token::Shared shared) : Token(*shared)
+			Token(const Token* ptr) : Token(*ptr)
 			{ }
-			Token(std::shared_ptr<TokenSymbol> symb) : m_Symbol(symb)
+			Token(TokenSymbol* symb) : m_Symbol(symb)
 			{ }
+			~Token() {
+				if (m_Token) delete m_Token;
+			}
 
-			inline Position & GetPosition()					{ return m_Position; }
-			inline const Position & GetPosition() const		{ return GetPosition(); }
+			inline Position& GetPosition()					{ return m_Position; }
+			inline const Position& GetPosition() const		{ return GetPosition(); }
 			
 			template<typename T>
-			inline std::shared_ptr<T> GetToken()							{ return std::static_pointer_cast<T>(m_Token); }
+			inline T* GetToken() { return static_cast<T*>(m_Token); }
 			template<typename T>
-			inline std::shared_ptr<const T> GetToken() const				{ return std::static_pointer_cast<T>(m_Token); }
+			inline const T* GetToken() const { return static_cast<T*>(m_Token); }
 
 			template<typename T>
-			inline void SetToken(const T& tok)								{ m_Token = /*std::static_pointer_cast<IToken>(tok)*/ tok; }
+			inline void SetToken(T tok) {
+				if (m_Token) delete m_Token;
+				m_Token = tok;
+			}
 			
-			inline IToken::Shared GetToken()								{ return m_Token; }
-			inline const IToken::Shared GetToken() const					{ return GetToken(); }
-			inline std::shared_ptr<TokenSymbol>& GetSymbol()				{ return m_Symbol; }
-			inline const std::shared_ptr<TokenSymbol>& GetSymbol() const	{ return GetSymbol(); }
+			inline IToken* GetToken() { return m_Token; }
+			inline const IToken* GetToken() const { return GetToken(); }
+			inline TokenSymbol*& GetSymbol() { return m_Symbol; }
+			inline const TokenSymbol*& GetSymbol() const { return GetSymbol(); }
 
-			inline operator IToken::Shared()							{ return GetToken(); }
-			inline operator const IToken::Shared() const				{ return GetToken(); }
-			inline operator std::shared_ptr<TokenSymbol>&()				{ return GetSymbol(); }
-			inline operator const std::shared_ptr<TokenSymbol>&() const	{ return GetSymbol(); }
+			inline operator IToken*() { return GetToken(); }
+			inline operator const IToken*() const { return GetToken(); }
+			inline operator TokenSymbol*&()	{ return GetSymbol(); }
+			inline operator const TokenSymbol*&() const	{ return GetSymbol(); }
 		};
 
 		/*\
@@ -117,10 +121,10 @@ namespace SCRambl
 		class Tokens
 		{
 		public:
-			typedef std::vector<Token::Shared> Vector;
+			typedef std::vector<Token> Vector;
 
 		private:
-			Vector			m_Tokens;
+			Vector m_Tokens;
 
 		public:
 			/*\
@@ -128,38 +132,35 @@ namespace SCRambl
 			\*/
 			class Iterator
 			{
-				Vector::iterator		m_It;
-				size_t					m_Index = 0;
+				Vector::iterator m_It;
+				size_t m_Index = 0;
 
 			public:
-				//using Vector = std::vector < Iterator > ;
-				using CVector = std::vector < Iterator >;
+				//using Vector = std::vector<Iterator>;
+				using CVector = std::vector<Iterator>;
 
 				Iterator() = default;
-				Iterator(Vector & cont) : m_It(cont.begin()), m_Index(0)
+				Iterator(Vector& cont) : m_It(cont.begin()), m_Index(0)
 				{ }
-				Iterator(Vector::iterator it, const Vector & cont) : m_It(it), m_Index(it - cont.begin())
+				Iterator(Vector::iterator it, const Vector& cont) : m_It(it), m_Index(it - cont.begin())
 				{ }
 
-				inline Token::Shared Get() const {
-					return *m_It;
+				inline Token* Get() const {
+					return &*m_It;
 				}
 				inline size_t GetIndex() const {
 					return m_Index;
 				}
 
 				// Access
-				inline Token::Shared operator*() {
+				inline Token* operator*() const {
 					return Get();
 				}
-				inline const Token::Shared operator*() const {
+				inline Token* operator->() const {
 					return Get();
 				}
-				inline const Token::Shared operator->() const {
-					return **this;
-				}
-				inline Token::Shared operator[](size_t n) const {
-					return m_It[n];
+				inline Token* operator[](size_t n) const {
+					return &m_It[n];
 				}
 
 				// Manipulation
@@ -236,44 +237,43 @@ namespace SCRambl
 
 			// Insert
 			template<typename TToken, typename... TArgs>
-			inline Token::Shared Add(Position pos, TArgs... args)		{
-				auto ptr = std::make_shared<Token>(pos, std::make_shared<TToken>(std::forward<TArgs>(args)...));
-				m_Tokens.emplace_back(ptr);
-				return ptr;
+			inline Token* Add(Position pos, TArgs... args) {
+				m_Tokens.emplace_back(pos, new TToken(std::forward<TArgs>(args)...));
+				return &m_Tokens.back();
 			}
 
 			/* Navigation */
 
 			// Begin
-			inline Iterator Begin()					{ return{ m_Tokens.begin(), m_Tokens }; }
+			inline Iterator Begin() { return{ m_Tokens.begin(), m_Tokens }; }
 			// End
-			inline Iterator End()					{ return{ m_Tokens.end(), m_Tokens }; }
+			inline Iterator End() { return{ m_Tokens.end(), m_Tokens }; }
 
 			// STL hates my style
-			inline Iterator begin()					{ return Begin(); }
-			inline Iterator end()					{ return End(); }
+			inline Iterator begin() { return Begin(); }
+			inline Iterator end() { return End(); }
 
 			/* Access */
-			inline const Token::Shared Front() const	{ return m_Tokens.front(); }
-			inline Token::Shared Front()				{ return m_Tokens.front(); }
-			inline const Token::Shared Back() const		{ return m_Tokens.back(); }
-			inline Token::Shared Back()					{ return m_Tokens.back(); }
+			inline const Token* Front() const { return &m_Tokens.front(); }
+			inline const Token* Back() const { return &m_Tokens.back(); }
+			inline Token* Front() { return &m_Tokens.front(); }
+			inline Token* Back() { return &m_Tokens.back(); }
 
 			/* Info */
-			inline size_t Size() const				{ return m_Tokens.size(); }
-			inline bool Empty() const				{ return m_Tokens.empty(); }
+			inline size_t Size() const { return m_Tokens.size(); }
+			inline bool Empty() const { return m_Tokens.empty(); }
 
 			//
-			template<typename TToken, typename... TArgs>
-			static inline Token::Shared MakeShared(Position pos, TArgs... args) {
+			/*template<typename TToken, typename... TArgs>
+			static inline std::shared_ptr<Token> MakeShared(Position pos, TArgs... args) {
 				return std::make_shared<Token>(pos, std::make_shared<TToken>(std::forward<TArgs>(args)...));
-			}
+			}*/
 		};
 		class TokenLine
 		{
 		private:
-			typedef std::vector<Token::Shared> Line;
-			Line		m_Line;
+			typedef std::vector<Token*> Line;
+			Line m_Line;
 
 		public:
 			using Iter = Line::iterator;
@@ -282,11 +282,10 @@ namespace SCRambl
 			using CRevIter = Line::const_reverse_iterator;
 			using Ref = Line::reference;
 			using CRef = Line::reference;
-			using Shared = std::shared_ptr < TokenLine > ;
 
 			TokenLine() = default;
 
-			void AddToken(Token::Shared tok) {
+			void AddToken(Token* tok) {
 				auto dest_it = m_Line.end();
 				auto dest_col = -1;
 				for (auto it = m_Line.begin(); it != m_Line.end(); ++it) {
@@ -309,8 +308,8 @@ namespace SCRambl
 				}
 				else m_Line.emplace_back(tok);
 			}
-			Token::Shared GetToken(int col) {
-				Token::Shared r;
+			Token* GetToken(int col) {
+				Token* r;
 				for (auto ptr : m_Line) {
 					if (ptr->GetPosition().GetColumn() >= col)
 						return r;
@@ -319,17 +318,16 @@ namespace SCRambl
 				return r;
 			}
 
-			inline Iter begin()						{ return m_Line.begin(); }
-			inline Iter end()						{ return m_Line.end(); }
-			inline CIter cbegin()					{ return m_Line.cbegin(); }
-			inline CIter cend()						{ return m_Line.cend(); }
+			inline Iter begin() { return m_Line.begin(); }
+			inline Iter end() { return m_Line.end(); }
+			inline CIter cbegin() { return m_Line.cbegin(); }
+			inline CIter cend() { return m_Line.cend(); }
 		};
 		class TokenMap
 		{
-			
-			typedef std::map<int, TokenLine::Shared> TokenList;
+			typedef std::map<long long, TokenLine> TokenList;
 
-			TokenList			m_Map;
+			TokenList m_Map;
 
 		public:
 			using Iter = TokenList::iterator;
@@ -339,12 +337,11 @@ namespace SCRambl
 			using Ref = TokenList::reference;
 			using CRef = TokenList::reference;
 			using RefType = TokenList::referent_type;
-			using Shared = std::shared_ptr < TokenMap > ;
 
 			TokenMap() = default;
 
-			TokenLine::Shared AddLine(int);
-			TokenLine::Shared GetLine(int);
+			TokenLine* AddLine(long long);
+			TokenLine* GetLine(long long);
 		};
 
 		using Labels = Scope<Label>;
@@ -398,7 +395,7 @@ namespace SCRambl
 		[in] include file path */
 		Scripts::Position Include(Scripts::Position &, const std::string &);
 
-		Scripts::TokenMap::Shared GenerateTokenMap();
+		Scripts::TokenMap GenerateTokenMap();
 
 		// Get number of (additional) local scripts
 		//size_t NumLScripts() const { return m_LScripts.size(); }

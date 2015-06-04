@@ -306,7 +306,7 @@ namespace SCRambl
 			std::string	m_Identifier;				// last scanned identifier
 			MacroMap m_Macros;
 			
-			std::stack<Scripts::Token::Shared> m_Delimiters;
+			std::stack<Scripts::Token*> m_Delimiters;
 
 		public:
 			enum State {
@@ -320,7 +320,7 @@ namespace SCRambl
 				max_state = bad_state,
 			};
 
-			Preprocessor(Task&, Engine&, Build::Shared);
+			Preprocessor(Task&, Engine&, Build&);
 
 			inline bool IsRunning() const			{ return m_State != finished; }
 			inline bool IsFinished() const			{ return m_State == finished; }
@@ -332,7 +332,7 @@ namespace SCRambl
 
 		private:
 			State m_State = init;
-			Build::Shared m_Build;
+			Build& m_Build;
 			Scripts::Tokens& m_Tokens;
 			Scripts::Position m_CodePos;
 			Types::Types& m_Types;
@@ -377,7 +377,7 @@ namespace SCRambl
 
 			// Add
 			bool OpenDelimiter(Scripts::Position pos, Delimiter type) {
-				auto token = AddToken<Tokens::Delimiter::Info<Delimiter>>(pos, Tokens::Type::Delimiter, pos, Scripts::Range(pos, pos), type);
+				auto token = m_Build.CreateToken<Tokens::Delimiter::Info<Delimiter>>(pos, Tokens::Type::Delimiter, pos, Scripts::Range(pos, pos), type);
 				if (token) {
 					m_Delimiters.push(token);
 					return true;
@@ -386,13 +386,14 @@ namespace SCRambl
 			}
 			//
 			bool CloseDelimiter(Scripts::Position pos, Delimiter type) {
-				auto& token = m_Delimiters.top()->GetToken<Tokens::Delimiter::Info<Delimiter>>();
+				auto& token = m_Delimiters.top();
+				auto tok = token->GetToken<Tokens::Delimiter::Info<Delimiter>>();
 				// ensure the delimiters are for the same purpose, otherwise there's error
-				if (token->GetValue<Tokens::Delimiter::DelimiterType>() == type) {
+				if (tok->GetValue<Tokens::Delimiter::DelimiterType>() == type) {
 					// replace the token with an updated Scripts::Range
-					token = Tokens::CreateToken<Tokens::Delimiter::Info<Delimiter>>(Tokens::Type::Delimiter, pos, Scripts::Range(token->GetValue<Tokens::Delimiter::ScriptRange>().Begin(), pos), type);
+					token = m_Build.CreateToken<Tokens::Delimiter::Info<Delimiter>>(pos, Tokens::Type::Delimiter, pos, Scripts::Range(tok->GetValue<Tokens::Delimiter::ScriptRange>().Begin(), pos), type);
 					// mark the closing position
-					AddToken<Tokens::Delimiter::Info<Delimiter>>(pos, Tokens::Type::Delimiter, pos, Scripts::Range(token->GetValue<Tokens::Delimiter::ScriptRange>().Begin(), pos), type);
+					AddToken<Tokens::Delimiter::Info<Delimiter>>(pos, Tokens::Type::Delimiter, pos, Scripts::Range(tok->GetValue<Tokens::Delimiter::ScriptRange>().Begin(), pos), type);
 					m_Delimiters.pop();
 					return true;
 				}
@@ -411,9 +412,9 @@ namespace SCRambl
 			// Strips comments
 			void HandleComment();
 
-			inline Types::Type::Shared GetType(const std::string& name) {
+			inline Types::Type* GetType(const std::string& name) {
 				auto ptr = m_Types.GetType(name);
-				return ptr ? ptr : m_Build->GetTypes().GetType(name);
+				return ptr ? ptr : m_Build.GetTypes().GetType(name);
 			}
 
 			// Lex main code
@@ -443,7 +444,7 @@ namespace SCRambl
 
 			// Add a preprocessing token
 			template<typename T, typename... TArgs>
-			inline Scripts::Token::Shared AddToken(Scripts::Position pos, Tokens::Type token, TArgs&&... args)
+			inline Scripts::Token* AddToken(Scripts::Position pos, Tokens::Type token, TArgs&&... args)
 			{
 				m_WasLastTokenEOL = false;
 				return m_Tokens.Add<T>(pos, token, std::forward<TArgs&&>(args)...);
@@ -516,8 +517,8 @@ namespace SCRambl
 			inline bool operator()(Event id, Args&&... args) { return CallEventHandler(id, std::forward<Args>(args)...); }
 
 		public:
-			Task(Engine& engine, Build::Shared build):
-				Preprocessor(*this, engine, build),
+			Task(Engine& engine, Build* build):
+				Preprocessor(*this, engine, *build),
 				m_Engine(engine), m_Info(GetInfo())
 			{ }
 

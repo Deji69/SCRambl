@@ -8,31 +8,27 @@
 #include <string>
 #include <vector>
 #include "Scripts-code.h"
+#include "Types.h"
 
 namespace SCRambl
 {
 	namespace Scripts
 	{
 		/*\ Scripts::Label - Labels in scripts \*/
-		class Label
-		{
-			std::string				m_Name;
-			uint32_t				m_Offset = 0;
+		class Label {
+			std::string m_Name;
+			Types::Type* m_Type;
+			uint32_t m_Offset = 0;
 
 		public:
-			using Shared = std::shared_ptr < Label >;
-
-			Label(std::string name) : m_Name(name)
+			Label(Types::Type* type, std::string name) : m_Name(name), m_Type(type)
 			{ }
 
-			inline const std::string &			GetName() const			{ return m_Name; }
-			inline uint32_t						GetOffset() const		{ return m_Offset; }
+			inline const std::string& GetName() const { return m_Name; }
+			inline Types::Type* GetType() const { return m_Type; }
+			inline uint32_t GetOffset() const { return m_Offset; }
 
-			static inline Shared Make(std::string name) {
-				return std::make_shared<Label>(name);
-			}
-
-			static inline std::string Formatter(Shared label) {
+			static inline std::string Formatter(Label* label) {
 				return "(" + label->GetName() + ")";
 			}
 		};

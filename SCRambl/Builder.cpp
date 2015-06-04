@@ -6,21 +6,15 @@
 namespace SCRambl
 {
 	/* Build */
-	ScriptVariable Build::AddScriptVariable(std::string name, Types::Type::Shared type, size_t array_size) {
+	ScriptVariable* Build::AddScriptVariable(std::string name, Types::Type* type, size_t array_size) {
 		if (type->HasValueType(array_size ? Types::ValueSet::Array : Types::ValueSet::Variable)) {
-			auto var = m_Variables.Add(name, type, array_size);
-			if (var->IsGlobal())
-				m_Variables.Global().Add(name, var);
-			else if (m_Variables.Scope())
-				m_Variables.Scope()->Add(name, var);
-			else
-				BREAK();
-			return var;
+			auto& var = m_Variables.Add(type, name, array_size);
+			return &var;
 		}
 		else BREAK();
 		return nullptr;
 	}
-	ScriptVariable Build::GetScriptVariable(std::string name) {
+	ScriptVariable* Build::GetScriptVariable(std::string name) {
 		auto var = m_Variables.Find(name);
 		return var;
 	}
@@ -71,7 +65,7 @@ namespace SCRambl
 			m_BuildScripts.emplace_back(scr.first, m_Env.Val(scr.second->Name).AsString() + m_Env.Val(scr.second->Ext).AsString());
 		}
 	}
-	bool Build::IsCommandArgParsed(Command::Shared command, unsigned long index) const {
+	bool Build::IsCommandArgParsed(Command* command, unsigned long index) const {
 		if (index < command->GetNumArgs()) {
 			auto& arg = command->GetArg(index);
 		}
@@ -81,14 +75,16 @@ namespace SCRambl
 		// TODO:
 		return m_Script.OpenFile(input);
 	}
-	std::shared_ptr<XMLConfiguration> Build::AddConfig(const std::string & name)
-	{
+	XMLConfiguration* Build::AddConfig(const std::string& name) {
 		if (name.empty()) return nullptr;
 		auto it = m_ConfigMap.find(name);
-		if (it != m_ConfigMap.end()) return it->second;
-		auto config = std::make_shared<XMLConfiguration>(name);
-		m_ConfigMap.emplace(name, config);
-		return config;
+		if (it == m_ConfigMap.end()) {
+			auto pr = m_ConfigMap.emplace(name, name);
+			if (pr.second) it = m_ConfigMap.emplace(name, name).first;
+		}
+		if (it != m_ConfigMap.end())
+			return &it->second;
+		return nullptr;
 	}
 	const TaskSystem::Task<BuildEvent> & Build::Run() {
 		if (m_CurrentTask == std::end(m_Tasks))

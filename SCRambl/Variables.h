@@ -25,7 +25,7 @@ namespace SCRambl
 		}
 
 	public:
-		Variable(std::string name, Types::Type* type, size_t array_size = 0) : m_Name(name), m_Type(type), m_ArraySize(array_size)
+		Variable(Types::Type* type, std::string name, size_t array_size = 0) : m_Name(name), m_Type(type), m_ArraySize(array_size)
 		{ Init(); }
 
 		inline const std::string& Name() const { return m_Name; }

@@ -26,6 +26,7 @@ namespace SCRambl
 		class Position;
 		class Token;
 		class Tokens;
+		class Label;
 
 		typedef std::list<Line> CodeList;
 		typedef std::vector<std::shared_ptr<File>> Files;

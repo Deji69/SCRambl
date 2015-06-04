@@ -9,14 +9,14 @@ namespace SCRambl
 {
 	namespace Preprocessor
 	{
-		Preprocessor::Preprocessor(Task& task, Engine& engine, Build::Shared build) :
+		Preprocessor::Preprocessor(Task& task, Engine& engine, Build& build) :
 			m_State(init), m_Task(task),
 			m_Engine(engine), m_Build(build),
-			m_Tokens(build->GetScript().GetTokens()),
+			m_Tokens(build.GetScript().GetTokens()),
 			m_Lexer(),
 			m_OperatorScanner(m_Operators),
 			m_Information(m_CodePos),
-			m_Commands(build->GetCommands()), m_Types(build->GetTypes())
+			m_Commands(build.GetCommands()), m_Types(build.GetTypes())
 		{
 			Reset();
 
@@ -81,7 +81,7 @@ namespace SCRambl
 			m_Engine.SetFormatter<Scripts::Position>(Scripts::Position::Formatter);
 			m_Engine.SetFormatter<Scripts::Range>(Scripts::Range::Formatter);
 			m_Engine.SetFormatter<Directive>(Directive::Formatter);
-			m_Engine.SetFormatter<Scripts::Label::Shared>(Scripts::Label::Formatter);
+			m_Engine.SetFormatter<Scripts::Label*>(Scripts::Label::Formatter);
 		}
 		void Preprocessor::Reset() {
 			switch (m_State) {
@@ -102,7 +102,7 @@ namespace SCRambl
 				switch (m_State) {
 				case init:
 					m_Task(Event::Begin);
-					m_CodePos = m_Build->GetScript().GetCode();
+					m_CodePos = m_Build.GetScript().GetCode();
 					m_State = lexing;
 					break;
 				default:
@@ -143,37 +143,38 @@ namespace SCRambl
 
 			switch (m_Token) {
 			case TokenType::Identifier: {
- 				AddToken<Tokens::Identifier::Info<>>(pos, Tokens::Type::Identifier, m_Token.Range());
+				m_Build.CreateToken<Tokens::Identifier::Info<>>(pos, Tokens::Type::Identifier, m_Token.Range());
 				m_Task(Event::AddedToken, range);
 				break;
 			}
 			case TokenType::Number: {
 				if (m_NumericScanner.Is<int>())
-					AddToken<Tokens::Number::Info<Numbers::IntegerType>>(pos, Tokens::Type::Number, range, Numbers::Integer, m_NumericScanner.Get<long long>());
+					m_Build.CreateToken<Tokens::Number::Info<Numbers::IntegerType>>(pos, Tokens::Type::Number, range, Numbers::Integer, m_NumericScanner.Get<long long>());
 				else
-					AddToken<Tokens::Number::Info<Numbers::FloatType>>(pos, Tokens::Type::Number, range, Numbers::Float, m_NumericScanner.Get<float>());
+					m_Build.CreateToken<Tokens::Number::Info<Numbers::FloatType>>(pos, Tokens::Type::Number, range, Numbers::Float, m_NumericScanner.Get<float>());
 				m_Task(Event::AddedToken, range);
 				break;
 			}
 			case TokenType::Label: {
 				auto name = range.Format();
-				auto label = m_Build->GetScript().GetLabels().Add(name, m_Build->AddScriptLabel(name).Ptr());
-				AddToken<Tokens::Label::Info>(pos, Tokens::Type::Label, range, label);
+				// TODO: do
+				auto label = m_Build.AddScriptLabel(nullptr, name);
+				m_Build.CreateToken<Tokens::Label::Info>(pos, Tokens::Type::Label, range, label->Ptr());
 				m_Task(Event::AddedToken, range);
 				break;
 			}
 			case TokenType::Operator: {
-				AddToken<Tokens::Operator::Info<Operator::Type>>(pos, Tokens::Type::Operator, range, m_OperatorScanner.GetOperator());
+				m_Build.CreateToken<Tokens::Operator::Info<Operator::Type>>(pos, Tokens::Type::Operator, range, m_OperatorScanner.GetOperator());
 				m_Task(Event::AddedToken, range);
 				break;
 			}
 			case TokenType::Directive: {
-				AddToken<Tokens::Directive::Info>(pos, Tokens::Type::Directive, range);
+				m_Build.CreateToken<Tokens::Directive::Info>(pos, Tokens::Type::Directive, range);
 				m_Task(Event::AddedToken, range);
 				break;
 			}
 			case TokenType::String: {
-				AddToken<Tokens::String::Info>(pos, Tokens::Type::String, range, m_String);
+				m_Build.CreateToken<Tokens::String::Info>(pos, Tokens::Type::String, range, m_String);
 				m_Task(Event::AddedToken, range);
 				break;
 			}
@@ -216,8 +217,8 @@ namespace SCRambl
 									if (macrosThatAreNotMacros.find(macro) == macrosThatAreNotMacros.end()) {
 										macrosThatAreNotMacros.emplace(macro);
 										bool b = m_CodePos == start_pos;
-										m_CodePos = m_Build->GetScript().GetCode().Erase(m_Token.Begin(), m_Token.End());
-										m_CodePos = m_Build->GetScript().GetCode().Insert(m_CodePos, macro->GetCode());
+										m_CodePos = m_Build.GetScript().GetCode().Erase(m_Token.Begin(), m_Token.End());
+										m_CodePos = m_Build.GetScript().GetCode().Insert(m_CodePos, macro->GetCode());
 										if (b) start_pos = m_CodePos;
 										continue;
 									}
@@ -228,7 +229,7 @@ namespace SCRambl
 							++m_CodePos;
 						}
 
-						m_Macros.Define(name, m_Build->GetScript().GetCode().Copy(start_pos, m_CodePos, code));
+						m_Macros.Define(name, m_Build.GetScript().GetCode().Copy(start_pos, m_CodePos, code));
 					}
 					else m_Macros.Define(name);
 				}
@@ -277,7 +278,7 @@ namespace SCRambl
 			case Directive::INCLUDE:
 				if (Lex() == Lexer::Result::found_token && m_Token == TokenType::String)
 				{
-					if (m_Build->GetScript().Include(m_CodePos, m_String))
+					if (m_Build.GetScript().Include(m_CodePos, m_String))
 					{
 						m_State = lexing;
 						return;
@@ -337,7 +338,7 @@ namespace SCRambl
 		}
 		void Preprocessor::HandleComment() {
 			// handle it with care by deleting the shit out of it
-			m_CodePos = m_Build->GetScript().GetCode().Erase(m_Token.Begin(), m_Token.End());
+			m_CodePos = m_Build.GetScript().GetCode().Erase(m_Token.Begin(), m_Token.End());
 
 			// that felt good... add a single space in its place as an extra sign of indignity...
 			m_CodePos.Insert(' ');
@@ -938,7 +939,7 @@ namespace SCRambl
 						\*/
 					case TokenType::Directive:
 						// get the directive identifier and look up its ID
-						m_Directive = GetDirective(m_Build->GetScript().GetCode().Select(m_Token.Inside(), m_Token.End()));
+						m_Directive = GetDirective(m_Build.GetScript().GetCode().Select(m_Token.Inside(), m_Token.End()));
 
 						// if the source is being skipped, wait until we have a related directive
 						if (!GetSourceControl() && !DoesDirectiveIgnoreSourceControl(m_Directive))
@@ -959,7 +960,7 @@ namespace SCRambl
 
 					case TokenType::String:
 						// save the string
-						m_String = m_Build->GetScript().GetCode().Select(m_Token.Inside(), m_Token.End());
+						m_String = m_Build.GetScript().GetCode().Select(m_Token.Inside(), m_Token.End());
 						m_String = m_String.substr(0, m_String.find_last_not_of('\0') + 1);
 						break;
 
@@ -990,10 +991,10 @@ namespace SCRambl
 									identifiersThatAreNotMacros.emplace(m_Identifier);
 
 									// remove the identifier from code
-									m_CodePos = m_Build->GetScript().GetCode().Erase(m_Token.Begin(), m_Token.End());
+									m_CodePos = m_Build.GetScript().GetCode().Erase(m_Token.Begin(), m_Token.End());
 
 									// insert the macro code
-									m_CodePos = m_Build->GetScript().GetCode().Insert(m_CodePos, macro->GetCode().Symbols());
+									m_CodePos = m_Build.GetScript().GetCode().Insert(m_CodePos, macro->GetCode().Symbols());
 									// continue parsing until we have a REAL token
 									continue;
 								}
