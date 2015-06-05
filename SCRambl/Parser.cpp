@@ -262,6 +262,7 @@ namespace SCRambl
 				};
 				newstate = (this->*funcs[m_ParseState = newstate])();
 			} while (newstate != m_ParseState && newstate != state_neutral);
+			m_ParseState = newstate;
 			return;
 
 
