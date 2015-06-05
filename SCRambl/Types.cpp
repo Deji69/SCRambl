@@ -9,12 +9,14 @@ namespace SCRambl
 	namespace Types
 	{
 		ValueSet GetValueTypeByName(std::string name) {
-			static const std::map<std::string, ValueSet> table = {
+			static const std::unordered_map<std::string, ValueSet> table = {
 				{ "Null", ValueSet::Null },
 				{ "Number", ValueSet::Number },
 				{ "Variable", ValueSet::Variable },
+				{ "Array", ValueSet::Array },
 				{ "Text", ValueSet::Text },
-				{ "Label", ValueSet::Label }
+				{ "Label", ValueSet::Label },
+				{ "Command", ValueSet::Command },
 			};
 			auto it = table.find(name);
 			return it == table.end() ? ValueSet::INVALID : it->second;
@@ -53,10 +55,26 @@ namespace SCRambl
 		bool Type::IsBasicType() const { return GetType() == TypeSet::Basic; }
 		bool Type::IsExtendedType() const { return GetType() == TypeSet::Extended; }
 		bool Type::IsVariableType() const { return GetType() == TypeSet::Variable; }
+		void Type::CopyValues(const Type& other) {
+			for (auto val : other.m_Values) {
+				m_Values.emplace_back(val);
+				m_Values.back()->m_Type = this;
+			}
+		}
+		void Type::MoveValues(Type& other) {
+			for (auto val : other.m_Values) {
+				val->m_Type = this;
+				m_Values.emplace_back(val);
+			}
+			other.m_Values.clear();
+		}
+		Type::Type(Type&& type) : m_Name(type.m_Name), m_Type(type.m_Type) {
+			MoveValues(type);
+		}
 
 		/* Types */
-		void Types::AddValueAttributes(XMLConfig& type) {
-			auto& value = type.AddClass("Number", [this](const XMLNode vec, void*& obj){
+		void Types::AddValueAttributes(XMLConfig* type) {
+			auto value = type->AddClass("Number", [this](const XMLNode vec, void*& obj){
 				auto type = static_cast<Type*>(obj);
 				NumberValueType numtype = vec["Type"]->AsString() == "float" ? numtype = NumberValueType::Float : NumberValueType::Integer;
 
@@ -64,31 +82,31 @@ namespace SCRambl
 				AddValue(ValueSet::Number, value);
 				obj = value;
 			});
-			auto& text = type.AddClass("Text", [this](const XMLNode vec, void*& obj){
+			auto text = type->AddClass("Text", [this](const XMLNode vec, void*& obj){
 				auto type = static_cast<Type*>(obj);
 				auto value = type->AddValue<TextValue>(type, vec["Size"]->AsNumber<uint32_t>(), *vec["Mode"]);
 				AddValue(ValueSet::Text, value);
 				obj = value;
 			});
-			auto& command = type.AddClass("Command", [this](const XMLNode vec, void*& obj) {
+			auto command = type->AddClass("Command", [this](const XMLNode vec, void*& obj) {
 				auto type = static_cast<Type*>(obj);
 				auto value = type->AddValue<CommandValue>(type, vec["Size"]->AsNumber<uint32_t>());
 				AddValue(ValueSet::Command, value);
 				obj = value;
 			});
-			auto& label = type.AddClass("Label", [this](const XMLNode vec, void*& obj) {
+			auto label = type->AddClass("Label", [this](const XMLNode vec, void*& obj) {
 				auto type = static_cast<Type*>(obj);
 				auto value = type->AddValue<LabelValue>(type, vec["Size"]->AsNumber<uint32_t>());
 				AddValue(ValueSet::Label, value);
 				obj = value;
 			});
-			auto& variable = type.AddClass("Variable", [this](const XMLNode vec, void*& obj) {
+			auto variable = type->AddClass("Variable", [this](const XMLNode vec, void*& obj) {
 				auto type = static_cast<Type*>(obj);
 				auto value = type->AddValue<VariableValue>(type, vec["Size"]->AsNumber<uint32_t>());
 				AddValue(ValueSet::Variable, value);
 				obj = value;
 			});
-			auto& array_var = type.AddClass("Array", [this](const XMLNode vec, void*& obj) {
+			auto array_var = type->AddClass("Array", [this](const XMLNode vec, void*& obj) {
 				auto type = static_cast<Type*>(obj);
 				auto value = type->AddValue<ArrayValue>(type, vec["Size"]->AsNumber<uint32_t>());
 				AddValue(ValueSet::Array, value);
@@ -100,7 +118,7 @@ namespace SCRambl
 
 			m_Config = build.AddConfig("VariableTypes");
 			{
-				auto& vartype = m_Config->AddClass("VariableTypes", [this](const XMLNode vec, void*& obj) {
+				auto vartype = m_Config->AddClass("VariableTypes", [this](const XMLNode vec, void*& obj) {
 					auto scope = vec.GetAttribute("Scope").GetValue();
 					auto isarray = vec.GetAttribute("IsArray").GetValue();
 					auto type = AddVariableType(vec.GetAttribute("Name").GetValue().AsString(), scope, isarray.AsBool(false));
@@ -162,7 +180,7 @@ namespace SCRambl
 					}*/
 				};
 
-				auto& type = m_Config->AddClass("Type", [this](const XMLNode vec, void*& obj){
+				auto type = m_Config->AddClass("Type", [this](const XMLNode vec, void*& obj){
 					// store the command to the object pointer so we can access it again
 					auto type = AddType(vec.GetAttribute("Name").GetValue().AsString());
 					obj = type;
@@ -172,7 +190,7 @@ namespace SCRambl
 			}
 			m_Config = build.AddConfig("ExtendedTypes");
 			{
-				auto& extype = m_Config->AddClass("Type", [this](const XMLNode vec, void*& obj){
+				auto extype = m_Config->AddClass("Type", [this](const XMLNode vec, void*& obj){
 					unsigned long id = 0;
 					if (auto attr = vec.GetAttribute("ID"))
 						id = attr.GetValue().AsNumber<unsigned int>();
@@ -192,10 +210,11 @@ namespace SCRambl
 			}
 			m_Config = build.AddConfig("Translations");
 			{
-				auto& trans = m_Config->AddClass("Translate", [this](const XMLNode vec, void*& obj){
+				auto trans = m_Config->AddClass("Translate", [this](const XMLNode vec, void*& obj){
 					std::string type_name = vec.GetAttribute("Type").GetValue().AsString();
 					if (auto type = GetType(type_name)) {
-						ValueSet valtype = GetValueTypeByName(vec.GetAttribute("Value").GetValue().AsString());
+						auto val = vec.GetAttribute("Value").GetValue();
+						ValueSet valtype = GetValueTypeByName(val.AsString());
 
 						size_t size = vec.GetAttribute("Size").GetValue().AsNumber<size_t>(-1);
 						auto translation = AddTranslation(type, valtype, size);
@@ -217,7 +236,7 @@ namespace SCRambl
 
 					obj = nullptr;
 				});
-				auto& data = trans.AddClass("Data", [this](const XMLNode vec, void*& obj){
+				auto data = trans->AddClass("Data", [this](const XMLNode vec, void*& obj){
 					if (obj) {
 						auto translation = static_cast<Translation*>(obj);
 						auto& data = translation->AddData();

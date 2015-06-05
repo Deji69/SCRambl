@@ -306,7 +306,7 @@ namespace SCRambl
 			std::string	m_Identifier;				// last scanned identifier
 			MacroMap m_Macros;
 			
-			std::stack<Scripts::Token*> m_Delimiters;
+			std::stack<Scripts::Token> m_Delimiters;
 
 		public:
 			enum State {
@@ -378,16 +378,13 @@ namespace SCRambl
 			// Add
 			bool OpenDelimiter(Scripts::Position pos, Delimiter type) {
 				auto token = m_Build.CreateToken<Tokens::Delimiter::Info<Delimiter>>(pos, Tokens::Type::Delimiter, pos, Scripts::Range(pos, pos), type);
-				if (token) {
-					m_Delimiters.push(token);
-					return true;
-				}
-				return false;
+				m_Delimiters.push(token);
+				return true;
 			}
 			//
 			bool CloseDelimiter(Scripts::Position pos, Delimiter type) {
 				auto& token = m_Delimiters.top();
-				auto tok = token->GetToken<Tokens::Delimiter::Info<Delimiter>>();
+				auto tok = token.GetToken<Tokens::Delimiter::Info<Delimiter>>();
 				// ensure the delimiters are for the same purpose, otherwise there's error
 				if (tok->GetValue<Tokens::Delimiter::DelimiterType>() == type) {
 					// replace the token with an updated Scripts::Range
@@ -444,7 +441,7 @@ namespace SCRambl
 
 			// Add a preprocessing token
 			template<typename T, typename... TArgs>
-			inline Scripts::Token* AddToken(Scripts::Position pos, Tokens::Type token, TArgs&&... args)
+			inline Scripts::Token AddToken(Scripts::Position pos, Tokens::Type token, TArgs&&... args)
 			{
 				m_WasLastTokenEOL = false;
 				return m_Tokens.Add<T>(pos, token, std::forward<TArgs&&>(args)...);

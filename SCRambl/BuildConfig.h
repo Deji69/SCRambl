@@ -30,7 +30,6 @@ namespace SCRambl
 			File
 		};
 
-		using Shared = std::shared_ptr<InputConfig>;
 		InputConfig::InputConfig(XMLValue val, eType type) : Value(val), Type(type)
 		{ }
 
@@ -38,7 +37,6 @@ namespace SCRambl
 		eType Type;
 	};
 	struct ScriptConfig {
-		using Shared = std::shared_ptr<ScriptConfig>;
 		ScriptConfig::ScriptConfig(XMLValue name, XMLValue ext) : Name(name), Ext(ext)
 		{ }
 
@@ -48,7 +46,6 @@ namespace SCRambl
 	};
 	
 	struct ParseObjectConfig {
-		using Shared = std::shared_ptr<ParseObjectConfig>;
 		enum class ActionType {
 			Clear, Set, Inc, Dec, Add, Sub, Mul, Div, Mod, And, Or, Xor, Shl, Shr, Not
 		};
@@ -73,7 +70,7 @@ namespace SCRambl
 	{
 		friend class Build;
 
-		XMLConfiguration::Shared m_Config;
+		XMLConfiguration* m_Config;
 
 		// attributes
 		std::string m_ID;
@@ -85,11 +82,12 @@ namespace SCRambl
 		std::vector<std::string> m_Definitions;
 
 		//
-		using ParseNameVec = std::vector<std::pair<XMLValue, ParseObjectConfig::Shared>>;
-		std::map<std::string, ScriptConfig::Shared> m_Scripts;
+		using ParseNameVec = std::vector<std::pair<XMLValue, ParseObjectConfig*>>;
+		std::map<std::string, ScriptConfig> m_Scripts;
 		ParseNameVec m_ParseCommandNames;
 		ParseNameVec m_ParseVariableNames;
 		ParseNameVec m_ParseLabelNames;
+		std::vector<ParseObjectConfig> m_ObjectConfigs;
 
 		BuildDefinitionPath& AddDefPath(std::string);
 		size_t GetDefinitionPathID(std::string);				// returns -1 on failure
@@ -104,14 +102,14 @@ namespace SCRambl
 		const ParseNameVec& GetParseLabels() const { return m_ParseLabelNames; }
 
 	public:
-		using Shared = std::shared_ptr<BuildConfig>;
-
 		//BuildConfig::BuildConfig(std::string id, std::string name);
-		BuildConfig::BuildConfig(std::string id, std::string name, XMLConfig& config);
+		BuildConfig::BuildConfig(std::string id, std::string name, XMLConfig* config);
 
-		ScriptConfig::Shared AddScript(std::string id, XMLValue name, XMLValue ext = "");
+		ScriptConfig* AddScript(std::string id, XMLValue name, XMLValue ext = "");
 		void AddDefinitionPath(std::string);
 		void AddDefinitionPath(std::string, const std::vector<std::string>&);
+
+		ParseObjectConfig* AddParseObjectConfig(XMLValue name, XMLValue required, XMLValue type);
 
 		size_t GetNumDefinitionPaths() const { return m_DefinitionPaths.size(); }
 		size_t GetNumDefaultLoads() const { return 0; }

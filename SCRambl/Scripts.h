@@ -86,9 +86,6 @@ namespace SCRambl
 			{ }
 			Token(TokenSymbol* symb) : m_Symbol(symb)
 			{ }
-			~Token() {
-				if (m_Token) delete m_Token;
-			}
 
 			inline Position& GetPosition()					{ return m_Position; }
 			inline const Position& GetPosition() const		{ return GetPosition(); }
@@ -237,15 +234,20 @@ namespace SCRambl
 			};
 
 			Tokens() = default;
-			Tokens(const Vector & vec) : m_Tokens(vec) { }
+			Tokens(const Vector& vec) = delete;
+			~Tokens() {
+				for (auto& tok : m_Tokens) {
+					if (tok.GetToken()) delete tok.GetToken();
+				}
+			}
 
 			/* Manipulation */
 
 			// Insert
 			template<typename TToken, typename... TArgs>
-			inline Token* Add(Position pos, TArgs... args) {
-				m_Tokens.emplace_back(pos, new TToken(std::forward<TArgs>(args)...));
-				return &m_Tokens.back();
+			inline Token Add(Position pos, TArgs&&... args) {
+				m_Tokens.emplace_back(pos, new TToken(args...));
+				return m_Tokens.back();
 			}
 
 			/* Navigation */
@@ -260,20 +262,14 @@ namespace SCRambl
 			inline Iterator end() { return End(); }
 
 			/* Access */
-			inline const Token* Front() const { return &m_Tokens.front(); }
-			inline const Token* Back() const { return &m_Tokens.back(); }
-			inline Token* Front() { return &m_Tokens.front(); }
-			inline Token* Back() { return &m_Tokens.back(); }
+			inline const Token Front() const { return m_Tokens.front(); }
+			inline const Token Back() const { return m_Tokens.back(); }
+			inline Token Front() { return m_Tokens.front(); }
+			inline Token Back() { return m_Tokens.back(); }
 
 			/* Info */
 			inline size_t Size() const { return m_Tokens.size(); }
 			inline bool Empty() const { return m_Tokens.empty(); }
-
-			//
-			/*template<typename TToken, typename... TArgs>
-			static inline std::shared_ptr<Token> MakeShared(Position pos, TArgs... args) {
-				return std::make_shared<Token>(pos, std::make_shared<TToken>(std::forward<TArgs>(args)...));
-			}*/
 		};
 		class TokenLine
 		{

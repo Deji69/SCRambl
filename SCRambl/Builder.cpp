@@ -62,7 +62,7 @@ namespace SCRambl
 		LoadDefinitions();
 
 		for (auto& scr : m_Config->GetScripts()) {
-			m_BuildScripts.emplace_back(scr.first, m_Env.Val(scr.second->Name).AsString() + m_Env.Val(scr.second->Ext).AsString());
+			m_BuildScripts.emplace_back(scr.first, m_Env.Val(scr.second.Name).AsString() + m_Env.Val(scr.second.Ext).AsString());
 		}
 	}
 	bool Build::IsCommandArgParsed(Command* command, unsigned long index) const {
@@ -151,10 +151,9 @@ namespace SCRambl
 	BuildEnvironment::BuildEnvironment(Engine& engine) : m_Engine(engine) { }
 
 	/* BuildConfig */
-	ScriptConfig::Shared BuildConfig::AddScript(std::string id, XMLValue name, XMLValue ext) {
-		auto ptr = std::make_shared<ScriptConfig>(name, ext);
-		m_Scripts.emplace(id, ptr);			// TODO: ?
-		return ptr;
+	ScriptConfig* BuildConfig::AddScript(std::string id, XMLValue name, XMLValue ext) {
+		auto pr = m_Scripts.emplace(id, ScriptConfig(name, ext));			// TODO: ?
+		return pr.second ? &pr.first->second : nullptr;
 	}
 	void BuildConfig::AddDefinitionPath(std::string path, const std::vector<std::string>& defs) {
 		auto& defpath = AddDefPath(path);
@@ -178,9 +177,9 @@ namespace SCRambl
 		return it != m_DefinitionPathMap.end() ? it->second : -1;
 	}
 	template<ParseObjectConfig::ActionType TAction>
-	void AddEnvironmentHandler(XMLConfig& config, std::string str) {
-		config.AddClass(str, [](const XMLNode base, std::shared_ptr<void>& obj) {
-			if (auto ptr = std::static_pointer_cast<ParseObjectConfig>(obj)) {
+	void AddEnvironmentHandler(XMLConfig* config, std::string str) {
+		config->AddClass(str, [](const XMLNode base, void*& obj) {
+			if (auto ptr = static_cast<ParseObjectConfig*>(obj)) {
 				if (auto attr = base.GetAttribute("Var")) {
 					ParseObjectConfig::Action action;
 					action.Type = TAction;
@@ -190,15 +189,23 @@ namespace SCRambl
 			}
 		});
 	}
-	void AddEnvironmentXMLHandlers(XMLConfig& config) {
+	void AddEnvironmentXMLHandlers(XMLConfig* config) {
 		AddEnvironmentHandler<ParseObjectConfig::ActionType::Set>(config, "Set");
 		AddEnvironmentHandler<ParseObjectConfig::ActionType::Inc>(config, "Inc");
 		AddEnvironmentHandler<ParseObjectConfig::ActionType::Dec>(config, "Dec");
 	}
-	BuildConfig::BuildConfig(std::string id, std::string name, XMLConfig& config) : m_ID(id), m_Name(name) {
+	ParseObjectConfig * BuildConfig::AddParseObjectConfig(XMLValue name, XMLValue required, XMLValue type) {
+		m_ObjectConfigs.emplace_back();
+		auto& obj = m_ObjectConfigs.back();
+		obj.Name = name;
+		obj.Required = required;
+		obj.Type = type;
+		return &obj;
+	}
+	BuildConfig::BuildConfig(std::string id, std::string name, XMLConfig* config) : m_ID(id), m_Name(name) {
 		// <DefinitionPath>...</DefinitionPath>
-		auto& defpath = config.AddClass("DefinitionPath", [](const XMLNode base, std::shared_ptr<void>& obj) {
-			auto ptr = std::static_pointer_cast<BuildConfig>(obj);
+		auto defpath = config->AddClass("DefinitionPath", [](const XMLNode base, void*& obj) {
+			auto ptr = static_cast<BuildConfig*>(obj);
 			if (auto attr = base.GetAttribute("Path")) {
 				std::vector<std::string> defs;
 				for (auto child : base.Children()) {
@@ -218,15 +225,12 @@ namespace SCRambl
 		});
 
 		// <Parse>
-		auto& parse = config.AddClass("Parse");
+		if (auto parse = config->AddClass("Parse")) {
 			// <Command>
-			auto& parsecmd = parse.AddClass("Command", [](const XMLNode base, std::shared_ptr<void>& obj){
-				auto ptr = std::static_pointer_cast<BuildConfig>(obj);
+			auto parsecmd = parse->AddClass("Command", [](const XMLNode base, void*& obj){
+				auto ptr = static_cast<BuildConfig*>(obj);
 				if (auto attr = base.GetAttribute("Name")) {
-					ParseObjectConfig::Shared config = std::make_shared<ParseObjectConfig>();
-					config->Name = attr.GetValue();
-					config->Required = base.GetAttribute("Required").GetValue();
-					config->Type = base.GetAttribute("Type").GetValue();
+					auto config = ptr->AddParseObjectConfig(attr.GetValue(), base.GetAttribute("Required").GetValue(), base.GetAttribute("Type").GetValue());
 					ptr->m_ParseCommandNames.emplace_back(attr.GetValue(), config);
 					obj = config;
 				}
@@ -234,13 +238,10 @@ namespace SCRambl
 			AddEnvironmentXMLHandlers(parsecmd);
 			// </Command>
 			// <Variable>
-			auto& parsevar = parse.AddClass("Variable", [](const XMLNode base, std::shared_ptr<void>& obj){
-				auto ptr = std::static_pointer_cast<BuildConfig>(obj);
+			auto parsevar = parse->AddClass("Variable", [](const XMLNode base, void*& obj){
+				auto ptr = static_cast<BuildConfig*>(obj);
 				if (auto attr = base.GetAttribute("Name")) {
-					ParseObjectConfig::Shared config = std::make_shared<ParseObjectConfig>();
-					config->Name = attr.GetValue();
-					config->Required = base.GetAttribute("Required").GetValue();
-					config->Type = base.GetAttribute("Type").GetValue();
+					auto config = ptr->AddParseObjectConfig(attr.GetValue(), base.GetAttribute("Required").GetValue(), base.GetAttribute("Type").GetValue());
 					ptr->m_ParseVariableNames.emplace_back(attr.GetValue(), config);
 					obj = config;
 				}
@@ -248,39 +249,36 @@ namespace SCRambl
 			AddEnvironmentXMLHandlers(parsevar);
 			// </Variable>
 			// <Label>
-			auto& parselabel = parse.AddClass("Label", [](const XMLNode base, std::shared_ptr<void>& obj){
-				auto ptr = std::static_pointer_cast<BuildConfig>(obj);
+			auto parselabel = parse->AddClass("Label", [](const XMLNode base, void*& obj){
+				auto ptr = static_cast<BuildConfig*>(obj);
 				if (auto attr = base.GetAttribute("Name")) {
-					ParseObjectConfig::Shared config = std::make_shared<ParseObjectConfig>();
-					config->Name = attr.GetValue();
-					config->Required = base.GetAttribute("Required").GetValue();
-					config->Type = base.GetAttribute("Type").GetValue();
+					auto config = ptr->AddParseObjectConfig(attr.GetValue(), base.GetAttribute("Required").GetValue(), base.GetAttribute("Type").GetValue());
 					ptr->m_ParseLabelNames.emplace_back(attr.GetValue(), config);
 					obj = config;
 				}
 			});
 			AddEnvironmentXMLHandlers(parselabel);
 			// </Label>
-		// </Parse>
+		} // </Parse>
 
 		// <Script>
-		auto& script = config.AddClass("Script", [](const XMLNode base, std::shared_ptr<void>& obj){
-			auto ptr = std::static_pointer_cast<BuildConfig>(obj);
+		if (auto script = config->AddClass("Script", [](const XMLNode base, void*& obj){
+			auto ptr = static_cast<BuildConfig*>(obj);
 			if (auto attr = base.GetAttribute("ID")) {
 				obj = ptr->AddScript(attr.GetValue().AsString(), base.GetAttribute("Name").GetValue(), base.GetAttribute("Ext").GetValue());
 			}
 			else obj = nullptr;
-		});
+		})) {
 			// <Input>
-			auto& input = script.AddClass("Input");
+			if (auto input = script->AddClass("Input")) {
 				// <File>
-				input.AddClass("File", [](const XMLNode base, std::shared_ptr<void>& obj){
-					auto ptr = std::static_pointer_cast<ScriptConfig>(obj);
+				input->AddClass("File", [](const XMLNode base, void*& obj){
+					auto ptr = static_cast<ScriptConfig*>(obj);
 					ptr->Inputs.emplace_back(base.GetValue(), InputConfig::File);
 				});
 				// </File>
-			// </Input>
-		// </Script>
+			} // </Input>
+		} // </Script>
 	}
 	//BuildConfig::BuildConfig(std::string id, std::string name) : m_ID(id), m_Name(name)
 	//{ }

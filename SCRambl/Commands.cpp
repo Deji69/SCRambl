@@ -19,12 +19,12 @@ namespace SCRambl
 			ccdest = GetCasingByName(xml.GetAttribute("To").GetValue().AsString());
 			ccsrc = GetCasingByName(xml.GetAttribute("From").GetValue().AsString());
 		});
-		auto& args = m_Config->AddClass("Command", [this](const XMLNode xml, void*& obj){
+		auto args = m_Config->AddClass("Command", [this](const XMLNode xml, void*& obj){
 			// store the command to the object pointer so we can access it again
 			auto command = AddCommand(xml.GetAttribute("Name").GetValue().AsString(), xml.GetAttribute("ID").GetValue().AsNumber<size_t>());
 			obj = command;
-		}).AddClass("Args");
-		args.AddClass("Arg", [this, &types](const XMLNode xml, void*& obj){
+		})->AddClass("Args");
+		args->AddClass("Arg", [this, &types](const XMLNode xml, void*& obj){
 			// retrieve the object poiter as a SCR command we know it to be
 			auto& command = *static_cast<SCRambl::Command*>(obj);
 			if (auto type = types.GetType(xml.GetAttribute("Type").GetValue().AsString())) {

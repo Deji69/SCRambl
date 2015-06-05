@@ -296,8 +296,11 @@ namespace SCRambl
 		// Labels
 		inline ScriptObjects<Scripts::Label>& GetLabels() { return m_Labels; }
 		inline const ScriptObjects<Scripts::Label>& GetLabels() const { return m_Labels; }
-		ScriptLabel* AddScriptLabel(Types::Type* type, std::string name) {
-			return m_Labels.Add(type, name);
+		ScriptLabel* AddScriptLabel(std::string name) {
+			std::vector<Types::Value*> vals;
+			m_Types.GetValues(Types::ValueSet::Label, 0, vals);
+			if (vals.empty() || vals.size() > 1) BREAK();
+			return m_Labels.Add(vals[0]->GetType(), name);
 		}
 		ScriptLabel* GetScriptLabel(std::string name) {
 			return m_Labels.Find(name);
@@ -307,7 +310,7 @@ namespace SCRambl
 		}
 
 		template<typename TTokenType, typename... TArgs>
-		Scripts::Token* CreateToken(Scripts::Position pos, TArgs&&... args) {
+		Scripts::Token CreateToken(Scripts::Position pos, TArgs&&... args) {
 			return m_Script.GetTokens().Add<TTokenType>(pos, args...);
 		}
 		template<typename TSymbolType, typename... TArgs>
@@ -411,7 +414,7 @@ namespace SCRambl
 	{
 		Engine& m_Engine;
 		XMLConfiguration* m_Configuration;
-		XMLConfig& m_Config;
+		XMLConfig* m_Config;
 		std::unordered_map<std::string, BuildConfig> m_BuildConfigurations;
 		BuildConfig* m_BuildConfig;
 

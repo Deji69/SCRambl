@@ -74,12 +74,16 @@ namespace SCRambl
 			}
 		};
 
+		class Value;
 		class Basic;
 		class Extended;
 		class Variable;
 
 		/* Types::Type */
 		class Type {
+			void CopyValues(const Type&);
+			void MoveValues(Type&);
+
 		public:
 			template<typename TMainType>
 			class MatchSpec {
@@ -95,46 +99,14 @@ namespace SCRambl
 				}
 			};
 
-			class Value {
-			private:
-				ValueSet m_ValType;
-
-				inline ValueSet GetType() const { return m_ValType; }
-
-			protected:
-				virtual bool TestCompatibility(const Value &) const {
-					return true;
-				}
-
-			public:
-				Value(ValueSet valtype) : m_ValType(valtype)
-				{ }
-				inline virtual ~Value() { }
-
-				inline ValueSet GetValueType() const {
-					return m_ValType;
-				}
-
-				template<typename TValueExtension>
-				bool IsCompatible(const Value & lhs) const {
-					return lhs.GetType() == GetType() && TestCompatibility(static_cast<TValueExtension>(lhs));
-				}
-				template<>
-				bool IsCompatible<Value>(const Value & lhs) const {
-					return lhs.GetType() == GetType() && TestCompatibility(lhs);
-				}
-			};
-
-			//using SharedValue = Value::Shared;
-
 			// TODO: meh
 			Type(std::string name, TypeSet type) : m_Name(name), m_Type(type)
 			{ }
-			inline virtual ~Type() {
-				for (auto val : m_Values) {
-					delete val;
-				}
+			Type(const Type& type) : m_Name(type.m_Name), m_Type(type.m_Type) {
+				CopyValues(type);
 			}
+			Type(Type&&);
+			inline virtual ~Type() { }
 
 			virtual bool IsGlobal() const { return true; }
 			inline bool IsScoped() const { return !IsGlobal(); }
@@ -162,7 +134,7 @@ namespace SCRambl
 				return vec;
 			}
 			
-			template<typename TValue = Value, typename... TArgs>
+			template<typename TValue, typename... TArgs>
 			inline TValue* AddValue(TArgs&&... args) {
 				auto val = new TValue(std::forward<TArgs>(args)...);
 				m_Values.push_back(val);
@@ -170,7 +142,7 @@ namespace SCRambl
 			}
 
 			/*\ Types::Types::AllValues - Calls the requested function for each Value this Type contains \*/
-			template<typename TValue = Value, typename TFunc>
+			template<typename TValue, typename TFunc>
 			void AllValues(TFunc func) {
 				for (auto v : m_Values) {
 					func(static_cast<TValue*>(v));
@@ -230,37 +202,52 @@ namespace SCRambl
 
 		class Storage {
 		public:
-			using Map = std::unordered_map<std::string, Type*>;
-			using Vector = std::vector<Type*>;
+			struct Info {
+				TypeSet type;
+				size_t index;
+
+				Info(TypeSet ty, size_t id) : type(ty), index(id)
+				{ }
+			};
+
+			using Map = std::unordered_map<std::string, Info>;
+			using Vector = std::vector<Info>;
 
 			Storage() { }
 
 			template<typename T>
-			void Add(std::string name, T* obj) {
-				m_Vector.emplace_back(obj);
-				m_Map.emplace(name, obj);
+			void Add(std::string name, Info info) {
+				m_Vector.emplace_back(info);
+				m_Map.emplace(name, info);
 			}
 			inline Basic* AddBasic(std::string name) {
+				Add<Basic>(name, Info(TypeSet::Basic, m_Basics.size()));
 				m_Basics.emplace_back(name);
-				auto ptr = &m_Basics.back();
-				Add<Basic>(name, ptr);
-				return ptr;
+				return &m_Basics.back();
 			}
 			inline Extended* AddExtended(std::string name, Basic* basic = nullptr) {
+				Add<Extended>(name, Info(TypeSet::Extended, m_Extendeds.size()));
 				m_Extendeds.emplace_back(name, basic);
-				auto ptr = &m_Extendeds.back();
-				Add<Extended>(name, ptr);
-				return ptr;
+				return &m_Extendeds.back();
 			}
 			inline Variable* AddVariable(std::string name, XMLValue scope, bool is_array = false) {
+				Add<Variable>(name, Info(TypeSet::Variable, m_Variables.size()));
 				m_Variables.emplace_back(name, scope, is_array);
-				auto ptr = &m_Variables.back();
-				Add<Variable>(name, ptr);
-				return ptr;
+				return &m_Variables.back();
+			}
+			Type* GetType(TypeSet type, size_t id) {
+				if (type == TypeSet::Extended)
+					return &m_Extendeds[id];
+				else if (type == TypeSet::Variable)
+					return &m_Variables[id];
+				return &m_Basics[id];
+			}
+			Type* Get(Info info) {
+				return GetType(info.type, info.index);
 			}
 			Type* Get(std::string name) {
 				auto it = m_Map.find(name);
-				return it != m_Map.end() ? it->second : nullptr;
+				return it != m_Map.end() ? Get(it->second) : nullptr;
 			}
 
 		private:
@@ -458,9 +445,9 @@ namespace SCRambl
 			}
 
 		private:
-			Type* m_Type;
-			ValueSet m_ValueType;
-			size_t m_Size;
+			Type* m_Type = nullptr;
+			ValueSet m_ValueType = ValueSet::INVALID;
+			size_t m_Size = 0;
 			std::vector<Data> m_Data;
 		};
 
@@ -479,12 +466,14 @@ namespace SCRambl
 		};
 
 		/*\ Value of Type for translation \*/
-		class Value : public Type::Value, public ValueAttributes
+		class Value : public ValueAttributes
 		{
+			friend Type;
+
 		public:
-			Value(Type* type, ValueSet valtype) : Type::Value(valtype), m_Type(type), m_Size(0)
+			Value(Type* type, ValueSet valtype) : m_ValueType(valtype), m_Type(type), m_Size(0)
 			{ }
-			Value(Type* type, ValueSet valtype, size_t size) : Type::Value(valtype), m_Type(type), m_Size(size)
+			Value(Type* type, ValueSet valtype, size_t size) : m_ValueType(valtype), m_Type(type), m_Size(size)
 			{ }
 			inline virtual ~Value() { }
 
@@ -494,6 +483,7 @@ namespace SCRambl
 			
 			inline size_t GetSize() const { return m_Size; }
 			inline Type* GetType() const { return m_Type; }
+			inline ValueSet GetValueType() const { return m_ValueType; }
 
 			inline Translation* GetTranslation() const { return m_Translation; }
 			inline void SetTranslation(Translation* v) { m_Translation = v; }
@@ -504,6 +494,7 @@ namespace SCRambl
 			inline const T& Extend() const { return *static_cast<T*>(this); }
 
 		private:
+			ValueSet m_ValueType;
 			Type* m_Type;
 			size_t m_Size;
 			Translation* m_Translation = nullptr;
@@ -691,7 +682,7 @@ namespace SCRambl
 			}
 		
 		private:
-			void AddValueAttributes(XMLConfig&);
+			void AddValueAttributes(XMLConfig*);
 		};
 	}
 }

@@ -5,7 +5,7 @@
 namespace SCRambl
 {
 	Delimiters::Delimiters(Engine& eng) {
-		m_config = eng.AddConfiguration("Delimiters");
+		m_config = eng.AddConfig("Delimiters");
 	}
 
 	void Delimiters::AddDelimiterType(std::string name) {

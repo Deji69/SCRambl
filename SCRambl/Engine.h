@@ -94,9 +94,9 @@ namespace SCRambl
 			return pr.second ? &pr.first->second : nullptr;
 		}
 
-		Configuration* AddConfiguration(const std::string & name) {
+		/*Configuration* AddConfiguration(const std::string & name) {
 			return new Configuration(name);
-		}
+		}*/
 
 		/*/ Engine::AddConfig /*/
 		void AddConfig(Configuration* config) {

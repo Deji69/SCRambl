@@ -26,54 +26,51 @@ namespace SCRambl
 		inline virtual ~XMLConfig() { }
 
 	private:
-		std::map<std::string, std::shared_ptr<XMLObject>> m_Objects;
+		std::map<std::string, XMLObject> m_Objects;
 
-		void LoadChildXML(XMLRange root, std::shared_ptr<void> ptr = nullptr);
+		void LoadChildXML(XMLRange root, void* ptr = nullptr);
 
 	public:
 		XMLConfig() { }
 
-		XMLConfig& AddClass(const std::string&);
+		XMLConfig* AddClass(const std::string&);
 		
 		template<typename T>
-		inline XMLConfig& AddClass(const std::string & name, T& func) {
-			auto obj = std::make_shared<XMLObject>(func);
-			m_Objects.emplace(name, obj);
-			return *obj;
+		inline XMLConfig* AddClass(const std::string & name, T& func) {
+			auto pr = m_Objects.emplace(name, func);
+			return pr.second ? &pr.first->second : nullptr;
 		}
 	};
 
 	class XMLObject : public XMLConfig
 	{
 		friend class Configuration;
-		std::shared_ptr<void> m_Func;
+		std::function<void(const XMLNode, void*&)> m_Func;
 
 	public:
 		XMLObject() = default;
 		template<typename T>
 		XMLObject(T& func) {
-			m_Func = std::make_shared<decltype(to_function(func))>(to_function(func));
+			m_Func = func;
 		}
+		~XMLObject() { }
 
-		std::shared_ptr<void> LoadXML(XMLNode node, std::shared_ptr<void> theptr = nullptr);
+		void* LoadXML(XMLNode node, void* theptr = nullptr);
 	};
 
 	class XMLConfiguration
 	{
 	private:
 		std::string m_Name;
-		std::map<std::string, std::shared_ptr<XMLObject>> m_Objects;
+		std::map<std::string, XMLObject> m_Objects;
 
 	public:
-		typedef std::shared_ptr<XMLConfiguration> Shared;
-
 		XMLConfiguration(std::string name);
 		
 		template<typename T>
-		inline XMLConfig & AddClass(const std::string & name, T& func) {
-			auto obj = std::make_shared<XMLObject>(func);
-			m_Objects.emplace(name, obj);
-			return *obj;
+		XMLConfig* AddClass(const std::string& name, T& func) {
+			auto pr = m_Objects.emplace(name, func);
+			return pr.second ? &pr.first->second : nullptr;
 		}
 
 		void LoadXML(XMLNode main_node);
@@ -83,14 +80,12 @@ namespace SCRambl
 	 * Configuration - Configurable component
 	 * AKA big ugly wrapper for SCR XML loading
 	\*/
-	class Configuration
+	/*class Configuration
 	{
 	private:
 		std::string								m_Name;
 
 	public:
-		typedef std::shared_ptr<Configuration> Shared;
-
 		Configuration(std::string name) : m_Name(name)
 		{ }
 		virtual ~Configuration() { }
@@ -108,38 +103,36 @@ namespace SCRambl
 			inline virtual ~Config() { }
 
 		private:
-			std::map<std::string, std::shared_ptr<Object>>	m_Objects;
+			std::map<std::string, Object> m_Objects;
 
-			void LoadChildXML(pugi::xml_object_range<pugi::xml_node_iterator> root, std::shared_ptr<void> ptr = nullptr) {
+			void LoadChildXML(pugi::xml_object_range<pugi::xml_node_iterator> root, void* ptr = nullptr) {
 				if (m_Objects.empty()) return;
 				for (auto node : root) {
 					auto it = m_Objects.find(node.name());
 					if (it != m_Objects.end())
 					{
-						auto obj = it->second;
-						auto new_ptr = obj->LoadXML(node, ptr);
-						obj->LoadChildXML(node.children(), new_ptr);
+						auto& obj = it->second;
+						auto new_ptr = obj.LoadXML(node, ptr);
+						obj.LoadChildXML(node.children(), new_ptr);
 						continue;
 					}
 				}
 			}
 
 		public:
-			inline Config & AddClass(const std::string & name) {
-				auto obj = std::make_shared<Object>();
-				m_Objects.emplace(name, obj);
-				return *obj;
+			inline Config* AddClass(const std::string & name) {
+				auto pr = m_Objects.emplace(name, Object());
+				return pr.second ? &pr.first->second : nullptr;
 			}
 			template<typename T>
 			inline Config & AddClass(const std::string & name, T& func) {
-				auto obj = std::make_shared<Object>(func);
-				m_Objects.emplace(name, obj);
-				return *obj;
+				auto pr = m_Objects.emplace(name, func);
+				return pr.second ? &pr.first->second : nullptr;
 			}
 		};
 		class Object : public Config {
 			friend class Configuration;
-			std::shared_ptr<void> m_Func;
+			std::unique_ptr<void> m_Func;
 
 		public:
 			Object() = default;
@@ -147,29 +140,27 @@ namespace SCRambl
 			template<typename T>
 			Object(T& func)
 			{
-				m_Func = std::make_shared<decltype(to_function(func))>(to_function(func));
+				m_Func = std::make_unique<decltype(to_function(func))>(to_function(func));
 			}
 
 		private:
-			std::shared_ptr<void> LoadXML(pugi::xml_node node, std::shared_ptr<void> theptr = nullptr)
+			void* LoadXML(XMLNode node, void* theptr = nullptr)
 			{
 				if (m_Func) {
-					auto & func = *static_cast<std::function<void(const pugi::xml_node, std::shared_ptr<void> &)>*>(m_Func.get());
+					auto & func = *static_cast<std::function<void(const XMLNode, void* &)>*>(m_Func.get());
 					func(node, theptr);
 				}
 				return theptr;
 			}
 		};
 
-		std::map<std::string, std::shared_ptr<Object>>			m_Objects;
+		std::map<std::string, Object*> m_Objects;
 
 	public:
 		template<typename T>
-		inline Config & AddClass(const std::string & name, T& func)
-		{
-			auto obj = std::make_shared<Object>(func);
-			m_Objects.emplace(name, obj);
-			return *obj;
+		inline Config* AddClass(const std::string & name, T& func) {
+			auto pr = m_Objects.emplace(name, func);
+			return pr.second ? &pr.first->second : nullptr;
 		}
 		
 		int LoadXML(pugi::xml_node master_node)
@@ -190,5 +181,5 @@ namespace SCRambl
 			}
 			return 0;
 		}
-	};/**/
+	};*/
 }

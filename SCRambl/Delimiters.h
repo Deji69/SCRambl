@@ -21,9 +21,9 @@ namespace SCRambl
 		Delimiter(int type, std::string beg, std::string end) : m_type(type), m_open(beg), m_close(end)
 		{ }
 
-		inline int Type() const						{ return m_type; }
-		inline const std::string& Open() const		{ return m_open; }
-		inline const std::string& Close() const		{ return m_close; }
+		inline int Type() const { return m_type; }
+		inline const std::string& Open() const { return m_open; }
+		inline const std::string& Close() const { return m_close; }
 
 	private:
 		int m_type;
@@ -59,7 +59,7 @@ namespace SCRambl
 		}*/
 
 	private:
-		Configuration* m_config;
+		XMLConfiguration* m_config;
 		std::vector<Delimiter> m_delimiters;
 		std::unordered_map<std::string, Delimiter *> m_openingDelims;
 		std::unordered_map<std::string, Delimiter *> m_closingDelims;

@@ -58,7 +58,7 @@ namespace SCRambl
 				auto& token = m_CommandTokenIt->GetToken()->Get<Tokens::Identifier::Info<>>();
 				auto range = token.GetValue<Tokens::Identifier::ScriptRange>();
 				// TODO: fix this weirdness
-				m_CommandTokenIt->SetToken(m_Build.CreateToken<CommandInfo>(range.Begin(), Tokens::Type::Command, range, m_CurrentCommand)->GetToken());
+				m_CommandTokenIt->SetToken(m_Build.CreateToken<CommandInfo>(range.Begin(), Tokens::Type::Command, range, m_CurrentCommand).GetToken());
 				
 				m_State = parsing;
 				return;

@@ -14,7 +14,7 @@ namespace SCRambl
 {
 	void Constants::Init(Build& build) {
 		m_Config = build.AddConfig("Constants");
-		auto& conf_constant = m_Config->AddClass("Constant", [this](const XMLNode xml, void*& obj){
+		auto conf_constant = m_Config->AddClass("Constant", [this](const XMLNode xml, void*& obj){
 			if (auto attr_name = xml.GetAttribute("Name")) {
 				auto name = attr_name.GetValue().AsString();
 				if (auto attr_val = xml.GetAttribute("Value")) {
@@ -25,13 +25,13 @@ namespace SCRambl
 			}
 			obj = nullptr;
 		});
-		auto& conf_enum = m_Config->AddClass("Enum", [this](const XMLNode xml, void*& obj){
+		auto conf_enum = m_Config->AddClass("Enum", [this](const XMLNode xml, void*& obj){
 			if (auto attr_name = xml.GetAttribute("Name")) {
 				auto name = attr_name.GetValue().AsString();
 				obj = this->AddEnum(name);
 			}
 		});
-		conf_enum.AddClass("Constant", [this](const XMLNode xml, void* & obj){
+		conf_enum->AddClass("Constant", [this](const XMLNode xml, void* & obj){
 			;
 			if (auto attr_name = xml.GetAttribute("Name")) {
 				auto name = attr_name.GetValue().AsString();

@@ -30,7 +30,7 @@ namespace SCRambl
 	class Project
 	{
 		std::string m_Name;
-		BuildConfig::Shared m_Config;
+		BuildConfig* m_Config;
 		std::vector<ProjectFile> m_Sources;
 		std::unordered_map<std::string, ProjectTarget> m_Targets;
 
@@ -40,9 +40,9 @@ namespace SCRambl
 		{ }
 
 		inline void SetName(std::string name) { m_Name = name; }
-		inline void SetConfig(BuildConfig::Shared conf) { m_Config = conf; }
+		inline void SetConfig(BuildConfig* conf) { m_Config = conf; }
 		inline const std::string& GetName() const { return m_Name; }
-		inline BuildConfig::Shared GetConfig() const { return m_Config; }
+		inline BuildConfig* GetConfig() const { return m_Config; }
 
 		inline void AddSource(std::string path) {
 			m_Sources.emplace_back(path);
