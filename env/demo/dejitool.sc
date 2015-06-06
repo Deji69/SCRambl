@@ -4,6 +4,7 @@
 */
 
 VAR_INT var1
+++var1
 var1 = 0
 SCRIPT_NAME tool
 {
