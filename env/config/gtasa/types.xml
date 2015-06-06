@@ -114,36 +114,36 @@
 			</Type> - End Type declaration
 		-->
 		<Type Name="VAR_INT">
-			<Variable Type="VAR" Basic="INT" />
-			<Array Type="VAR_ARRAY" Basic="INT" />
+			<Variable Type="VAR" Value="INT" />
+			<Array Type="VAR_ARRAY" Value="INT" />
 		</Type>
 		<Type Name="VAR_FLOAT">
-			<Variable Type="VAR" Basic="FLOAT" />
-			<Array Type="VAR_ARRAY" Basic="FLOAT" />
+			<Variable Type="VAR" Value="FLOAT" />
+			<Array Type="VAR_ARRAY" Value="FLOAT" />
 		</Type>
 		<Type Name="VAR_TEXT_LABEL">
-			<Variable Type="VAR" Basic="TEXT_LABEL" />
-			<Array Type="VAR_ARRAY" Basic="TEXT_LABEL" />
+			<Variable Type="VAR" Value="TEXT_LABEL" />
+			<Array Type="VAR_ARRAY" Value="TEXT_LABEL" />
 		</Type>
 		<Type Name="VAR_STRING">
-			<Variable Type="VAR" Basic="STRING" />
-			<Array Type="VAR_ARRAY" Basic="STRING" />
+			<Variable Type="VAR" Value="STRING" />
+			<Array Type="VAR_ARRAY" Value="STRING" />
 		</Type>
 		<Type Name="LVAR_INT">
-			<Variable Type="LVAR" Basic="INT" />
-			<Array Type="LVAR_ARRAY" Basic="INT" />
+			<Variable Type="LVAR" Value="INT" />
+			<Array Type="LVAR_ARRAY" Value="INT" />
 		</Type>
 		<Type Name="LVAR_FLOAT">
-			<Variable Type="LVAR" Basic="FLOAT" />
-			<Array Type="LVAR_ARRAY" Basic="FLOAT" />
+			<Variable Type="LVAR" Value="FLOAT" />
+			<Array Type="LVAR_ARRAY" Value="FLOAT" />
 		</Type>
 		<Type Name="LVAR_TEXT_LABEL">
-			<Variable Type="LVAR" Basic="TEXT_LABEL" />
-			<Array Type="LVAR_ARRAY" Basic="TEXT_LABEL" />
+			<Variable Type="LVAR" Value="TEXT_LABEL" />
+			<Array Type="LVAR_ARRAY" Value="TEXT_LABEL" />
 		</Type>
 		<Type Name="LVAR_STRING">
-			<Variable Type="LVAR" Basic="STRING" />
-			<Array Type="LVAR_ARRAY" Basic="STRING" />
+			<Variable Type="LVAR" Value="STRING" />
+			<Array Type="LVAR_ARRAY" Value="STRING" />
 		</Type>
 	</BasicTypes>
 	

@@ -79,6 +79,23 @@ namespace SCRambl
 		class Extended;
 		class Variable;
 
+		/* Types::VarType */
+		class VarType {
+			friend class Types;
+			Variable* m_VarType = nullptr;
+			Type* m_ValueType = nullptr;
+
+		public:
+			VarType() = default;
+			VarType(Variable* varType, Type* valType) : m_VarType(varType), m_ValueType(valType)
+			{ }
+
+			Type* GetValue() const { return m_ValueType; }
+			Variable* GetType() const { return m_VarType; }
+			void SetValue(Type* type) { m_ValueType = type; }
+			void SetType(Variable* type) { m_VarType = type; }
+		};
+
 		/* Types::Type */
 		class Type {
 			void CopyValues(const Type&);
@@ -122,6 +139,8 @@ namespace SCRambl
 			const Basic* ToBasic() const;
 			const Extended* ToExtended() const;
 			const Variable* ToVariable() const;
+			VarType* GetVarType() const;
+			VarType* GetArrayType() const;
 
 			bool HasValueType(ValueSet type) const;
 			template<typename TValue = Value>
@@ -143,9 +162,9 @@ namespace SCRambl
 
 			/*\ Types::Types::AllValues - Calls the requested function for each Value this Type contains \*/
 			template<typename TValue, typename TFunc>
-			void AllValues(TFunc func) {
+			void AllValues(TFunc func) const {
 				for (auto v : m_Values) {
-					func(static_cast<TValue*>(v));
+					if (func(static_cast<TValue*>(v))) break;
 				}
 			}
 
@@ -158,8 +177,6 @@ namespace SCRambl
 		class Basic : public Type
 		{
 		public:
-			using Shared = std::shared_ptr<Basic>;
-
 			Basic(std::string name) : Type(name, TypeSet::Basic)
 			{ }
 		
@@ -178,8 +195,6 @@ namespace SCRambl
 			XMLValue m_MaxIndex = LONG_MAX;
 
 		public:
-			using Shared = std::shared_ptr<Variable>;
-
 			Variable(std::string name, XMLValue scope, XMLValue isarray) : Type(name, TypeSet::Variable),
 				m_Scope(scope), m_IsArray(isarray)
 			{ }
@@ -249,6 +264,24 @@ namespace SCRambl
 				auto it = m_Map.find(name);
 				return it != m_Map.end() ? Get(it->second) : nullptr;
 			}
+			Type* Get(size_t id) {
+				return id < m_Vector.size() ? Get(m_Vector[id]) : nullptr;
+			}
+			size_t GetSize() const {
+				return m_Vector.size();
+			}
+			size_t GetCapacity() const {
+				return m_Vector.capacity();
+			}
+			
+			template<typename TFunc>
+			size_t Walk(TFunc func) {
+				size_t n = 0;
+				for (; n < GetSize(); ++n) {
+					if (func(Get(n))) break;
+				}
+				return n;
+			}
 
 		private:
 			Map m_Map;
@@ -292,8 +325,6 @@ namespace SCRambl
 		class DataSourceSet : public AttributeSet < DataSourceID >
 		{
 		public:
-			using Shared = std::shared_ptr < DataSourceSet > ;
-
 			DataSourceSet() : AttributeSet(DataSourceID::None)
 			{
 				AddAttribute("Value", DataSourceID::Value);
@@ -311,8 +342,6 @@ namespace SCRambl
 		class DataAttributeSet<DataSourceID::Value> : public AttributeSet<DataAttributeID>
 		{
 		public:
-			using Shared = std::shared_ptr<DataAttributeSet>;
-
 			DataAttributeSet() : AttributeSet(DataAttributeID::None)
 			{
 				AddAttribute("Value", DataAttributeID::Value);
@@ -331,8 +360,6 @@ namespace SCRambl
 		class DataAttributeSet<DataSourceID::Command> : public AttributeSet<DataAttributeID>
 		{
 		public:
-			using Shared = std::shared_ptr<DataAttributeSet>;
-
 			DataAttributeSet() : AttributeSet(DataAttributeID::None)
 			{
 				AddAttribute("ID", DataAttributeID::ID);
@@ -343,8 +370,6 @@ namespace SCRambl
 		class DataAttributeSet<DataSourceID::Label> : public AttributeSet<DataAttributeID>
 		{
 		public:
-			using Shared = std::shared_ptr<DataAttributeSet>;
-
 			DataAttributeSet() : AttributeSet(DataAttributeID::None)
 			{
 				AddAttribute("Offset", DataAttributeID::Offset);
@@ -355,8 +380,6 @@ namespace SCRambl
 		class DataAttributeSet<DataSourceID::Variable> : public AttributeSet<DataAttributeID>
 		{
 		public:
-			using Shared = std::shared_ptr<DataAttributeSet>;
-
 			DataAttributeSet() : AttributeSet(DataAttributeID::None)
 			{
 				AddAttribute("Index", DataAttributeID::Index);
@@ -516,6 +539,23 @@ namespace SCRambl
 			{ }
 		};
 
+		class VariableValueAttributes {
+			friend class Types;
+			Types* m_Types = nullptr;
+			
+			XMLValue m_Type;
+			XMLValue m_Value;
+
+		public:
+			VariableValueAttributes(XMLValue type, XMLValue value) : m_Type(type), m_Value(value)
+			{ }
+
+			//void SetVarType(Variable* type) { m_VarType.SetType(type); }
+			//void SetValType(Type* type) { m_VarType.SetValue(type); }
+			//void SetType(VarType type) { m_VarType = type; }
+			VarType GetVarType() const;
+		};
+
 		class NumberValue : public Value
 		{
 		public:
@@ -554,22 +594,67 @@ namespace SCRambl
 			CommandValue(Type* type, size_t size) : Value(type, ValueSet::Command, size)
 			{ }
 		};
-		class VariableValue : public Value {
+		class VariableValue : public Value, public VariableValueAttributes {
 		public:
-			VariableValue(Type* type, size_t size) : Value(type, ValueSet::Variable, size)
+			VariableValue(Type* type, size_t size, XMLValue var, XMLValue val) : Value(type, ValueSet::Variable, size),
+				VariableValueAttributes(var, val)
 			{ }
 		};
-		class ArrayValue : public Value {
+		class ArrayValue : public Value, public VariableValueAttributes {
 		public:
-			ArrayValue(Type* type, size_t size) : Value(type, ValueSet::Array, size)
+			ArrayValue(Type* type, size_t size, XMLValue var, XMLValue val) : Value(type, ValueSet::Array, size),
+				VariableValueAttributes(var, val)
 			{ }
 		};
 
 		class Types {
+			struct VarValToUpdate {
+				VarType& varType;
+				bool isArray;
+				bool isValue;
+
+				VarValToUpdate(VarType& type, bool isarr, bool isval) : varType(type), isArray(isarr && !isval), isValue(isval)
+				{ }
+			};
+
 			XMLConfiguration* m_Config;
 			Storage m_Types;
 			std::multimap<ValueSet, Value*> m_Values;
 			std::vector<Translation> m_Translations;
+			
+			std::unordered_multimap<std::string, VarValToUpdate> m_ValsToUpdate;
+			std::unordered_multimap<Type*, Type**> m_TypePointers;
+
+			void UpdatePointer(Type* type, Type* new_ptr) {
+				if (type == new_ptr) return;
+				auto rg = m_TypePointers.equal_range(type);
+				if (rg.first != rg.second) {
+					for (auto it = rg.first; it != rg.second; ++it) {
+						*it->second = new_ptr;
+						m_TypePointers.emplace(new_ptr, it->second);
+					}
+					m_TypePointers.erase(rg.first, rg.second);
+				}
+			}
+			std::vector<Type*> GetAllTypesVector() {
+				std::vector<Type*> vec;
+				m_Types.Walk([&vec](Type* type) {
+					vec.emplace_back(type);
+					return false;
+				});
+				return vec;
+			}
+			size_t UpdatePointers(std::vector<Type*> old) {
+				size_t i = 0;
+				m_Types.Walk([this,&old,&i](Type* type) {
+					if (i < old.size()) {
+						UpdatePointer(old[i++], type);
+						return i >= old.size();
+					}
+					return true;
+				});
+				return i;
+			}
 			
 		public:
 			Types();
@@ -616,16 +701,31 @@ namespace SCRambl
 				return DataAttributeID::None;
 			}
 
+			/*template<typename T>
+			inline void AddTypePointer(T** optr) {
+				auto ptr = reinterpret_cast<Type**>(optr);
+				m_TypePointers.emplace(*ptr, ptr);
+			}*/
+
 			inline Type* AddType(std::string name) {
+				auto old = GetAllTypesVector();
+				size_t cap = m_TypePointers.empty() ? 0 : m_Types.GetCapacity();
 				auto shared = m_Types.AddBasic(name);
+				if (!m_TypePointers.empty() && cap != m_Types.GetCapacity()) UpdatePointers(old);
 				return shared;
 			}
 			inline Extended* AddExtendedType(std::string name, Basic* basic = nullptr) {
+				auto old = GetAllTypesVector();
+				size_t cap = m_TypePointers.empty() ? 0 : m_Types.GetCapacity();
 				auto type = m_Types.AddExtended(name, basic);
+				if (!m_TypePointers.empty() && cap != m_Types.GetCapacity()) UpdatePointers(old);
 				return type;
 			}
 			inline Variable* AddVariableType(std::string name, XMLValue scope, bool is_array = false) {
+				auto old = GetAllTypesVector();
+				size_t cap = m_TypePointers.empty() ? 0 : m_Types.GetCapacity();
 				auto type = m_Types.AddVariable(name, scope, is_array);
+				if (!m_TypePointers.empty() && cap != m_Types.GetCapacity()) UpdatePointers(old);
 				return type;
 			}
 			inline Type* GetType(std::string name) {

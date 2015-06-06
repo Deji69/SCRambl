@@ -38,7 +38,46 @@ namespace SCRambl
 		}
 #endif
 
+		/* VariableValueAttributes */
+		VarType VariableValueAttributes::GetVarType() const {
+			auto type = m_Types->GetType(m_Type.AsString());
+			auto valtype = m_Types->GetType(m_Value.AsString());
+			if (!type) BREAK();
+			else if (!type->IsVariableType()) {
+				BREAK();
+				type = nullptr;
+			}
+			if (!valtype) BREAK();
+			else if (valtype->IsVariableType()) {
+				BREAK();
+				valtype = nullptr;
+			}
+			return VarType(type ? type->ToVariable() : nullptr, valtype);
+		}
+
 		/* Type */
+		VarType* Type::GetVarType() const {
+			VariableValue* value = nullptr;
+			AllValues<Value>([&value](Value* val){
+				if (val->GetValueType() == ValueSet::Variable) {
+					value = &val->Extend<VariableValue>();
+					return true;
+				}
+				return false;
+			});
+			return value ? &value->GetVarType() : nullptr;
+		}
+		VarType* Type::GetArrayType() const {
+			ArrayValue* value = nullptr;
+			AllValues<Value>([&value](Value* val){
+				if (val->GetValueType() == ValueSet::Array) {
+					value = &val->Extend<ArrayValue>();
+					return true;
+				}
+				return false;
+			});
+			return value ? &value->GetVarType() : nullptr;
+		}
 		bool Type::HasValueType(ValueSet type) const {
 			for (auto& val : m_Values) {
 				if (val->GetValueType() == type)
@@ -46,15 +85,15 @@ namespace SCRambl
 			}
 			return false;
 		}
-		Basic* Type::ToBasic() { return IsBasicType() ? static_cast<Basic*>(this) : nullptr; }
-		Extended* Type::ToExtended() { return IsBasicType() ? static_cast<Extended*>(this) : nullptr; }
-		Variable* Type::ToVariable() { return IsBasicType() ? static_cast<Variable*>(this) : nullptr; }
-		const Basic* Type::ToBasic() const { return IsBasicType() ? static_cast<const Basic*>(this) : nullptr; }
-		const Extended* Type::ToExtended() const { return IsBasicType() ? static_cast<const Extended*>(this) : nullptr; }
-		const Variable* Type::ToVariable() const { return IsBasicType() ? static_cast<const Variable*>(this) : nullptr; }
 		bool Type::IsBasicType() const { return GetType() == TypeSet::Basic; }
 		bool Type::IsExtendedType() const { return GetType() == TypeSet::Extended; }
 		bool Type::IsVariableType() const { return GetType() == TypeSet::Variable; }
+		Basic* Type::ToBasic() { return IsBasicType() ? static_cast<Basic*>(this) : nullptr; }
+		Extended* Type::ToExtended() { return IsExtendedType() ? static_cast<Extended*>(this) : nullptr; }
+		Variable* Type::ToVariable() { return IsVariableType() ? static_cast<Variable*>(this) : nullptr; }
+		const Basic* Type::ToBasic() const { return IsBasicType() ? static_cast<const Basic*>(this) : nullptr; }
+		const Extended* Type::ToExtended() const { return IsExtendedType() ? static_cast<const Extended*>(this) : nullptr; }
+		const Variable* Type::ToVariable() const { return IsVariableType() ? static_cast<const Variable*>(this) : nullptr; }
 		void Type::CopyValues(const Type& other) {
 			for (auto val : other.m_Values) {
 				m_Values.emplace_back(val);
@@ -102,15 +141,47 @@ namespace SCRambl
 			});
 			auto variable = type->AddClass("Variable", [this](const XMLNode vec, void*& obj) {
 				auto type = static_cast<Type*>(obj);
-				auto value = type->AddValue<VariableValue>(type, vec["Size"]->AsNumber<uint32_t>());
-				AddValue(ValueSet::Variable, value);
-				obj = value;
+				auto type_attr = vec["Type"]->AsString();
+				auto value_attr = vec["Value"]->AsString();
+				obj = nullptr;
+
+				if (type_attr.empty()) {
+					// error: type attribute not specified
+					BREAK();
+				}
+				else if (value_attr.empty()) {
+					// error: value attribute not specified
+					BREAK();
+				}
+				else {
+					auto value = type->AddValue<VariableValue>(type, vec["Size"]->AsNumber<uint32_t>(), type_attr, value_attr);
+					value->m_Types = this;
+
+					AddValue(ValueSet::Variable, value);
+					obj = value;
+				}
 			});
 			auto array_var = type->AddClass("Array", [this](const XMLNode vec, void*& obj) {
 				auto type = static_cast<Type*>(obj);
-				auto value = type->AddValue<ArrayValue>(type, vec["Size"]->AsNumber<uint32_t>());
-				AddValue(ValueSet::Array, value);
-				obj = value;
+				auto type_attr = vec["Type"]->AsString();
+				auto value_attr = vec["Value"]->AsString();
+				obj = nullptr;
+
+				if (type_attr.empty()) {
+					// error: type attribute not specified
+					BREAK();
+				}
+				else if (value_attr.empty()) {
+					// error: value attribute not specified
+					BREAK();
+				}
+				else {
+					auto value = type->AddValue<ArrayValue>(type, vec["Size"]->AsNumber<uint32_t>(), type_attr, value_attr);
+					value->m_Types = this;
+
+					AddValue(ValueSet::Array, value);
+					obj = value;
+				}
 			});
 		}
 
@@ -118,71 +189,45 @@ namespace SCRambl
 
 			m_Config = build.AddConfig("VariableTypes");
 			{
-				auto vartype = m_Config->AddClass("VariableTypes", [this](const XMLNode vec, void*& obj) {
+				auto vartype = m_Config->AddClass("Type", [this](const XMLNode vec, void*& obj) {
 					auto scope = vec.GetAttribute("Scope").GetValue();
 					auto isarray = vec.GetAttribute("IsArray").GetValue();
-					auto type = AddVariableType(vec.GetAttribute("Name").GetValue().AsString(), scope, isarray.AsBool(false));
+					auto name = vec.GetAttribute("Name").GetValue().AsString();
+					auto type = AddVariableType(name, scope, isarray.AsBool(false));
+
+					auto rg = m_ValsToUpdate.equal_range(name);
+					if (rg.first != rg.second) {
+						for (auto it = rg.first; it != rg.second; ++it) {
+							if (it->second.isArray != isarray.AsBool(false))
+								BREAK();
+							if (it->second.isValue)
+								BREAK();
+
+							it->second.varType.m_VarType = type;
+						}
+					}
+
 					obj = type;
 				});
 			}
 
-			/*m_Config = m_Engine.AddConfig("VariableTypes");
-			{
-			auto& vartype = m_Config->AddClass("Type", [this](const pugi::xml_node vec, std::shared_ptr<void> & obj){
-			// store the command to the object pointer so we can access it again
-			SCR::VarScope scope;
-			unsigned long id = 0;
-			if (auto attr = vec.attribute("ID"))
-				id = attr.as_uint();
-
-			std::string name = vec.attribute("Name").as_string();
-
-			if (auto attr = vec.attribute("Scope"))
-			scope = SCR::VarScope(attr.as_string());
-
-			std::hash<std::string> hasher;
-			if (auto attr = vec.attribute("Hash"))
-			id = hasher(vec.attribute(attr.as_string()).as_string());
-			else
-			id = hasher(name);
-
-			auto type = AddVariableType(name, id, scope);
-			obj = type;
-			});
-			vartype.AddClass("Width", [this](const pugi::xml_node vec, std::shared_ptr<void> & obj){
-			/*auto vartype = std::static_pointer_cast<SCRambl::SCR::VarType<>>(obj);
-			bool is_variable = false;
-			if (auto attr = vec.attribute("Variable"))
-			is_variable = attr.as_bool(false);
-			Numbers::IntegerType size;
-			auto result = Numbers::StringToInt(vec.first_child().value(), size);
-			if (result == Numbers::ConvertResult::success) {
-			value->AddSize(size, is_variable);
-			}*\/
-			});
-			vartype.AddClass("Array", [this](const pugi::xml_node vec, std::shared_ptr<void> & obj){
-			auto vartype = std::static_pointer_cast<SCR::VarType<>>(obj);
-			vartype->SetIsArray(true);
-			});
-			}*/
-			
-			
 			m_Config = build.AddConfig("BasicTypes");
 			{
-				static const auto size_fun = [this](const XMLNode vec, void*& obj){
-					//auto value = std::static_pointer_cast<ValueExt>(obj);
-
-					/*size_t size = 0;
-					if (!vec.empty()) {
-					Numbers::IntegerType size;
-					if (Numbers::StringToInt(vec.value(), size) == Numbers::ConvertResult::success)
-					value->AddSize(size);
-					}*/
-				};
-
 				auto type = m_Config->AddClass("Type", [this](const XMLNode vec, void*& obj){
 					// store the command to the object pointer so we can access it again
-					auto type = AddType(vec.GetAttribute("Name").GetValue().AsString());
+					auto name = vec.GetAttribute("Name").GetValue().AsString();
+					auto type = AddType(name);
+
+					auto rg = m_ValsToUpdate.equal_range(name);
+					if (rg.first != rg.second) {
+						for (auto it = rg.first; it != rg.second; ++it) {
+							if (!it->second.isValue)
+								BREAK();
+
+							it->second.varType.m_ValueType = type;
+						}
+					}
+
 					obj = type;
 					//std::cout << "Type: name " << type->GetName() << ", id " << type->GetID() << "\n";
 				});
@@ -200,7 +245,18 @@ namespace SCRambl
 						id = hasher(vec.GetAttribute(attr.GetValue().AsString()).GetValue().AsString());
 					}
 
-					auto type = AddExtendedType(vec.GetAttribute("Name").GetValue().AsString());
+					auto name = vec.GetAttribute("Name").GetValue().AsString();
+					auto type = AddExtendedType(name);
+
+					auto rg = m_ValsToUpdate.equal_range(name);
+					if (rg.first != rg.second) {
+						for (auto it = rg.first; it != rg.second; ++it) {
+							if (!it->second.isValue)
+								BREAK();
+
+							it->second.varType.m_ValueType = type;
+						}
+					}
 
 					// store the type to the object pointer so we can access it again
 					obj = type;
@@ -225,6 +281,7 @@ namespace SCRambl
 								if (valtype == ValueSet::INVALID || valtype == value->GetValueType())
 									value->SetTranslation(translation);
 							}
+							return false;
 						});
 
 						obj = translation;
@@ -303,6 +360,7 @@ namespace SCRambl
 				});
 			}
 		}
+
 		Types::Types()
 		{ }
 	}
