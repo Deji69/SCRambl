@@ -28,6 +28,12 @@ namespace SCRambl
 	#define BREAK() do{}while(0)
 #endif
 
+#if (_MSC_VER <= 1800)
+	#define NOTHROW
+#else
+	#define NOTHROW nothrow
+#endif
+
 #include "utils/hash.h"
 #include "utils/utf8.h"
 #include "utils/ansi.h"
@@ -72,6 +78,41 @@ namespace SCRambl
 		inline bool operator()(T v) {
 			return vec.end() != std::find(vec.begin(), vec.end(), v);
 		}
+	};
+
+	template<typename T, typename TIt = size_t>
+	class VecRef {
+	public:
+		using Vec = std::vector<T>;
+		VecRef() = default;
+		VecRef(const VecRef& v) = default;
+		VecRef(Vec* vec, TIt index) : m_Vector(vec), m_Index(index)
+		{ }
+		VecRef(Vec& vec, TIt index) : m_Vector(&vec), m_Index(index)
+		{ }
+		~VecRef() { }
+
+		inline T& operator*() const { return *Ptr(); }
+		inline T* operator->() const { return Ptr(); }
+		inline operator bool() const { return OK(); }
+		inline bool operator==(const T& v) const { return Ptr() == v.Ptr(); }
+		inline bool operator!=(const T& v) const { return !(*this == v); }
+
+		bool OK() const {
+			return m_Vector != nullptr && m_Index < m_Vector->size();
+		}
+
+		T* Ptr() const {
+			return OK() ? &(*m_Vector)[m_Index] : nullptr;
+		}
+		T& Get() const {
+			return m_Vector.at(m_Index);
+		}
+		inline size_t Index() const { return m_Index; }
+
+	private:
+		Vec* const m_Vector = nullptr;
+		const TIt m_Index = 0;
 	};
 
 	class line
@@ -169,7 +210,7 @@ namespace SCRambl
 		return JoinInt32(ft.dwHighDateTime, ft.dwLowDateTime);
 	}
 
-	inline uint64_t 	GetFileModifiedTime(FILE *hFile)
+	inline uint64_t GetFileModifiedTime(FILE *hFile)
 	{
 		BY_HANDLE_FILE_INFORMATION fi;
 		GetFileInformationByHandle(hFile, &fi);

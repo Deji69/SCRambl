@@ -178,6 +178,7 @@ namespace SCRambl
 			States Parse_Neutral();
 			States Parse_Neutral_CheckIdentifier(IToken*);
 			States Parse_Neutral_CheckDelimiter(IToken*);
+			States Parse_Neutral_CheckOperator(IToken*);
 			States Parse_Type();
 			States Parse_Type_Varlist();
 			States Parse_Command();

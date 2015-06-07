@@ -189,6 +189,12 @@ namespace SCRambl
 		}
 		return false;
 	}
+	auto XMLValue::IsEmpty() const->bool {
+		return m_str.empty();
+	}
+	auto XMLValue::Size() const->size_t {
+		return m_str.size();
+	}
 	template<> auto XMLValue::AsNumber(int v) const->int { return sto<int>(m_str, v, [](std::string str){ return std::stoi(str); }); }
 	template<> auto XMLValue::AsNumber(long v) const->long { return sto<long>(m_str, v, [](std::string str){ return std::stol(str, nullptr, 0); }); }
 	template<> auto XMLValue::AsNumber(unsigned int v) const->unsigned int { return sto<unsigned long>(m_str, v, [](std::string str){ return std::stoul(str, nullptr, 0); }); }
@@ -246,6 +252,7 @@ namespace SCRambl
 		return m_str.empty() ? default_value : m_str;
 	}
 	auto XMLValue::Raw() const->std::string { return m_str; }
+	XMLValue::operator bool() const { return !IsEmpty(); }
 	XMLValue::XMLValue() { }
 	XMLValue::XMLValue(std::string str) : m_str(str) { }
 	XMLValue::XMLValue(const char* str) : m_str(str) { }

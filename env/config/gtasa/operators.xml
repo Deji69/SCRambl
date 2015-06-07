@@ -2,13 +2,37 @@
 
 <SCRambl Version="1.0" FileVersion="0.0.0.0">
     <Operators>
-		<Operator Type="=">
+		<Operator Name="=">
+			<!--- Val to var -->
 			<Operation ID="0x4" LHS="VAR_INT" RHS="INT" />
 			<Operation ID="0x5" LHS="VAR_FLOAT" RHS="FLOAT" />
 			<Operation ID="0x6" LHS="LVAR_INT" RHS="INT" />
 			<Operation ID="0x7" LHS="LVAR_FLOAT" RHS="FLOAT" />
+			<!-- Var to var -->
+			<Operation ID="0x84" LHS="VAR_INT" RHS="VAR_INT" />
+			<Operation ID="0x85" LHS="LVAR_INT" RHS="LVAR_INT" />
+			<Operation ID="0x86" LHS="VAR_FLOAT" RHS="VAR_FLOAT" />
+			<Operation ID="0x87" LHS="LVAR_FLOAT" RHS="LVAR_FLOAT" />
+			<Operation ID="0x88" LHS="VAR_FLOAT" RHS="LVAR_FLOAT" />
+			<Operation ID="0x89" LHS="LVAR_FLOAT" RHS="VAR_FLOAT" />
+			<Operation ID="0x8A" LHS="VAR_INT" RHS="LVAR_INT" />
+			<Operation ID="0x8B" LHS="LVAR_INT" RHS="VAR_INT" />
+			<!-- Text label to var -->
+			<Operation ID="0x5A9" LHS="VAR_TEXT_LABEL" RHS="TEXT_LABEL" Size="8" />
+			<Operation ID="0x5A9" LHS="VAR_TEXT_LABEL" RHS="VAR_TEXT_LABEL" />
+			<Operation ID="0x5A9" LHS="VAR_TEXT_LABEL" RHS="LVAR_TEXT_LABEL" />
+			<Operation ID="0x5AA" LHS="LVAR_TEXT_LABEL" RHS="TEXT_LABEL" Size="8" />
+			<Operation ID="0x5AA" LHS="LVAR_TEXT_LABEL" RHS="VAR_TEXT_LABEL" />
+			<Operation ID="0x5AA" LHS="LVAR_TEXT_LABEL" RHS="LVAR_TEXT_LABEL" />
+			<!-- String to var -->
+			<Operation ID="0x6D1" LHS="VAR_STRING" RHS="STRING" Size="16" />
+			<Operation ID="0x6D1" LHS="VAR_STRING" RHS="VAR_STRING" />
+			<Operation ID="0x6D1" LHS="VAR_STRING" RHS="LVAR_STRING" />
+			<Operation ID="0x6D2" LHS="LVAR_STRING" RHS="STRING" Size="16" />
+			<Operation ID="0x6D2" LHS="LVAR_STRING" RHS="VAR_STRING" />
+			<Operation ID="0x6D2" LHS="LVAR_STRING" RHS="LVAR_STRING" />
 		</Operator>
-		<Operator Type="+" Comp="+=">
+		<Operator Name="+" Comp="+=">
 			<Operation ID="0x8" LHS="VAR_INT" RHS="INT" />
 			<Operation ID="0x9" LHS="VAR_FLOAT" RHS="FLOAT" />
 			<Operation ID="0xA" LHS="LVAR_INT" RHS="INT" />
@@ -22,31 +46,84 @@
 			<Operation ID="0x5C" LHS="LVAR_INT" RHS="VAR_INT" />
 			<Operation ID="0x5D" LHS="LVAR_FLOAT" RHS="VAR_FLOAT" />
 		</Operator>
-		<Operator Type="-" Comp="-=">
+		<Operator Name="-" Comp="-=">
 			<Operation ID="0xC" LHS="VAR_INT" RHS="INT" />
 			<Operation ID="0xD" LHS="VAR_FLOAT" RHS="FLOAT" />
 			<Operation ID="0xE" LHS="LVAR_INT" RHS="INT" />
 			<Operation ID="0xF" LHS="LVAR_FLOAT" RHS="FLOAT" />
+			<Operation ID="0x60" LHS="VAR_INT" RHS="VAR_INT" />
+			<Operation ID="0x61" LHS="VAR_FLOAT" RHS="VAR_FLOAT" />
+			<Operation ID="0x62" LHS="LVAR_INT" RHS="LVAR_INT" />
+			<Operation ID="0x63" LHS="LVAR_FLOAT" RHS="LVAR_FLOAT" />
+			<Operation ID="0x64" LHS="LVAR_INT" RHS="VAR_INT" />
+			<Operation ID="0x65" LHS="LVAR_FLOAT" RHS="VAR_FLOAT" />
+			<Operation ID="0x66" LHS="VAR_INT" RHS="LVAR_INT" />
+			<Operation ID="0x67" LHS="VAR_FLOAT" RHS="LVAR_FLOAT" />
 		</Operator>
-		<Operator Type="*" Comp="*=">
+		<Operator Name="*" Comp="*=">
 			<Operation ID="0x10" LHS="VAR_INT" RHS="INT" />
 			<Operation ID="0x11" LHS="VAR_FLOAT" RHS="FLOAT" />
 			<Operation ID="0x12" LHS="LVAR_INT" RHS="INT" />
 			<Operation ID="0x13" LHS="LVAR_FLOAT" RHS="FLOAT" />
+			<Operation ID="0x68" LHS="VAR_INT" RHS="VAR_INT" />
+			<Operation ID="0x69" LHS="VAR_FLOAT" RHS="VAR_FLOAT" />
+			<Operation ID="0x6A" LHS="LVAR_INT" RHS="LVAR_INT" />
+			<Operation ID="0x6B" LHS="LVAR_FLOAT" RHS="LVAR_FLOAT" />
+			<Operation ID="0x6C" LHS="VAR_INT" RHS="INT" />
+			<Operation ID="0x6D" LHS="VAR_FLOAT" RHS="FLOAT" />
+			<Operation ID="0x6E" LHS="LVAR_INT" RHS="VAR_INT" />
+			<Operation ID="0x6F" LHS="LVAR_FLOAT" RHS="VAR_FLOAT" />
 		</Operator>
-		<Operator Type="/" Comp="/=">
+		<Operator Name="/" Comp="/=">
 			<Operation ID="0x14" LHS="VAR_INT" RHS="INT" />
 			<Operation ID="0x15" LHS="VAR_FLOAT" RHS="FLOAT" />
 			<Operation ID="0x16" LHS="LVAR_INT" RHS="INT" />
 			<Operation ID="0x17" LHS="LVAR_FLOAT" RHS="FLOAT" />
+			<Operation ID="0x70" LHS="VAR_INT" RHS="VAR_INT" />
+			<Operation ID="0x71" LHS="VAR_FLOAT" RHS="VAR_FLOAT" />
+			<Operation ID="0x72" LHS="LVAR_INT" RHS="LVAR_INT" />
+			<Operation ID="0x73" LHS="LVAR_FLOAT" RHS="LVAR_FLOAT" />
+			<Operation ID="0x74" LHS="VAR_INT" RHS="LVAR_INT" />
+			<Operation ID="0x75" LHS="LVAR_FLOAT" RHS="LVAR_FLOAT" />
+			<Operation ID="0x76" LHS="LVAR_INT" RHS="LVAR_INT" />
+			<Operation ID="0x77" LHS="LVAR_FLOAT" RHS="VAR_FLOAT" />
+		</Operator>
+		<Operator Name="+@" Comp="+=@">
+			<Operation ID="0x78" LHS="VAR_FLOAT" RHS="FLOAT" />
+			<Operation ID="0x79" LHS="LVAR_FLOAT" RHS="FLOAT" />
+			<Operation ID="0x7A" LHS="VAR_FLOAT" RHS="VAR_FLOAT" />
+			<Operation ID="0x7B" LHS="LVAR_FLOAT" RHS="LVAR_FLOAT" />
+			<Operation ID="0x7C" LHS="LVAR_FLOAT" RHS="VAR_FLOAT" />
+			<Operation ID="0x7D" LHS="VAR_FLOAT" RHS="LVAR_FLOAT" />
+		</Operator>
+		<Operator Name="-@" Comp="-=@">
+			<Operation ID="0x7E" LHS="VAR_FLOAT" RHS="FLOAT" />
+			<Operation ID="0x7F" LHS="LVAR_FLOAT" RHS="FLOAT" />
+			<Operation ID="0x80" LHS="VAR_FLOAT" RHS="VAR_FLOAT" />
+			<Operation ID="0x81" LHS="LVAR_FLOAT" RHS="LVAR_FLOAT" />
+			<Operation ID="0x82" LHS="LVAR_FLOAT" RHS="VAR_FLOAT" />
+			<Operation ID="0x83" LHS="VAR_FLOAT" RHS="LVAR_FLOAT" />
+		</Operator>
+		<Operator Name="=#">
+			<Operation ID="0x8C" LHS="VAR_INT" RHS="VAR_FLOAT" />
+			<Operation ID="0x8D" LHS="VAR_FLOAT" RHS="VAR_INT" />
+			<Operation ID="0x8E" LHS="LVAR_INT" RHS="VAR_FLOAT" />
+			<Operation ID="0x8F" LHS="LVAR_FLOAT" RHS="VAR_INT" />
+			<Operation ID="0x90" LHS="VAR_INT" RHS="LVAR_FLOAT" />
+			<Operation ID="0x91" LHS="VAR_FLOAT" RHS="LVAR_FLOAT" />
+			<Operation ID="0x92" LHS="LVAR_INT" RHS="LVAR_FLOAT" />
+			<Operation ID="0x93" LHS="LVAR_FLOAT" RHS="LVAR_INT" />
 		</Operator>
 		
-		<Operator Type="=" Comp="==" Not="!=" Cond="true">
+		<!-- Conditional-->
+		<Operator Name="=" Comp="==" Not="!=" Cond="true">
+			<!-- INT comparison -->
 			<Operation ID="0x38" LHS="VAR_INT" RHS="INT" />
 			<Operation ID="0x39" LHS="LVAR_INT" RHS="INT" />
 			<Operation ID="0x3A" LHS="VAR_INT" RHS="VAR_INT" />
 			<Operation ID="0x3B" LHS="LVAR_INT" RHS="LVAR_INT" />
 			<Operation ID="0x3C" LHS="VAR_INT" RHS="LVAR_INT" />
+			<!-- FLOAT comparison-->
 			<Operation ID="0x42" LHS="VAR_FLOAT" RHS="FLOAT" />
 			<Operation ID="0x43" LHS="LVAR_FLOAT" RHS="FLOAT" />
 			<Operation ID="0x44" LHS="VAR_FLOAT" RHS="VAR_FLOAT" />
@@ -54,16 +131,96 @@
 			<Operation ID="0x46" LHS="VAR_FLOAT" RHS="LVAR_FLOAT" />
 			<Operation ID="0x7D6" LHS="LVAR_INT" RHS="VAR_INT" />
 			<Operation ID="0x7D6" LHS="LVAR_FLOAT" RHS="VAR_FLOAT" />
+			<!-- TEXT_LABEL comparison -->
+			<Operation ID="0x5AD" LHS="VAR_TEXT_LABEL" RHS="TEXT_LABEL" />
+			<Operation ID="0x5AD" LHS="VAR_TEXT_LABEL" RHS="VAR_TEXT_LABEL" />
+			<Operation ID="0x5AD" LHS="VAR_TEXT_LABEL" RHS="LVAR_TEXT_LABEL" />
+			<Operation ID="0x5AE" LHS="LVAR_TEXT_LABEL" RHS="TEXT_LABEL" />
+			<Operation ID="0x5AE" LHS="LVAR_TEXT_LABEL" RHS="LVAR_TEXT_LABEL" />
+			<Operation ID="0x5AE" LHS="LVAR_TEXT_LABEL" RHS="VAR_TEXT_LABEL" />
+			<!-- STRING comparison -->
+			<Operation ID="0x8F9" LHS="VAR_STRING" RHS="STRING" />
+			<Operation ID="0x8F9" LHS="VAR_STRING" RHS="VAR_STRING" />
+			<Operation ID="0x8F9" LHS="VAR_STRING" RHS="LVAR_STRING" />
+			<Operation ID="0x8FA" LHS="LVAR_STRING" RHS="STRING" />
+			<Operation ID="0x8FA" LHS="LVAR_STRING" RHS="LVAR_STRING" />
+			<Operation ID="0x8FA" LHS="LVAR_STRING" RHS="VAR_STRING" />
+		</Operator>
+		<Operator Name=">" Not="<=" Cond="true">
+			<Operation ID="0x18" LHS="VAR_INT" RHS="INT" />
+			<Operation ID="0x19" LHS="LVAR_INT" RHS="INT" />
+			<Operation ID="0x1A" LHS="INT" RHS="VAR_INT" />
+			<Operation ID="0x1B" LHS="INT" RHS="LVAR_INT" />
+			<Operation ID="0x1C" LHS="VAR_INT" RHS="VAR_INT" />
+			<Operation ID="0x1D" LHS="LVAR_INT" RHS="LVAR_INT" />
+			<Operation ID="0x1E" LHS="VAR_INT" RHS="LVAR_INT" />
+			<Operation ID="0x1F" LHS="LVAR_INT" RHS="VAR_INT" />
+			<Operation ID="0x20" LHS="VAR_FLOAT" RHS="FLOAT" />
+			<Operation ID="0x21" LHS="LVAR_FLOAT" RHS="FLOAT" />
+			<Operation ID="0x22" LHS="FLOAT" RHS="VAR_FLOAT" />
+			<Operation ID="0x23" LHS="FLOAT" RHS="LVAR_FLOAT" />
+			<Operation ID="0x24" LHS="VAR_FLOAT" RHS="VAR_FLOAT" />
+			<Operation ID="0x25" LHS="LVAR_FLOAT" RHS="LVAR_FLOAT" />
+			<Operation ID="0x26" LHS="VAR_FLOAT" RHS="LVAR_FLOAT" />
+			<Operation ID="0x27" LHS="LVAR_FLOAT" RHS="VAR_FLOAT" />
+		</Operator>
+		<Operator Name=">=" Not="<" Cond="true">
+			<Operation ID="0x28" LHS="VAR_INT" RHS="INT" />
+			<Operation ID="0x29" LHS="LVAR_INT" RHS="INT" />
+			<Operation ID="0x2A" LHS="INT" RHS="VAR_INT" />
+			<Operation ID="0x2B" LHS="INT" RHS="LVAR_INT" />
+			<Operation ID="0x2C" LHS="VAR_INT" RHS="VAR_INT" />
+			<Operation ID="0x2D" LHS="LVAR_INT" RHS="LVAR_INT" />
+			<Operation ID="0x2E" LHS="VAR_INT" RHS="LVAR_INT" />
+			<Operation ID="0x2F" LHS="LVAR_INT" RHS="VAR_INT" />
+			<Operation ID="0x30" LHS="VAR_FLOAT" RHS="FLOAT" />
+			<Operation ID="0x31" LHS="LVAR_FLOAT" RHS="FLOAT" />
+			<Operation ID="0x32" LHS="FLOAT" RHS="VAR_FLOAT" />
+			<Operation ID="0x33" LHS="FLOAT" RHS="LVAR_FLOAT" />
+			<Operation ID="0x34" LHS="VAR_FLOAT" RHS="VAR_FLOAT" />
+			<Operation ID="0x35" LHS="LVAR_FLOAT" RHS="LVAR_FLOAT" />
+			<Operation ID="0x36" LHS="VAR_FLOAT" RHS="LVAR_FLOAT" />
+			<Operation ID="0x37" LHS="LVAR_FLOAT" RHS="VAR_FLOAT" />
 		</Operator>
 		
 		<!-- Pseudo -->
-		<Operator Type="++">
+		<Operator Name="++">
 			<Operation ID="0x8" LHS="VAR_INT" RHV="1" />
 			<Operation ID="0xA" LHS="LVAR_INT" RHV="1" />
 		</Operator>
-		<Operator Type="--">
+		<Operator Name="--">
 			<Operation ID="0xC" LHS="VAR_INT" RHV="1" />
 			<Operation ID="0xE" LHS="LVAR_INT" RHV="1" />
+		</Operator>
+		
+		<!-- CLEO 4.3 IntOperations -->
+		<Operator Name="&" Comp="&=">
+			<Operation ID="0xB17" LHS="VAR_INT" RHS="INT" />
+			<Operation ID="0xB17" LHS="LVAR_INT" RHS="INT" />
+		</Operator>
+		<Operator Name="|" Comp="|=">
+			<Operation ID="0xB18" LHS="VAR_INT" RHS="INT" />
+			<Operation ID="0xB18" LHS="LVAR_INT" RHS="INT" />
+		</Operator>
+		<Operator Name="^" Comp="^=">
+			<Operation ID="0xB19" LHS="VAR_INT" RHS="INT" />
+			<Operation ID="0xB19" LHS="LVAR_INT" RHS="INT" />
+		</Operator>
+		<Operator Name="~">
+			<Operation ID="0xB1A" LHS="VAR_INT" />
+			<Operation ID="0xB1A" LHS="LVAR_INT" />
+		</Operator>
+		<Operator Name="%" Comp="%=">
+			<Operation ID="0xB1B" LHS="VAR_INT" RHS="INT" />
+			<Operation ID="0xB1B" LHS="LVAR_INT" RHS="INT" />
+		</Operator>
+		<Operator Name=">>" Comp=">>=">
+			<Operation ID="0xB1C" LHS="VAR_INT" RHS="INT" />
+			<Operation ID="0xB1C" LHS="LVAR_INT" RHS="INT" />
+		</Operator>
+		<Operator Name="<<" Comp="<<=">
+			<Operation ID="0xB1D" LHS="VAR_INT" RHS="INT" />
+			<Operation ID="0xB1D" LHS="LVAR_INT" RHS="INT" />
 		</Operator>
 	</Operators>
 </SCRambl>

@@ -275,8 +275,8 @@ namespace SCRambl
 			using LexerToken = Lexer::Token<TokenType>;
 			using LexerMachine = Lexer::Lexer<TokenType>;
 			using DirectiveMap = std::unordered_map<std::string, Directive>;
-			using OperatorTable = Operator::Table<Operator::Type, Operator::max_operator>;
-			using OperatorScanner = Operator::Scanner<Operator::Type, Operator::max_operator>;
+			using OperatorTable = Operators::Table<Operators::Type, Operators::max_operator>;
+			using OperatorScanner = Operators::Scanner<Operators::Type, Operators::max_operator>;
 			template<typename... T>
 			using TToken = TokenInfo<Tokens::Type, T...>;
 
@@ -456,13 +456,13 @@ namespace SCRambl
 			int ProcessExpression(bool paren = false);
 
 			// Perform unary operation on passed value - returns false if no change could be made as the operator was unsupported
-			static bool ExpressUnary(Operator::Type op, int& val);
+			static bool ExpressUnary(Operators::Type op, int& val);
 
 			// Get current line number
-			inline long GetLineNumber() const			{ return m_CodePos.GetLine(); }
+			inline long GetLineNumber() const { return m_CodePos.GetLine(); }
 
 			// Get code of the current line
-			inline CodeLine& GetLineCode()				{ return m_CodePos.GetLine().GetCode(); }
+			inline CodeLine& GetLineCode() { return m_CodePos.GetLine().GetCode(); }
 
 			// Returns directive_invalid if it didnt exist
 			inline Directive GetDirective(const std::string& str) const {

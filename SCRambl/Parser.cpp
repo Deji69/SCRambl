@@ -166,6 +166,9 @@ namespace SCRambl
 			else BREAK();
 			return state_neutral;
 		}
+		States Parser::Parse_Neutral_CheckOperator(IToken* tok) {
+			return state_neutral;
+		}
 		States Parser::Parse_Neutral() {
 			States new_state = state_neutral;
 			switch (m_TokenIt->GetToken()->GetType<Tokens::Type>()) {
@@ -174,6 +177,9 @@ namespace SCRambl
 				break;
 			case Tokens::Type::Delimiter:
 				new_state = Parse_Neutral_CheckDelimiter(m_TokenIt->GetToken());
+				break;
+			case Tokens::Type::Operator:
+				new_state = Parse_Neutral_CheckOperator(m_TokenIt->GetToken());
 				break;
 			}
 			if (new_state == state_neutral)
@@ -512,7 +518,7 @@ namespace SCRambl
 				break;
 			}
 			case Tokens::Type::Operator: {
-				auto& token = ptr->GetToken()->Get<Tokens::Operator::Info<Operator::Type>>();
+				auto& token = ptr->GetToken()->Get<Tokens::Operator::Info<Operators::Type>>();
 				auto type = token.GetValue<Tokens::Operator::Parameter::OperatorType>();
 				auto rg = token.GetValue<Tokens::Operator::Parameter::ScriptRange>();
 				rg.Begin();
