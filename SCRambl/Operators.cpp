@@ -13,12 +13,13 @@ namespace SCRambl
 			auto operater = m_Config->AddClass("Operator", [this](const XMLNode xml, void*& obj){
 				// add operator
 				auto name = xml.GetAttribute("Name").GetValue();
+				auto not_attr = xml.GetAttribute("Not").GetValue();
 				if (name) {
-					auto op = Add(xml.GetAttribute("Name").GetValue().AsString());
+					auto op = Add(name.AsString(), not_attr.AsBool());
 					if (op) {
 						// map pseudonyms
+						auto cond_attr = xml.GetAttribute("Cond").GetValue();
 						auto comp_attr = xml.GetAttribute("Comp").GetValue();
-						auto not_attr = xml.GetAttribute("Not").GetValue();
 						if (comp_attr) Add(comp_attr.AsString(), op);
 						if (not_attr) Add(not_attr.AsString(), op);
 					}

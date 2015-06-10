@@ -249,20 +249,10 @@ namespace SCRambl
 
 			Delimiter() = default;
 			Delimiter(Type type) : m_Type(type) {}
-			/*Delimiter(Type type, char beg[2], char end[2] = 0) : m_Type(type) {
-				if (beg[1]) m_Open[1] = beg[1];
-				if (end[1]) m_Close[1] = end[1];
-				m_Open[0] = beg[0];
-				m_Close[0] = end[0];
-			}*/
 
-			//inline const std::array<char, 2>& Open() const { return m_Open; }
-			//inline const std::array<char, 2>& Close() const { return m_Close; }
 			inline operator Type() const { return m_Type; }
 			
 		private:
-			//std::array<char, 2> m_Open = { { '\0', '\0' } };
-			//std::array<char, 2> m_Close = { { '\0', '\0' } };
 			Type m_Type = None;
 		};
 
@@ -275,8 +265,8 @@ namespace SCRambl
 			using LexerToken = Lexer::Token<TokenType>;
 			using LexerMachine = Lexer::Lexer<TokenType>;
 			using DirectiveMap = std::unordered_map<std::string, Directive>;
-			using OperatorTable = Operators::Table<Operators::Type, Operators::max_operator>;
-			using OperatorScanner = Operators::Scanner<Operators::Type, Operators::max_operator>;
+			using OperatorTable = Operators::Table<Operators::Type>;
+			using OperatorScanner = Operators::Scanner<Operators::Type>;
 			template<typename... T>
 			using TToken = TokenInfo<Tokens::Type, T...>;
 
@@ -292,8 +282,6 @@ namespace SCRambl
 			LabelScanner m_LabelScanner;
 			StringLiteralScanner m_StringLiteralScanner;
 			WhitespaceScanner m_WhitespaceScanner;
-
-			
 
 			OperatorTable m_Operators;
 			OperatorScanner m_OperatorScanner;

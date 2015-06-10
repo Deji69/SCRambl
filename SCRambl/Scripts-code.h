@@ -415,9 +415,11 @@ namespace SCRambl
 
 			inline operator const std::pair<Position, Position>() const	{ return Get(); }
 			inline const std::pair<Position, Position> & Get() const	{ return m_Pair; }
-			inline const Position & Begin() const		{ return m_Pair.first; }
-			inline const Position & End() const			{ return m_Pair.second; }
-			inline std::string Format() const			{ return Formatter(*this); }
+			inline const Position & Begin() const { return m_Pair.first; }
+			inline const Position & begin() const { return Begin(); }
+			inline const Position & End() const { return m_Pair.second; }
+			inline const Position & end() const { return End(); }
+			inline std::string Format() const { return Formatter(*this); }
 		};
 	}
 }

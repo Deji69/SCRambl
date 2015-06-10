@@ -92,6 +92,11 @@ namespace SCRambl
 		{ }
 		~VecRef() { }
 
+		/*inline VecRef& operator=(const VecRef& v) {
+			m_Vector = v.m_Vector;
+			m_Index = v.m_Index;
+			return *this;
+		}*/
 		inline T& operator*() const { return *Ptr(); }
 		inline T* operator->() const { return Ptr(); }
 		inline operator bool() const { return OK(); }
@@ -111,8 +116,8 @@ namespace SCRambl
 		inline size_t Index() const { return m_Index; }
 
 	private:
-		Vec* const m_Vector = nullptr;
-		const TIt m_Index = 0;
+		Vec* m_Vector = nullptr;
+		TIt m_Index = 0;
 	};
 
 	class line

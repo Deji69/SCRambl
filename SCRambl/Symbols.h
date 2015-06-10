@@ -14,12 +14,11 @@
 
 namespace SCRambl
 {
-	class Grapheme
-	{
+	class Grapheme {
 	public:
 		enum ID : char {
-			not, hash, dollar, percent, and, left_parenthesis, right_parenthesis, asterisk,
-			plus, minus, slash, colon, semicolon, less, equals, more, condition,
+			not, hash, dollar, percent, and, left_paren, right_paren, multiply,
+			plus, minus, divide, colon, semicolon, less, equals, greater, condition,
 			at, backslash, caret, pipe, tilde,
 			max_type
 		};
@@ -33,11 +32,9 @@ namespace SCRambl
 		Grapheme(ID id) : m_ID(id)
 		{ }
 
-		inline operator ID() const	 { return m_ID; }
+		inline operator ID() const { return m_ID; }
 	};
-
-	class Symbol
-	{
+	class Symbol {
 	public:
 		enum Type : char {
 			whitespace,
@@ -69,7 +66,7 @@ namespace SCRambl
 		void GetCharSymbolType(char character)
 		{
 			struct charsetpair { Type first; Grapheme second; };
-			static const std::vector <charsetpair> character_set = {
+			static const std::vector<charsetpair> character_set = {
 				// Control chars
 				/* 00 */	{ /*NUL*/ eol },
 				/* 01-08 */	{ /*SOH*/ unknown },	{ /*STX*/ unknown },	{ /*ETX*/ unknown },	{ /*EOT*/ unknown },
@@ -87,14 +84,14 @@ namespace SCRambl
 							{ /* % */ punctuator, Grapheme::percent },
 							{ /* & */ punctuator, Grapheme::and },
 							{ /* ' */ delimiter },
-							{ /* ( */ punctuator, Grapheme::left_parenthesis },
-							{ /* ) */ punctuator, Grapheme::right_parenthesis },
-							{ /* * */ punctuator, Grapheme::asterisk },
+							{ /* ( */ punctuator, Grapheme::left_paren},
+							{ /* ) */ punctuator, Grapheme::right_paren},
+							{ /* * */ punctuator, Grapheme::multiply },
 							{ /* + */ punctuator, Grapheme::plus },
 							{ /* , */ separator },
 							{ /* - */ punctuator, Grapheme::minus },
 							{ /* . */ identifier },
-							{ /* / */ punctuator, Grapheme::slash },
+							{ /* / */ punctuator, Grapheme::divide },
 				/* 30-3F */	{ /* 0 */ number },		{ /* 1 */ number },		{ /* 2 */ number },		{ /* 3 */ number },
 							{ /* 4 */ number },		{ /* 5 */ number },		{ /* 6 */ number },		{ /* 7 */ number },
 							{ /* 8 */ number },		{ /* 9 */ number },
@@ -102,7 +99,7 @@ namespace SCRambl
 							{ /* ; */ punctuator, Grapheme::semicolon },
 							{ /* < */ punctuator, Grapheme::less },
 							{ /* = */ punctuator, Grapheme::equals },
-							{ /* > */ punctuator, Grapheme::more },
+							{ /* > */ punctuator, Grapheme::greater },
 							{ /* ? */ punctuator, Grapheme::condition },
 				/* 40-5F */	{ /* @ */ punctuator, Grapheme::at },
 							{ /* A */ identifier }, { /* B */ identifier }, { /* C */ identifier },
@@ -146,7 +143,7 @@ namespace SCRambl
 		Symbol(Type generic_type) :
 			m_Type(generic_type),
 			m_Character(GetGenericTypeChar(generic_type))
-		{}
+		{ }
 
 		inline char GetChar() const				{ return m_Character; }
 		inline Type GetType() const				{ return m_Type; }
@@ -169,9 +166,7 @@ namespace SCRambl
 			return false;
 		}
 	};
-
-	class Column
-	{
+	class Column {
 	public:
 		typedef std::pair<int, Symbol> pair;
 
@@ -179,10 +174,10 @@ namespace SCRambl
 		pair			m_Column;
 
 	public:
-		Column(const pair & col) : m_Column(col) {
-		}
-		Column(int col, Symbol sym) : m_Column(std::make_pair(col, sym)) {
-		}
+		Column(const pair & col) : m_Column(col)
+		{ }
+		Column(int col, Symbol sym) : m_Column(std::make_pair(col, sym))
+		{ }
 
 		inline int Number() const					{ return m_Column.first; }
 		inline Symbol & operator*()					{ return m_Column.second; }
@@ -193,9 +188,7 @@ namespace SCRambl
 		inline operator const Symbol&() const		{ return m_Column.second; }
 		inline operator char()						{ return m_Column.second; }
 	};
-
-	class CodeLine
-	{
+	class CodeLine {
 	public:
 		//typedef std::vector<std::pair<int,Symbol>> vector;
 		typedef std::vector<Column> vector;
@@ -203,38 +196,46 @@ namespace SCRambl
 		typedef vector::const_iterator const_iterator;
 
 	private:
-		vector			m_Symbols;
-		int				m_NumCols = 0;
+		vector m_Symbols;
+		int m_NumCols = 0;
 
 	public:
 		CodeLine() = default;
-		CodeLine(const vector vec) : m_Symbols(vec) {
-		}
+		CodeLine(const vector vec) : m_Symbols(vec)
+		{ }
 		CodeLine(const std::vector<Symbol> symbols) {
 			for (auto c : symbols) {
 				if (c == '\t') m_NumCols += 3;
 				m_Symbols.emplace_back(++m_NumCols, c);
 			}
 		}
+		CodeLine(std::string symbols) {
+			for (auto c : symbols) {
+				if (c == '\t') m_NumCols += 3;
+				m_Symbols.emplace_back(++m_NumCols, c);
+			}
+		}
+		CodeLine(const char* str) : CodeLine(std::string(str))
+		{ }
 
 		//inline vector & Symbols() { return m_Symbols; }
 		//inline const vector & Symbols() const { return m_Symbols; }
 
-		inline void Clear()								{ return m_Symbols.clear(); }
-		inline bool Empty() const						{ return m_Symbols.empty(); }
-		inline vector::size_type Size() const			{ return m_Symbols.size(); }
-		inline vector::iterator Begin()					{ return m_Symbols.begin(); }
-		inline vector::const_iterator Begin() const		{ return m_Symbols.cbegin(); }
-		inline vector::iterator End()					{ return m_Symbols.end(); }
-		inline vector::const_iterator End() const		{ return m_Symbols.cend(); }
-		inline vector::reference Back()					{ return m_Symbols.back(); }
-		inline vector::const_reference Back() const		{ return m_Symbols.back(); }
+		inline void Clear() { return m_Symbols.clear(); }
+		inline bool Empty() const { return m_Symbols.empty(); }
+		inline vector::size_type Size() const { return m_Symbols.size(); }
+		inline vector::iterator Begin()	{ return m_Symbols.begin(); }
+		inline vector::const_iterator Begin() const { return m_Symbols.cbegin(); }
+		inline vector::iterator End() { return m_Symbols.end(); }
+		inline vector::const_iterator End() const { return m_Symbols.cend(); }
+		inline vector::reference Back()	{ return m_Symbols.back(); }
+		inline vector::const_reference Back() const { return m_Symbols.back(); }
 
 		// (stupid STL)
-		inline vector::iterator begin()					{ return Begin(); }
-		inline vector::iterator end()					{ return End(); }
-		inline vector::const_iterator begin() const		{ return Begin(); }
-		inline vector::const_iterator end() const		{ return End(); }
+		inline vector::iterator begin() { return Begin(); }
+		inline vector::iterator end() { return End(); }
+		inline vector::const_iterator begin() const { return Begin(); }
+		inline vector::const_iterator end() const { return End(); }
 
 		template<typename... Val>
 		inline void Append(Val... v) {
@@ -271,8 +272,7 @@ namespace SCRambl
 
 		inline CodeLine & operator=(const std::string & str) {
 			m_Symbols.clear();
-			if (!str.empty())
-			{
+			if (!str.empty()) {
 				for (auto c : str) {
 					if (c == '\t') m_NumCols += 3;
 					m_Symbols.emplace_back(++m_NumCols, c);

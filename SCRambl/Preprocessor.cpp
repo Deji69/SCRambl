@@ -46,36 +46,36 @@ namespace SCRambl
 			m_Directives["register_command"] = Directive::REGISTER_COMMAND;
 
 			// arithmetic operators - add em
-			m_Operators.AddOperator({ { '+' } }, Operators::add);
-			m_Operators.AddOperator({ { '-' } }, Operators::sub);
-			m_Operators.AddOperator({ { '+', '+' } }, Operators::inc);
-			m_Operators.AddOperator({ { '-', '-' } }, Operators::dec);
-			m_Operators.AddOperator({ { '*' } }, Operators::mult);
-			m_Operators.AddOperator({ { '/' } }, Operators::div);
-			m_Operators.AddOperator({ { '%' } }, Operators::mod);
+			m_Operators.AddOperator("+", Operators::Type::add);
+			m_Operators.AddOperator("-", Operators::Type::sub);
+			m_Operators.AddOperator("++", Operators::Type::inc);
+			m_Operators.AddOperator("--", Operators::Type::dec);
+			m_Operators.AddOperator("*", Operators::Type::mult);
+			m_Operators.AddOperator("/", Operators::Type::div);
+			m_Operators.AddOperator("%", Operators::Type::mod);
 
 			// bitwise operators - add em
-			m_Operators.AddOperator({ { '&' } }, Operators::bit_and);
-			m_Operators.AddOperator({ { '|' } }, Operators::bit_or);
-			m_Operators.AddOperator({ { '^' } }, Operators::bit_xor);
-			m_Operators.AddOperator({ { '<', '<' } }, Operators::bit_shl);
-			m_Operators.AddOperator({ { '>', '>' } }, Operators::bit_shr);
+			m_Operators.AddOperator("&", Operators::Type::bit_and);
+			m_Operators.AddOperator("|", Operators::Type::bit_or);
+			m_Operators.AddOperator("^", Operators::Type::bit_xor);
+			m_Operators.AddOperator("<<", Operators::Type::bit_shl);
+			m_Operators.AddOperator(">>", Operators::Type::bit_shr);
 
 			// comparison operators - add em
-			//m_Operators.AddOperator({ { '=' } }, Operator::eq);
-			m_Operators.AddOperator({ { '>' } }, Operators::gt);
-			m_Operators.AddOperator({ { '<' } }, Operators::lt);
-			m_Operators.AddOperator({ { '=', '=' } }, Operators::eq);
-			m_Operators.AddOperator({ { '!', '=' } }, Operators::neq);
-			m_Operators.AddOperator({ { '>', '=' } }, Operators::geq);
-			m_Operators.AddOperator({ { '<', '=' } }, Operators::leq);
+			//m_Operators.AddOperator("=", Operator::eq);
+			m_Operators.AddOperator(">", Operators::Type::gt);
+			m_Operators.AddOperator("<", Operators::Type::lt);
+			m_Operators.AddOperator("==", Operators::Type::eq);
+			m_Operators.AddOperator("!=", Operators::Type::neq);
+			m_Operators.AddOperator(">=", Operators::Type::geq);
+			m_Operators.AddOperator("<=", Operators::Type::leq);
 
 			// logical operators - add em
-			m_Operators.AddOperator({ { '!' } }, Operators::not);
-			m_Operators.AddOperator({ { '&', '&' } }, Operators::and);
-			m_Operators.AddOperator({ { '|', '|' } }, Operators::or);
-			m_Operators.AddOperator({ { '?' } }, Operators::cond);
-			m_Operators.AddOperator({ { ':' } }, Operators::condel);
+			m_Operators.AddOperator("!", Operators::Type::not);
+			m_Operators.AddOperator("&&", Operators::Type::and);
+			m_Operators.AddOperator("||", Operators::Type::or);
+			m_Operators.AddOperator("?", Operators::Type::cond);
+			m_Operators.AddOperator(":", Operators::Type::condel);
 
 			// formatters for messages - set defaults
 			m_Engine.SetFormatter<Scripts::Position>(Scripts::Position::Formatter);
@@ -432,18 +432,18 @@ namespace SCRambl
 			}
 		}
 		bool Preprocessor::ExpressUnary(Operators::Type op, int& val) {
-			switch (op) {
+			switch (op.Get()) {
 			default: return false;
-			case Operators::not:
+			case Operators::Type::not:
 				val = !val;
 				break;
-			case Operators::bit_not:
+			case Operators::Type::bit_not:
 				val = ~val;
 				break;
-			case Operators::sub:
+			case Operators::Type::sub:
 				val = -val;
 				break;
-			case Operators::add:
+			case Operators::Type::add:
 				val = +val;			// lol
 				break;
 			}
@@ -564,81 +564,81 @@ namespace SCRambl
 					last_op = op;
 					switch (op = m_OperatorScanner.GetOperator()) {
 						// Arithmetic
-					case Operators::add:			// +
+					case Operators::Type::add:			// +
 						// if not, do the binary operation instead
 						if (!got_val) {
 							// this is unary, correct things
-							unary_operators.emplace(Operators::add, std::make_pair(m_Token.Begin(), m_Token.End()));
+							unary_operators.emplace(Operators::Type::add, std::make_pair(m_Token.Begin(), m_Token.End()));
 							op = last_op;
 						}
 						else got_val = false;
 						break;
 
-					case Operators::sub:			// -
+					case Operators::Type::sub:			// -
 						// if not, do the binary operation instead
 						if (!got_val) {
 							// this is unary, correct things
-							unary_operators.emplace(Operators::sub, std::make_pair(m_Token.Begin(), m_Token.End()));
+							unary_operators.emplace(Operators::Type::sub, std::make_pair(m_Token.Begin(), m_Token.End()));
 							op = last_op;
 						}
 						else got_val = false;
 						break;
 
-					case Operators::mult:		// *
-					case Operators::div:			// /
-					case Operators::mod:			// %
+					case Operators::Type::mult:		// *
+					case Operators::Type::div:			// /
+					case Operators::Type::mod:			// %
 						if (!got_val) SendError(Error::invalid_unary_operator, m_Token.Range());
 						else got_val = false;
 						break;
 
-					case Operators::inc:			// ++
-					case Operators::dec:			// --
+					case Operators::Type::inc:			// ++
+					case Operators::Type::dec:			// --
 						SendError(Error::expr_invalid_operator, m_Token.Range());
 						break;
 
 						// Bitwise
-					case Operators::bit_and:		// &
-					case Operators::bit_or:		// |
-					case Operators::bit_xor:		// ^
-					case Operators::bit_shl:		// <<
-					case Operators::bit_shr:		// >>
+					case Operators::Type::bit_and:		// &
+					case Operators::Type::bit_or:		// |
+					case Operators::Type::bit_xor:		// ^
+					case Operators::Type::bit_shl:		// <<
+					case Operators::Type::bit_shr:		// >>
 						if (!got_val) SendError(Error::invalid_unary_operator, m_Token.Range());
 						else got_val = false;
 						break;
 
-					case Operators::bit_not:
+					case Operators::Type::bit_not:
 						// if not, wait, this IS not!
 						if (!got_val) {
 							// this is unary, correct things
-							unary_operators.emplace(Operators::bit_not, std::make_pair(m_Token.Begin(), m_Token.End()));
+							unary_operators.emplace(Operators::Type::bit_not, std::make_pair(m_Token.Begin(), m_Token.End()));
 							op = last_op;
 						}
 						break;
 
 						// Comparison
-					case Operators::gt:			// >
-					case Operators::lt:			// <
-					case Operators::geq:			// >=
-					case Operators::leq:			// <=
-					case Operators::eq:			// ==
-					case Operators::neq:			// !=
+					case Operators::Type::gt:			// >
+					case Operators::Type::lt:			// <
+					case Operators::Type::geq:			// >=
+					case Operators::Type::leq:			// <=
+					case Operators::Type::eq:			// ==
+					case Operators::Type::neq:			// !=
 						if (!got_val) SendError(Error::invalid_unary_operator, m_Token.Range());
 						else got_val = false;
 						break;
 
 						// Logical
-					case Operators::not:			// !
+					case Operators::Type::not:			// !
 						// if not, wait, THIS IS NOT TOOO!!!
 						if (!got_val) {
 							// this is unary, correct things
-							unary_operators.emplace(Operators::not, std::make_pair(m_Token.Begin(), m_Token.End()));
+							unary_operators.emplace(Operators::Type::not, std::make_pair(m_Token.Begin(), m_Token.End()));
 							op = last_op;
 						}
 						else SendError(Error::invalid_unary_operator_use, m_Token.Range());
 						break;
 
-					case Operators::and:			// &&
-					case Operators::or:			// ||
+					case Operators::Type::and:			// &&
+					case Operators::Type::or:			// ||
 						// if got
 						if (got_val) {
 							log_operand = result != 0;
@@ -648,13 +648,13 @@ namespace SCRambl
 						else SendError(Error::expected_expression);
 						break;
 
-					case Operators::cond:		// ?
-					case Operators::condel:		// :
-						// (TODO)
+					case Operators::Type::cond:		// ?
+					case Operators::Type::condel:	// :
+						// if (TODO?DO:NOTTODO) that is the question;
 						got_val = false;
 						break;
 
-					case Operators::max_operator:
+					case Operators::Type::max_operator:
 						throw;
 						break;
 
@@ -715,66 +715,66 @@ namespace SCRambl
 					default:
 						result = val;
 						break;
-					case Operators::add:
+					case Operators::Type::add:
 						result += val;
 						break;
-					case Operators::sub:
+					case Operators::Type::sub:
 						result -= val;
 						break;
-					case Operators::mult:
+					case Operators::Type::mult:
 						result *= val;
 						break;
-					case Operators::div:
+					case Operators::Type::div:
 						result /= val;
 						break;
-					case Operators::mod:
+					case Operators::Type::mod:
 						result %= val;
 						break;
 
 						// Bitwise
-					case Operators::bit_and:
+					case Operators::Type::bit_and:
 						result &= val;
 						break;
-					case Operators::bit_or:
+					case Operators::Type::bit_or:
 						result |= val;
 						break;
-					case Operators::bit_xor:
+					case Operators::Type::bit_xor:
 						result ^= val;
 						break;
-					case Operators::bit_shl:
+					case Operators::Type::bit_shl:
 						result <<= val;
 						break;
-					case Operators::bit_shr:
+					case Operators::Type::bit_shr:
 						result >>= val;
 						break;
 
 						// Comparison
-					case Operators::eq:
+					case Operators::Type::eq:
 						result = result == val;
 						break;
-					case Operators::neq:
+					case Operators::Type::neq:
 						result = result != val;
 						break;
-					case Operators::leq:
+					case Operators::Type::leq:
 						result = result <= val;
 						break;
-					case Operators::geq:
+					case Operators::Type::geq:
 						result = result >= val;
 						break;
-					case Operators::lt:
+					case Operators::Type::lt:
 						result = result < val;
 						break;
-					case Operators::gt:
+					case Operators::Type::gt:
 						result = result > val;
 						break;
 					}
 
 					// evaluate logical operation
-					if (log_op != Operators::max_operator && op != Operators::and && op != Operators::or)
+					if (log_op != Operators::max_operator && op != Operators::Type::and && op != Operators::Type::or)
 					{
-						if (log_op == Operators::and)
+						if (log_op == Operators::Type::and)
 							result = log_operand & (result != 0);
-						else if (log_op == Operators::or)
+						else if (log_op == Operators::Type::or)
 							result = log_operand | (result != 0);
 
 						log_op = Operators::max_operator;
@@ -783,9 +783,9 @@ namespace SCRambl
 			}
 
 			// evaluate logical operation
-			if (log_op == Operators::and)
+			if (log_op == Operators::Type::and)
 				result = log_operand & (result != 0);
-			else if (log_op == Operators::or)
+			else if (log_op == Operators::Type::or)
 				result = log_operand | (result != 0);
 			
 			return result;

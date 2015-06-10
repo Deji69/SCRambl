@@ -15,64 +15,82 @@ namespace SCRambl
 {
 	namespace Operators
 	{
-		// Safe(ish) references
+		// Safe(ish) references usable as values
 		using OperatorRef = VecRef<class Operator>;
 		using OperationRef = VecRef<class Operation>;
 		
 		/*\ Operators::Type - built-in operator types \*/
-		enum Type {
-			add,					// +
-			sub,					// -
-			mult,					// *
-			div,					// /
-			mod,					// %
+		class Type {
+		public:
+			enum ID {
+				add,					// +
+				sub,					// -
+				mult,					// *
+				div,					// /
+				mod,					// %
 
-			inc,					// ++
-			dec,					// --
+				inc,					// ++
+				dec,					// --
 
-			bit_and,				// &
-			bit_or,					// |
-			bit_xor,				// ^
-			bit_shl,				// <<
-			bit_shr,				// >>
-			bit_not,				// ~ (unary)
+				bit_and,				// &
+				bit_or,					// |
+				bit_xor,				// ^
+				bit_shl,				// <<
+				bit_shr,				// >>
+				bit_not,				// ~ (unary)
 
-			comp_add,				// +=
-			comp_sub,				// -=
-			comp_mult,				// *=
-			comp_div,				// /=
-			comp_mod,				// %=
-			comp_bit_and,			// &=
-			comp_bit_or,			// |=
-			comp_bit_xor,			// ^=
-			comp_bit_shl,			// <<=
-			comp_bit_shr,			// >>=
-			uncomp_cast,			// =#
+				comp_add,				// +=
+				comp_sub,				// -=
+				comp_mult,				// *=
+				comp_div,				// /=
+				comp_mod,				// %=
+				comp_bit_and,			// &=
+				comp_bit_or,			// |=
+				comp_bit_xor,			// ^=
+				comp_bit_shl,			// <<=
+				comp_bit_shr,			// >>=
+				uncomp_cast,			// =#
 
-			//add_timed,				// +@
-			//sub_timed,				// -@
+				//add_timed,				// +@
+				//sub_timed,				// -@
 
-			eq,						// ==
-			neq,					// !=
-			gt,						// >
-			lt,						// <
-			geq,					// >=
-			leq,					// <=
+				eq,						// ==
+				neq,					// !=
+				gt,						// >
+				lt,						// <
+				geq,					// >=
+				leq,					// <=
 
-			not,					// !
-			and,					// &&
-			or,						// ||
-			cond,					// ?
-			condel,					// :
+				not,					// !
+				and,					// &&
+				or,						// ||
+				cond,					// ?
+				condel,					// :
 
-			max_operator,
+				max_operator,
+			};
+
+			Type() = default;
+			Type(ID id) : m_ID(id)
+			{ }
+
+			inline bool OK() const { return Get() != max_operator; }
+			inline ID Get() const { return m_ID; }
+			inline operator ID() const { return Get(); }
+			inline explicit operator bool() const { return OK(); }
+
+			bool operator==(const Type& v) const { return m_ID == v.m_ID; }
+			bool operator==(ID v) const { return m_ID == v; }
+
+		private:
+			ID m_ID = max_operator;
 		};
 
 		/*\
 		 - Operators::Table - the place where operators go
 		 - Uses the Symbols vector of CodeLine to assign new operators, and retrieve them later
 		\*/
-		template<typename T, T max>
+		template<typename T>
 		class Table
 		{
 		public:
@@ -83,18 +101,18 @@ namespace SCRambl
 			class Cell {
 				friend class Table;
 
-				T m_Operator = max;
+				T m_Operator;
 				std::vector<Cell> m_Cells;
 
 			public:
 				// For reservation of cells for any grapheme character - wastes a lot of space, but we can access things quickly :)
-				void ReserveCells() {
-					m_Cells.resize(max);
+				void ReserveCells(size_t num_cells) {
+					if (m_Cells.size() < num_cells)
+						m_Cells.resize(num_cells);
 				}
 
 				// Obviously doesnt work if theres no way to get an operator by adding that grapheme, of course
-				bool Next(Grapheme graph, const Cell *& next_out) const
-				{
+				bool Next(Grapheme graph, const Cell *& next_out) const {
 					// ensure we have a cell for this grapheme
 					if (m_Cells.size() >= (unsigned)graph) {
 						// give it the next cell
@@ -117,31 +135,30 @@ namespace SCRambl
 			std::vector<Cell> m_Cells;
 
 		public:
-			Table() : m_Cells(max)
-			{}
+			Table() = default;
+			Table(size_t num_cells) : m_Cells(num_cells)
+			{ }
 
 			/*\
 			- Allocates cells for the path of graphemes leading to an operator
 			- Adding <, << and <=, for example, would allocate one initial cell for '<' and then two cells for '<' and '='
 			- Each final cell will have the operator type ID assigned to it, which can be retrieved once the cell is obtained
 			\*/
-			void AddOperator(CodeLine code, T type)
-			{
-				Cell * pCell = nullptr;
+			void AddOperator(CodeLine code, T op) {
+				Cell* pCell = nullptr;
 				bool got_first_cell = false;
 
 				// use the grapheme from each symbol to walk down the row of cells
-				for (auto c : code)
-				{
+				for (auto c : code) {
 					ASSERT(c->HasGrapheme() && "Only symbols with graphemes (specially recognized symbols) can be added as operators");
-					if (!got_first_cell)
-					{
+					if (!got_first_cell) {
+						auto minsize = static_cast<unsigned>(c->GetGrapheme()) + 1;
+						if (m_Cells.size() < minsize) m_Cells.resize(minsize);
 						pCell = &m_Cells[c->GetGrapheme()];
 						got_first_cell = true;
 					}
-					else
-					{
-						pCell->ReserveCells();
+					else {
+						pCell->ReserveCells(c->GetGrapheme() + 1);
 						pCell->Next(c->GetGrapheme(), pCell);
 					}
 
@@ -149,10 +166,9 @@ namespace SCRambl
 
 				ASSERT(got_first_cell && "Use a CodeLine that actually contains Symbols");
 
-				if (got_first_cell)
-				{
+				if (got_first_cell) {
 					// assign an operator to that cell
-					pCell->m_Operator = type;
+					pCell->m_Operator = op;
 				}
 			}
 
@@ -161,35 +177,33 @@ namespace SCRambl
 			- e.g. if the grapheme was 'plus' (+), there could be two possible following cells: 'plus' (+) or 'equals' (=)
 			- it all depends on which operators are in this table, of course
 			\*/
-			inline const Cell& GetCell(Grapheme graph) const
-			{
-				ASSERT(m_Cells.size() >= (unsigned)graph && "Something went wrong internally - or an out of range grapheme ID was used");
-				return m_Cells[graph];
+			inline const Cell& GetCell(Grapheme graph) const {
+				static const Cell default_cell;
+				//ASSERT(m_Cells.size() >= (unsigned)graph && "Something went wrong internally - or an out of range grapheme ID was used");
+				return m_Cells.size() >= (unsigned)graph ? m_Cells[graph] : default_cell;
 			}
 		};
 
 		/* Operators::Scanner - Operator scanner for lexage */
-		template<typename T, T max>
-		class Scanner : public Lexer::Scanner
-		{
-			typedef typename Table<T, max>::Cell OperatorCell;
-			Table<T, max>& m_Table;
+		template<typename T>
+		class Scanner : public Lexer::Scanner {
+			using OperatorCell = typename Table<T>::Cell;
+			Table<T>& m_Table;
 			Scripts::Position m_LastOperatorPos;
 			const OperatorCell* m_Cell;
 			const OperatorCell* m_LastOperatorCell;
 
 		public:
-			Scanner(Table<T, max> & table) : m_Table(table)
+			Scanner(Table<T>& table) : m_Table(table)
 			{}
-			bool Scan(Lexer::State & state, Scripts::Position & pos)
-			{
+			bool Scan(Lexer::State& state, Scripts::Position& pos) {
 				switch (state)
 				{
 					// Check, check, check fo da cell dat sells
 				case Lexer::State::before:
 					if (!pos->HasGrapheme()) return false;
 					m_Cell = &m_Table.GetCell(pos->GetGrapheme());
-					if (m_Cell->GetOperator() != max) {
+					if (m_Cell->GetOperator()) {
 						m_LastOperatorCell = m_Cell;
 						m_LastOperatorPos = pos;
 					}
@@ -202,7 +216,7 @@ namespace SCRambl
 					for (; pos && pos->HasGrapheme(); ++pos)
 					{
 						if (!m_Cell->Next(pos->GetGrapheme(), m_Cell)) break;
-						if (m_Cell->GetOperator() != max) {
+						if (m_Cell->GetOperator()) {
 							m_LastOperatorCell = m_Cell;
 							m_LastOperatorPos = pos;
 						}
@@ -222,7 +236,7 @@ namespace SCRambl
 				return false;
 			}
 
-			T GetOperator() const		{ ASSERT(m_Cell && "Can only get the operator after a succesful scan");  return m_Cell->GetOperator(); }
+			T GetOperator() const { ASSERT(m_Cell && "Can only get the operator after a succesful scan");  return m_Cell->GetOperator(); }
 		};
 
 		/*\ Operators::Operation \*/
@@ -261,23 +275,35 @@ namespace SCRambl
 
 			std::string m_Op;
 			std::vector<Operation> m_Operations;
+			bool m_IsConditional = false;
 
 		public:
-			Operator(std::string op) : m_Op(op)
+			Operator(std::string op, bool iscond) : m_Op(op), m_IsConditional(iscond)
 			{ }
-			Operator(const Operator& v) : m_Op(v.m_Op) {
+			Operator(const Operator& v) : m_Op(v.m_Op), m_IsConditional(v.m_IsConditional) {
 				for (auto& op : v.m_Operations) {
 					m_Operations.emplace_back(op);
 					m_Operations.back().m_Operator = this;
 				}
 			}
 
+			bool IsConditional() const { return m_IsConditional; }
+
 			Operation& AddOperation(size_t id, Types::Type* lhs, Types::Type* rhs) {
 				m_Operations.emplace_back(this, id, lhs, rhs);
 				return m_Operations.back();
 			}
+			size_t GetNumOperations() const {
+				return m_Operations.size();
+			}
+			Operation* GetOperation(size_t idx) {
+				return idx < m_Operations.size() ? &m_Operations[idx] : nullptr;
+			}
 		};
 		
+		const Type max_operator = Type::max_operator;
+		using OperatorTable = Table<OperatorRef>;
+
 		/*\	Operators - storage, config & utility \*/
 		class Operators {
 		public:
@@ -288,9 +314,12 @@ namespace SCRambl
 				m_Storage.emplace_back(args...);
 				return OperatorRef(m_Storage, m_Storage.size() - 1);
 			}
-			OperatorRef Add(std::string op) {
-				auto ref = Insert(op);
-				if (ref) m_OpMap.emplace(op, ref);
+			OperatorRef Add(std::string op, bool is_conditional = false) {
+				auto ref = Insert(op, is_conditional);
+				if (ref) {
+					m_OpMap.emplace(op, ref);
+					m_Table.AddOperator(op, ref);
+				}
 				return ref;
 			}
 			void Add(std::string op, OperatorRef ref) {
@@ -304,9 +333,12 @@ namespace SCRambl
 			size_t Size() const { return m_Storage.size(); }
 
 		private:
+			static const OperatorRef s_InvalidOperatorRef;
+
 			XMLConfiguration* m_Config;
 			std::vector<Operator> m_Storage;
 			std::unordered_map<std::string, OperatorRef> m_OpMap;
+			OperatorTable m_Table;
 		};
 	}
 }
