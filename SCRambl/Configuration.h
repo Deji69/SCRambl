@@ -15,6 +15,9 @@
 namespace SCRambl
 {
 	class Engine;
+	class Build;
+	class Builder;
+	class BuildEnvironment;
 
 	class XMLObject;
 

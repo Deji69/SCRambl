@@ -106,9 +106,10 @@ namespace SCRambl
 	Build::Build(Engine& engine, BuildConfig* config) : m_Env(engine), m_Engine(engine),
 		m_Config(config), m_CurrentTask(std::end(m_Tasks))
 	{
-		m_Commands.Init(*this);
 		m_Types.Init(*this);
 		m_Constants.Init(*this);
+		m_Commands.Init(*this);
+		m_Operators.Init(*this);
 	}
 
 	/* BuildEnvironment */

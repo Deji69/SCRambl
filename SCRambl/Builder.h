@@ -12,6 +12,7 @@
 #include "ScriptObjects.h"
 #include "BuildConfig.h"
 #include "Commands.h"
+#include "Operators.h"
 #include "Constants.h"
 #include "Types.h"
 
@@ -231,6 +232,7 @@ namespace SCRambl
 		Engine& m_Engine;
 		Constants m_Constants;
 		Commands m_Commands;
+		Operators::Operators m_Operators;
 		Types::Types m_Types;
 		BuildEnvironment m_Env;
 		BuildConfig* m_Config;
@@ -280,6 +282,10 @@ namespace SCRambl
 		// Commands
 		inline Commands& GetCommands() { return m_Commands; }
 		inline const Commands& GetCommands() const { return m_Commands; }
+
+		// Operators
+		inline Operators::Operators& GetOperators() { return m_Operators; }
+		inline const Operators::Operators& GetOperators() const { return m_Operators; }
 
 		// Types
 		inline Types::Types& GetTypes() { return m_Types; }

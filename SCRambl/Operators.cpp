@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Operators.h"
+#include "Builder.h"
 
 namespace SCRambl
 {

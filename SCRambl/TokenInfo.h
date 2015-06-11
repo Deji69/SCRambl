@@ -80,7 +80,7 @@ namespace SCRambl
 		Identifier,
 		Number,
 		Label,
-		Operator,
+		Operator, ParseOperator,
 		Delimiter,
 		String,
 

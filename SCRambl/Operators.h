@@ -9,7 +9,6 @@
 #include "Types.h"
 #include "Numbers.h"
 #include "Commands.h"
-#include "Builder.h"
 
 namespace SCRambl
 {
@@ -330,6 +329,8 @@ namespace SCRambl
 				auto it = m_OpMap.find(op);
 				return it != m_OpMap.end() ? it->second : def;
 			}
+			OperatorTable& GetTable() { return m_Table; }
+			const OperatorTable& GetTable() const { return m_Table; }
 			size_t Size() const { return m_Storage.size(); }
 
 		private:

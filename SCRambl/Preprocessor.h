@@ -92,16 +92,16 @@ namespace SCRambl
 		class Information
 		{
 			friend class Preprocessor;
-			Scripts::Position		&	m_ScriptPosition;
+			Scripts::Position& m_ScriptPosition;
 
-			void SetScriptPos(Scripts::Position & pos)				{ m_ScriptPosition = pos; }
+			void SetScriptPos(Scripts::Position& pos) { m_ScriptPosition = pos; }
 
 		public:
-			Information(Scripts::Position & pos):
+			Information(Scripts::Position& pos):
 				m_ScriptPosition(pos)
 			{}
 
-			inline const Scripts::Position &	GetScriptPos() const	{ return m_ScriptPosition; }
+			inline const Scripts::Position& GetScriptPos() const { return m_ScriptPosition; }
 		};
 
 		/*\
@@ -286,6 +286,9 @@ namespace SCRambl
 			OperatorTable m_Operators;
 			OperatorScanner m_OperatorScanner;
 
+			Operators::Table<Operators::OperatorRef>& m_ParserOperators;
+			Operators::Scanner<Operators::OperatorRef> m_ParserOperatorScanner;
+
 			LexerMachine m_Lexer;
 			LexerToken m_Token;
 			DirectiveMap m_Directives;
@@ -429,8 +432,7 @@ namespace SCRambl
 
 			// Add a preprocessing token
 			template<typename T, typename... TArgs>
-			inline Scripts::Token AddToken(Scripts::Position pos, Tokens::Type token, TArgs&&... args)
-			{
+			inline Scripts::Token AddToken(Scripts::Position pos, Tokens::Type token, TArgs&&... args) {
 				m_WasLastTokenEOL = false;
 				return m_Tokens.Add<T>(pos, token, std::forward<TArgs&&>(args)...);
 			}

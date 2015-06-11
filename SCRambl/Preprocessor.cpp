@@ -16,7 +16,9 @@ namespace SCRambl
 			m_Lexer(),
 			m_OperatorScanner(m_Operators),
 			m_Information(m_CodePos),
-			m_Commands(build.GetCommands()), m_Types(build.GetTypes())
+			m_Commands(build.GetCommands()), m_Types(build.GetTypes()),
+			m_ParserOperators(build.GetOperators().GetTable()),
+			m_ParserOperatorScanner(m_ParserOperators)
 		{
 			Reset();
 
@@ -30,6 +32,8 @@ namespace SCRambl
 			m_Lexer.AddTokenScanner(TokenType::Identifier, m_IdentifierScanner);
 			m_Lexer.AddTokenScanner(TokenType::Number, m_NumericScanner);
 			m_Lexer.AddTokenScanner(TokenType::Operator, m_OperatorScanner);
+			m_Lexer.AddTokenScanner(TokenType::ParseOperator, m_ParserOperatorScanner);
+			m_OperatorScanner.Disable(); // only for preprocessor lines
 
 			// map directives
 			m_Directives["define"] = Directive::DEFINE;
@@ -165,6 +169,11 @@ namespace SCRambl
 			}
 			case TokenType::Operator: {
 				m_Build.CreateToken<Tokens::Operator::Info<Operators::Type>>(pos, Tokens::Type::Operator, range, m_OperatorScanner.GetOperator());
+				m_Task(Event::AddedToken, range);
+				break;
+			}
+			case TokenType::ParseOperator: {
+				m_Build.CreateToken<Tokens::Operator::Info<Operators::OperatorRef>>(pos, Tokens::Type::Operator, range, m_ParserOperatorScanner.GetOperator());
 				m_Task(Event::AddedToken, range);
 				break;
 			}
@@ -828,6 +837,9 @@ namespace SCRambl
 
 				// If we're preprocessing a directive, directly return further directions
 				if (m_State == found_directive) {
+					m_OperatorScanner.Enable();			// enable preprocessor operators
+					m_ParserOperatorScanner.Disable();	// disable parser (proper) operators
+
 					if (m_CodePos->GetType() == Symbol::punctuator) {
 						switch (char c = *m_CodePos)
 						{
@@ -847,33 +859,19 @@ namespace SCRambl
 						//m_Token()
 					}
 				}
+				else {
+					m_OperatorScanner.Disable();		// disable preprocessor operators
+					m_ParserOperatorScanner.Enable();	// enable parser (proper) operators
+				}
 				
 				// try to lex something - catch and handle any thrown scanner errors
-				try
-				{
-					/*if (m_CodePos->IsEOL())
-					{
-						if (!m_WasLastTokenEOL)
-						{
-							AddToken<Token::Character::Info<Character>>(m_CodePos, Token::Type::Character, m_CodePos, Character::EOL);
-							m_WasLastTokenEOL = true;
-						}
-					}*/
-
+				try {
 					result = m_CodePos ? m_Lexer.Scan(m_CodePos, m_Token) : Lexer::Result::found_nothing;
-					/*else if (!m_WasLastTokenEOL)
-					{
-						result = m_CodePos ? m_Lexer.Scan(m_CodePos, m_Token) : Lexer::Result::found_nothing;
-						AddToken<Token::CharacterInfo<Character>>(m_CodePos, Token::Character, m_CodePos, Character::EOL);
-						m_WasLastTokenEOL = true;
-					}*/
 				}
-				catch (const StringLiteralScanner::Error & err)
-				{
+				catch (const StringLiteralScanner::Error & err) {
 					switch (err) {
 						// unterminated string literal
 					case StringLiteralScanner::Error::unterminated:
-
 						// recovery method: skip to end of this line
 						while (m_CodePos->GetType() != Symbol::eol)
 							++m_CodePos;
@@ -882,8 +880,7 @@ namespace SCRambl
 					}
 					continue;
 				}
-				catch (const BlockCommentScanner::Error & err)
-				{
+				catch (const BlockCommentScanner::Error & err) {
 					switch (err) {
 						// unterminated block comment
 					case BlockCommentScanner::Error::end_of_file_reached:
@@ -912,13 +909,10 @@ namespace SCRambl
 				case Lexer::Result::found_token:
 					// we found one, we found one!
 					m_CodePos = m_Token.End();
-					//if (m_CodePos->IsSeparating() && !m_CodePos->IsEOL() && !m_CodePos->IsIgnorable()) ++m_CodePos;
 
 					// only try to handle directives and comments if we're skipping source
-					//if (m_Directive != Directive::ELIF) {
 					if (!GetSourceControl() && (m_Token != TokenType::Directive))
 							continue;
-					//}
 
 					// tell brother
 					m_Task(Event::FoundToken, m_Token.Range());

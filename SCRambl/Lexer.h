@@ -29,8 +29,18 @@ namespace SCRambl
 		\*/
 		class Scanner
 		{
+			bool enabled = true;
+
+		protected:
+			virtual bool Scan(class State& state, Scripts::Position& pos) = 0;
+
 		public:
-			virtual bool Scan(class State & state, Scripts::Position & pos) = 0;
+			void Disable() { enabled = false; }
+			void Enable() { enabled = true; }
+			inline bool DoScan(class State& state, Scripts::Position& pos) {
+				return enabled ? Scan(state, pos) : false;
+			}
+			virtual ~Scanner() { }
 		};
 
 		/*\
@@ -42,28 +52,28 @@ namespace SCRambl
 			template<class>
 			friend class Lexer;
 
-			TokenIDType						m_Type;
-			Scripts::Position				m_Start;
-			Scripts::Position				m_Middle;
-			Scripts::Position				m_End;
+			TokenIDType m_Type;
+			Scripts::Position m_Start;
+			Scripts::Position m_Middle;
+			Scripts::Position m_End;
 
 		public:
 			Token()
 			{ }
 
-			inline TokenIDType				GetType() const			{ return m_Type; }
+			inline TokenIDType GetType() const { return m_Type; }
 
 			// get the position of the token before any prefix
-			inline Scripts::Position			Begin() const			{ return m_Start; }
+			inline Scripts::Position Begin() const { return m_Start; }
 			// get the position of the token after any prefix
-			inline Scripts::Position			Inside() const			{ return m_Middle; }
+			inline Scripts::Position Inside() const { return m_Middle; }
 			// get the position of the token at the very end
-			inline Scripts::Position			End() const				{ return m_End; }
+			inline Scripts::Position End() const { return m_End; }
 			// get the entire range
-			inline Scripts::Range			Range() const			{ return{ m_Start, m_End }; }
+			inline Scripts::Range Range() const { return{ m_Start, m_End }; }
 
-			inline operator TokenIDType &()							{ return m_Type; }
-			inline operator TokenIDType () const					{ return m_Type; }
+			inline operator TokenIDType &()	{ return m_Type; }
+			inline operator TokenIDType () const { return m_Type; }
 
 			inline void operator ()(TokenIDType type, Scripts::Position start, Scripts::Position mid, Scripts::Position end) {
 				m_Type = type;
@@ -148,12 +158,12 @@ namespace SCRambl
 		class Lexer
 		{
 		private:
-			typedef std::pair<TokenIDType, Scanner&> TokenScanner;
+			typedef std::pair<TokenIDType, Scanner*> TokenScanner;
 			typedef std::vector<TokenScanner> ScannerList;
 			typedef std::list<std::pair<State, TokenScanner&>> ScannerStates;
 			
-			ScannerList							m_Scanners;
-			ScannerStates						m_ScannerStates;
+			ScannerList m_Scanners;
+			ScannerStates m_ScannerStates;
 
 		public:
 			/*\
@@ -163,16 +173,14 @@ namespace SCRambl
 			 - They must change state manually, and return true while valid
 			 - Usually each scanner only requires one call per the 3 states (before/inside/after)
 			\*/
-			template<class Scanner> void AddTokenScanner(TokenIDType tokenid, Scanner & scanner)
-			{
-				m_Scanners.emplace_back(tokenid, scanner);
+			template<class Scanner> void AddTokenScanner(TokenIDType tokenid, Scanner& scanner) {
+				m_Scanners.emplace_back(tokenid, &scanner);
 			}
 
 			/*\
 			 - Give it the current Scripts::Position and a Token<> to write to, let magic happen
 			\*/
-			Result Scan(const Scripts::Position & pos, Token<TokenIDType> & token)
-			{
+			Result Scan(const Scripts::Position& pos, Token<TokenIDType>& token) {
 				ASSERT(!m_Scanners.empty());		// you need to add some scanners first!
 
 				// if we haven't any active scanners, start trying to activate them
@@ -185,8 +193,8 @@ namespace SCRambl
 						State state(pos);
 
 						// scan beginning token symbol with the scanner
-						auto & scanner = scit->second;
-						if (scanner.Scan(state, state.Current()))
+						auto scanner = scit->second;
+						if (scanner->DoScan(state, state.Current()))
 						{
 							// match? store its state...
 							m_ScannerStates.emplace_back(state, *scit);
@@ -205,19 +213,17 @@ namespace SCRambl
 					for (auto scit = m_ScannerStates.begin(); scit != m_ScannerStates.end(); first = false)
 					{
 						// restore the scanners state
-						State & state = scit->first;
-						auto & scanner = scit->second.second;
+						State& state = scit->first;
+						auto scanner = scit->second.second;
 
 						// all scanners finishing first qualify for the major league
 						bool last = state == State::after;
 
 						// skip inactive scanners
-						if (state != State::before)
-						{
+						if (state != State::before) {
 							// if a scanner throws an error, remove it from the active scanner list and pass the error along
-							try{
-								if (!scanner.Scan(state, state.Current()))
-								{
+							try {
+								if (!scanner->DoScan(state, state.Current())) {
 									// failed? do away with this scanner, then...
 									scit = m_ScannerStates.erase(scit);
 
@@ -235,18 +241,15 @@ namespace SCRambl
 						}
 						
 						// as soon as the quickest scanner finishes, call the race
-						if (last)
-						{
+						if (last) {
 							token(scit->second.first, state.Before(), state.Inside(), state.After());
 
 							// if it's the only one, we're a success
-							if (m_ScannerStates.size() <= 1 || scit == m_ScannerStates.begin())
-							{
+							if (m_ScannerStates.size() <= 1 || scit == m_ScannerStates.begin()) {
 								m_ScannerStates.clear();
 								return found_token;
 							}
-							else
-							{
+							else {
 								// 
 								scit = m_ScannerStates.erase(scit);
 								continue;
@@ -263,7 +266,7 @@ namespace SCRambl
 			 - ScanFor something specific - will initiate similarly to 'Scan' except for a specific token type
 			 - After the first successful call, further calls made to this simply redirect to 'Scan'
 			\*/
-			Result ScanFor(TokenIDType type, const Scripts::Position & pos, Token<TokenIDType> & token)
+			Result ScanFor(TokenIDType type, const Scripts::Position& pos, Token<TokenIDType>& token)
 			{
 				ASSERT(!m_Scanners.empty());			// better add a scanner
 
@@ -280,7 +283,7 @@ namespace SCRambl
 						State state(pos);
 
 						// scan beginning token symbol
-						if (scit->second.Scan(state, state.Current()))
+						if (scit->second->DoScan(state, state.Current()))
 						{
 							// matched! aaand we're done...
 							m_ScannerStates.emplace_back(state, *scit);
