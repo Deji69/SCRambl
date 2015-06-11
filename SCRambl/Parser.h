@@ -33,7 +33,7 @@ namespace SCRambl
 			Command = Tokens::Identifier::EXTRA,
 		};
 		enum States {
-			state_neutral, state_parsing_type, state_parsing_command, state_parsing_label, state_parsing_variable,
+			state_neutral, state_parsing_type, state_parsing_command, state_parsing_operator, state_parsing_label, state_parsing_variable,
 			state_parsing_type_varlist,
 			state_parsing_command_args,
 			max_state
@@ -74,13 +74,14 @@ namespace SCRambl
 		public:
 			enum ID {
 				// involuntary errors (errors that should be impossible)
-				invalid_character		= 500,
+				invalid_character = 500,
 
 				// normal errors
-				invalid_identifier		= 1000,
-				label_on_line			= 1001,
-				unsupported_value_type	= 1002,
-				expected_identifier		= 1003,
+				invalid_identifier = 1000,
+				invalid_operator,
+				label_on_line,
+				unsupported_value_type,
+				expected_identifier,
 
 				// fatal errors
 				fatal_begin = 4000,
@@ -183,6 +184,7 @@ namespace SCRambl
 			States Parse_Type_Varlist();
 			States Parse_Command();
 			States Parse_Command_Args();
+			States Parse_Operator();
 			States Parse_Label();
 			States Parse_Variable();
 
@@ -231,14 +233,17 @@ namespace SCRambl
 				auto token = static_cast<Tokens::String::Info*>(toke);
 				return token->GetValue<Tokens::String::ScriptRange>().Format();
 			}
-
+			static Scripts::Range GetOperatorRange(IToken* toke) {
+				auto tok = static_cast<Tokens::Operator::Info<Operators::OperatorRef>*>(toke);
+				return tok->GetValue<Tokens::Operator::ScriptRange>();
+			}
+			
 			static Character GetCharacterValue(IToken* toke) {
 				auto token = static_cast<CharacterInfo*>(toke);
 				return token->GetValue<Tokens::Character::Parameter::CharacterValue>();
 			}
 			static bool IsCharacter(IToken* toke) {
-				auto tok = static_cast<CharacterInfo*>(toke);
-				return tok->GetType() == Tokens::Type::Character;
+				return toke->GetType<Tokens::Type>() == Tokens::Type::Character;
 			}
 			static bool IsCharacterEOL(IToken* toke) {
 				auto tok = static_cast<CharacterInfo*>(toke);
@@ -257,6 +262,19 @@ namespace SCRambl
 			static bool IsScopeDelimiterClosing(IToken* toke) {
 				auto tok = static_cast<DelimiterInfo*>(toke);
 				return IsScopeDelimiter(toke) && tok->GetValue<Tokens::Delimiter::ScriptRange>().End() == tok->GetValue<Tokens::Delimiter::ScriptPosition>();
+			}
+			static bool IsOperator(IToken* toke) {
+				//return static_cast<TokenBase<Tokens::Type>*>(toke)->GetType() == Tokens::Type::Operator;
+				return toke->GetType<Tokens::Type>() == Tokens::Type::Operator;
+			}
+			static Operators::Operator* GetOperator(IToken* toke) {
+				auto tok = static_cast<Tokens::Operator::Info<Operators::OperatorRef>*>(toke);
+				auto operater = tok->GetValue<Tokens::Operator::OperatorType>();
+				return operater.Ptr();
+			}
+			static bool IsOperatorConditional(IToken* toke) {
+				auto operater = GetOperator(toke);
+				return operater && operater->IsConditional();
 			}
 
 			bool GetDelimitedArrayIntegerConstant(size_t& i) {

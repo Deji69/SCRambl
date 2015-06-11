@@ -167,6 +167,10 @@ namespace SCRambl
 			return state_neutral;
 		}
 		States Parser::Parse_Neutral_CheckOperator(IToken* tok) {
+			if (auto operater = GetOperator(tok)) {
+				return state_parsing_operator;
+			}
+			else SendError(Error::invalid_operator, GetOperatorRange(tok));
 			return state_neutral;
 		}
 		States Parser::Parse_Neutral() {
@@ -258,11 +262,16 @@ namespace SCRambl
 			}*/
 			return state_parsing_command_args;
 		}
+		States Parser::Parse_Operator() {
+			return state_parsing_operator;
+		}
 		void Parser::Parse() {
 			States newstate = m_ParseState;
 			do {
 				static States(Parser::*funcs[States::max_state])() = {
-					&Parser::Parse_Neutral, &Parser::Parse_Type, &Parser::Parse_Command, &Parser::Parse_Label, &Parser::Parse_Variable,
+					&Parser::Parse_Neutral, &Parser::Parse_Type, &Parser::Parse_Command, &Parser::Parse_Operator,
+					&Parser::Parse_Label, &Parser::Parse_Variable,
+
 					&Parser::Parse_Type_Varlist,
 					&Parser::Parse_Command_Args,
 				};
