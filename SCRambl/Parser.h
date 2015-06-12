@@ -141,6 +141,7 @@ namespace SCRambl
 			using IdentifierInfo = Tokens::Identifier::Info<>;
 
 			States m_ParseState = state_neutral;
+			States m_ActiveState = state_neutral;
 
 			struct ParseState {
 				using TMap = std::map<States, ParseState>;
@@ -154,7 +155,6 @@ namespace SCRambl
 				ParseState(TFunc func, TMap map) : Func(func), Map(map)
 				{ }
 			};
-
 			struct TypeParseState {
 				struct TypeVarDeclaration {
 					Scripts::Tokens::Iterator var_iterator;
@@ -175,6 +175,13 @@ namespace SCRambl
 				TypeParseState(Types::Type* type_, IToken* token_) : type(type_), token(token_)
 				{ }
 			} m_TypeParseState;
+			struct OperationParseState {
+				bool looksPrefixed = false;
+
+				void StartWithOperator() {
+					looksPrefixed = true;
+				}
+			} m_OperationParseState;
 
 			States Parse_Neutral();
 			States Parse_Neutral_CheckIdentifier(IToken*);
@@ -267,10 +274,10 @@ namespace SCRambl
 				//return static_cast<TokenBase<Tokens::Type>*>(toke)->GetType() == Tokens::Type::Operator;
 				return toke->GetType<Tokens::Type>() == Tokens::Type::Operator;
 			}
-			static Operators::Operator* GetOperator(IToken* toke) {
+			static Operators::OperatorRef GetOperator(IToken* toke) {
 				auto tok = static_cast<Tokens::Operator::Info<Operators::OperatorRef>*>(toke);
 				auto operater = tok->GetValue<Tokens::Operator::OperatorType>();
-				return operater.Ptr();
+				return operater;
 			}
 			static bool IsOperatorConditional(IToken* toke) {
 				auto operater = GetOperator(toke);
@@ -422,6 +429,7 @@ namespace SCRambl
 			Scripts::Tokens& m_Tokens;
 			Scripts::Tokens::Iterator m_TokenIt;
 			Scripts::Tokens::Iterator m_CommandTokenIt;
+			Scripts::Tokens::Iterator m_OperatorTokenIt;
 			Scripts::Tokens::Iterator::CVector m_CommandTokens;			// positions of all parsed command tokens
 			Scripts::Tokens::Iterator::CVector m_LabelTokens;
 			//Scripts::Labels& m_Labels;
@@ -432,6 +440,7 @@ namespace SCRambl
 			Commands& m_Commands;
 			Commands m_ExtraCommands;
 			Command* m_CurrentCommand;
+			Operators::OperatorRef m_CurrentOperator;
 			Command::Arg::Iterator m_CommandArgIt;
 			Commands::Vector m_OverloadCommands;
 			Commands::Vector::iterator m_OverloadCommandsIt;

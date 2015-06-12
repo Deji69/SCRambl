@@ -298,6 +298,21 @@ namespace SCRambl
 			Operation* GetOperation(size_t idx) {
 				return idx < m_Operations.size() ? &m_Operations[idx] : nullptr;
 			}
+		
+			Operation* GetOperation(Types::Type* type, Types::Type* rtype = nullptr) {
+				for (auto& op : m_Operations) {
+					auto lhs = op.GetLHS();
+					auto rhs = op.GetRHS();
+
+					if ((!lhs && !rhs) || !type) continue;				// derp?
+					else if (lhs && rhs && !rtype) continue;			// skip if we want a unary and it has lhs & rhs
+					else if (!lhs && rhs) std::swap(lhs, rhs);			// odd...
+					else if (!rtype && !type->IsVariableType()) continue;	// it's unary and our only type isn't a variable, skip
+					
+
+				}
+				return nullptr;
+			}
 		};
 		
 		const Type max_operator = Type::max_operator;

@@ -167,7 +167,8 @@ namespace SCRambl
 			return state_neutral;
 		}
 		States Parser::Parse_Neutral_CheckOperator(IToken* tok) {
-			if (auto operater = GetOperator(tok)) {
+			if (m_CurrentOperator = GetOperator(tok)) {
+				m_OperatorTokenIt = m_TokenIt;
 				return state_parsing_operator;
 			}
 			else SendError(Error::invalid_operator, GetOperatorRange(tok));
@@ -198,6 +199,15 @@ namespace SCRambl
 			return state_parsing_label;
 		}
 		States Parser::Parse_Variable() {
+
+			if (m_ActiveState == state_parsing_operator) {
+				if (m_OperationParseState.looksPrefixed) {
+					if (auto op = m_CurrentOperator->GetOperation(m_Variable->Get().Type())) {
+						
+					}
+					else BREAK();		// error?
+				}
+			}
 			
 			return state_parsing_variable;
 		}
@@ -263,6 +273,12 @@ namespace SCRambl
 			return state_parsing_command_args;
 		}
 		States Parser::Parse_Operator() {
+			if (m_OperatorTokenIt == m_TokenIt) {
+				++m_TokenIt;
+				m_OperationParseState.StartWithOperator();
+				m_ActiveState = state_parsing_operator;
+				return state_neutral;
+			}
 			return state_parsing_operator;
 		}
 		void Parser::Parse() {
@@ -286,11 +302,6 @@ namespace SCRambl
 			auto type = ptr->GetToken()->GetType<Tokens::Type>();
 			bool newline = false;
 			bool just_found_command = false;
-
-			if (IsCommandParsing() && !AreCommandArgsParsed()) {
-				m_CommandArgIt->IsReturn();
-			}
-
 			Types::ValueSet val_type = Types::ValueSet::INVALID;
 
 			switch (type) {
@@ -320,11 +331,6 @@ namespace SCRambl
 
 				if (IsCommandParsing() && !AreCommandArgsParsed()) {
 					if (m_CommandArgIt->IsReturn()) {
-						//auto& vars = m_Build.GetScript().GetLScript()->GetVariables();
-						//if (auto var = vars.Find(name)) {
-							// TODO: something
-						//}
-						//else BREAK();
 					}
 					else {
 						auto type = m_CommandArgIt->GetType();
@@ -347,14 +353,6 @@ namespace SCRambl
 				}
 
 				if (auto type = GetType(name)) {
-					/*auto& vars = m_Build.GetScript().GetLScript()->GetVariables();
-					if (++m_TokenIt != m_Tokens.End()) {
-						auto& token = m_TokenIt->GetToken()->Get<Tokens::Identifier::Info<>>();
-						auto name = token.GetValue<0>().Format();
-						vars.Insert(name, std::make_shared<Variable<Types::Type>>(name, type));
-						//vars.Insert()
-					}
-					else BREAK();*/
 				}
 				else if (auto ptr = m_Build.GetScriptLabel(name)) {
 					// this is a label pointer!
