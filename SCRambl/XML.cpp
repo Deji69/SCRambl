@@ -205,14 +205,17 @@ namespace SCRambl
 	template<> auto XMLValue::AsNumber(double v) const->double { return sto<double>(m_str, v, [](std::string str){ return std::stod(str); }); }
 	auto XMLValue::AsBool(bool default_value) const->bool{
 		if (!m_str.empty()) {
-			switch (m_str[0]) {
-			case 't': case 'T':
-			case 'y': case 'Y':
-			case '1':
+			// check for special stuff...
+			auto str = tolower(m_str);
+			if (str == "on" || str == "enable")
 				return true;
-			case 'f': case 'F':
-			case 'n': case 'N':
-			case '0':
+			else if (str == "off" || str == "disable")
+				return false;
+
+			switch (str[0]) {
+			case 't': case 'y': case '1':
+				return true;
+			case 'f': case 'n': case '0':
 				return false;
 			}
 		}

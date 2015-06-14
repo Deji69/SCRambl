@@ -246,6 +246,7 @@ namespace SCRambl
 			size_t m_Index;
 			Types::Type* m_RHS = nullptr;
 			Types::Type* m_LHS = nullptr;
+			bool m_HasRHV = false, m_HasLHV = false;
 			int m_LHV = 0;
 			int m_RHV = 0;
 
@@ -259,12 +260,20 @@ namespace SCRambl
 			size_t GetIndex() const { return m_Index; }
 			Types::Type* GetLHS() const { return m_LHS; }
 			Types::Type* GetRHS() const { return m_RHS; }
+			bool HasLHV() const { return m_HasLHV; }
+			bool HasRHV() const { return m_HasRHV; }
 			int GetLHV() const { return m_LHV; }
 			int GetRHV() const { return m_RHV; }
 			void SetLHS(Types::Type* type) { m_LHS = type; }
 			void SetRHS(Types::Type* type) { m_RHS = type; }
-			void SetLHV(int v) { m_LHV = v; }
-			void SetRHV(int v) { m_RHV = v; }
+			void SetLHV(int v) {
+				m_LHV = v;
+				m_HasLHV = true;
+			}
+			void SetRHV(int v) {
+				m_RHV = v;
+				m_HasRHV = true;
+			}
 		};
 
 		/*\ Smooth Operator */
@@ -300,14 +309,17 @@ namespace SCRambl
 			}
 		
 			Operation* GetOperation(Types::Type* type, Types::Type* rtype = nullptr) {
+				bool wantUnary = type == nullptr || rtype == nullptr;
 				for (auto& op : m_Operations) {
 					auto lhs = op.GetLHS();
 					auto rhs = op.GetRHS();
+					bool isUnary = op.HasLHV() != op.HasRHV();
+					bool isPre = op.HasLHV();
 
-					if ((!lhs && !rhs) || !type) continue;				// derp?
-					else if (lhs && rhs && !rtype) continue;			// skip if we want a unary and it has lhs & rhs
-					else if (!lhs && rhs) std::swap(lhs, rhs);			// odd...
-					else if (!rtype && !type->IsVariableType()) continue;	// it's unary and our only type isn't a variable, skip
+					if ((!lhs && !rhs) || !type) continue;						// derp?
+					else if (!isUnary && (lhs == nullptr) != (rhs == nullptr)) continue;
+					else if (wantUnary != isUnary) continue;					// skip if we want a unary and it's not, and vice-versa
+					else if (isUnary && !type->IsVariableType()) continue;		// it's unary and our only type isn't a variable, skip
 					
 
 				}

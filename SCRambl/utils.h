@@ -138,6 +138,15 @@ namespace SCRambl
 		return l;
 	}
 
+	static inline std::string tolower(std::string str) {
+		std::transform(str.begin(), str.end(), str.begin(), [](int c){ return std::tolower(c); });
+		return str;
+	}
+	static inline std::string toupper(std::string str) {
+		std::transform(str.begin(), str.end(), str.begin(), [](int c){ return std::toupper(c); });
+		return str;
+	}
+
 	// trim from start
 	static inline std::string &ltrim(std::string &s)
 	{

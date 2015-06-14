@@ -91,6 +91,7 @@
     <ClInclude Include="Delimiters.h" />
     <ClInclude Include="Labels.h" />
     <ClInclude Include="Linker.h" />
+    <ClInclude Include="Matching.h" />
     <ClInclude Include="ScriptObjects.h" />
     <ClInclude Include="SCR.h" />
     <ClInclude Include="Scripts-code.h" />

@@ -255,6 +255,9 @@
     <ClInclude Include="ScriptObjects.h">
       <Filter>Header</Filter>
     </ClInclude>
+    <ClInclude Include="Matching.h">
+      <Filter>Header</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header">

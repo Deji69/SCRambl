@@ -102,20 +102,6 @@ namespace SCRambl
 			void MoveValues(Type&);
 
 		public:
-			template<typename TMainType>
-			class MatchSpec {
-				TMainType				m_Type;
-
-			public:
-				MatchSpec(TMainType type) : m_Type(type)
-				{ }
-
-				bool DoesMatch(TMainType type)
-				{
-
-				}
-			};
-
 			// TODO: meh
 			Type(std::string name, TypeSet type) : m_Name(name), m_Type(type)
 			{ }
@@ -213,6 +199,8 @@ namespace SCRambl
 			Extended(std::string name, Type* basic = nullptr) : Type(name, TypeSet::Extended),
 				m_BasicType(basic)
 			{ }
+
+			Type* GetBasicType() const { return m_BasicType; }
 		};
 
 		class Storage {

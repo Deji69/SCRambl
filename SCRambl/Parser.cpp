@@ -145,7 +145,7 @@ namespace SCRambl
 				else BREAK();
 				return state_parsing_command;
 			}
-			else if (auto m_Variable = m_Build.GetScriptVariable(name)) {
+			else if (m_Variable = m_Build.GetScriptVariable(name)) {
 				return state_parsing_variable;
 			}
 			else if (IsCommandParsing()/* && m_CommandArgIt->GetType().IsCompatible()*/) {
