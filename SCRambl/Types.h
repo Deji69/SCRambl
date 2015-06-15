@@ -28,6 +28,9 @@ namespace SCRambl
 			Null, Number, Variable, Array, Text, Label, Command,
 			INVALID
 		};
+		enum class MatchLevel {
+			None, Loose, Basic, Strict
+		};
 
 		static ValueSet GetValueTypeByName(std::string name);
 
@@ -127,6 +130,10 @@ namespace SCRambl
 			const Variable* ToVariable() const;
 			VarType* GetVarType() const;
 			VarType* GetArrayType() const;
+
+			Type* GetValueType();
+
+			MatchLevel GetMatchLevel(Type* type);
 
 			bool HasValueType(ValueSet type) const;
 			template<typename TValue = Value>

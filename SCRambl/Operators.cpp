@@ -1,11 +1,34 @@
 #include "stdafx.h"
 #include "Operators.h"
 #include "Builder.h"
+#include "Variables.h"
 
 namespace SCRambl
 {
 	namespace Operators
 	{
+		/* Operators::Operator */
+		Operation* Operator::GetUnaryOperation(Variable* var, bool rhs_var) {
+			std::vector<Operation*> basicMatches, looseMatches;
+			for (auto& op : m_Operations) {
+				if (op.HasLHS() == op.HasRHS()) continue;
+				if (rhs_var ? (!op.HasLHV() || !op.HasRHS()) : (!op.HasRHV() || !op.HasLHS())) continue;
+
+				auto lhs = op.GetLHS(), rhs = op.GetRHS();
+
+				if (!lhs && !rhs) continue; // derp?
+
+				auto matchLevel = var->Type()->GetMatchLevel(rhs_var ? rhs : lhs);
+				if (matchLevel == Types::MatchLevel::Strict)
+					return &op;
+				else if (matchLevel == Types::MatchLevel::Basic)
+					basicMatches.emplace_back(&op);
+				else if (matchLevel == Types::MatchLevel::Loose && basicMatches.empty())
+					looseMatches.emplace_back(&op);
+			}
+			return nullptr;
+		}
+		/* Operators::Operators */
 		void Operators::Init(Build& build) {
 			auto& types = build.GetTypes();
 
@@ -33,15 +56,19 @@ namespace SCRambl
 				obj = nullptr;
 
 				if (auto id = xml.GetAttribute("ID").GetValue()) {
-					if (auto lhs = xml.GetAttribute("LHS").GetValue()) {
-						Types::Type* lhs_type = types.GetType(lhs.AsString());
-						Types::Type* rhs_type = nullptr;
-						if (auto rhs = xml.GetAttribute("RHS").GetValue()) {
-							rhs_type = types.GetType(rhs.AsString());
-						}
-						auto& operation = operater.AddOperation(id, lhs_type, rhs_type);
-						operation.SetLHV(xml.GetAttribute("LHV")->AsNumber<int>());
-						operation.SetRHV(xml.GetAttribute("RHV")->AsNumber<int>());
+					Types::Type * lhs_type = nullptr, * rhs_type = nullptr;
+					if (auto lhs = xml.GetAttribute("LHS").GetValue())
+						lhs_type = types.GetType(lhs.AsString());
+					if (auto rhs = xml.GetAttribute("RHS").GetValue())
+						rhs_type = types.GetType(rhs.AsString());
+					
+					if (lhs_type || rhs_type) {
+						auto& operation = operater.AddOperation(id.AsNumber<size_t>(), lhs_type, rhs_type);
+						if (auto lhv = xml.GetAttribute("LHV"))
+							operation.SetLHV(lhv->AsNumber<int>());
+						if (auto rhv = xml.GetAttribute("RHV"))
+							operation.SetRHV(rhv->AsNumber<int>());
+						operation.SetSwapped(xml.GetAttribute("Swap")->AsBool(false));
 					}
 				}
 			});

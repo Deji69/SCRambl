@@ -9,6 +9,7 @@
 #include "Types.h"
 #include "Numbers.h"
 #include "Commands.h"
+#include "Variables.h"
 
 namespace SCRambl
 {
@@ -244,22 +245,22 @@ namespace SCRambl
 
 			Operator* m_Operator;
 			size_t m_Index;
-			Types::Type* m_RHS = nullptr;
-			Types::Type* m_LHS = nullptr;
-			bool m_HasRHV = false, m_HasLHV = false;
-			int m_LHV = 0;
-			int m_RHV = 0;
+			Types::Type* m_RHS = nullptr, * m_LHS = nullptr;
+			bool m_HasLHV = false, m_HasRHV = false, m_Swapped = false;
+			int m_LHV = 0, m_RHV = 0;
 
 		public:
 			Operation() = delete;
 			Operation(Operator* op, size_t id, Types::Type* lhs, Types::Type* rhs = nullptr) : m_Operator(op), m_Index(id),
-				m_LHS(lhs), m_RHS(rhs)
+				m_LHS(lhs), m_RHS(rhs), m_HasLHV(false), m_HasRHV(false), m_Swapped(false)
 			{ }
 
 			Operator* GetOperator() const { return m_Operator; }
 			size_t GetIndex() const { return m_Index; }
 			Types::Type* GetLHS() const { return m_LHS; }
 			Types::Type* GetRHS() const { return m_RHS; }
+			bool HasLHS() const { return m_LHS != nullptr; }
+			bool HasRHS() const { return m_RHS != nullptr; }
 			bool HasLHV() const { return m_HasLHV; }
 			bool HasRHV() const { return m_HasRHV; }
 			int GetLHV() const { return m_LHV; }
@@ -274,6 +275,7 @@ namespace SCRambl
 				m_RHV = v;
 				m_HasRHV = true;
 			}
+			void SetSwapped(bool v) { m_Swapped = v; }
 		};
 
 		/*\ Smooth Operator */
@@ -308,23 +310,8 @@ namespace SCRambl
 				return idx < m_Operations.size() ? &m_Operations[idx] : nullptr;
 			}
 		
-			Operation* GetOperation(Types::Type* type, Types::Type* rtype = nullptr) {
-				bool wantUnary = type == nullptr || rtype == nullptr;
-				for (auto& op : m_Operations) {
-					auto lhs = op.GetLHS();
-					auto rhs = op.GetRHS();
-					bool isUnary = op.HasLHV() != op.HasRHV();
-					bool isPre = op.HasLHV();
-
-					if ((!lhs && !rhs) || !type) continue;						// derp?
-					else if (!isUnary && (lhs == nullptr) != (rhs == nullptr)) continue;
-					else if (wantUnary != isUnary) continue;					// skip if we want a unary and it's not, and vice-versa
-					else if (isUnary && !type->IsVariableType()) continue;		// it's unary and our only type isn't a variable, skip
-					
-
-				}
-				return nullptr;
-			}
+			Operation* GetUnaryOperation(Variable*, bool rhs_var = false);
+			Operation* GetOperation(Variable*, Types::Type*);
 		};
 		
 		const Type max_operator = Type::max_operator;

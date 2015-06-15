@@ -75,13 +75,13 @@
 		</Type>
 		<Type Name="TEXT_LABEL">
 			<!-- 8 character text string -->
-			<Text Size="8" Mode="static" Terminate="null" />
+			<Text Size="8" Mode="static" Terminate="0x0" />
 			<!-- 16 character text string -->
-			<Text Size="16" Mode="static" Terminate="null" />
+			<Text Size="16" Mode="static" Terminate="0x0" />
 		</Type>
 		<Type Name="STRING">
 			<!-- Variable-length text string with 255-character limit -->
-			<Text Size="255" Mode="variable" Terminate="null" />
+			<Text Size="255" Mode="variable" Terminate="0x0" />
 		</Type>
 		
 		<Type Name="COMMAND">

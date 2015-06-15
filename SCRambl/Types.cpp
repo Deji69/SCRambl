@@ -56,6 +56,27 @@ namespace SCRambl
 		}
 
 		/* Type */
+		MatchLevel Type::GetMatchLevel(Type* type) {
+			if (type == this) return MatchLevel::Strict;
+			if (auto valtype = type->GetValueType()) {
+				if (type == valtype) return MatchLevel::Basic;
+			}
+			return MatchLevel::None;
+		}
+		Type* Type::GetValueType() {
+			if (IsVariableType()) {
+				if (auto vartype = ToVariable()->GetVarType()) {
+					return vartype->GetValue();
+				}
+			}
+			else if (IsExtendedType()) {
+				return ToExtended()->GetBasicType();
+			}
+			else if (IsBasicType()) {
+				return this;
+			}
+			return nullptr;
+		}
 		VarType* Type::GetVarType() const {
 			VariableValue* value = nullptr;
 			AllValues<Value>([&value](Value* val){

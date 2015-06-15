@@ -202,8 +202,9 @@ namespace SCRambl
 
 			if (m_ActiveState == state_parsing_operator) {
 				if (m_OperationParseState.looksPrefixed) {
-					if (auto op = m_CurrentOperator->GetOperation(m_Variable->Get().Type())) {
-						
+					if (auto op = m_CurrentOperator->GetUnaryOperation(m_Variable->Ptr(), true)) {
+						m_OperatorTokenIt->SetSymbol(CreateSymbol<Tokens::Operator::Operation<Operators::Operation>>(op));
+						return state_neutral;
 					}
 					else BREAK();		// error?
 				}

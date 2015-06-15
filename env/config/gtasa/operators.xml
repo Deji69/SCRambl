@@ -185,16 +185,16 @@
 		
 		<!-- Pseudo -->
 		<Operator Name="++">
-			<Operation ID="0x8" LHS="VAR_INT" RHS="INT" RHV="1" />				<!-- Post-increment, e.g. var_int++ -->
-			<Operation ID="0x8" LHS="INT" RHS="VAR_INT" LHV="1" Swap="on" />	<!-- Pre-increment - swapped when parsed, ++lvar_int -->
-			<Operation ID="0xA" LHS="LVAR_INT" RHS="INT" RHV="1" />				<!-- lvar_int++ -->
-			<Operation ID="0xA" LHS="INT" RHS="LVAR_INT" LHV="1" Swap="on" />	<!-- ++lvar_int -->
+			<Operation ID="0x8" LHS="VAR_INT" RHV="1" />				<!-- Post-increment, e.g. var_int++ -->
+			<Operation ID="0x8" RHS="VAR_INT" LHV="1" Swap="on" />		<!-- Pre-increment - swapped when parsed, ++lvar_int -->
+			<Operation ID="0xA" LHS="LVAR_INT" RHV="1" />				<!-- lvar_int++ -->
+			<Operation ID="0xA" RHS="LVAR_INT" LHV="1" Swap="on" />		<!-- ++lvar_int -->
 		</Operator>
 		<Operator Name="--">
-			<Operation ID="0xC" LHS="VAR_INT" RHS="INT" RHV="1" />				<!-- var_int-- -->
-			<Operation ID="0xC" LHS="INT" RHS="VAR_INT" LHV="1" Swap="on"/>		<!-- --var_int -->
-			<Operation ID="0xE" LHS="LVAR_INT" RHS="INT" RHV="1" />				<!-- lvar_int-- -->
-			<Operation ID="0xE" LHS="INT" RHS="LVAR_INT" LHV="1" Swap="on" />	<!-- --lvar_int -->
+			<Operation ID="0xC" LHS="VAR_INT" RHV="1" />				<!-- var_int-- -->
+			<Operation ID="0xC" RHS="VAR_INT" LHV="1" Swap="on"/>		<!-- --var_int -->
+			<Operation ID="0xE" LHS="LVAR_INT" RHV="1" />				<!-- lvar_int-- -->
+			<Operation ID="0xE" RHS="LVAR_INT" LHV="1" Swap="on" />		<!-- --lvar_int -->
 		</Operator>
 		
 		<!-- CLEO 4.3 IntOperations -->

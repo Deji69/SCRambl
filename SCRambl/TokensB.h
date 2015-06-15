@@ -142,6 +142,20 @@ namespace SCRambl
 			static const enum Parameter { ScriptRange, OperatorType };
 			template<typename TOperatorType>
 			using Info = TokenInfo < Type, Scripts::Range, TOperatorType >;
+
+			template<typename TOperationType>
+			class Operation : public Symbol
+			{
+			public:
+				Operation(TOperationType* op) : Symbol(Type::Operator),
+					m_Operation(op)
+				{ }
+
+				TOperationType* GetOperation() const { return m_Operation; }
+
+			private:
+				TOperationType* m_Operation;
+			};
 		};
 		class Command {
 		public:

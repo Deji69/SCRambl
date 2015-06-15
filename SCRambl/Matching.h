@@ -5,6 +5,8 @@
 //	 or copy at http://opensource.org/licenses/MIT)
 /**********************************************************/
 #pragma once
+#include <set>
+#include <unordered_set>
 #include "utils.h"
 #include "Types.h"
 #include "Variables.h"
@@ -15,15 +17,16 @@ namespace SCRambl
 		nomatch, loose, basic, strict
 	};
 
-	class MatchSpec {
-	public:
-		
-	};
-
-	class Match {
+	class TypeMatch {
 	public:
 
 	private:
 		MatchLevel m_matchLevel = MatchLevel::nomatch;
+	};
+
+	class MatchSet {
+	public:
+
+	private:
 	};
 }
