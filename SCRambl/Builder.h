@@ -255,6 +255,7 @@ namespace SCRambl
 		TaskMap::iterator m_CurrentTask;
 		bool m_HaveTask;
 
+		void Setup();
 		void Init();
 		void LoadDefinitions();
 
@@ -262,9 +263,10 @@ namespace SCRambl
 		using Shared = std::shared_ptr<Build>;
 
 		Build(Engine&, BuildConfig*);
+		Build(const Build&) = delete;
 		~Build() {
 			for (auto ptr : m_Symbols) {
-				delete ptr;
+				if (ptr) delete ptr;
 			}
 		}
 

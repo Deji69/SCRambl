@@ -128,7 +128,93 @@ namespace SCRambl
 			LabelRef(Scripts::Tokens::Iterator it, bool isref) : TokenIt(it), IsReference(isref)
 			{ }
 		};
+
+		class Operand
+		{
+		public:
+			enum Type { NullValue, IntValue, FloatValue, TextValue, LabelValue, VariableValue };
+
+			Operand(IToken* token) {
+				switch (token->GetType<Tokens::Type>()) {
+				case Tokens::Type::Number:
+					if (token->Get<Tokens::Number::TypelessInfo>().GetValue<Tokens::Number::ValueType>() == Numbers::Type::Float) {
+						auto& tok = token->Get<Tokens::Number::Info<Numbers::FloatType>>();
+						m_FloatValue = tok.GetValue<Tokens::Number::NumberValue>();
+						m_Text = tok.GetValue<Tokens::Number::ScriptRange>().Format();
+						m_Type = FloatValue;
+					}
+					else {
+						auto& tok = token->Get<Tokens::Number::Info<Numbers::IntegerType>>();
+						m_IntValue = tok.GetValue<Tokens::Number::NumberValue>();
+						m_Text = tok.GetValue<Tokens::Number::ScriptRange>().Format();
+						m_Type = IntValue;
+					}
+					break;
+
+				case Tokens::Type::String:
+					m_Type = TextValue;
+					m_Text = token->Get<Tokens::String::Info>().GetValue<Tokens::String::ScriptRange>().Format();
+					break;
+
+				case Tokens::Type::LabelRef:
+					m_Type = LabelValue;
+					{
+						auto& tok = token->Get<Tokens::Label::Info>();
+						m_Text = tok.GetValue<Tokens::Label::ScriptRange>().Format();
+						m_LabelValue = tok.GetValue<Tokens::Label::LabelValue>();
+					}
+					break;
+
+				case Tokens::Type::Variable:
+					m_Type = VariableValue;
+					{
+						//
+					}
+					break;
+
+				default:
+					m_Type = NullValue;
+					break;
+				}
+			}
+
+			Type GetType() const { return m_Type; }
+
+		private:
+			Type m_Type = NullValue;
+			union {
+				int64_t m_IntValue = 0;
+				float m_FloatValue;
+				Scripts::Label* m_LabelValue;
+				Variable* m_VariableValue;
+			};
+			std::string m_Text;
+		};
 		
+		/*\
+		 * Parser::Operation
+		\*/
+		class Operation : public Tokens::Symbol
+		{
+		public:
+			enum Type { PrefixUnary, SuffixUnary, Inline, Compounded };
+			// PrefixUnary
+			Operation(ScriptVariable* var, Operators::Operation* op) : Symbol(Tokens::Type::Operator),
+				m_Operation(op), m_Type(PrefixUnary), m_LVariable(var)
+			{ }
+			// SuffixUnary
+			Operation(Operators::Operation* op, ScriptVariable* var) : Symbol(Tokens::Type::Operator),
+				m_Operation(op), m_Type(SuffixUnary), m_RVariable(var)
+			{ }
+
+		private:
+			Type m_Type;
+			Operators::Operation* m_Operation;
+			ScriptVariable* m_LVariable, *m_RVariable;
+			Types::Type* m_LValueType, * m_RValueType;
+			bool m_Condition = false;
+		};
+
 		/*\
 		 * Parser::Parser - Now this is what we're here for
 		\*/
@@ -180,6 +266,9 @@ namespace SCRambl
 
 				void StartWithOperator() {
 					looksPrefixed = true;
+				}
+				void StartWithVariable() {
+					looksPrefixed = false;
 				}
 			} m_OperationParseState;
 
@@ -428,6 +517,7 @@ namespace SCRambl
 			Build& m_Build;
 			Scripts::Tokens& m_Tokens;
 			Scripts::Tokens::Iterator m_TokenIt;
+			Scripts::Tokens::Iterator m_VariableTokenIt;
 			Scripts::Tokens::Iterator m_CommandTokenIt;
 			Scripts::Tokens::Iterator m_OperatorTokenIt;
 			Scripts::Tokens::Iterator::CVector m_CommandTokens;			// positions of all parsed command tokens

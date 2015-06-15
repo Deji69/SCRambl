@@ -146,6 +146,7 @@ namespace SCRambl
 				return state_parsing_command;
 			}
 			else if (m_Variable = m_Build.GetScriptVariable(name)) {
+				m_VariableTokenIt = m_TokenIt;
 				return state_parsing_variable;
 			}
 			else if (IsCommandParsing()/* && m_CommandArgIt->GetType().IsCompatible()*/) {
@@ -201,13 +202,20 @@ namespace SCRambl
 		States Parser::Parse_Variable() {
 
 			if (m_ActiveState == state_parsing_operator) {
+				m_ActiveState = state_neutral;
 				if (m_OperationParseState.looksPrefixed) {
 					if (auto op = m_CurrentOperator->GetUnaryOperation(m_Variable->Ptr(), true)) {
-						m_OperatorTokenIt->SetSymbol(CreateSymbol<Tokens::Operator::Operation<Operators::Operation>>(op));
+						m_Build.CreateSymbol<Operation>(op, m_Variable);
 						return state_neutral;
 					}
 					else BREAK();		// error?
 				}
+			}
+			else if (m_ActiveState == state_neutral) {
+				++m_TokenIt;
+				m_ActiveState = state_parsing_variable;
+				m_OperationParseState.StartWithVariable();
+				return state_neutral;
 			}
 			
 			return state_parsing_variable;
@@ -274,7 +282,16 @@ namespace SCRambl
 			return state_parsing_command_args;
 		}
 		States Parser::Parse_Operator() {
-			if (m_OperatorTokenIt == m_TokenIt) {
+			if (m_ActiveState == state_parsing_variable) {
+				m_ActiveState = state_neutral;
+				++m_TokenIt;
+				if (auto op = m_CurrentOperator->GetUnaryOperation(m_Variable->Ptr(), false)) {
+					m_Build.CreateSymbol<Operation>(m_Variable, op);
+					return state_neutral;
+				}
+				else BREAK();
+			}
+			else if (m_OperatorTokenIt == m_TokenIt) {
 				++m_TokenIt;
 				m_OperationParseState.StartWithOperator();
 				m_ActiveState = state_parsing_operator;

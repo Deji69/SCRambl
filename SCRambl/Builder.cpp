@@ -56,6 +56,13 @@ namespace SCRambl
 		}
 		return false;
 	}
+	void Build::Setup() {
+		m_CurrentTask = std::end(m_Tasks);
+		m_Types.Init(*this);
+		m_Constants.Init(*this);
+		m_Commands.Init(*this);
+		m_Operators.Init(*this);
+	}
 	void Build::Init() {
 		m_CurrentTask = std::begin(m_Tasks);
 
@@ -104,12 +111,9 @@ namespace SCRambl
 		return *this;
 	}
 	Build::Build(Engine& engine, BuildConfig* config) : m_Env(engine), m_Engine(engine),
-		m_Config(config), m_CurrentTask(std::end(m_Tasks))
+		m_Config(config)
 	{
-		m_Types.Init(*this);
-		m_Constants.Init(*this);
-		m_Commands.Init(*this);
-		m_Operators.Init(*this);
+		Setup();
 	}
 
 	/* BuildEnvironment */
