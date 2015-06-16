@@ -108,6 +108,19 @@ namespace SCRambl
 			}
 		}
 		
+		States Parser::Parse_Neutral_CheckCharacter(IToken* tok) {
+			if (IsCharacterEOL(tok)) {
+				switch (m_ActiveState) {
+				case state_parsing_operator:
+					if (m_OperationParseState.RequireRVal())
+						BREAK();
+					else if (m_OperationParseState.CheckForRVal())
+						m_Build.CreateSymbol<Operation>(m_OperationParseState.lh_var, m_OperationParseState.operation);
+					break;
+				}
+			}
+			return state_neutral;
+		}
 		States Parser::Parse_Neutral_CheckIdentifier(IToken* tok) {
 			Commands::Vector vec;
 			auto& token = tok->Get<Tokens::Identifier::Info<>>();
@@ -175,9 +188,23 @@ namespace SCRambl
 			else SendError(Error::invalid_operator, GetOperatorRange(tok));
 			return state_neutral;
 		}
+		States Parser::Parse_Neutral_CheckNumber(IToken* tok) {
+			if (auto info = GetIntInfo(tok)) {
+				auto val = info->GetValue<Tokens::Number::NumberValue>();
+				std::vector<Types::Value*> vals;
+				m_Build.GetTypes().GetValues(Types::ValueSet::Number, val.Size(), vals);
+			}
+			else if (auto info = GetFloatInfo(tok)) {
+				auto val = info->GetValue<Tokens::Number::NumberValue>();
+
+			}
+		}
 		States Parser::Parse_Neutral() {
 			States new_state = state_neutral;
 			switch (m_TokenIt->GetToken()->GetType<Tokens::Type>()) {
+			case Tokens::Type::Character:
+				new_state = Parse_Neutral_CheckCharacter(m_TokenIt->GetToken());
+				break;
 			case Tokens::Type::Identifier:
 				new_state = Parse_Neutral_CheckIdentifier(m_TokenIt->GetToken());
 				break;
@@ -186,6 +213,9 @@ namespace SCRambl
 				break;
 			case Tokens::Type::Operator:
 				new_state = Parse_Neutral_CheckOperator(m_TokenIt->GetToken());
+				break;
+			case Tokens::Type::Number:
+				new_state = Parse_Neutral_CheckNumber(m_TokenIt->GetToken());
 				break;
 			}
 			if (new_state == state_neutral)
@@ -285,8 +315,9 @@ namespace SCRambl
 			if (m_ActiveState == state_parsing_variable) {
 				m_ActiveState = state_neutral;
 				++m_TokenIt;
+				
 				if (auto op = m_CurrentOperator->GetUnaryOperation(m_Variable->Ptr(), false)) {
-					m_Build.CreateSymbol<Operation>(m_Variable, op);
+					m_OperationParseState.HoldPostUnary(op, m_Variable);
 					return state_neutral;
 				}
 				else BREAK();

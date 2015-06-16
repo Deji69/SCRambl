@@ -146,6 +146,11 @@ namespace SCRambl
 			auto pos = m_Token.Begin();
 
 			switch (m_Token) {
+			case TokenType::Eol: {
+				m_Build.CreateToken<Tokens::Character::Info<Character>>(pos, Character(Character::Type::EOL));
+				m_Task(Event::AddedToken, range);
+				break;
+			}
 			case TokenType::Identifier: {
 				m_Build.CreateToken<Tokens::Identifier::Info<>>(pos, Tokens::Type::Identifier, m_Token.Range());
 				m_Task(Event::AddedToken, range);

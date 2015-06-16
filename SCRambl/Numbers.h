@@ -30,7 +30,7 @@ namespace SCRambl
 			typedef unsigned char MinUType;
 
 		private:
-			Type			m_Type = None;
+			Type m_Type = None;
 			union Value {
 				long long			tLong;
 				long				tInt;
@@ -41,29 +41,32 @@ namespace SCRambl
 				unsigned short		tUShort;
 				unsigned char		tUChar;
 			} m_Value;
+			size_t m_Size;
 
 		public:
 			IntegerType() = default;
-			IntegerType(long long val) : m_Type(Long)
+			IntegerType(long long val) : m_Type(Long), m_Size(sizeof(long long))
 			{ m_Value.tLong = val; }
-			IntegerType(int val) : m_Type(Int)
+			IntegerType(int val) : m_Type(Int), m_Size(sizeof(int))
 			{ m_Value.tInt = val; }
-			IntegerType(short val) : m_Type(Short)
+			IntegerType(short val) : m_Type(Short), m_Size(sizeof(short))
 			{ m_Value.tShort = val; }
-			IntegerType(char val) : m_Type(Char)
+			IntegerType(char val) : m_Type(Char), m_Size(sizeof(char))
 			{ m_Value.tChar = val; }
-			IntegerType(unsigned long long val) : m_Type(ULong)
+			IntegerType(unsigned long long val) : m_Type(ULong), m_Size(sizeof(unsigned long long))
 			{ m_Value.tULong = val; }
-			IntegerType(unsigned int val) : m_Type(UInt)
+			IntegerType(unsigned int val) : m_Type(UInt), m_Size(sizeof(unsigned int))
 			{ m_Value.tUInt = val; }
-			IntegerType(unsigned short val) : m_Type(UShort)
+			IntegerType(unsigned short val) : m_Type(UShort), m_Size(sizeof(unsigned short))
 			{ m_Value.tUShort = val; }
-			IntegerType(unsigned char val) : m_Type(UChar)
+			IntegerType(unsigned char val) : m_Type(UChar), m_Size(sizeof(unsigned char))
 			{ m_Value.tUChar = val; }
-			IntegerType(const char * str) : m_Type(None)
+			IntegerType(const char * str) : m_Type(None), m_Size(sizeof(const char*))
 			{
-				if (StringToInt<long long>(str, m_Value.tLong, true) == ConvertResult::success)
+				if (StringToInt<long long>(str, m_Value.tLong, true) == ConvertResult::success) {
+					m_Size = sizeof(long long);
 					m_Type = Long;
+				}
 			}
 
 			template<typename T>
@@ -81,6 +84,8 @@ namespace SCRambl
 			}
 			//template<typename T>
 			//inline const T& GetValue() const		{ return GetValue<T>(); }
+
+			size_t Size() const { return m_Size; }
 
 			inline operator long long() const { return GetValue<long long>(); }
 			inline operator long() const { return GetValue<long>(); }
@@ -117,6 +122,7 @@ namespace SCRambl
 			}
 
 			inline operator float()	const { return GetValue<float>(); }
+			inline size_t Size() const { return sizeof(float); }
 		};
 
 		enum class ConvertResult {

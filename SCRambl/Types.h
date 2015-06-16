@@ -752,7 +752,7 @@ namespace SCRambl
 			/*\
 			 * Types::Types::GetValues - Pushes out a list of values of 'valtype' which contain values of at least 'size' in bits
 			 * Returns the number of values added to the list
-			 * Optional bool(Value::Shared) function which should return true if it wants to push the Value
+			 * Optional bool(Value*) function which should return true if it wants to push the Value
 			\*/
 			size_t GetValues(ValueSet valtype, size_t size, std::vector<Value*> & out) const {
 				int i = 0;

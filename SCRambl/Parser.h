@@ -134,49 +134,22 @@ namespace SCRambl
 		public:
 			enum Type { NullValue, IntValue, FloatValue, TextValue, LabelValue, VariableValue };
 
-			Operand(IToken* token) {
-				switch (token->GetType<Tokens::Type>()) {
-				case Tokens::Type::Number:
-					if (token->Get<Tokens::Number::TypelessInfo>().GetValue<Tokens::Number::ValueType>() == Numbers::Type::Float) {
-						auto& tok = token->Get<Tokens::Number::Info<Numbers::FloatType>>();
-						m_FloatValue = tok.GetValue<Tokens::Number::NumberValue>();
-						m_Text = tok.GetValue<Tokens::Number::ScriptRange>().Format();
-						m_Type = FloatValue;
-					}
-					else {
-						auto& tok = token->Get<Tokens::Number::Info<Numbers::IntegerType>>();
-						m_IntValue = tok.GetValue<Tokens::Number::NumberValue>();
-						m_Text = tok.GetValue<Tokens::Number::ScriptRange>().Format();
-						m_Type = IntValue;
-					}
-					break;
-
-				case Tokens::Type::String:
-					m_Type = TextValue;
-					m_Text = token->Get<Tokens::String::Info>().GetValue<Tokens::String::ScriptRange>().Format();
-					break;
-
-				case Tokens::Type::LabelRef:
-					m_Type = LabelValue;
-					{
-						auto& tok = token->Get<Tokens::Label::Info>();
-						m_Text = tok.GetValue<Tokens::Label::ScriptRange>().Format();
-						m_LabelValue = tok.GetValue<Tokens::Label::LabelValue>();
-					}
-					break;
-
-				case Tokens::Type::Variable:
-					m_Type = VariableValue;
-					{
-						//
-					}
-					break;
-
-				default:
-					m_Type = NullValue;
-					break;
-				}
-			}
+			Operand() = default;
+			Operand(ScriptVariable* var) : m_Type(VariableValue),
+				m_VariableValue(var), m_Text(var->Get().Name())
+			{ }
+			Operand(ScriptLabel* label) : m_Type(LabelValue),
+				m_LabelValue(label), m_Text(label->Get().GetName())
+			{ }
+			Operand(int64_t v, std::string str) : m_Type(IntValue),
+				m_IntValue(v), m_Text(str)
+			{ }
+			Operand(float v, std::string str) : m_Type(FloatValue),
+				m_FloatValue(v), m_Text(str)
+			{ }
+			Operand(std::string v) : m_Type(TextValue),
+				m_Text(v)
+			{ }
 
 			Type GetType() const { return m_Type; }
 
@@ -185,8 +158,8 @@ namespace SCRambl
 			union {
 				int64_t m_IntValue = 0;
 				float m_FloatValue;
-				Scripts::Label* m_LabelValue;
-				Variable* m_VariableValue;
+				ScriptLabel* m_LabelValue;
+				ScriptVariable* m_VariableValue;
 			};
 			std::string m_Text;
 		};
@@ -199,19 +172,26 @@ namespace SCRambl
 		public:
 			enum Type { PrefixUnary, SuffixUnary, Inline, Compounded };
 			// PrefixUnary
-			Operation(ScriptVariable* var, Operators::Operation* op) : Symbol(Tokens::Type::Operator),
-				m_Operation(op), m_Type(PrefixUnary), m_LVariable(var)
+			Operation(Operators::Operation* op, ScriptVariable* var) : Symbol(Tokens::Type::Operator),
+				m_Operation(op), m_Type(PrefixUnary), m_ROperand(var)
 			{ }
 			// SuffixUnary
-			Operation(Operators::Operation* op, ScriptVariable* var) : Symbol(Tokens::Type::Operator),
-				m_Operation(op), m_Type(SuffixUnary), m_RVariable(var)
+			Operation(ScriptVariable* var, Operators::Operation* op) : Symbol(Tokens::Type::Operator),
+				m_Operation(op), m_Type(SuffixUnary), m_LOperand(var)
+			{ }
+			// Inline var + var
+			Operation(Operand lop, Operators::Operation* op, Operand rop) : Symbol(Tokens::Type::Operator),
+				m_Operation(op), m_Type(Inline), m_LOperand(lop), m_ROperand(rop)
+			{ }
+			// Compounded
+			Operation(Operators::Operation* op, Operand lop, Operand rop) : Symbol(Tokens::Type::Operator),
+				m_Operation(op), m_Type(Compounded), m_LOperand(lop), m_ROperand(rop)
 			{ }
 
 		private:
 			Type m_Type;
+			Operand m_LOperand, m_ROperand;
 			Operators::Operation* m_Operation;
-			ScriptVariable* m_LVariable, *m_RVariable;
-			Types::Type* m_LValueType, * m_RValueType;
 			bool m_Condition = false;
 		};
 
@@ -263,19 +243,38 @@ namespace SCRambl
 			} m_TypeParseState;
 			struct OperationParseState {
 				bool looksPrefixed = false;
+				bool possiblePostUnary = false;
+				bool requireRVal = false;
+				ScriptVariable* lh_var = nullptr;
+				Operators::Operation* operation = nullptr;
 
 				void StartWithOperator() {
+					OperationParseState();
 					looksPrefixed = true;
 				}
 				void StartWithVariable() {
+					OperationParseState();
 					looksPrefixed = false;
+				}
+				void HoldPostUnary(Operators::Operation* op, ScriptVariable* var) {
+					operation = op;
+					lh_var = var;
+					possiblePostUnary = true;
+				}
+				bool CheckForRVal() {
+					return possiblePostUnary;
+				}
+				bool RequireRVal() {
+					return requireRVal;
 				}
 			} m_OperationParseState;
 
 			States Parse_Neutral();
+			States Parse_Neutral_CheckCharacter(IToken*);
 			States Parse_Neutral_CheckIdentifier(IToken*);
 			States Parse_Neutral_CheckDelimiter(IToken*);
 			States Parse_Neutral_CheckOperator(IToken*);
+			States Parse_Neutral_CheckNumber(IToken*);
 			States Parse_Type();
 			States Parse_Type_Varlist();
 			States Parse_Command();
