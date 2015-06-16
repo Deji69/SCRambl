@@ -118,6 +118,7 @@ namespace SCRambl
 						m_Build.CreateSymbol<Operation>(m_OperationParseState.lh_var, m_OperationParseState.operation);
 					break;
 				}
+				m_ActiveState = state_neutral;
 			}
 			return state_neutral;
 		}
@@ -190,14 +191,14 @@ namespace SCRambl
 		}
 		States Parser::Parse_Neutral_CheckNumber(IToken* tok) {
 			if (auto info = GetIntInfo(tok)) {
-				auto val = info->GetValue<Tokens::Number::NumberValue>();
-				std::vector<Types::Value*> vals;
-				m_Build.GetTypes().GetValues(Types::ValueSet::Number, val.Size(), vals);
+				m_NumberParseState.Start(info);
+				return state_parsing_number;
 			}
 			else if (auto info = GetFloatInfo(tok)) {
-				auto val = info->GetValue<Tokens::Number::NumberValue>();
-
+				m_NumberParseState.Start(info);
+				return state_parsing_number;
 			}
+			return state_neutral;
 		}
 		States Parser::Parse_Neutral() {
 			States new_state = state_neutral;
@@ -226,28 +227,71 @@ namespace SCRambl
 			++m_TokenIt;
 			return state_parsing_type_varlist;
 		}
+		States Parser::Parse_Number() {
+			if (!m_NumberParseState.IsFloat()) {
+				auto info = m_NumberParseState.IntInfo;
+				auto val = info->GetValue<Tokens::Number::NumberValue>();
+				std::vector<Types::Value*> vals;
+				size_t best_size = 0;
+				m_Build.GetTypes().AllValues(Types::ValueSet::Number, [&val, &vals, &best_size](Types::Value* value){
+					if (val.Size() <= value->GetSize()) {
+						if (vals.empty() || value->GetSize() < best_size) {
+							best_size = value->GetSize();
+							vals.emplace_back(value);
+						}
+					}
+				});
+				
+				if (vals.empty())
+					BREAK();
+				if (vals.size() > 1)
+					BREAK();
+				auto value = vals.front();
+				auto type = value->GetType();
+				
+				if (m_ActiveState == state_parsing_operator) {
+					// var = N
+					if (m_OperationParseState.RequireRVal() || m_OperationParseState.CheckForRVal()) {
+						m_OperationParseState.requireRVal = false;
+
+						if (auto op = m_CurrentOperator->GetOperation(m_OperationParseState.lh_var->Ptr(), type)) {
+							m_OperationParseState.FinishRHS(op, type);
+						}
+					}
+				}
+			}
+			else {
+				auto info = m_NumberParseState.FloatInfo;
+				auto val = info->GetValue<Tokens::Number::NumberValue>();
+			}
+			return state_parsing_number;
+		}
 		States Parser::Parse_Label() {
 			return state_parsing_label;
 		}
 		States Parser::Parse_Variable() {
-
 			if (m_ActiveState == state_parsing_operator) {
 				m_ActiveState = state_neutral;
 				if (m_OperationParseState.looksPrefixed) {
+					// rhs of a =var unary operation
 					if (auto op = m_CurrentOperator->GetUnaryOperation(m_Variable->Ptr(), true)) {
 						m_Build.CreateSymbol<Operation>(op, m_Variable);
 						return state_neutral;
 					}
 					else BREAK();		// error?
 				}
+				else {
+					// rhs of a var=var operation
+				}
+				return state_neutral;
 			}
 			else if (m_ActiveState == state_neutral) {
+				// lhs of a var= operation?
 				++m_TokenIt;
 				m_ActiveState = state_parsing_variable;
 				m_OperationParseState.StartWithVariable();
 				return state_neutral;
 			}
-			
 			return state_parsing_variable;
 		}
 		States Parser::Parse_Type_Varlist() {
@@ -318,9 +362,10 @@ namespace SCRambl
 				
 				if (auto op = m_CurrentOperator->GetUnaryOperation(m_Variable->Ptr(), false)) {
 					m_OperationParseState.HoldPostUnary(op, m_Variable);
-					return state_neutral;
 				}
-				else BREAK();
+				else m_OperationParseState.HoldLHS(m_Variable);
+ 				m_ActiveState = state_parsing_operator;
+				return state_neutral;
 			}
 			else if (m_OperatorTokenIt == m_TokenIt) {
 				++m_TokenIt;
@@ -335,7 +380,7 @@ namespace SCRambl
 			do {
 				static States(Parser::*funcs[States::max_state])() = {
 					&Parser::Parse_Neutral, &Parser::Parse_Type, &Parser::Parse_Command, &Parser::Parse_Operator,
-					&Parser::Parse_Label, &Parser::Parse_Variable,
+					&Parser::Parse_Number, &Parser::Parse_Label, &Parser::Parse_Variable,
 
 					&Parser::Parse_Type_Varlist,
 					&Parser::Parse_Command_Args,
@@ -346,7 +391,7 @@ namespace SCRambl
 			return;
 
 
-			auto& types = m_Build.GetTypes();
+			/*auto& types = m_Build.GetTypes();
 			auto ptr = *m_TokenIt;
 			auto type = ptr->GetToken()->GetType<Tokens::Type>();
 			bool newline = false;
@@ -426,10 +471,10 @@ namespace SCRambl
 						just_found_command = true;
 					}
 				}
-				else if (false /*check variables */) {
+				else if (false /*check variables /) {
 
 				}
-				else if (IsCommandParsing()/* && m_CommandArgIt->GetType().IsCompatible()*/) {
+				else if (IsCommandParsing()/* && m_CommandArgIt->GetType().IsCompatible()/) {
 
 				}
 				else {
@@ -565,7 +610,7 @@ namespace SCRambl
 				case Delimiter::EndScope:
 					type.Close();
 					break;
-				}*/
+				}*
 				break;
 			}
 			case Tokens::Type::Command: {
@@ -609,7 +654,7 @@ namespace SCRambl
 			}
 
 			m_OnNewLine = newline;
-			++m_TokenIt;
+			++m_TokenIt;*/
 		}
 		void Parser::Reset()
 		{ }

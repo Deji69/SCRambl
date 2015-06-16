@@ -33,9 +33,9 @@ namespace SCRambl
 			Command = Tokens::Identifier::EXTRA,
 		};
 		enum States {
-			state_neutral, state_parsing_type, state_parsing_command, state_parsing_operator, state_parsing_label, state_parsing_variable,
-			state_parsing_type_varlist,
-			state_parsing_command_args,
+			state_neutral, state_parsing_type, state_parsing_command, state_parsing_operator,
+			state_parsing_number, state_parsing_label, state_parsing_variable,
+			state_parsing_type_varlist, state_parsing_command_args,
 			max_state
 		};
 
@@ -246,6 +246,7 @@ namespace SCRambl
 				bool possiblePostUnary = false;
 				bool requireRVal = false;
 				ScriptVariable* lh_var = nullptr;
+				Types::Type* rh_type = nullptr;
 				Operators::Operation* operation = nullptr;
 
 				void StartWithOperator() {
@@ -261,6 +262,17 @@ namespace SCRambl
 					lh_var = var;
 					possiblePostUnary = true;
 				}
+				void HoldLHS(ScriptVariable* var) {
+					lh_var = var;
+					requireRVal = true;
+				}
+				void FinishRHS(Operators::Operation* op, Types::Type* type) {
+					requireRVal = false;
+					possiblePostUnary = false;
+					looksPrefixed = false;
+					operation = op;
+					rh_type = type;
+				}
 				bool CheckForRVal() {
 					return possiblePostUnary;
 				}
@@ -268,6 +280,25 @@ namespace SCRambl
 					return requireRVal;
 				}
 			} m_OperationParseState;
+			struct NumberParseState {
+				bool ItIsFloat = false;
+				union {
+					Tokens::Number::Info<Numbers::IntegerType>* IntInfo = nullptr;
+					Tokens::Number::Info<Numbers::FloatType>* FloatInfo;
+				};
+				void Start(Tokens::Number::Info<Numbers::IntegerType>* intInfo) {
+					NumberParseState();
+					IntInfo = intInfo;
+				}
+				void Start(Tokens::Number::Info<Numbers::FloatType>* fltInfo) {
+					NumberParseState();
+					FloatInfo = fltInfo;
+					ItIsFloat = true;
+				}
+				bool IsFloat() const {
+					return ItIsFloat;
+				}
+			} m_NumberParseState;
 
 			States Parse_Neutral();
 			States Parse_Neutral_CheckCharacter(IToken*);
@@ -280,6 +311,7 @@ namespace SCRambl
 			States Parse_Command();
 			States Parse_Command_Args();
 			States Parse_Operator();
+			States Parse_Number();
 			States Parse_Label();
 			States Parse_Variable();
 

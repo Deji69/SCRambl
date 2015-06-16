@@ -147,7 +147,7 @@ namespace SCRambl
 
 			switch (m_Token) {
 			case TokenType::Eol: {
-				m_Build.CreateToken<Tokens::Character::Info<Character>>(pos, Character(Character::Type::EOL));
+				m_Build.CreateToken<Tokens::Character::Info<Character>>(pos, Tokens::Type::Character, pos, Character(Character::Type::EOL));
 				m_Task(Event::AddedToken, range);
 				break;
 			}

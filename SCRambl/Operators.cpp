@@ -8,6 +8,42 @@ namespace SCRambl
 	namespace Operators
 	{
 		/* Operators::Operator */
+		Operation* Operator::GetOperation(Variable* var, Types::Type* type) {
+			Operation* bestMatch = nullptr;
+			Types::MatchLevel bestMatchLevel = Types::MatchLevel::None;
+			std::vector<Operation*> basicMatches, looseMatches;
+			for (auto& op : m_Operations) {
+				if (!op.HasLHS() || !op.HasRHS()) continue;
+				
+				auto lhs = op.GetLHS(), rhs = op.GetRHS();
+				auto lhs_lvl = lhs->GetMatchLevel(var->Type());
+				auto rhs_lvl = rhs->GetMatchLevel(type);
+				if (lhs_lvl != rhs_lvl) {
+					if (lhs_lvl == Types::MatchLevel::None || rhs_lvl == Types::MatchLevel::None)
+						lhs_lvl = rhs_lvl = Types::MatchLevel::None;
+					else if (lhs_lvl == Types::MatchLevel::Loose || rhs_lvl == Types::MatchLevel::Loose)
+						lhs_lvl = rhs_lvl = Types::MatchLevel::Loose;
+					else if (lhs_lvl == Types::MatchLevel::Basic || rhs_lvl == Types::MatchLevel::Basic)
+						lhs_lvl = rhs_lvl = Types::MatchLevel::Basic;
+				}
+
+				// We want the best of the best of the best
+				if (lhs_lvl == Types::MatchLevel::None)
+					continue;
+				if (bestMatch) {
+					if (lhs_lvl == bestMatchLevel)
+						continue;
+					if (lhs_lvl == Types::MatchLevel::Loose && bestMatchLevel != Types::MatchLevel::Loose)
+						continue;
+					if (lhs_lvl == Types::MatchLevel::Basic && bestMatchLevel == Types::MatchLevel::Strict)
+						continue;
+				}
+
+				bestMatch = &op;
+				bestMatchLevel = lhs_lvl;
+			}
+			return bestMatch;
+		}
 		Operation* Operator::GetUnaryOperation(Variable* var, bool rhs_var) {
 			std::vector<Operation*> basicMatches, looseMatches;
 			for (auto& op : m_Operations) {
