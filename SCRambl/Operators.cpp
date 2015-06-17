@@ -8,7 +8,7 @@ namespace SCRambl
 	namespace Operators
 	{
 		/* Operators::Operator */
-		Operation* Operator::GetOperation(Variable* var, Types::Type* type) {
+		OperationRef Operator::GetOperation(Variable* var, Types::Type* type) {
 			Operation* bestMatch = nullptr;
 			Types::MatchLevel bestMatchLevel = Types::MatchLevel::None;
 			std::vector<Operation*> basicMatches, looseMatches;
@@ -42,9 +42,9 @@ namespace SCRambl
 				bestMatch = &op;
 				bestMatchLevel = lhs_lvl;
 			}
-			return bestMatch;
+			return bestMatch ? OperationRef() : bestMatch->GetRef();
 		}
-		Operation* Operator::GetUnaryOperation(Variable* var, bool rhs_var) {
+		OperationRef Operator::GetUnaryOperation(Variable* var, bool rhs_var) {
 			std::vector<Operation*> basicMatches, looseMatches;
 			for (auto& op : m_Operations) {
 				if (op.HasLHS() == op.HasRHS()) continue;
@@ -56,13 +56,19 @@ namespace SCRambl
 
 				auto matchLevel = var->Type()->GetMatchLevel(rhs_var ? rhs : lhs);
 				if (matchLevel == Types::MatchLevel::Strict)
-					return &op;
+					return op.GetRef();
 				else if (matchLevel == Types::MatchLevel::Basic)
 					basicMatches.emplace_back(&op);
 				else if (matchLevel == Types::MatchLevel::Loose && basicMatches.empty())
 					looseMatches.emplace_back(&op);
 			}
-			return nullptr;
+			if (!basicMatches.empty()) {
+				return basicMatches.front()->GetRef();
+			}
+			else if (!looseMatches.empty()) {
+				return looseMatches.front()->GetRef();
+			}
+			return OperationRef();
 		}
 		/* Operators::Operators */
 		void Operators::Init(Build& build) {
@@ -80,8 +86,8 @@ namespace SCRambl
 						// map pseudonyms
 						auto cond_attr = xml.GetAttribute("Cond").GetValue();
 						auto comp_attr = xml.GetAttribute("Comp").GetValue();
-						if (comp_attr) Add(comp_attr.AsString(), op);
-						if (not_attr) Add(not_attr.AsString(), op);
+						if (comp_attr) Add(comp_attr.AsString(), op, OperatorType::Compound);
+						if (not_attr) Add(not_attr.AsString(), op, OperatorType::Not);
 					}
 					obj = op.Ptr();
 				}
@@ -99,12 +105,12 @@ namespace SCRambl
 						rhs_type = types.GetType(rhs.AsString());
 					
 					if (lhs_type || rhs_type) {
-						auto& operation = operater.AddOperation(id.AsNumber<size_t>(), lhs_type, rhs_type);
+						auto operation = operater.AddOperation(id.AsNumber<size_t>(), lhs_type, rhs_type);
 						if (auto lhv = xml.GetAttribute("LHV"))
-							operation.SetLHV(lhv->AsNumber<int>());
+							operation->SetLHV(lhv->AsNumber<int>());
 						if (auto rhv = xml.GetAttribute("RHV"))
-							operation.SetRHV(rhv->AsNumber<int>());
-						operation.SetSwapped(xml.GetAttribute("Swap")->AsBool(false));
+							operation->SetRHV(rhv->AsNumber<int>());
+						operation->SetSwapped(xml.GetAttribute("Swap")->AsBool(false));
 					}
 				}
 			});

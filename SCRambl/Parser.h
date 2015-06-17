@@ -141,6 +141,14 @@ namespace SCRambl
 			Operand(ScriptLabel* label) : m_Type(LabelValue),
 				m_LabelValue(label), m_Text(label->Get().GetName())
 			{ }
+			Operand(Tokens::Number::Info<Numbers::IntegerType>* info) : m_Type(IntValue),
+				m_IntValue(info->GetValue<Tokens::Number::NumberValue>()),
+				m_Text(info->GetValue<Tokens::Number::ScriptRange>().Format())
+			{ }
+			Operand(Tokens::Number::Info<Numbers::FloatType>* info) : m_Type(FloatValue),
+				m_FloatValue(info->GetValue<Tokens::Number::NumberValue>()),
+				m_Text(info->GetValue<Tokens::Number::ScriptRange>().Format())
+			{ }
 			Operand(int64_t v, std::string str) : m_Type(IntValue),
 				m_IntValue(v), m_Text(str)
 			{ }
@@ -163,6 +171,19 @@ namespace SCRambl
 			};
 			std::string m_Text;
 		};
+
+		class ChainOperation {
+		public:
+			ChainOperation(Variable* var, Operators::Operator* op) : m_Variable(var), m_Operator(op)
+			{ }
+
+			Operators::Operator* GetOperator() const { return m_Operator; }
+			Variable* GetVariable() const { return m_Variable; }
+
+		private:
+			Variable* m_Variable = nullptr;
+			Operators::Operator* m_Operator = nullptr;
+		};
 		
 		/*\
 		 * Parser::Operation
@@ -172,26 +193,26 @@ namespace SCRambl
 		public:
 			enum Type { PrefixUnary, SuffixUnary, Inline, Compounded };
 			// PrefixUnary
-			Operation(Operators::Operation* op, ScriptVariable* var) : Symbol(Tokens::Type::Operator),
+			Operation(Operators::OperationRef op, ScriptVariable* var) : Symbol(Tokens::Type::Operator),
 				m_Operation(op), m_Type(PrefixUnary), m_ROperand(var)
 			{ }
 			// SuffixUnary
-			Operation(ScriptVariable* var, Operators::Operation* op) : Symbol(Tokens::Type::Operator),
+			Operation(ScriptVariable* var, Operators::OperationRef op) : Symbol(Tokens::Type::Operator),
 				m_Operation(op), m_Type(SuffixUnary), m_LOperand(var)
 			{ }
 			// Inline var + var
-			Operation(Operand lop, Operators::Operation* op, Operand rop) : Symbol(Tokens::Type::Operator),
+			Operation(Operand lop, Operators::OperationRef op, Operand rop) : Symbol(Tokens::Type::Operator),
 				m_Operation(op), m_Type(Inline), m_LOperand(lop), m_ROperand(rop)
 			{ }
 			// Compounded
-			Operation(Operators::Operation* op, Operand lop, Operand rop) : Symbol(Tokens::Type::Operator),
+			Operation(Operators::OperationRef op, Operand lop, Operand rop) : Symbol(Tokens::Type::Operator),
 				m_Operation(op), m_Type(Compounded), m_LOperand(lop), m_ROperand(rop)
 			{ }
 
 		private:
 			Type m_Type;
 			Operand m_LOperand, m_ROperand;
-			Operators::Operation* m_Operation;
+			Operators::OperationRef m_Operation;
 			bool m_Condition = false;
 		};
 
@@ -245,39 +266,59 @@ namespace SCRambl
 				bool looksPrefixed = false;
 				bool possiblePostUnary = false;
 				bool requireRVal = false;
+				bool inChain = false;
 				ScriptVariable* lh_var = nullptr;
 				Types::Type* rh_type = nullptr;
-				Operators::Operation* operation = nullptr;
+				Operators::OperatorRef baseOperator;
+				Operators::OperationRef operation;
+				std::vector<ChainOperation> chainedOps;
 
-				void StartWithOperator() {
+				void StartWithOperator(Operators::OperatorRef op) {
 					OperationParseState();
 					looksPrefixed = true;
+					baseOperator = op;
 				}
 				void StartWithVariable() {
 					OperationParseState();
 					looksPrefixed = false;
 				}
-				void HoldPostUnary(Operators::Operation* op, ScriptVariable* var) {
+				void HoldPostUnary(Operators::OperationRef op, ScriptVariable* var) {
+					baseOperator = op->GetOperator();
 					operation = op;
 					lh_var = var;
 					possiblePostUnary = true;
 				}
-				void HoldLHS(ScriptVariable* var) {
+				void HoldLHS(Operators::OperatorRef op, ScriptVariable* var) {
+					baseOperator = op;
 					lh_var = var;
 					requireRVal = true;
 				}
-				void FinishRHS(Operators::Operation* op, Types::Type* type) {
+				void FinishRHS(Operators::OperationRef op, Types::Type* type) {
 					requireRVal = false;
 					possiblePostUnary = false;
 					looksPrefixed = false;
 					operation = op;
 					rh_type = type;
 				}
+				void PrepareChain() {
+					inChain = true;
+				}
+				ChainOperation& Chain(Variable* var, Operators::OperatorRef op) {
+					chainedOps.emplace_back(var, op.Ptr());
+					return chainedOps.back();
+				}
+				ChainOperation& LastInChain() {
+					return chainedOps.back();
+				}
+				
 				bool CheckForRVal() {
 					return possiblePostUnary;
 				}
 				bool RequireRVal() {
 					return requireRVal;
+				}
+				bool IsInChain() {
+					return inChain;
 				}
 			} m_OperationParseState;
 			struct NumberParseState {
@@ -320,6 +361,24 @@ namespace SCRambl
 			}
 			inline Tokens::Type GetCurrentTokenType() const {
 				return m_TokenIt->GetToken()->GetType<Tokens::Type>();
+			}
+			inline Types::Value* GetBestValue(Types::ValueSet type, size_t size) {
+				std::vector<Types::Value*> vals;
+				size_t best_size = 0;
+				m_Build.GetTypes().AllValues(type, [size, &vals, &best_size](Types::Value* value){
+					if (size <= value->GetSize()) {
+						if (vals.empty() || value->GetSize() < best_size) {
+							best_size = value->GetSize();
+							vals.emplace_back(value);
+						}
+					}
+				});
+
+				if (vals.empty() || vals.size() > 1) {
+					BREAK();
+					return nullptr;
+				}
+				return vals.front();
 			}
 
 			IToken* PeekToken(Tokens::Type type = Tokens::Type::None, size_t off = 1) {

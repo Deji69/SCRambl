@@ -243,7 +243,8 @@ namespace SCRambl
 		class Operation {
 			friend class Operator;
 
-			Operator* m_Operator;
+			OperatorRef m_Operator;
+			OperationRef m_Ref;
 			size_t m_Index;
 			Types::Type* m_RHS = nullptr, * m_LHS = nullptr;
 			bool m_HasLHV = false, m_HasRHV = false, m_Swapped = false;
@@ -251,11 +252,12 @@ namespace SCRambl
 
 		public:
 			Operation() = delete;
-			Operation(Operator* op, size_t id, Types::Type* lhs, Types::Type* rhs = nullptr) : m_Operator(op), m_Index(id),
-				m_LHS(lhs), m_RHS(rhs), m_HasLHV(false), m_HasRHV(false), m_Swapped(false)
+			Operation(OperationRef ref, OperatorRef op, size_t id, Types::Type* lhs, Types::Type* rhs = nullptr) : m_Ref(ref), m_Operator(op),
+				m_Index(id), m_LHS(lhs), m_RHS(rhs), m_HasLHV(false), m_HasRHV(false), m_Swapped(false)
 			{ }
 
-			Operator* GetOperator() const { return m_Operator; }
+			OperationRef GetRef() const { return m_Ref; }
+			OperatorRef GetOperator() const { return m_Operator; }
 			size_t GetIndex() const { return m_Index; }
 			Types::Type* GetLHS() const { return m_LHS; }
 			Types::Type* GetRHS() const { return m_RHS; }
@@ -284,38 +286,46 @@ namespace SCRambl
 			friend class Operators;
 
 			std::string m_Op;
+			OperatorRef m_Ref;
 			std::vector<Operation> m_Operations;
-			bool m_IsConditional = false;
+			bool m_IsConditional = false,
+				 m_IsAssignment = false;
 
 		public:
-			Operator(std::string op, bool iscond) : m_Op(op), m_IsConditional(iscond)
+			Operator(OperatorRef ref, std::string op, bool iscond, bool isass = false) : m_Ref(ref), m_Op(op), m_IsConditional(iscond), m_IsAssignment(isass)
 			{ }
-			Operator(const Operator& v) : m_Op(v.m_Op), m_IsConditional(v.m_IsConditional) {
-				for (auto& op : v.m_Operations) {
-					m_Operations.emplace_back(op);
-					m_Operations.back().m_Operator = this;
+			Operator(const Operator& v) : m_Op(v.m_Op), m_IsConditional(v.m_IsConditional), m_IsAssignment(v.m_IsAssignment), m_Ref(v.m_Ref) {
+				for (auto& pr : v.m_Operations) {
+					m_Operations.emplace_back(pr);
+					m_Operations.back().m_Operator = m_Ref;
 				}
 			}
 
+			OperatorRef GetRef() { return m_Ref; }
+
 			bool IsConditional() const { return m_IsConditional; }
 
-			Operation& AddOperation(size_t id, Types::Type* lhs, Types::Type* rhs) {
-				m_Operations.emplace_back(this, id, lhs, rhs);
-				return m_Operations.back();
+			OperationRef AddOperation(size_t id, Types::Type* lhs, Types::Type* rhs) {
+				m_Operations.emplace_back(OperationRef(m_Operations), m_Ref, id, lhs, rhs);
+				return m_Operations.back().GetRef();
 			}
 			size_t GetNumOperations() const {
 				return m_Operations.size();
 			}
-			Operation* GetOperation(size_t idx) {
-				return idx < m_Operations.size() ? &m_Operations[idx] : nullptr;
+			OperationRef GetOperation(size_t idx) {
+				return idx < m_Operations.size() ? m_Operations[idx].GetRef() : OperationRef();
 			}
 		
-			Operation* GetUnaryOperation(Variable*, bool rhs_var = false);
-			Operation* GetOperation(Variable*, Types::Type*);
+			OperationRef GetUnaryOperation(Variable*, bool rhs_var = false);
+			OperationRef GetOperation(Variable*, Types::Type*);
 		};
 		
 		const Type max_operator = Type::max_operator;
 		using OperatorTable = Table<OperatorRef>;
+
+		enum class OperatorType {
+			None, Inline, Compound, Not
+		};
 
 		/*\	Operators - storage, config & utility \*/
 		class Operators {
@@ -324,22 +334,22 @@ namespace SCRambl
 			void Init(Build&);
 			template<typename... TArgs>
 			OperatorRef Insert(TArgs&&... args) {
-				m_Storage.emplace_back(args...);
-				return OperatorRef(m_Storage, m_Storage.size() - 1);
+				m_Storage.emplace_back(m_Storage, args...);
+				return m_Storage.back().GetRef();
 			}
 			OperatorRef Add(std::string op, bool is_conditional = false) {
 				auto ref = Insert(op, is_conditional);
 				if (ref) {
-					m_OpMap.emplace(op, ref);
+					m_OpMap.emplace(op, std::make_pair(ref, OperatorType::Inline));
 					m_Table.AddOperator(op, ref);
 				}
 				return ref;
 			}
-			void Add(std::string op, OperatorRef ref) {
-				if (ref) m_OpMap.emplace(op, ref);
+			void Add(std::string op, OperatorRef ref, OperatorType type) {
+				if (ref) m_OpMap.emplace(op, std::make_pair(ref, type));
 			}
-			OperatorRef Get(std::string op) {
-				static const OperatorRef def;
+			std::pair<OperatorRef, OperatorType> Get(std::string op) {
+				static const std::pair<OperatorRef, OperatorType> def;
 				auto it = m_OpMap.find(op);
 				return it != m_OpMap.end() ? it->second : def;
 			}
@@ -352,7 +362,7 @@ namespace SCRambl
 
 			XMLConfiguration* m_Config;
 			std::vector<Operator> m_Storage;
-			std::unordered_map<std::string, OperatorRef> m_OpMap;
+			std::unordered_map<std::string, std::pair<OperatorRef, OperatorType>> m_OpMap;
 			OperatorTable m_Table;
 		};
 	}

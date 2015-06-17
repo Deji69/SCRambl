@@ -2,7 +2,7 @@
 
 <SCRambl Version="1.0" FileVersion="0.0.0.0">
     <Operators>
-		<Operator Name="=">
+		<Operator Name="=" Assignment="true">
 			<!--- Val to var -->
 			<Operation ID="0x4" LHS="VAR_INT" RHS="INT" />
 			<Operation ID="0x5" LHS="VAR_FLOAT" RHS="FLOAT" />
@@ -94,7 +94,7 @@
 			<Operation ID="0x7A" LHS="VAR_FLOAT" RHS="VAR_FLOAT" />
 			<Operation ID="0x7B" LHS="LVAR_FLOAT" RHS="LVAR_FLOAT" />
 			<Operation ID="0x7C" LHS="LVAR_FLOAT" RHS="VAR_FLOAT" />
-			<Operation ID="0x7D" LHS="VAR_FLOAT" RHS="LVAR_FLOAT" />
+			<Operation ID="0x7D" LHS="VAR_FLOAT" RHS="LVAR_FLOAT" 	/>
 		</Operator>
 		<Operator Name="-@" Comp="-=@">
 			<Operation ID="0x7E" LHS="VAR_FLOAT" RHS="FLOAT" />

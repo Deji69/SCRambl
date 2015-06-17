@@ -86,17 +86,14 @@ namespace SCRambl
 		using Vec = std::vector<T>;
 		VecRef() = default;
 		VecRef(const VecRef& v) = default;
+		VecRef(Vec& vec) : VecRef(vec, vec.size())
+		{ }
 		VecRef(Vec* vec, TIt index) : m_Vector(vec), m_Index(index)
 		{ }
 		VecRef(Vec& vec, TIt index) : m_Vector(&vec), m_Index(index)
 		{ }
 		~VecRef() { }
 
-		/*inline VecRef& operator=(const VecRef& v) {
-			m_Vector = v.m_Vector;
-			m_Index = v.m_Index;
-			return *this;
-		}*/
 		inline T& operator*() const { return *Ptr(); }
 		inline T* operator->() const { return Ptr(); }
 		inline operator bool() const { return OK(); }

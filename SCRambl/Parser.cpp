@@ -228,41 +228,46 @@ namespace SCRambl
 			return state_parsing_type_varlist;
 		}
 		States Parser::Parse_Number() {
+			Types::Type* type = nullptr;
+			size_t size;
+			Operand operand;
 			if (!m_NumberParseState.IsFloat()) {
 				auto info = m_NumberParseState.IntInfo;
 				auto val = info->GetValue<Tokens::Number::NumberValue>();
-				std::vector<Types::Value*> vals;
-				size_t best_size = 0;
-				m_Build.GetTypes().AllValues(Types::ValueSet::Number, [&val, &vals, &best_size](Types::Value* value){
-					if (val.Size() <= value->GetSize()) {
-						if (vals.empty() || value->GetSize() < best_size) {
-							best_size = value->GetSize();
-							vals.emplace_back(value);
-						}
-					}
-				});
-				
-				if (vals.empty())
-					BREAK();
-				if (vals.size() > 1)
-					BREAK();
-				auto value = vals.front();
-				auto type = value->GetType();
-				
-				if (m_ActiveState == state_parsing_operator) {
-					// var = N
-					if (m_OperationParseState.RequireRVal() || m_OperationParseState.CheckForRVal()) {
-						m_OperationParseState.requireRVal = false;
-
-						if (auto op = m_CurrentOperator->GetOperation(m_OperationParseState.lh_var->Ptr(), type)) {
-							m_OperationParseState.FinishRHS(op, type);
-						}
-					}
-				}
+				operand = info;
+				size = val.Size();
 			}
 			else {
 				auto info = m_NumberParseState.FloatInfo;
 				auto val = info->GetValue<Tokens::Number::NumberValue>();
+				operand = info;
+				size = val.Size();
+			}
+
+			auto value = GetBestValue(Types::ValueSet::Number, size);
+			type = value->GetType();
+				
+			if (m_ActiveState == state_parsing_operator) {
+				if (m_OperationParseState.IsInChain()) {
+					// var = N + N
+					m_OperationParseState.Chain(m_OperationParseState.lh_var->Ptr(), m_OperationParseState.baseOperator);
+				}
+				else {
+					// var = N
+					if (m_OperationParseState.RequireRVal() || m_OperationParseState.CheckForRVal()) {
+						if (auto op = m_CurrentOperator->GetOperation(m_OperationParseState.lh_var->Ptr(), type))
+							m_OperationParseState.FinishRHS(op, type);
+					}
+					if (PeekToken(Tokens::Type::Operator)) {
+						m_OperationParseState.PrepareChain();
+						m_ActiveState = state_parsing_operator;
+					}
+					else {
+						m_Build.CreateSymbol<Operation>(m_OperationParseState.operation, m_OperationParseState.lh_var, operand);
+						m_ActiveState = state_neutral;
+					}
+				}
+				return state_neutral;
 			}
 			return state_parsing_number;
 		}
@@ -271,17 +276,22 @@ namespace SCRambl
 		}
 		States Parser::Parse_Variable() {
 			if (m_ActiveState == state_parsing_operator) {
-				m_ActiveState = state_neutral;
-				if (m_OperationParseState.looksPrefixed) {
-					// rhs of a =var unary operation
-					if (auto op = m_CurrentOperator->GetUnaryOperation(m_Variable->Ptr(), true)) {
-						m_Build.CreateSymbol<Operation>(op, m_Variable);
-						return state_neutral;
-					}
-					else BREAK();		// error?
+				if (m_OperationParseState.IsInChain()) {
+
 				}
 				else {
-					// rhs of a var=var operation
+					m_ActiveState = state_neutral;
+					if (m_OperationParseState.looksPrefixed) {
+						// rhs of a =var unary operation
+						if (auto op = m_CurrentOperator->GetUnaryOperation(m_Variable->Ptr(), true)) {
+							m_Build.CreateSymbol<Operation>(op, m_Variable);
+							return state_neutral;
+						}
+						else BREAK();		// error?
+					}
+					else {
+						// rhs of a var=var operation
+					}
 				}
 				return state_neutral;
 			}
@@ -363,13 +373,20 @@ namespace SCRambl
 				if (auto op = m_CurrentOperator->GetUnaryOperation(m_Variable->Ptr(), false)) {
 					m_OperationParseState.HoldPostUnary(op, m_Variable);
 				}
-				else m_OperationParseState.HoldLHS(m_Variable);
+				else m_OperationParseState.HoldLHS(m_CurrentOperator, m_Variable);
  				m_ActiveState = state_parsing_operator;
+				return state_neutral;
+			}
+			else if (m_ActiveState == state_parsing_operator) {
+				if (!m_OperationParseState.IsInChain())
+					BREAK();
+
+				m_OperationParseState.Chain(m_OperationParseState.lh_var->Ptr(), m_CurrentOperator);
 				return state_neutral;
 			}
 			else if (m_OperatorTokenIt == m_TokenIt) {
 				++m_TokenIt;
-				m_OperationParseState.StartWithOperator();
+				m_OperationParseState.StartWithOperator(m_CurrentOperator);
 				m_ActiveState = state_parsing_operator;
 				return state_neutral;
 			}
