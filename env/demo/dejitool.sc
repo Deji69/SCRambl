@@ -5,7 +5,7 @@
 
 VAR_INT var1
 var1 = 0 + 1
-SCRIPT_NAME tool
+SCRIPT_NAME "tool"
 {
 	LVAR_INT lvar1[2] pVehicleStruct
 	#define CEntity_wModelIndex 0x22

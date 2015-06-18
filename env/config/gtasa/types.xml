@@ -2,12 +2,6 @@
 
 <!-- 
 	This file is always loaded in order: VariableTypes, BasicTypes, ExtendedTypes, Translations
-	
-	
-	Type Encoding Process
-		COMMAD > ARG > TYPE > VALTYPE == VALTYPE < VALUE < PARSER TOKEN
-									  \/
-								SYMBOLIC TOKEN >
 -->
 
 <SCRambl Version="1.0" FileVersion="0.0.0.0">

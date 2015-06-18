@@ -200,6 +200,12 @@ namespace SCRambl
 			}
 			return state_neutral;
 		}
+		States Parser::Parse_Neutral_CheckString(IToken* tok) {
+			if (m_ActiveState != state_parsing_command_args && m_ActiveState != state_parsing_operator) {
+				BREAK();
+			}
+			return state_parsing_string;
+		}
 		States Parser::Parse_Neutral() {
 			States new_state = state_neutral;
 			switch (m_TokenIt->GetToken()->GetType<Tokens::Type>()) {
@@ -217,6 +223,9 @@ namespace SCRambl
 				break;
 			case Tokens::Type::Number:
 				new_state = Parse_Neutral_CheckNumber(m_TokenIt->GetToken());
+				break;
+			case Tokens::Type::String:
+				new_state = Parse_Neutral_CheckString(m_TokenIt->GetToken());
 				break;
 			}
 			if (new_state == state_neutral)
@@ -250,7 +259,8 @@ namespace SCRambl
 			if (m_ActiveState == state_parsing_operator) {
 				if (m_OperationParseState.IsInChain()) {
 					// var = N + N
-					m_OperationParseState.Chain(m_OperationParseState.lh_var->Ptr(), m_OperationParseState.baseOperator);
+					m_OperationParseState.Chain(m_CurrentOperator, {operand, value});
+					++m_TokenIt;
 				}
 				else {
 					// var = N
@@ -261,15 +271,32 @@ namespace SCRambl
 					if (PeekToken(Tokens::Type::Operator)) {
 						m_OperationParseState.PrepareChain();
 						m_ActiveState = state_parsing_operator;
+						++m_TokenIt;
 					}
 					else {
 						m_Build.CreateSymbol<Operation>(m_OperationParseState.operation, m_OperationParseState.lh_var, operand);
 						m_ActiveState = state_neutral;
+						++m_TokenIt;
 					}
 				}
 				return state_neutral;
 			}
 			return state_parsing_number;
+		}
+		States Parser::Parse_String() {
+			if (m_ActiveState == state_parsing_command_args) {
+				auto str = GetTextString(m_TokenIt->GetToken());
+				auto value = GetBestValue(Types::ValueSet::Text, str.size());
+				if (!value) BREAK();
+				if (!m_CommandParseState.AddParameter(str, value)) BREAK();
+				++m_TokenIt;
+				return state_neutral;
+			}
+			else if (m_ActiveState == state_parsing_operator) {
+
+			}
+			else BREAK();
+			return state_parsing_string;
 		}
 		States Parser::Parse_Label() {
 			return state_parsing_label;
@@ -277,7 +304,7 @@ namespace SCRambl
 		States Parser::Parse_Variable() {
 			if (m_ActiveState == state_parsing_operator) {
 				if (m_OperationParseState.IsInChain()) {
-
+					m_OperationParseState.Chain(m_CurrentOperator, { m_Variable, m_Variable->Get().Value);
 				}
 				else {
 					m_ActiveState = state_neutral;
@@ -335,7 +362,9 @@ namespace SCRambl
 			return state_parsing_type_varlist;
 		}
 		States Parser::Parse_Command() {
-			return state_parsing_command_args;
+			m_ActiveState = state_parsing_command_args;
+			m_CommandParseState.Begin(m_CurrentCommand, m_CurrentCommand->BeginArg());
+			return state_neutral;
 		}
 		States Parser::Parse_Command_Args() {
 			/*if (IsCommandParsing() && !AreCommandArgsParsed()) {
@@ -363,6 +392,7 @@ namespace SCRambl
 					}
 				}
 			}*/
+			//m_CommandArgIt->GetType()->GetMatchLevel();
 			return state_parsing_command_args;
 		}
 		States Parser::Parse_Operator() {
@@ -381,7 +411,7 @@ namespace SCRambl
 				if (!m_OperationParseState.IsInChain())
 					BREAK();
 
-				m_OperationParseState.Chain(m_OperationParseState.lh_var->Ptr(), m_CurrentOperator);
+				++m_TokenIt;
 				return state_neutral;
 			}
 			else if (m_OperatorTokenIt == m_TokenIt) {
@@ -397,7 +427,7 @@ namespace SCRambl
 			do {
 				static States(Parser::*funcs[States::max_state])() = {
 					&Parser::Parse_Neutral, &Parser::Parse_Type, &Parser::Parse_Command, &Parser::Parse_Operator,
-					&Parser::Parse_Number, &Parser::Parse_Label, &Parser::Parse_Variable,
+					&Parser::Parse_Number, &Parser::Parse_String, &Parser::Parse_Label, &Parser::Parse_Variable,
 
 					&Parser::Parse_Type_Varlist,
 					&Parser::Parse_Command_Args,

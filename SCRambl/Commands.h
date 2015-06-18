@@ -74,7 +74,7 @@ namespace SCRambl
 			none, uppercase, lowercase
 		};
 
-		using Map = std::unordered_multimap<std::string, Command*>;
+		using Map = std::unordered_multimap<std::string, size_t>;
 		using Vector = std::vector<Command*>;
 
 	private:
@@ -109,16 +109,19 @@ namespace SCRambl
 
 			m_Commands.emplace_back(name, opcode);
 			auto ptr = &m_Commands.back();
-			m_Map.emplace(name, ptr);
+			m_Map.emplace(name, m_Commands.size() - 1);
 			return ptr;
+		}
+
+		Command* GetCommand(size_t id) {
+			return id < m_Commands.size() ? &m_Commands[id] : nullptr;
 		}
 
 		// Passes each command handle matching the name to the supplied function
 		// Returns the number of calls / found commands
 		template<typename TFunc>
 		inline long ForCommandsNamed(std::string name, TFunc func) {
-			if (m_UseCaseConversion)
-			{
+			if (m_UseCaseConversion) {
 				if (m_DestCasing != Casing::none)
 					std::transform(name.begin(), name.end(), name.begin(), m_DestCasing == Casing::lowercase ? std::tolower : std::toupper);
 			}
@@ -127,7 +130,7 @@ namespace SCRambl
 			if (rg.first == m_Map.end()) return 0;
 			long num = 0;
 			for (auto it = rg.first; it != rg.second; ++it) {
-				func(it->second);
+				func(GetCommand(it->second));
 				++num;
 			}
 			return num;

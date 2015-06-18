@@ -34,7 +34,7 @@ namespace SCRambl
 		};
 		enum States {
 			state_neutral, state_parsing_type, state_parsing_command, state_parsing_operator,
-			state_parsing_number, state_parsing_label, state_parsing_variable,
+			state_parsing_number, state_parsing_string, state_parsing_label, state_parsing_variable,
 			state_parsing_type_varlist, state_parsing_command_args,
 			max_state
 		};
@@ -160,6 +160,7 @@ namespace SCRambl
 			{ }
 
 			Type GetType() const { return m_Type; }
+			std::string Text() const { return m_Text; }
 
 		private:
 			Type m_Type = NullValue;
@@ -172,17 +173,25 @@ namespace SCRambl
 			std::string m_Text;
 		};
 
+		struct Parameter {
+			Operand operand;
+			Types::Value* value;
+
+			Parameter(Operand op, Types::Value* val) : operand(op), value(val)
+			{ }
+		};
+
 		class ChainOperation {
 		public:
-			ChainOperation(Variable* var, Operators::Operator* op) : m_Variable(var), m_Operator(op)
+			ChainOperation(Operators::OperatorRef op, Parameter param) : m_Operator(op), m_Parameter(param)
 			{ }
 
-			Operators::Operator* GetOperator() const { return m_Operator; }
-			Variable* GetVariable() const { return m_Variable; }
+			Operators::OperatorRef GetOperator() const { return m_Operator; }
+			Parameter& GetOperand() { return m_Parameter; }
 
 		private:
-			Variable* m_Variable = nullptr;
-			Operators::Operator* m_Operator = nullptr;
+			Operators::OperatorRef m_Operator;
+			Parameter m_Parameter;
 		};
 		
 		/*\
@@ -262,6 +271,22 @@ namespace SCRambl
 				TypeParseState(Types::Type* type_, IToken* token_) : type(type_), token(token_)
 				{ }
 			} m_TypeParseState;
+			struct CommandParseState {
+				Command* command = nullptr;
+				CommandArg::Iterator commandArgIt;
+				std::vector<Parameter> parameters;
+
+				CommandParseState() = default;
+				void Begin(Command* cmd, CommandArg::Iterator argit) {
+					CommandParseState();
+					command = cmd;
+					commandArgIt = argit;
+				}
+				Parameter* AddParameter(Operand op, Types::Value* value) {
+					parameters.emplace_back(op, value);
+					return &parameters.back();
+				}
+			} m_CommandParseState;
 			struct OperationParseState {
 				bool looksPrefixed = false;
 				bool possiblePostUnary = false;
@@ -303,8 +328,8 @@ namespace SCRambl
 				void PrepareChain() {
 					inChain = true;
 				}
-				ChainOperation& Chain(Variable* var, Operators::OperatorRef op) {
-					chainedOps.emplace_back(var, op.Ptr());
+				ChainOperation& Chain(Operators::OperatorRef op, Parameter param) {
+					chainedOps.emplace_back(op, param);
 					return chainedOps.back();
 				}
 				ChainOperation& LastInChain() {
@@ -347,12 +372,14 @@ namespace SCRambl
 			States Parse_Neutral_CheckDelimiter(IToken*);
 			States Parse_Neutral_CheckOperator(IToken*);
 			States Parse_Neutral_CheckNumber(IToken*);
+			States Parse_Neutral_CheckString(IToken*);
 			States Parse_Type();
 			States Parse_Type_Varlist();
 			States Parse_Command();
 			States Parse_Command_Args();
 			States Parse_Operator();
 			States Parse_Number();
+			States Parse_String();
 			States Parse_Label();
 			States Parse_Variable();
 
@@ -363,22 +390,14 @@ namespace SCRambl
 				return m_TokenIt->GetToken()->GetType<Tokens::Type>();
 			}
 			inline Types::Value* GetBestValue(Types::ValueSet type, size_t size) {
-				std::vector<Types::Value*> vals;
-				size_t best_size = 0;
-				m_Build.GetTypes().AllValues(type, [size, &vals, &best_size](Types::Value* value){
-					if (size <= value->GetSize()) {
-						if (vals.empty() || value->GetSize() < best_size) {
-							best_size = value->GetSize();
-							vals.emplace_back(value);
-						}
+				Types::Value* best_value = nullptr;
+				m_Build.GetTypes().AllValues(type, [size, &best_value](Types::Value* value){
+					if (value->CanFitSize(size)) {
+						if (!best_value || best_value->GetSize() > value->GetSize())
+							best_value = value;
 					}
 				});
-
-				if (vals.empty() || vals.size() > 1) {
-					BREAK();
-					return nullptr;
-				}
-				return vals.front();
+				return best_value;
 			}
 
 			IToken* PeekToken(Tokens::Type type = Tokens::Type::None, size_t off = 1) {
@@ -443,7 +462,7 @@ namespace SCRambl
 			static bool IsScopeDelimiter(IToken* toke) {
 				auto info = static_cast<Tokens::Delimiter::Info<Delimiter>*>(toke);
 				auto delimtype = info->GetValue<Tokens::Delimiter::Parameter::DelimiterType>();
-				return delimtype == Delimiter::Subscript;
+				return delimtype == Delimiter::Scope;
 			}
 			static bool IsScopeDelimiterClosing(IToken* toke) {
 				auto tok = static_cast<DelimiterInfo*>(toke);
