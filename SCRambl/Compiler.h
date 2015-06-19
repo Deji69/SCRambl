@@ -77,6 +77,7 @@ namespace SCRambl
 			Task& m_Task;
 			Engine& m_Engine;
 			Build* m_Build;
+			Build::Symbols::const_iterator m_SymbolIt;
 			Scripts::Tokens& m_Tokens;
 			Scripts::Tokens::Iterator m_TokenIt;
 			std::ofstream m_File;

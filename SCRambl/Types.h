@@ -153,6 +153,15 @@ namespace SCRambl
 				return val;
 			}
 
+			/*\ Types::Types::Values - Calls the requested function for each matching Value this Type contains \*/
+			template<typename TValue, typename TFunc>
+			void Values(ValueSet type, TFunc func) const {
+				for (auto v : m_Values) {
+					if (v->GetValueType() == type && func(static_cast<TValue*>(v)))
+						break;
+				}
+			}
+
 			/*\ Types::Types::AllValues - Calls the requested function for each Value this Type contains \*/
 			template<typename TValue, typename TFunc>
 			void AllValues(TFunc func) const {

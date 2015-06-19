@@ -6,7 +6,7 @@
 VAR_INT var1
 var1 = 0 + 1
 SCRIPT_NAME "tool"
-{
+/*{
 	LVAR_INT lvar1[2] pVehicleStruct
 	#define CEntity_wModelIndex 0x22
 	lvar1[1] = LVAR_INT:0x54BA98[0][WORD:pVehicleStruct[/*0x22*/CEntity_wModelIndex]]
@@ -124,4 +124,4 @@ IF IS_PLAYER_PLAYING player
 	ENDIF
 ENDIF
 GOTO mainloop
-}
+}*/

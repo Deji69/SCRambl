@@ -12,10 +12,10 @@
 				<!-- <Definition> can be used outside of this nest to search through all Path's -->
 				<Definition>delimiters.xml</Definition>
 				<Definition>types.xml</Definition>
+				<Definition>constants.xml</Definition>
 				<Definition>commands.xml</Definition>
 				<Definition>operators.xml</Definition>
 			</DefinitionPath>
-			<Definition>constants.xml</Definition>
 			
 			<LibraryPath>gtasa/lib/</LibraryPath>
 			<IncludePaths>

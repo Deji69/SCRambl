@@ -117,6 +117,10 @@ namespace SCRambl
 					else if (m_OperationParseState.CheckForRVal())
 						m_Build.CreateSymbol<Operation>(m_OperationParseState.lh_var, m_OperationParseState.operation);
 					break;
+				case state_parsing_command:
+				case state_parsing_command_args:
+					m_CommandTokenMap.emplace(m_CommandParseState.command->GetName(), m_CommandTokenIt);
+					break;
 				}
 				m_ActiveState = state_neutral;
 			}
@@ -172,13 +176,21 @@ namespace SCRambl
 			return state_neutral;
 		}
 		States Parser::Parse_Neutral_CheckDelimiter(IToken* tok) {
-			if (IsScopeDelimiterClosing(tok)) {
-				m_Build.OpenVarScope();
+			if (m_ActiveState == state_parsing_variable) {
+				if (IsSubscriptDelimiter(tok))
+					return state_parsing_subscript;
+				else
+					BREAK();
 			}
-			else if (IsScopeDelimiter(tok)) {
-				m_Build.CloseVarScope();
+			else {
+				if (IsScopeDelimiterClosing(tok)) {
+					m_Build.OpenVarScope();
+				}
+				else if (IsScopeDelimiter(tok)) {
+					m_Build.CloseVarScope();
+				}
+				else BREAK();
 			}
-			else BREAK();
 			return state_neutral;
 		}
 		States Parser::Parse_Neutral_CheckOperator(IToken* tok) {
@@ -304,7 +316,7 @@ namespace SCRambl
 		States Parser::Parse_Variable() {
 			if (m_ActiveState == state_parsing_operator) {
 				if (m_OperationParseState.IsInChain()) {
-					m_OperationParseState.Chain(m_CurrentOperator, { m_Variable, m_Variable->Get().Value);
+					m_OperationParseState.Chain(m_CurrentOperator, { m_Variable, m_Variable->Get().GetValue() });
 				}
 				else {
 					m_ActiveState = state_neutral;
@@ -342,7 +354,8 @@ namespace SCRambl
 			}
 
 			// expect an identifier for a var name
-			if (GetCurrentTokenType() != Tokens::Type::Identifier) {
+			auto type = GetCurrentTokenType();
+			if (type != Tokens::Type::Identifier) {
 				SendError(Error::expected_identifier);
 				BREAK();
 			}
@@ -422,6 +435,11 @@ namespace SCRambl
 			}
 			return state_parsing_operator;
 		}
+		States Parser::Parse_Subscript() {
+			if (!IsSubscriptDelimiterClosing(m_TokenIt->GetToken()))
+				BREAK();
+			return state_parsing_subscript;
+		}
 		void Parser::Parse() {
 			States newstate = m_ParseState;
 			do {
@@ -429,6 +447,7 @@ namespace SCRambl
 					&Parser::Parse_Neutral, &Parser::Parse_Type, &Parser::Parse_Command, &Parser::Parse_Operator,
 					&Parser::Parse_Number, &Parser::Parse_String, &Parser::Parse_Label, &Parser::Parse_Variable,
 
+					&Parser::Parse_Subscript,
 					&Parser::Parse_Type_Varlist,
 					&Parser::Parse_Command_Args,
 				};

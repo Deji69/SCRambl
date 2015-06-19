@@ -31,5 +31,14 @@ namespace SCRambl
 		inline Types::VarType Value() const { return m_Value; }
 		inline bool IsArray() const { return m_ArraySize != 0; }
 		inline bool IsGlobal() const { return m_Value.GetType()->IsGlobal(); }
+
+		Types::Value* GetValue() const {
+			Types::Value* best_value = nullptr;
+			m_Type->Values<Types::VariableValue>(IsArray() ? Types::ValueSet::Array : Types::ValueSet::Variable, [&best_value](Types::VariableValue* value){
+				best_value = value;
+				return true;
+			});
+			return best_value;
+		}
 	};
 }

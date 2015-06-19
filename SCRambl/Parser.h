@@ -35,7 +35,7 @@ namespace SCRambl
 		enum States {
 			state_neutral, state_parsing_type, state_parsing_command, state_parsing_operator,
 			state_parsing_number, state_parsing_string, state_parsing_label, state_parsing_variable,
-			state_parsing_type_varlist, state_parsing_command_args,
+			state_parsing_subscript, state_parsing_type_varlist, state_parsing_command_args,
 			max_state
 		};
 
@@ -327,6 +327,7 @@ namespace SCRambl
 				}
 				void PrepareChain() {
 					inChain = true;
+					requireRVal = false;
 				}
 				ChainOperation& Chain(Operators::OperatorRef op, Parameter param) {
 					chainedOps.emplace_back(op, param);
@@ -382,6 +383,7 @@ namespace SCRambl
 			States Parse_String();
 			States Parse_Label();
 			States Parse_Variable();
+			States Parse_Subscript();
 
 			inline bool IsEOLReached() const {
 				return IsCharacterEOL(m_TokenIt->GetToken());
@@ -459,6 +461,11 @@ namespace SCRambl
 				auto delimtype = info->GetValue<Tokens::Delimiter::Parameter::DelimiterType>();
 				return delimtype == Delimiter::Subscript;
 			}
+			static bool IsSubscriptDelimiterClosing(IToken* toke) {
+				auto tok = static_cast<DelimiterInfo*>(toke);
+				auto delimtype = tok->GetValue<Tokens::Delimiter::Parameter::DelimiterType>();
+				return IsSubscriptDelimiter(toke) && tok->GetValue<Tokens::Delimiter::ScriptRange>().End() == tok->GetValue<Tokens::Delimiter::ScriptPosition>();
+			}
 			static bool IsScopeDelimiter(IToken* toke) {
 				auto info = static_cast<Tokens::Delimiter::Info<Delimiter>*>(toke);
 				auto delimtype = info->GetValue<Tokens::Delimiter::Parameter::DelimiterType>();
@@ -490,14 +497,29 @@ namespace SCRambl
 						//SendError();
 						BREAK();
 					}
+					EnterSubscript(next);
 					if (next = PeekToken(Tokens::Type::Number, 2)) {
 						i = GetIntegerConstant<size_t>(next);
 						b = true;
 						++m_TokenIt;
 					}
 					++m_TokenIt;
+					auto next = PeekToken(Tokens::Type::Delimiter);
+					if (!next || !IsSubscriptDelimiterClosing(next))
+							BREAK();
+					m_TokenIt += 2;
 				}
 				return b;
+			}
+
+			void EnterSubscript(IToken *token) {
+				m_Subscripts.emplace_back(token);
+			}
+			void LeaveSubscript() {
+				m_Subscripts.erase(m_Subscripts.end());
+			}
+			size_t GetSubscriptDepth() const {
+				return m_Subscripts.size();
 			}
 
 			std::vector<IToken*> m_ParserTokens;
@@ -649,6 +671,7 @@ namespace SCRambl
 			std::vector<std::shared_ptr<const Command>> m_CommandVector;
 			std::unordered_map<std::string, size_t> m_CommandMap;
 			std::multimap<const std::string, Scripts::Tokens::Iterator> m_CommandTokenMap;
+			std::vector<IToken*> m_Subscripts;
 
 			std::vector<Scripts::Token*> m_CommandArgTokens;
 

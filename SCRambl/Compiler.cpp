@@ -47,13 +47,8 @@ namespace SCRambl
 			}
 		}
 		void Compiler::Compile()
-		{
-			while (!m_TokenIt.Get()->GetSymbol()) {
-				if (++m_TokenIt == m_Tokens.End())
-					return;
-			}
-			
-			auto symbol = m_TokenIt.Get()->GetSymbol();
+		{	
+			auto symbol = *m_SymbolIt;
 			Output<uint8_t>(symbol->GetType());
 
 			switch (symbol->GetType()) {
@@ -90,7 +85,7 @@ namespace SCRambl
 				}
 			}
 
-			++m_TokenIt;
+			++m_SymbolIt;
 		}
 		void Compiler::Finish() {
 			for (auto name : m_CommandNameVec) {
@@ -101,7 +96,8 @@ namespace SCRambl
 		}
 
 		Compiler::Compiler(Task& task, Engine& engine, Build* build) :
-			m_State(init), m_Task(task), m_Engine(engine), m_Build(build), m_Tokens(build->GetScript().GetTokens())
+			m_State(init), m_Task(task), m_Engine(engine), m_Build(build), m_Tokens(build->GetScript().GetTokens()),
+			m_SymbolIt(build->GetSymbolsBegin())
 		{
 		}
 	}

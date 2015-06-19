@@ -144,6 +144,7 @@ namespace SCRambl
 		void Preprocessor::HandleToken() {
 			auto range = m_Token.Range();
 			auto pos = m_Token.Begin();
+			m_WasLastTokenEOL = false;
 
 			switch (m_Token) {
 			case TokenType::Eol: {
@@ -368,43 +369,46 @@ namespace SCRambl
 							m_WasLastTokenEOL = true;
 						}
 					}
-					else if (m_CodePos->IsDelimiter()) {
-						// only for "range" delimiting - these are independent from tokens using scanners (their contents are separate tokens)
-						bool open = true;
-						bool success = true;
-						Delimiter type;
+					else {
+						m_WasLastTokenEOL = false;
+						if (m_CodePos->IsDelimiter()) {
+							// only for "range" delimiting - these are independent from tokens using scanners (their contents are separate tokens)
+							bool open = true;
+							bool success = true;
+							Delimiter type;
 
-						switch (*m_CodePos) {
-						case '<':
-							success = OpenDelimiter(m_CodePos, type = Delimiter::Cast);
-							break;
-						case '>':
-							success = CloseDelimiter(m_CodePos, type = Delimiter::Cast);
-							open = false;
-							break;
-						case '[':
-							success = OpenDelimiter(m_CodePos, type = Delimiter::Subscript);
-							break;
-						case ']':
-							success = CloseDelimiter(m_CodePos, type = Delimiter::Subscript);
-							open = false;
-							break;
-						case '{':
-							success = OpenDelimiter(m_CodePos, type = Delimiter::Scope);
-							break;
-						case '}':
-							success = CloseDelimiter(m_CodePos, type = Delimiter::Scope);
-							open = false;
-							break;
-						default:
-							BREAK();
-							break;
-						}
+							switch (*m_CodePos) {
+							case '<':
+								success = OpenDelimiter(m_CodePos, type = Delimiter::Cast);
+								break;
+							case '>':
+								success = CloseDelimiter(m_CodePos, type = Delimiter::Cast);
+								open = false;
+								break;
+							case '[':
+								success = OpenDelimiter(m_CodePos, type = Delimiter::Subscript);
+								break;
+							case ']':
+								success = CloseDelimiter(m_CodePos, type = Delimiter::Subscript);
+								open = false;
+								break;
+							case '{':
+								success = OpenDelimiter(m_CodePos, type = Delimiter::Scope);
+								break;
+							case '}':
+								success = CloseDelimiter(m_CodePos, type = Delimiter::Scope);
+								open = false;
+								break;
+							default:
+								BREAK();
+								break;
+							}
 
-						if (!success) {
-							if (open) SendError(Error::internal_unable_to_allocate_token);
-							else SendError(Error::expr_unmatched_closing_delimiter);
-							BREAK();
+							if (!success) {
+								if (open) SendError(Error::internal_unable_to_allocate_token);
+								else SendError(Error::expr_unmatched_closing_delimiter);
+								BREAK();
+							}
 						}
 					}
 				}

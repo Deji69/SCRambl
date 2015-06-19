@@ -260,7 +260,8 @@ namespace SCRambl
 		void LoadDefinitions();
 
 	public:
-		using Shared = std::shared_ptr<Build>;
+		//using Shared = std::shared_ptr<Build>;
+		using Symbols = std::vector<Tokens::Symbol*>;
 
 		Build(Engine&, BuildConfig*);
 		Build(const Build&) = delete;
@@ -317,6 +318,13 @@ namespace SCRambl
 			return m_Labels.Find(label);
 		}
 
+		Symbols::const_iterator GetSymbolsBegin() const {
+			return m_Symbols.begin();
+		}
+		Symbols::const_iterator GetSymbolsEnd() const {
+			return m_Symbols.end();
+		}
+
 		template<typename TTokenType, typename... TArgs>
 		Scripts::Token CreateToken(Scripts::Position pos, TArgs&&... args) {
 			return m_Script.GetTokens().Add<TTokenType>(pos, args...);
@@ -363,9 +371,28 @@ namespace SCRambl
 
 						if (!check_type && !check_arg) {
 							if (found_type) {
-								auto& tok = argit->GetToken()->Get<Tokens::Identifier::Info<>>();
-								auto range = tok.GetValue<Tokens::Identifier::ScriptRange>();
-								DoParseActions(range.Format(), parsecmd.second->Actions);
+								std::string val;
+								auto toke = argit->GetToken();
+								switch (toke->GetType<Tokens::Type>()) {
+								case Tokens::Type::Number:
+									val = toke->Get<Tokens::Number::TypelessInfo>().GetValue<Tokens::Number::ScriptRange>().Format();
+									break;
+								case Tokens::Type::String:
+									val = toke->Get<Tokens::String::Info>().GetValue<Tokens::String::StringValue>();
+									break;
+								case Tokens::Type::Identifier:
+									val = toke->Get<Tokens::Identifier::Info<>>().GetValue<Tokens::Identifier::ScriptRange>().Format();
+									break;
+								case Tokens::Type::Command:
+									val = toke->Get<Tokens::Command::Info<Command>>().GetValue<Tokens::Command::CommandType>()->GetName();
+									break;
+								case Tokens::Type::Label:
+									val = toke->Get<Tokens::Label::Info>().GetValue<Tokens::Label::LabelValue>()->GetName();
+									break;
+								default: BREAK();
+								}
+								
+								DoParseActions(val, parsecmd.second->Actions);
 							}
 						}
 					}
