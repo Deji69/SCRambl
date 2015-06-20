@@ -532,9 +532,9 @@ namespace SCRambl
 			}
 			template<typename TSymbolType, typename... TArgs>
 			TSymbolType* CreateSymbol(TArgs&&... args) {
-				auto symbol = new TSymbolType(args...);
-				m_ParserSymbols.emplace_back(symbol);
-				return symbol;
+				//auto symbol = new TSymbolType(args...);
+				//m_ParserSymbols.emplace_back(symbol);
+				return m_Build.CreateSymbol<TSymbolType>(args...);
 			}
 
 		public:

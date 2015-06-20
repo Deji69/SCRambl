@@ -13,6 +13,7 @@ namespace SCRambl
 	{
 		void Compiler::Init() {
 			m_TokenIt = m_Tokens.Begin();
+			m_SymbolIt = m_Build->GetSymbolsBegin();
 			m_Task(Event::Begin);
 			m_State = compiling;
 
@@ -34,7 +35,7 @@ namespace SCRambl
 				Init();
 				return;
 			case compiling:
-				if (m_TokenIt != m_Tokens.End())
+				if (m_SymbolIt != m_Build->GetSymbolsEnd())
 					Compile();
 				else
 				{
@@ -62,13 +63,13 @@ namespace SCRambl
 
 				auto it = m_CommandNames.find(command->GetName());
 				if (it != m_CommandNames.end()) {
-					Output<int32_t>(it->second);
+					Output<uint16_t>(it->second);
 				}
 				else {
-					Output<int32_t>(AddCommandName(command->GetName()));
+					Output<uint16_t>(AddCommandName(command->GetName()));
 				}
 				
-				Output<uint32_t>(cmd.GetNumArgs());
+				Output<uint16_t>(cmd.GetNumArgs());
 
 				for (size_t n = 0; n < cmd.GetNumArgs(); ++n) {
 					auto& arg = command->GetArg(n);
@@ -89,15 +90,14 @@ namespace SCRambl
 		}
 		void Compiler::Finish() {
 			for (auto name : m_CommandNameVec) {
-				Output<int32_t>(name.second);
+				Output<uint16_t>(name.second);
 				Output(name.first.c_str(), name.first.size());
 				Output<uint8_t>(0);
 			}
 		}
 
 		Compiler::Compiler(Task& task, Engine& engine, Build* build) :
-			m_State(init), m_Task(task), m_Engine(engine), m_Build(build), m_Tokens(build->GetScript().GetTokens()),
-			m_SymbolIt(build->GetSymbolsBegin())
+			m_State(init), m_Task(task), m_Engine(engine), m_Build(build), m_Tokens(build->GetScript().GetTokens())
 		{
 		}
 	}

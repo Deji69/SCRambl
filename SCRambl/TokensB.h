@@ -14,9 +14,7 @@
 
 namespace SCRambl
 {
-	/*\
-	 * Tokens
-	\*/
+	/*\ Tokens \*/
 	namespace Tokens
 	{
 		/*\
@@ -39,9 +37,7 @@ namespace SCRambl
 			TValueType m_ValueType;
 		};
 
-		/*\
-	 	 * Define token classes for each type
-		\*/
+		/*\ Define token classes for each type \*/
 		class None {
 		public:
 			static const enum Parameter { };
@@ -101,9 +97,7 @@ namespace SCRambl
 				return token.Get<const TypelessInfo>().GetValue<ValueType>() == Numbers::Type::Float;
 			}
 
-			/*\
-			 * Preprocessor::Number::Value - Carries all symbolic data for a number value
-			\*/
+			/*\ Tokens::Number::Value - Carries all symbolic data for a number value \*/
 			template<typename TValueType>
 			class Value : public ValueToken<TValueType>
 			{
@@ -136,6 +130,15 @@ namespace SCRambl
 					return 0;
 				}
 			};
+		
+			/*\ Tokens::Number::Symbol \*/
+			class SymbolInfo : public Symbol {
+			public:
+				SymbolInfo() : Symbol(Tokens::Type::Number)
+				{
+
+				}
+			};
 		};
 		class Operator {
 		public:
@@ -165,9 +168,7 @@ namespace SCRambl
 			template<typename TCommandType, typename TCont = std::vector<TCommandType*>>
 			using OverloadInfo = TokenInfo<Type, Scripts::Range, TCont>;
 
-			/*\
-			 * Tokens::Command:Decl - Carries symbolic data for a command declaration
-			 \*/
+			/*\ Tokens::Command:Decl - Carries symbolic data for a command declaration \*/
 			template<typename TCommandType>
 			class Decl : public Symbol {
 				size_t m_ID;
@@ -182,12 +183,9 @@ namespace SCRambl
 				inline const TCommandType* GetCommand()	const { return m_Command; }
 			};
 
-			/*\
-			 * Tokens::Command::Call - Carries symbolic data for a command call
-			\*/
+			/*\ Tokens::Command::Call - Carries symbolic data for a command call \*/
 			template<typename TCommandType>
-			class Call : public Symbol
-			{
+			class Call : public Symbol {
 				const TCommandType* m_Command;
 				size_t m_NumArgs;
 				std::vector<Symbol*> m_Args;
@@ -196,12 +194,12 @@ namespace SCRambl
 				Call(const Info<TCommandType>& info, size_t num_args) : Symbol(Type::CommandCall),
 					m_Command(info.GetValue<CommandType>()),
 					m_NumArgs(num_args)
-				{
-					//Command::
-				}
+				{ }
+				Call(const IToken* info, size_t num_args) : Call(info->Get<Info<TCommandType>>(), num_args)
+				{ }
 
-				inline const TCommandType* GetCommand() const	{ return m_Command; }
-				inline size_t GetNumArgs() const						{ return m_NumArgs; }
+				inline const TCommandType* GetCommand() const { return m_Command; }
+				inline size_t GetNumArgs() const { return m_NumArgs; }
 
 				inline void AddArg(Symbol* symbol) { m_Args.emplace_back(symbol); }
 			};
@@ -224,6 +222,18 @@ namespace SCRambl
 
 				const std::string& GetValue() const { return m_Value; }
 				virtual size_t GetSize() const { return m_Value.size(); }
+			};
+
+			class Object : public Symbol
+			{
+				std::string m_Value;
+
+			public:
+				Object(std::string val) : Symbol(Type::String), m_Value(val)
+				{ }
+
+				std::string Value() const { return m_Value; }
+				size_t Size() const { return Value().size(); }
 			};
 		};
 		class Delimiter {

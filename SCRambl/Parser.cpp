@@ -115,11 +115,15 @@ namespace SCRambl
 					if (m_OperationParseState.RequireRVal())
 						BREAK();
 					else if (m_OperationParseState.CheckForRVal())
-						m_Build.CreateSymbol<Operation>(m_OperationParseState.lh_var, m_OperationParseState.operation);
+						CreateSymbol<Operation>(m_OperationParseState.lh_var, m_OperationParseState.operation);
 					break;
 				case state_parsing_command:
 				case state_parsing_command_args:
 					m_CommandTokenMap.emplace(m_CommandParseState.command->GetName(), m_CommandTokenIt);
+					CreateSymbol<Tokens::Command::Call<Command>>(m_CommandTokenIt->GetToken(), m_CommandParseState.parameters.size());
+					for (auto& param : m_CommandParseState.parameters) {
+						//CreateSymbol()
+					}
 					break;
 				}
 				m_ActiveState = state_neutral;
