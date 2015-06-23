@@ -13,7 +13,6 @@ enum BuildTask {
 
 bool Engine::BuildScript(Build* build) {
 	auto state = build->Run().GetState();
-
 	return true;
 }
 
@@ -34,6 +33,9 @@ Build* Engine::InitBuild(std::vector<std::string> files) {
 	auto compiler_task = build->AddTask<Compiler::Task>(compiler, build);
 	auto linker_task = build->AddTask<Linker::Task>(linker, build);
 	return build;
+}
+void Engine::FreeBuild(Build* build) {
+	if (build) delete build;
 }
 
 bool Engine::LoadXML(const std::string& path) {
@@ -56,27 +58,26 @@ bool Engine::LoadXML(const std::string& path) {
 	}
 	return false;
 }
-const TaskSystem::Task<EngineEvent> & Engine::Run() {
+const TaskSystem::Task<EngineEvent>& Engine::Run() {
 	if(CurrentTask == std::end(Tasks)) CurrentTask = std::begin(Tasks);
 	auto & it = CurrentTask;
 	
 	if (it != std::end(Tasks)) {
-		auto task = it->second;
+		auto task = it->second.get();
 		
 		while (task->IsTaskFinished()) {
 			if (++it == std::end(Tasks)) {
 				m_State = finished;
 				return *this;
 			}
-			task = it->second;
+			task = it->second.get();
 		}
 
 		task->RunTask();
 	}
 	return *this;
 }
-Engine::Engine() :
-HaveTask(false),
+Engine::Engine() : HaveTask(false),
 // in that order...
 m_Builder(*this)
 { }

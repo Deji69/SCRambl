@@ -11,7 +11,9 @@
 #include "Scripts.h"
 #include "Preprocessor.h"
 #include "Labels.h"
+#include "Tokens.h"
 #include "TokensB.h"
+#include "TokenInfo.h"
 #include "Types.h"
 
 namespace SCRambl
@@ -197,7 +199,7 @@ namespace SCRambl
 		/*\
 		 * Parser::Operation
 		\*/
-		class Operation : public Tokens::Symbol
+		class Operation : public TokenSymbol
 		{
 		public:
 			enum Type { PrefixUnary, SuffixUnary, Inline, Compounded };
@@ -225,13 +227,9 @@ namespace SCRambl
 			bool m_Condition = false;
 		};
 
-		/*\
-		 * Parser::Parser - Now this is what we're here for
-		\*/
+		/*\ Parser::Parser - Now this is what we're here for \*/
 		class Parser
 		{
-			using LabelMap = std::unordered_map<std::string, std::shared_ptr<Scripts::Label>>;
-
 			using DelimiterInfo = Tokens::Delimiter::Info<Delimiter>;
 			using CharacterInfo = Tokens::Character::Info<Character>;
 			using IdentifierInfo = Tokens::Identifier::Info<>;
@@ -479,14 +477,14 @@ namespace SCRambl
 				//return static_cast<TokenBase<Tokens::Type>*>(toke)->GetType() == Tokens::Type::Operator;
 				return toke->GetType<Tokens::Type>() == Tokens::Type::Operator;
 			}
+			static bool IsOperatorConditional(IToken* toke) {
+				auto operater = GetOperator(toke);
+				return operater && operater->IsConditional();
+			}
 			static Operators::OperatorRef GetOperator(IToken* toke) {
 				auto tok = static_cast<Tokens::Operator::Info<Operators::OperatorRef>*>(toke);
 				auto operater = tok->GetValue<Tokens::Operator::OperatorType>();
 				return operater;
-			}
-			static bool IsOperatorConditional(IToken* toke) {
-				auto operater = GetOperator(toke);
-				return operater && operater->IsConditional();
 			}
 
 			bool GetDelimitedArrayIntegerConstant(size_t& i) {
@@ -523,7 +521,7 @@ namespace SCRambl
 			}
 
 			std::vector<IToken*> m_ParserTokens;
-			std::vector<Tokens::Symbol*> m_ParserSymbols;
+			std::vector<TokenSymbol*> m_ParserSymbols;
 			template<typename TTokenType, typename... TArgs>
 			TTokenType* CreateToken(TArgs&&... args) {
 				auto token = new TTokenType(args...);
@@ -532,8 +530,6 @@ namespace SCRambl
 			}
 			template<typename TSymbolType, typename... TArgs>
 			TSymbolType* CreateSymbol(TArgs&&... args) {
-				//auto symbol = new TSymbolType(args...);
-				//m_ParserSymbols.emplace_back(symbol);
 				return m_Build.CreateSymbol<TSymbolType>(args...);
 			}
 
@@ -606,11 +602,10 @@ namespace SCRambl
 				}
 				m_CommandArgTokens.clear();
 
-				m_Build.GetScript().GetDeclarations().emplace_back(m_Build.CreateSymbol<Tokens::Command::Decl<Command>>(cmdid, m_CurrentCommand));
+				m_Build.GetDeclarations().emplace_back(m_Build.CreateSymbol<Tokens::Command::Decl<Command>>(cmdid, m_CurrentCommand));
 
 				m_ParsingCommandArgs = false;
 			}
-			//Types::Translation<>::Shared FigureOutTranslation()
 			void MarkOverloadIncompatible() {
 				m_OverloadCommandsIt = m_OverloadCommands.erase(m_OverloadCommandsIt);
 			}
@@ -681,9 +676,7 @@ namespace SCRambl
 			bool m_EndOfCommandArgs;
 		};
 		
-		/*\
-		 * Parser::Event - Interesting stuff that the Preprocessor does
-		\*/
+		/*\ Parser::Event - Interesting stuff that the Preprocessor does \*/
 		enum class Event
 		{
 			Begin, Finish,

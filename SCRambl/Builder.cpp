@@ -18,6 +18,84 @@ namespace SCRambl
 		auto var = m_Variables.Find(name);
 		return var;
 	}
+	ScriptLabel* Build::AddScriptLabel(std::string name) {
+		std::vector<Types::Value*> vals;
+		m_Types.GetValues(Types::ValueSet::Label, 0, vals);
+		if (vals.empty() || vals.size() > 1) BREAK();
+		return m_Labels.Add(vals[0]->GetType(), name);
+	}
+	ScriptLabel* Build::GetScriptLabel(std::string name) {
+		return m_Labels.Find(name);
+	}
+	ScriptLabel* Build::GetScriptLabel(Scripts::Label* label) {
+		return m_Labels.Find(label);
+	}
+	void Build::AddDeclaration(TokenSymbol* tok) {
+		m_Declarations.emplace_back(tok);
+	}
+	void Build::DoParseActions(std::string val, const ParseObjectConfig::ActionVec& vec) {
+		for (auto& action : vec) {
+			m_Env.DoAction(action, val);
+		}
+	}
+	void Build::ParseCommands(const std::multimap<const std::string, Scripts::Tokens::Iterator>& map) {
+		for (auto& parsecmd : m_Config->GetParseCommands()) {
+			auto v = m_Env.Val(parsecmd.first).AsString();
+			auto rg = map.equal_range(v);
+			if (rg.first != rg.second) {
+				for (auto it = rg.first; it != rg.second; ++it) {
+					bool check_arg = false, check_type = false;
+					bool found_type = false;
+					auto type = m_Env.Val(parsecmd.second->Type).AsString();
+					if (!type.empty()) {
+						check_type = true;
+					}
+
+					auto argit = it->second;
+					++argit;
+					auto& cmdtok = it->second->GetToken()->Get<Tokens::Command::Info<Command>>();
+					auto cmd = cmdtok.GetValue<Tokens::Command::CommandType>();
+					for (unsigned long i = 0; i < cmd->GetNumArgs(); ++i, ++argit) {
+						if (cmd->GetArg(i).GetType()->GetName() == type) {
+							found_type = true;
+							check_type = false;
+							break;
+						}
+					}
+
+					if (!check_type && !check_arg) {
+						if (found_type) {
+							std::string val;
+							auto toke = argit->GetToken();
+							switch (toke->GetType<Tokens::Type>()) {
+							case Tokens::Type::Number:
+								val = toke->Get<Tokens::Number::TypelessInfo>().GetValue<Tokens::Number::ScriptRange>().Format();
+								break;
+							case Tokens::Type::String:
+								val = toke->Get<Tokens::String::Info>().GetValue<Tokens::String::StringValue>();
+								break;
+							case Tokens::Type::Identifier:
+								val = toke->Get<Tokens::Identifier::Info<>>().GetValue<Tokens::Identifier::ScriptRange>().Format();
+								break;
+							case Tokens::Type::Command:
+								val = toke->Get<Tokens::Command::Info<Command>>().GetValue<Tokens::Command::CommandType>()->GetName();
+								break;
+							case Tokens::Type::Label:
+								val = toke->Get<Tokens::Label::Info>().GetValue<Tokens::Label::LabelValue>()->GetName();
+								break;
+							default: BREAK();
+							}
+
+							DoParseActions(val, parsecmd.second->Actions);
+						}
+					}
+				}
+			}
+			else if (parsecmd.second->Required.AsBool()) {
+				BREAK();
+			}
+		}
+	}
 	void Build::LoadDefinitions() {
 		auto loads = m_Config->GetDefinitions();
 		size_t defs_not_loaded = loads.size();
@@ -78,7 +156,7 @@ namespace SCRambl
 		}
 		return true;
 	}
-	Scripts::File::Shared Build::AddInput(std::string input) {
+	Scripts::FileRef Build::AddInput(std::string input) {
 		// TODO:
 		return m_Script.OpenFile(input);
 	}
@@ -93,30 +171,90 @@ namespace SCRambl
 			return &it->second;
 		return nullptr;
 	}
-	const TaskSystem::Task<BuildEvent> & Build::Run() {
+	XMLValue Build::GetEnvVar(std::string var) const {
+		return m_Env.Get(var).Value;
+	}
+	const TaskSystem::Task<BuildEvent>& Build::Run() {
 		if (m_CurrentTask == std::end(m_Tasks))
 			Init();
-		auto& it = m_CurrentTask;
 
+		auto& it = m_CurrentTask;
 		if (it != std::end(m_Tasks)) {
-			auto task = it->second;
+			auto task = it->second.get();
 			while (task->IsTaskFinished()) {
 				if (++it == std::end(m_Tasks)) {
 					return *this;
 				}
-				task = it->second;
+				task = it->second.get();
 			}
 			task->RunTask();
 		}
 		return *this;
 	}
-	Build::Build(Engine& engine, BuildConfig* config) : m_Env(engine), m_Engine(engine),
-		m_Config(config)
+	Build::Build(Engine& engine, BuildConfig* config) : m_Env(engine), m_Engine(engine), m_Config(config)
 	{
 		Setup();
 	}
+	Build::~Build() {
+		for (auto ptr : m_Symbols) {
+			if (ptr) delete ptr;
+		}
+	}
 
 	/* BuildEnvironment */
+	void BuildEnvironment::DoAction(const ParseObjectConfig::Action& action, XMLValue v) {
+		using ActionType = ParseObjectConfig::ActionType;
+		switch (action.Type) {
+		case ActionType::Clear:
+			Set(action.Var, "");
+			break;
+		case ActionType::Set:
+			Set(action.Var, v);
+			break;
+		case ActionType::Inc:
+			++Get(action.Var);
+			break;
+		case ActionType::Dec:
+			++Get(action.Var);
+			break;
+		case ActionType::Add:
+			Get(action.Var) += XMLValue(Val(v)).AsNumber<long long>();
+			break;
+		case ActionType::Sub:
+			Get(Val(action.Var)) -= XMLValue(Val(v)).AsNumber<long long>();
+			break;
+		case ActionType::Mul:
+			Get(Val(action.Var)) *= XMLValue(Val(v)).AsNumber<long long>();
+			break;
+		case ActionType::Div:
+			Get(Val(action.Var)) /= XMLValue(Val(v)).AsNumber<long long>();
+			break;
+		case ActionType::Mod:
+			Get(Val(action.Var)) %= XMLValue(Val(v)).AsNumber<long long>();
+			break;
+		case ActionType::And:
+			Get(Val(action.Var)) &= XMLValue(Val(v)).AsNumber<long long>();
+			break;
+		case ActionType::Or:
+			Get(Val(action.Var)) |= XMLValue(Val(v)).AsNumber<long long>();
+			break;
+		case ActionType::Xor:
+			Get(Val(action.Var)) ^= XMLValue(Val(v)).AsNumber<long long>();
+			break;
+		case ActionType::Shl:
+			Get(Val(action.Var)) <<= XMLValue(Val(v)).AsNumber<long long>();
+			break;
+		case ActionType::Shr:
+			Get(Val(action.Var)) >>= XMLValue(Val(v)).AsNumber<long long>();
+			break;
+		}
+	}
+	const BuildVariable& BuildEnvironment::Get(XMLValue id) const {
+		return m_Variables[Val(id).AsString()];
+	}
+	BuildVariable& BuildEnvironment::Get(XMLValue id) {
+		return m_Variables[Val(id).AsString()];
+	}
 	XMLValue BuildEnvironment::Val(XMLValue v) const {
 		std::string val, raw = v.AsString();
 		if (raw.size() <= 3) val = raw;
@@ -199,7 +337,7 @@ namespace SCRambl
 		AddEnvironmentHandler<ParseObjectConfig::ActionType::Inc>(config, "Inc");
 		AddEnvironmentHandler<ParseObjectConfig::ActionType::Dec>(config, "Dec");
 	}
-	ParseObjectConfig * BuildConfig::AddParseObjectConfig(XMLValue name, XMLValue required, XMLValue type) {
+	ParseObjectConfig* BuildConfig::AddParseObjectConfig(XMLValue name, XMLValue required, XMLValue type) {
 		m_ObjectConfigs.emplace_back();
 		auto& obj = m_ObjectConfigs.back();
 		obj.Name = name;
@@ -285,10 +423,10 @@ namespace SCRambl
 			} // </Input>
 		} // </Script>
 	}
-	//BuildConfig::BuildConfig(std::string id, std::string name) : m_ID(id), m_Name(name)
-	//{ }
-
+	
 	/* Builder */
+	BuildConfig* Builder::GetConfig() const { return m_BuildConfig; }
+	bool Builder::SetConfig(std::string) const { return true; }
 	bool Builder::LoadDefinitions(Build* build) {
 		auto definitions = GetConfig()->GetDefinitions();
 		for (auto path : GetConfig()->GetDefinitionPaths()) {
@@ -303,7 +441,7 @@ namespace SCRambl
 		}
 		return true;
 	}
-	Scripts::File::Shared Builder::LoadFile(Build* build, std::string path) {
+	Scripts::FileRef Builder::LoadFile(Build* build, std::string path) {
 		return build->AddInput(path);
 	}
 	bool Builder::LoadScriptFile(std::string path, Script& script) {

@@ -11,21 +11,14 @@ namespace SCRambl
 {
 	namespace Tokens
 	{
-		template<typename T>
-		using Shared = std::shared_ptr < T >;
-
-		/*\
-		* Tokens::Token - Types of token information
-		\*/
+		/*\ Tokens::Token - Types of token information \*/
 		enum class Type : char {
 			None, Directive,
 			Command, CommandDecl, CommandCall, CommandOverload, Variable,
 			Identifier, Label, LabelRef, Number, Operator, String, Character, Delimiter
 		};
 
-		/*\
-		 * Tokens::Symbol - Base for parsed token data
-		\*/
+		/*\ Tokens::Symbol - Base for parsed token data \*/
 		class Symbol
 		{
 		public:
@@ -42,7 +35,7 @@ namespace SCRambl
 			inline const T& Extend() const { return static_cast<T&>(*this); }
 
 		private:
-			Type				m_Type;
+			Type m_Type;
 		};
 	}
 }

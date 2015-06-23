@@ -26,16 +26,13 @@ void CheckCommandLine(const CCLP& cmdParser) {
 		helps.insert(helps.end(), qs.begin(), qs.end());
 
 		if (!helps.size()) helps = cmdParser.GetFlagOpts("?");
-		if (!helps.size())
-		{
+		if (!helps.size()) {
 			std::cout << "Syntax: SCRambl <input_filename> [-f=<format>] [-o=<output_filename>]\n"
 				<< "Use the -h flag for help on any other flag e.g. \"-hf\" or \"-h format\" for help on the -f flag\n";
 			throw return_exception(EXIT_SUCCESS);
 		}
-		else
-		{
-			for (auto help : helps)
-			{
+		else {
+			for (auto help : helps) {
 				if (help == "f")
 					std::cout << "Specifies the output format. Use one of the following format parameters:\n"
 					<< "scc - Single Compiled Script\n"
@@ -471,8 +468,7 @@ int main(int argc, char* argv[])
 
 void ProcessCommand(const std::string & cmd)
 {
-	if (cmd == "hash")
-	{
+	if (cmd == "hash") {
 		std::string str;
 		std::cin >> str;
 		std::cout << "I told you to go away" << std::endl;

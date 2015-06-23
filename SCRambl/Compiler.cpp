@@ -38,12 +38,7 @@ namespace SCRambl
 				if (m_SymbolIt != m_Build->GetSymbolsEnd())
 					Compile();
 				else
-				{
 					Finish();
-					m_Task(Event::Finish);
-					m_State = finished;
-					m_File.close();
-				}
 				return;
 			}
 		}
@@ -83,7 +78,9 @@ namespace SCRambl
 			}
 			case Tokens::Type::LabelRef: {
 				break;
-				}
+			}
+			default:
+				break;
 			}
 
 			++m_SymbolIt;
@@ -94,6 +91,10 @@ namespace SCRambl
 				Output(name.first.c_str(), name.first.size());
 				Output<uint8_t>(0);
 			}
+
+			m_Task(Event::Finish);
+			m_State = finished;
+			m_File.close();
 		}
 
 		Compiler::Compiler(Task& task, Engine& engine, Build* build) :

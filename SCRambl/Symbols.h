@@ -168,25 +168,25 @@ namespace SCRambl
 	};
 	class Column {
 	public:
-		typedef std::pair<int, Symbol> pair;
+		typedef std::pair<unsigned long, Symbol> pair;
 
 	private:
-		pair			m_Column;
+		pair m_Column;
 
 	public:
 		Column(const pair & col) : m_Column(col)
 		{ }
-		Column(int col, Symbol sym) : m_Column(std::make_pair(col, sym))
+		Column(unsigned long col, Symbol sym) : m_Column(std::make_pair(col, sym))
 		{ }
 
-		inline int Number() const					{ return m_Column.first; }
-		inline Symbol & operator*()					{ return m_Column.second; }
-		inline const Symbol & operator*() const		{ return m_Column.second; }
-		inline Symbol * operator->()				{ return &m_Column.second; }
-		inline const Symbol * operator->() const	{ return &m_Column.second; }
-		inline operator Symbol&()					{ return m_Column.second; }
-		inline operator const Symbol&() const		{ return m_Column.second; }
-		inline operator char()						{ return m_Column.second; }
+		inline unsigned long Number() const { return m_Column.first; }
+		inline Symbol & operator*() { return m_Column.second; }
+		inline const Symbol & operator*() const { return m_Column.second; }
+		inline Symbol * operator->() { return &m_Column.second; }
+		inline const Symbol * operator->() const { return &m_Column.second; }
+		inline operator Symbol&() { return m_Column.second; }
+		inline operator const Symbol&() const { return m_Column.second; }
+		inline operator char() { return m_Column.second; }
 	};
 	class CodeLine {
 	public:
@@ -217,9 +217,6 @@ namespace SCRambl
 		}
 		CodeLine(const char* str) : CodeLine(std::string(str))
 		{ }
-
-		//inline vector & Symbols() { return m_Symbols; }
-		//inline const vector & Symbols() const { return m_Symbols; }
 
 		inline void Clear() { return m_Symbols.clear(); }
 		inline bool Empty() const { return m_Symbols.empty(); }
@@ -254,7 +251,7 @@ namespace SCRambl
 			m_Symbols.emplace_back(m_NumCols, std::forward<Symbol>(v));
 		}
 
-		inline vector::iterator Insert(vector::const_iterator it, const Symbol & sym) {
+		inline vector::iterator Insert(vector::const_iterator it, const Symbol& sym) {
 			return m_Symbols.emplace(it, ++m_NumCols, sym);
 		}
 		inline vector::iterator Erase(vector::const_iterator it) {
@@ -270,7 +267,7 @@ namespace SCRambl
 			return r;
 		}
 
-		inline CodeLine & operator=(const std::string & str) {
+		inline CodeLine& operator=(const std::string& str) {
 			m_Symbols.clear();
 			if (!str.empty()) {
 				for (auto c : str) {

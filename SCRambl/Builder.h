@@ -25,11 +25,6 @@ namespace SCRambl
 	using ScriptVariable = ScriptObject<Variable>;
 	using ScriptLabel = ScriptObject<Scripts::Label>;
 
-	template<typename TTokenType>
-	TTokenType* CreateToken() {
-
-	}
-
 	struct BuildVariable {
 		XMLValue Value;
 		BuildVariable() = default;
@@ -146,67 +141,18 @@ namespace SCRambl
 				it = m_Variables.emplace(Val(id).AsString(), Val(v)).first;
 			return it->second;
 		}
-		BuildVariable& Get(XMLValue id) {
-			return m_Variables[Val(id).AsString()];
-		}
-		const BuildVariable& Get(XMLValue id) const {
-			return m_Variables[Val(id).AsString()];
-		}
+		BuildVariable& Get(XMLValue id);
+		const BuildVariable& Get(XMLValue id) const;
 
 		XMLValue Val(XMLValue v) const;
 	
-		void DoAction(const ParseObjectConfig::Action& action, XMLValue v) {
-			using ActionType = ParseObjectConfig::ActionType;
-			switch (action.Type) {
-			case ActionType::Clear:
-				Set(action.Var, "");
-				break;
-			case ActionType::Set:
-				Set(action.Var, v);
-				break;
-			case ActionType::Inc:
-				++Get(action.Var);
-				break;
-			case ActionType::Dec:
-				++Get(action.Var);
-				break;
-			case ActionType::Add:
-				Get(action.Var) += XMLValue(Val(v)).AsNumber<long long>();
-				break;
-			case ActionType::Sub:
-				Get(Val(action.Var)) -= XMLValue(Val(v)).AsNumber<long long>();
-				break;
-			case ActionType::Mul:
-				Get(Val(action.Var)) *= XMLValue(Val(v)).AsNumber<long long>();
-				break;
-			case ActionType::Div:
-				Get(Val(action.Var)) /= XMLValue(Val(v)).AsNumber<long long>();
-				break;
-			case ActionType::Mod:
-				Get(Val(action.Var)) %= XMLValue(Val(v)).AsNumber<long long>();
-				break;
-			case ActionType::And:
-				Get(Val(action.Var)) &= XMLValue(Val(v)).AsNumber<long long>();
-				break;
-			case ActionType::Or:
-				Get(Val(action.Var)) |= XMLValue(Val(v)).AsNumber<long long>();
-				break;
-			case ActionType::Xor:
-				Get(Val(action.Var)) ^= XMLValue(Val(v)).AsNumber<long long>();
-				break;
-			case ActionType::Shl:
-				Get(Val(action.Var)) <<= XMLValue(Val(v)).AsNumber<long long>();
-				break;
-			case ActionType::Shr:
-				Get(Val(action.Var)) >>= XMLValue(Val(v)).AsNumber<long long>();
-				break;
-			}
-		}
+		void DoAction(const ParseObjectConfig::Action& action, XMLValue v);
 	};
 
 	class Build : public TaskSystem::Task<BuildEvent>
 	{
 		friend class Builder;
+		using ConfigMap = std::map<std::string, XMLConfiguration>;
 
 		struct BuildScript {
 			std::string ID;
@@ -220,14 +166,12 @@ namespace SCRambl
 		struct BuildInput {
 			std::string ScriptType;
 			std::string Value;
-			Scripts::File::Shared Input;
+			Scripts::FileRef Input;
 
 			BuildInput() = default;
 			BuildInput(std::string type, std::string value) : ScriptType(type), Value(value)
 			{ }
 		};
-
-		using ConfigMap = std::map<std::string, XMLConfiguration>;
 
 		Engine& m_Engine;
 		Constants m_Constants;
@@ -242,15 +186,16 @@ namespace SCRambl
 		std::vector<BuildScript> m_BuildScripts;
 		std::vector<BuildInput> m_BuildInputs;
 		std::vector<std::string> m_Files;
-		std::vector<IToken*> m_Tokens;
-		std::vector<Tokens::Symbol*> m_Symbols;
+		TokenPtrVec m_Tokens;
+		SymbolPtrVec m_Symbols;
+		SymbolPtrVec m_Declarations;
 
 		//
 		ScriptObjects<Variable> m_Variables;
 		ScriptObjects<Scripts::Label> m_Labels;
 
 		// Tasks
-		using TaskMap = std::map<int, std::shared_ptr<TaskSystem::ITask>>;
+		using TaskMap = std::map<int, std::unique_ptr<TaskSystem::ITask>>;
 		TaskMap m_Tasks;
 		TaskMap::iterator m_CurrentTask;
 		bool m_HaveTask;
@@ -260,21 +205,16 @@ namespace SCRambl
 		void LoadDefinitions();
 
 	public:
-		//using Shared = std::shared_ptr<Build>;
-		using Symbols = std::vector<Tokens::Symbol*>;
+		using Symbols = std::vector<TokenSymbol*>;
 
 		Build(Engine&, BuildConfig*);
 		Build(const Build&) = delete;
-		~Build() {
-			for (auto ptr : m_Symbols) {
-				if (ptr) delete ptr;
-			}
-		}
+		~Build();
 
-		Scripts::File::Shared AddInput(std::string);
+		Scripts::FileRef AddInput(std::string);
 		XMLConfiguration* AddConfig(const std::string& name);
 		bool LoadXML(std::string path);
-		XMLValue GetEnvVar(std::string var) const { return m_Env.Get(var).Value; }
+		XMLValue GetEnvVar(std::string var) const;
 
 		bool IsCommandArgParsed(Command*, unsigned long arg_index) const;
 
@@ -305,18 +245,14 @@ namespace SCRambl
 		// Labels
 		inline ScriptObjects<Scripts::Label>& GetLabels() { return m_Labels; }
 		inline const ScriptObjects<Scripts::Label>& GetLabels() const { return m_Labels; }
-		ScriptLabel* AddScriptLabel(std::string name) {
-			std::vector<Types::Value*> vals;
-			m_Types.GetValues(Types::ValueSet::Label, 0, vals);
-			if (vals.empty() || vals.size() > 1) BREAK();
-			return m_Labels.Add(vals[0]->GetType(), name);
-		}
-		ScriptLabel* GetScriptLabel(std::string name) {
-			return m_Labels.Find(name);
-		}
-		ScriptLabel* GetScriptLabel(Scripts::Label* label) {
-			return m_Labels.Find(label);
-		}
+		ScriptLabel* AddScriptLabel(std::string name);
+		ScriptLabel* GetScriptLabel(std::string name);
+		ScriptLabel* GetScriptLabel(Scripts::Label* label);
+
+		// "Declarations"
+		inline std::vector<TokenSymbol*> & GetDeclarations() { return m_Declarations; }
+		inline const std::vector<TokenSymbol*> & GetDeclarations() const { return m_Declarations; }
+		void AddDeclaration(TokenSymbol* tok);
 
 		Symbols::const_iterator GetSymbolsBegin() const {
 			return m_Symbols.begin();
@@ -336,82 +272,21 @@ namespace SCRambl
 			return ptr;
 		}
 
-		void DoParseActions(std::string val, const ParseObjectConfig::ActionVec& vec) {
-			for (auto& action : vec) {
-				m_Env.DoAction(action, val);
-			}
-		}
-
-		//template<typename TMap = std::multimap<const std::string, Scripts::Tokens::Iterator>>
-		//void ParseCommands(const TMap& map) {
-		void ParseCommands(const std::multimap<const std::string, Scripts::Tokens::Iterator>& map) {
-			for (auto& parsecmd : m_Config->GetParseCommands()) {
-				auto v = m_Env.Val(parsecmd.first).AsString();
-				auto rg = map.equal_range(v);
-				if (rg.first != rg.second) {
-					for (auto it = rg.first; it != rg.second; ++it) {
-						bool check_arg = false, check_type = false;
-						bool found_type = false;
-						auto type = m_Env.Val(parsecmd.second->Type).AsString();
-						if (!type.empty()) {
-							check_type = true;
-						}
-
-						auto argit = it->second;
-						++argit;
-						auto& cmdtok = it->second->GetToken()->Get<Tokens::Command::Info<Command>>();
-						auto cmd = cmdtok.GetValue<Tokens::Command::CommandType>();
-						for (unsigned long i = 0; i < cmd->GetNumArgs(); ++i, ++argit) {
-							if (cmd->GetArg(i).GetType()->GetName() == type) {
-								found_type = true;
-								check_type = false;
-								break;
-							}
-						}
-
-						if (!check_type && !check_arg) {
-							if (found_type) {
-								std::string val;
-								auto toke = argit->GetToken();
-								switch (toke->GetType<Tokens::Type>()) {
-								case Tokens::Type::Number:
-									val = toke->Get<Tokens::Number::TypelessInfo>().GetValue<Tokens::Number::ScriptRange>().Format();
-									break;
-								case Tokens::Type::String:
-									val = toke->Get<Tokens::String::Info>().GetValue<Tokens::String::StringValue>();
-									break;
-								case Tokens::Type::Identifier:
-									val = toke->Get<Tokens::Identifier::Info<>>().GetValue<Tokens::Identifier::ScriptRange>().Format();
-									break;
-								case Tokens::Type::Command:
-									val = toke->Get<Tokens::Command::Info<Command>>().GetValue<Tokens::Command::CommandType>()->GetName();
-									break;
-								case Tokens::Type::Label:
-									val = toke->Get<Tokens::Label::Info>().GetValue<Tokens::Label::LabelValue>()->GetName();
-									break;
-								default: BREAK();
-								}
-								
-								DoParseActions(val, parsecmd.second->Actions);
-							}
-						}
-					}
-				}
-				else if (parsecmd.second->Required.AsBool()) {
-					BREAK();
-				}
-			}
-		}
+		void DoParseActions(std::string val, const ParseObjectConfig::ActionVec& vec);
+		void ParseCommands(const std::multimap<const std::string, Scripts::Tokens::Iterator>& map);
 
 		template<typename T, typename ID, typename... Params>
-		const std::shared_ptr<T> AddTask(ID id, Params&&... prms) {
-			auto task = std::shared_ptr<T>(new T(m_Engine, std::forward<Params>(prms)...));
-			m_Tasks.emplace(id, task);
-			if (!m_HaveTask) {
-				Init();
-				m_HaveTask = true;
+		const T* AddTask(ID id, Params&&... prms) {
+			auto pr = m_Tasks.emplace(id, std::make_unique<T>(m_Engine, std::forward<Params>(prms)...));
+			if (pr.second) {
+				auto task = pr.first->second.get();
+				if (!m_HaveTask) {
+					Init();
+					m_HaveTask = true;
+				}
+				return static_cast<T*>(task);
 			}
-			return task;
+			return nullptr;
 		}
 		template<typename ID>
 		bool RemoveTask(ID id) {
@@ -432,12 +307,12 @@ namespace SCRambl
 		}
 
 		template<typename T>
-		inline T & GetCurrentTask() { return reinterpret_cast<T&>(*CurrentTask->second); }
-		inline int GetCurrentTaskID() const { return std::ref(m_CurrentTask->first); }
+		inline T& GetCurrentTask() { return *std::static_pointer_cast<T>(CurrentTask->second); }
+		inline int GetCurrentTaskID() const { return m_CurrentTask->first; }
 		inline size_t GetNumTasks() const { return m_Tasks.size(); }
 		inline void ClearTasks() { m_Tasks.clear(); }
 
-		const TaskSystem::Task<BuildEvent> & Run();
+		const TaskSystem::Task<BuildEvent>& Run();
 
 	protected:
 		bool IsTaskFinished() override { return m_CurrentTask == std::end(m_Tasks); }
@@ -456,11 +331,11 @@ namespace SCRambl
 	public:
 		Builder(Engine&);
 		
-		Scripts::File::Shared LoadFile(Build*, std::string);
+		Scripts::FileRef LoadFile(Build*, std::string);
 		bool LoadDefinitions(Build*);
 
 		bool LoadScriptFile(std::string, Script&);
-		bool SetConfig(std::string) const { return true; }
-		BuildConfig* GetConfig() const { return m_BuildConfig; }
+		bool SetConfig(std::string) const;
+		BuildConfig* GetConfig() const;
 	};
 }

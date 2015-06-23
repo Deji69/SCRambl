@@ -38,7 +38,7 @@ namespace SCRambl
 		int i = 0;
 		bool eol = false;
 		
-		if (!m_Code) m_Code = std::make_shared<Code>();
+		if (!m_Code) m_Code = new Code();
 		if (!m_Code->IsEmpty()) m_Code->Clear();
 		if (cdata[i]) {
 			do {
@@ -104,13 +104,13 @@ namespace SCRambl
 		}
 		return eol;
 	}
-	File::Shared Script::OpenFile(const std::string& path) {
-		auto ptr = m_Code ? std::make_shared<File>(m_Code, path) : std::make_shared<File>(path);
-		if (m_Files.empty()) {
-			m_Code = ptr->GetCode();
-		}
-		m_Files.emplace_back(ptr);
-		return m_File = ptr;
+	FileRef Script::OpenFile(const std::string& path) {
+		FileRef ref(m_Files);
+		bool wasempty = m_Files.empty();
+		m_Files.emplace_back(m_Code ? (m_Code, path) : path);
+		if (wasempty && ref) m_Code = ref->GetCode();
+		if (m_Code) m_Code->SetFile(ref);
+		return m_File = ref;
 	}
 	bool Script::IsFileOpen() const {
 		return m_File && m_File->IsOpen();
@@ -118,14 +118,6 @@ namespace SCRambl
 	long long Script::GetNumLines() const {
 		return m_Code->NumLines();
 	}
-	/*void Script::LoadFile(const std::string& path) {
-		CloseFile();
-		if (m_Files.empty()) {
-			m_Files.emplace_back(std::make_shared<File>(path));
-			m_Code = 
-		}
-		m_File = std::make_shared<File>(m_Code, path);
-	}*/
 	Position Script::Include(Position & pos, const std::string & path) {
 		ASSERT(m_File);
 		try {
@@ -153,20 +145,33 @@ namespace SCRambl
 	}
 
 	/* Scripts::File */
-	File::File() : m_Code(std::make_shared<Code>())
+	File::File() : m_Code(new Code())
 	{ }
+	File::File(const File& file) : m_Parent(file.m_Parent), m_Code(file.m_Code),
+		m_FileOpen(file.m_FileOpen), m_Begin(file.m_Begin), m_End(file.m_End),
+		m_Path(file.m_Path), m_NumLines(file.m_NumLines)
+	{
+		for (auto& inc : file.m_Includes) {
+			m_Includes.emplace_back(inc);
+			m_Includes.back().m_Parent = this;
+		}
+	}
 	File::File(File* parent) : m_Parent(parent), m_Code(parent->GetCode())
 	{ }
-	File::File(Code::Shared code) : m_Code(code)
+	File::File(Code* code) : m_Code(code)
 	{ }
-	File::File(std::string path) : m_Code(std::make_shared<Code>()) {
+	File::File(std::string path) : m_Code(new Code()) {
 		Open(path);
 	}
 	File::File(File* parent, std::string path) : m_Parent(parent), m_Path(path), m_Code(parent->GetCode()), m_FileOpen(false) {
 		Open(path);
 	}
-	File::File(Code::Shared code, std::string path) : m_Code(code), m_Path(path), m_FileOpen(false) {
+	File::File(Code* code, std::string path) : m_Code(code), m_Path(path), m_FileOpen(false) {
 		Open(path);
+	}
+	File::~File() {
+		if (m_Code) delete m_Code;
+		m_Code = nullptr;
 	}
 	bool File::IsOpen() const {
 		return m_FileOpen;
@@ -177,10 +182,10 @@ namespace SCRambl
 	long File::GetNumIncludes() const {
 		return m_Includes.size();
 	}
-	Code::Shared File::GetCode() const {
+	Code* File::GetCode() const {
 		return m_Code;
 	}
-	void File::SetCode(Code::Shared code) {
+	void File::SetCode(Code* code) {
 		m_Code = code;
 	}
 	bool File::Open(std::string path) {
@@ -196,9 +201,7 @@ namespace SCRambl
 		}
 		return m_FileOpen;
 	}
-	void File::ReadFile(std::ifstream & file) {
-		m_Code->SetFile(this);
-
+	void File::ReadFile(std::ifstream& file) {
 		bool eol = false;	// use to prevent eol sequences and escape new lines
 		std::string code;
 		while (std::getline(file, code)) {
@@ -231,37 +234,13 @@ namespace SCRambl
 			++m_NumLines;
 		}
 	}
-	File::Shared File::IncludeFile(Position& pos, std::string path) {
-		auto ptr = std::make_shared<File>(this, path);
-		m_Includes.emplace_back(ptr);
+	FileRef File::IncludeFile(Position& pos, std::string path) {
+		FileRef ref(m_Includes);
+		m_Includes.emplace_back(this, path);
 		pos.NextLine();
-		return ptr;
+		return ref;
 	}
 	
-	/*
-	File::File(std::string path, Code * code): m_Code(code),
-		m_Begin(code->End()), m_End(code->End()),
-		m_Path(path),
-		m_Parent(nullptr),
-		m_NumLines(0)
-	{
-		std::ifstream file(path, std::ios::in);
-		if (file) ReadFile(file);
-		else throw *this;
-		code->SetFile(this);
-	}
-	File::File(std::string path, Code * code, Position pos, const File * parent): m_Code(code),
-		m_Begin(pos.NextLine()), m_End(pos),
-		m_Path(path),
-		m_Parent(parent),
-		m_NumLines(0)
-	{
-		std::ifstream file(path, std::ios::in);
-		if (file) ReadFile(file);
-		else throw *this;
-	}
-	*/
-
 	/* Scripts::TokenMap */
 	TokenLine* TokenMap::AddLine(long long line) {
 		auto it = m_Map.find(line);
@@ -293,7 +272,7 @@ namespace SCRambl
 		m_LineIt = it;
 		GetCodeLine();
 	}
-	Position::Position(Code * code, int line, int col) : m_pCode(code)
+	Position::Position(Code * code, unsigned long line, unsigned long col) : m_pCode(code)
 	{
 		auto src_it = code->GetLines().end();
 		for (auto it = code->GetLines().begin(); it != code->GetLines().end(); ++it) {
@@ -369,8 +348,7 @@ namespace SCRambl
 	}
 
 	/* Scripts::Code */
-	Code::Code() : m_CurrentFile(nullptr), m_NumSymbols(0)
-	{ }
+	Code::Code() = default;
 	Code::Code(const CodeList& code) : m_Code(code)
 	{ }
 	CodeList& Code::operator*() {
@@ -379,7 +357,7 @@ namespace SCRambl
 	CodeList* Code::operator->() {
 		return &**this;
 	}
-	void Code::SetFile(const File * file) {
+	void Code::SetFile(FileRef file) {
 		m_CurrentFile = file;
 	}
 	const CodeList& Code::GetLines() const {
@@ -413,8 +391,7 @@ namespace SCRambl
 		return pos;
 	}
 	void Code::AddLine(const CodeLine& code) {
-		if (!code.Empty())
-		{
+		if (!code.Empty()) {
 			m_Code.emplace_back(NumLines() + 1, code, m_CurrentFile);
 			m_NumSymbols += code.Size();
 		}
@@ -490,18 +467,18 @@ namespace SCRambl
 	}
 
 	/* Scripts::Line */
-	Line::Line(long line, CodeLine code, const File * file) : m_Line(line), m_Code(code), m_File(file)
+	Line::Line(unsigned long line, CodeLine code, const FileRef file) : m_Line(line), m_Code(code), m_File(file)
 	{ }
-	const File * Line::GetFile() const {
+	const FileRef Line::GetFile() const {
 		return m_File;
 	}
-	CodeLine & Line::GetCode() {
+	CodeLine& Line::GetCode() {
 		return m_Code;
 	}
-	const CodeLine & Line::GetCode() const {
+	const CodeLine& Line::GetCode() const {
 		return m_Code;
 	}
-	long Line::GetLine() const {
+	unsigned long Line::GetLine() const {
 		return m_Line;
 	}
 	Line::operator const CodeLine &() const {
@@ -510,7 +487,7 @@ namespace SCRambl
 	Line::operator CodeLine &() {
 		return GetCode();
 	}
-	Line::operator long() const {
+	Line::operator unsigned long() const {
 		return GetLine();
 	}
 }

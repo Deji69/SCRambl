@@ -106,8 +106,6 @@ namespace SCRambl
 				Numbers::FloatType m_FloatValue;
 
 			public:
-				//using Shared = std::shared_ptr<ValueToken>;
-
 				Value(TValueType valtype, Numbers::Type num_type) : ValueToken(Type::Number, valtype),
 					m_Type(num_type)
 				{ }
@@ -223,7 +221,6 @@ namespace SCRambl
 				const std::string& GetValue() const { return m_Value; }
 				virtual size_t GetSize() const { return m_Value.size(); }
 			};
-
 			class Object : public Symbol
 			{
 				std::string m_Value;
@@ -249,13 +246,5 @@ namespace SCRambl
 			using Info = TokenInfo<Type, Scripts::Position, TCharType>;
 		};
 
-		/*template<typename TTokenType, typename... TArgs>
-		static TTokenType* CreateToken(TArgs&&... args) {
-			return std::make_shared<TTokenType>(args...);
-		}*/
-		template<typename T>
-		static T& GetToken(IToken* token) {
-			return token->Get<T>();
-		}
 	}
 }

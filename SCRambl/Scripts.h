@@ -23,44 +23,48 @@
 
 namespace SCRambl
 {
-	typedef SCRambl::Tokens::Symbol TokenSymbol;
+	using TokenSymbol = SCRambl::Tokens::Symbol;
+	using TokenPtrVec = std::vector<IToken*>;
+	using SymbolPtrVec = std::vector<TokenSymbol*>;
 
 	namespace Scripts
 	{
-		typedef std::list<Line> CodeList;
-		typedef std::vector<std::shared_ptr<File>> Files;
+		using CodeList = std::list<Line>;
+		using CodeListRef = CodeList::iterator;
+		using Files = std::vector<File>;
+		using FileRef = VecRef<File>;
 
-		/*\
-		 * Scripts::File - Script files and includes
+		/*\ Scripts::File - Script files and includes
 		\*/
 		class File
 		{
 		public:
-			using Shared = std::shared_ptr<File>;
-			
 			File();
+			File(const File&);
 			File(File*);
-			File(Code::Shared);
+			File(Code*);
 			File(std::string);
 			File(File*, std::string);
-			File(Code::Shared, std::string);
+			File(Code*, std::string);
+			~File();
 
 			bool IsOpen() const;
 			bool IsInclude() const;
 			long GetNumLines() const;
 			long GetNumIncludes() const;
-			Code::Shared GetCode() const;
-			void SetCode(Code::Shared);
+			std::string GetPath() const;
+			Code* GetCode() const;
+			void SetCode(Code*);
 			bool Open(std::string);
-			bool Open(Code::Shared, std::string);
-			File::Shared IncludeFile(Position&, std::string);
+			bool Open(Code*, std::string);
+			FileRef IncludeFile(Position&, std::string);
 
 		private:
 			void ReadFile(std::ifstream&);
 
 			bool m_FileOpen = false;
-			File* m_Parent = nullptr;
-			Code::Shared m_Code;
+			File* m_Parent;
+			Code* m_Code;
 			Position m_Begin;
 			Position m_End;
 			Files m_Includes;
@@ -68,9 +72,7 @@ namespace SCRambl
 			long m_NumLines = 0;
 		};
 		
-		/*\
-		 * Scripts::Token - Script token wrapper
-		\*/
+		/*\ Scripts::Token - Script token wrapper \*/
 		class Token
 		{
 			Position m_Position;
@@ -87,8 +89,8 @@ namespace SCRambl
 			Token(TokenSymbol* symb) : m_Symbol(symb)
 			{ }
 
-			inline Position& GetPosition()					{ return m_Position; }
-			inline const Position& GetPosition() const		{ return GetPosition(); }
+			inline Position& GetPosition() { return m_Position; }
+			inline const Position& GetPosition() const { return GetPosition(); }
 			
 			template<typename T>
 			inline T* GetToken() { return static_cast<T*>(m_Token); }
@@ -100,7 +102,6 @@ namespace SCRambl
 				if (m_Token) delete m_Token;
 				m_Token = tok;
 			}
-
 			template<typename T>
 			inline void SetSymbol(T sym) {
 				if (m_Symbol) delete m_Symbol;
@@ -118,9 +119,7 @@ namespace SCRambl
 			inline operator const TokenSymbol*&() const	{ return GetSymbol(); }
 		};
 
-		/*\
-		 * Scripts::Tokens - Script token container
-		\*/
+		/*\ Scripts::Tokens - Script token container \*/
 		class Tokens
 		{
 		public:
@@ -220,16 +219,16 @@ namespace SCRambl
 					return !(*this == rhs);
 				}
 				inline bool operator<(const Iterator& rhs) const {
-					return m_It < rhs.m_It;
+					return m_Index < rhs.m_Index;
 				}
 				inline bool operator<=(const Iterator& rhs) const {
-					return m_It <= rhs.m_It;
+					return m_Index <= rhs.m_Index;
 				}
 				inline bool operator>(const Iterator& rhs) const {
-					return m_It > rhs.m_It;
+					return m_Index > rhs.m_Index;
 				}
 				inline bool operator>=(const Iterator& rhs) const {
-					return m_It >= rhs.m_It;
+					return m_Index >= rhs.m_Index;
 				}
 			};
 
@@ -347,16 +346,10 @@ namespace SCRambl
 		};
 
 		using Labels = Scope<Label>;
-		//using Variables = Scope<std::shared_ptr<Variable>>;
-
-		//template<typename T> typedef Variable<T> Variable;
-		//template<typename T> typedef Scope<Variable<T>::Shared> Variables;
 
 		/*class LScript
 		{
 		public:
-			using Shared = std::shared_ptr<LScript>;
-
 			LScript();
 
 			inline Labels& GetLabels()							{ return m_Labels; }
@@ -378,7 +371,7 @@ namespace SCRambl
 		Script();
 
 		// Open file 
-		Scripts::File::Shared OpenFile(const std::string&);
+		Scripts::FileRef OpenFile(const std::string&);
 		
 		// Must be \0 terminated
 		void SetCode(const void *);
@@ -390,12 +383,12 @@ namespace SCRambl
 		long long GetNumLines() const;
 
 		//void LoadFile(const std::string&);
-		void ReadFile(std::ifstream &, Scripts::Code &);
+		void ReadFile(std::ifstream&, Scripts::Code&);
 
 		/* Include File
 		[in] position
 		[in] include file path */
-		Scripts::Position Include(Scripts::Position &, const std::string &);
+		Scripts::Position Include(Scripts::Position&, const std::string&);
 
 		Scripts::TokenMap GenerateTokenMap();
 
@@ -406,26 +399,10 @@ namespace SCRambl
 		Scripts::Code& GetCode() { return *m_Code; }
 
 		// Get the labels
-		Scripts::Labels& GetLabels() { return /*m_LScript ? m_LScript->GetLabels() :*/ m_Labels ; }
-											  
-		// Get the variables
-		//Scripts::Variables& GetVariables() { return m_Variables; }
-		//const Scripts::Variables& GetVariables() const { return m_Variables; }
-
-		// Get the current local script
-		//Scripts::LScript* GetLScript() { return m_LScript; }
-		//const Scripts::LScript* GetLScript() const { return m_LScript; }
-
-		// Get one of the local scripts
-		//Scripts::LScript* GetLScript(size_t i) { return &m_LScripts[i]; }
-		//const Scripts::LScript* GetLScript(size_t i) const { return &m_LScripts[i]; }
+		Scripts::Labels& GetLabels() { return m_Labels ; }
 
 		// Get the tokens
 		Scripts::Tokens& GetTokens() { return m_Tokens; }
-
-		// X
-		inline std::vector<std::shared_ptr<TokenSymbol>> & GetDeclarations() { return m_Declarations; }
-		inline const std::vector<std::shared_ptr<TokenSymbol>> & GetDeclarations() const { return m_Declarations; }
 
 	private:
 		bool ProcessCodeLine(const std::string&, CodeLine&, bool = false);
@@ -434,13 +411,10 @@ namespace SCRambl
 		Scripts::Files m_Files;
 		//Scripts::LScripts m_LScripts;
 		Scripts::Labels m_Labels;
-		//Scripts::Variables m_Variables;
 		
 		//Scripts::LScript m_LScriptMain;
 		//Scripts::LScript* m_LScript;
-		Scripts::File::Shared m_File;
-		Scripts::Code::Shared m_Code;
-
-		std::vector<std::shared_ptr<TokenSymbol>> m_Declarations;
+		Scripts::FileRef m_File;
+		Scripts::Code* m_Code;
 	};
 }

@@ -28,29 +28,30 @@ namespace SCRambl
 		class Tokens;
 		class Label;
 
-		typedef std::list<Line> CodeList;
-		typedef std::vector<std::shared_ptr<File>> Files;
+		using CodeList = std::list<Line>;
+		using Files = std::vector<File>;
+		using FileRef = VecRef<File>;
 
 		/*\ Scripts::Line - this is one \*/
 		class Line
 		{
 		public:
 			Line() = default;
-			Line(long, CodeLine, const File *);
+			Line(unsigned long, CodeLine, const FileRef);
 
-			long GetLine() const;
-			CodeLine & GetCode();
-			const CodeLine & GetCode() const;
-			const File * GetFile() const;
+			unsigned long GetLine() const;
+			CodeLine& GetCode();
+			const CodeLine& GetCode() const;
+			const FileRef GetFile() const;
 
-			operator const CodeLine &() const;
-			operator CodeLine &();
-			operator long() const;
+			operator const CodeLine&() const;
+			operator CodeLine&();
+			operator unsigned long() const;
 
 		private:
-			const File		*	m_File = nullptr;
-			long				m_Line = 0;
-			CodeLine			m_Code;
+			const FileRef m_File;
+			unsigned long m_Line = 0;
+			CodeLine m_Code;
 		};
 
 		/*\ Scripts::Code - where symbolic data lives in peaceful bliss \*/
@@ -58,21 +59,11 @@ namespace SCRambl
 		{
 			friend class Position;
 
-			CodeList m_Code;
-			const File* m_CurrentFile;
-			long m_NumSymbols;
-
-			CodeList& GetLines();
-			CodeList& operator *();
-			CodeList* operator ->();
-
 		public:
-			using Shared = std::shared_ptr<Code>;
-
 			Code();
 			Code(const CodeList&);
 
-			void SetFile(const File* file);
+			void SetFile(FileRef file);
 			const CodeList & GetLines() const;
 			long NumSymbols() const;
 			long NumLines() const;
@@ -122,22 +113,21 @@ namespace SCRambl
 			 - Returns the vector of collected symbols
 			\*/
 			CodeLine& Copy(const Position&, const Position&, CodeLine&) const;
+
+		private:
+			CodeList m_Code;
+			FileRef m_CurrentFile;
+			long m_NumSymbols = 0;
+
+			CodeList& GetLines();
+			CodeList& operator*();
+			CodeList* operator->();
 		};
 
 		/*\ Scripts::Position(tm) - iterating through all that matters since '14 \*/
 		class Position
 		{
 			friend class Code;
-
-			//Code					*	m_pCode;
-			Code					*	m_pCode = nullptr;
-			CodeList::iterator			m_LineIt;		// (x)
-			CodeLine::iterator			m_CodeIt;		// (y)
-
-			inline CodeList::iterator		GetLineIt()			{ return m_LineIt; }
-			inline CodeLine::iterator		GetSymbolIt()		{ return m_CodeIt; }
-
-			void GetCodeLine();
 
 		public:
 			// construct invalid thing
@@ -147,158 +137,141 @@ namespace SCRambl
 			Position(Code &);
 			Position(Code *);
 			// specified line of code
-			Position(Code *, int, int = 0);
+			Position(Code *, unsigned long, unsigned long = 0);
 			Position(Code *, CodeList::iterator &);
 
 			/*\
-			- Attempt to set this position at the next line
+			 - Attempt to set this position at the next line
 			\*/
 			Position & NextLine();
 
 			/*\
-			- Attempt to set this position at the next symbol
-			- Returns true if another symbol is available
+			 - Attempt to set this position at the next symbol
+			 - Returns true if another symbol is available
 			\*/
 			bool Forward();
 
 			/*\
-			- Attempt to set this position at the previous symbol
-			- Returns true if another symbol is available
+			 - Attempt to set this position at the previous symbol
+			 - Returns true if another symbol is available
 			\*/
 			bool Backward();
 
 			/*\
-			- Attempt to erase the symbol at the current position
-			- Returns a reference to this position at the next symbol
+			 - Attempt to erase the symbol at the current position
+			 - Returns a reference to this position at the next symbol
 			\*/
-			Position & Delete();
+			Position& Delete();
 
 			/*\
-			- Attempt to insert a symbol at the current position
-			- Returns a reference to this position at the inserted symbol
+			 - Attempt to insert a symbol at the current position
+		 	 - Returns a reference to this position at the inserted symbol
 			\*/
-			Position & Insert(const Symbol &);
+			Position& Insert(const Symbol&);
 
 			/*\
-			- Attempt to insert multiple symbols at the current position
-			- Returns a reference to this position at the inserted symbol
+			 - Attempt to insert multiple symbols at the current position
+			 - Returns a reference to this position at the inserted symbol
 			\*/
-			Position & Insert(const CodeLine &);
+			Position& Insert(const CodeLine&);
 
 			/*\
 			- Select a string from this position to the specified one
 			\*/
-			inline std::string Select(const Position & end) const {
+			inline std::string Select(const Position& end) const {
 				return GetCode()->Select(*this, end);
 			}
 
-			/*\
-			- Returns true if this position is at the end of the symbol list
-			\*/
+			/*\ Returns true if this position is at the end of the symbol list \*/
 			inline bool IsEnd() const {
 				return !m_pCode || GetCode()->IsEmpty() || m_LineIt == GetCodeLines().end() || m_CodeIt == m_LineIt->GetCode().End();
 			}
 
-			/*\
-			- Returns true if each Position refers to the same script position
-			\*/
-			inline bool Compare(const Position & pos) const {
+			/*\ Returns true if each Position refers to the same script position \*/
+			inline bool Compare(const Position& pos) const {
 				return m_pCode == pos.m_pCode && m_LineIt == pos.m_LineIt && m_CodeIt == pos.m_CodeIt;
 			}
 
-			/*\
-			- Returns true if both Position's are on the same line
-			\*/
-			inline bool IsOnSameLine(const Position & pos) const {
+			/*\ Returns true if both Position's are on the same line \*/
+			inline bool IsOnSameLine(const Position& pos) const {
 				return m_LineIt == pos.m_LineIt;
 			}
 
-			/*\
-			- Returns true if the Position is on an earlier line
-			\*/
-			inline bool IsOnEarlierLine(const Position & pos) const {
+			/*\ Returns true if the Position is on an earlier line \*/
+			inline bool IsOnEarlierLine(const Position& pos) const {
 				return GetLine().GetLine() > pos.GetLine().GetLine();
 			}
 
-			/*\
-			- Returns true if the position is on a later line
-			\*/
-			inline bool IsOnLaterLine(const Position & pos) const {
+			/*\ Returns true if the position is on a later line \*/
+			inline bool IsOnLaterLine(const Position& pos) const {
 				return GetLine().GetLine() < pos.GetLine().GetLine();
 			}
 
-			/*\
-			- Returns ture if the position is earlier
-			\*/
-			inline bool IsEarlier(const Position & pos) const {
+			/*\ Returns ture if the position is earlier \*/
+			inline bool IsEarlier(const Position& pos) const {
 				return IsOnEarlierLine(pos) || (IsOnSameLine(pos) && GetColumn() < pos.GetColumn());
 			}
 
-			/*\
-			- Returns ture if the position is later
-			\*/
-			inline bool IsLater(const Position & pos) const {
+			/*\ Returns ture if the position is later \*/
+			inline bool IsLater(const Position& pos) const {
 				return IsOnLaterLine(pos) || (IsOnSameLine(pos) && GetColumn() > pos.GetColumn());
 			}
 
-			/*\
-			- Returns true if the Position points to the same character
-			\*/
+			/*\ Returns true if the Position points to the same character \*/
 			inline bool Compare(const char c) const {
 				return !IsEnd() ? *m_CodeIt == c : false;
 			}
 
 			// Get teh code
-			inline Code * GetCode()							{ ASSERT(m_pCode); return m_pCode; }
-			inline const Code * GetCode() const				{ ASSERT(m_pCode); return m_pCode; }
-			inline CodeList & GetCodeLines()				{ ASSERT(m_pCode); return m_pCode->GetLines(); }
-			inline const CodeList & GetCodeLines() const	{ ASSERT(m_pCode); return m_pCode->GetLines(); }
+			inline Code* GetCode() { ASSERT(m_pCode); return m_pCode; }
+			inline const Code* GetCode() const { ASSERT(m_pCode); return m_pCode; }
+			inline CodeList& GetCodeLines() { ASSERT(m_pCode); return m_pCode->GetLines(); }
+			inline const CodeList& GetCodeLines() const { ASSERT(m_pCode); return m_pCode->GetLines(); }
 
 			// Get the current line of this position
-			inline Line & GetLine()							{ return *m_LineIt; }
-			inline const Line & GetLine()	const			{ return *m_LineIt; }
+			inline Line& GetLine() { return *m_LineIt; }
+			inline const Line& GetLine() const { return *m_LineIt; }
 
 			// Get the current number of the column at this position
-			inline int GetColumn() const					{ return m_CodeIt->Number(); }
+			inline int GetColumn() const { return m_CodeIt->Number(); }
 
 			// Get the current line code of this position
-			inline CodeLine & GetLineCode()					{ return m_LineIt->GetCode(); }
-			inline const CodeLine & GetLineCode()	const	{ return m_LineIt->GetCode(); }
+			inline CodeLine& GetLineCode() { return m_LineIt->GetCode(); }
+			inline const CodeLine& GetLineCode() const { return m_LineIt->GetCode(); }
 
 			// Get the current symbol of this position
-			inline Symbol & GetSymbol()						{ return *m_CodeIt; }
-			inline const Symbol & GetSymbol() const			{ return *m_CodeIt; }
+			inline Symbol& GetSymbol() { return *m_CodeIt; }
+			inline const Symbol& GetSymbol() const { return *m_CodeIt; }
 
 			// GetSymbol()
-			inline Symbol & operator*()					{ return GetSymbol(); }
-			inline const Symbol & operator*() const		{ return GetSymbol(); }
+			inline Symbol& operator*() { return GetSymbol(); }
+			inline const Symbol& operator*() const { return GetSymbol(); }
 
 			// GetSymbol()
-			inline Symbol * operator->()				{ return &**this; }
-			inline const Symbol * operator->() const	{ return &**this; }
+			inline Symbol* operator->() { return &**this; }
+			inline const Symbol* operator->() const { return &**this; }
 
 			// !IsEnd()
-			inline operator bool() const				{ return !IsEnd(); }
+			inline operator bool() const { return !IsEnd(); }
 
 			// Insert Symbol
-			inline Position & operator<<(const Symbol & sym) {
+			inline Position& operator<<(const Symbol& sym) {
 				return Insert(sym);
 			}
 
 			// Insert Line
-			inline Position & operator<<(const CodeLine & line) {
+			inline Position& operator<<(const CodeLine& line) {
 				m_pCode->AddLine(*this, line);
 				return *this;
 			}
 
 			// 
-			inline Position & operator=(const Position & pos) {
+			inline Position& operator=(const Position& pos) {
 				m_pCode = pos.m_pCode;
 				m_CodeIt = pos.m_CodeIt;
 				m_LineIt = pos.m_LineIt;
 				return *this;
 			}
-
 			inline Position operator[](int i) {
 				Position new_pos = *this;
 				for (i; i > 0; --i) if (!new_pos.Forward()) break;
@@ -306,7 +279,7 @@ namespace SCRambl
 			}
 
 			// Forward()
-			inline Position & operator++() {
+			inline Position& operator++() {
 				Forward();
 				return *this;
 			}
@@ -315,7 +288,6 @@ namespace SCRambl
 				Forward();
 				return pos;
 			}
-
 			inline Position operator+(int n) const {
 				Position new_pos = *this;
 				for (n; n > 0; --n)
@@ -324,14 +296,13 @@ namespace SCRambl
 				}
 				return new_pos;
 			}
-
-			inline Position & operator+=(int n) {
+			inline Position& operator+=(int n) {
 				for (n; n > 0; --n) if (!Forward()) break;
 				return *this;
 			}
 
 			// Backward()
-			inline Position & operator--() {
+			inline Position& operator--() {
 				Backward();
 				return *this;
 			}
@@ -340,7 +311,6 @@ namespace SCRambl
 				Backward();
 				return pos;
 			}
-
 			inline Position operator-(int n) const {
 				Position new_pos = *this;
 				for (n; n > 0; --n)
@@ -349,35 +319,34 @@ namespace SCRambl
 				}
 				return new_pos;
 			}
-
-			inline Position & operator-=(int n) {
+			inline Position& operator-=(int n) {
 				for (n; n > 0; --n) if (!Backward()) break;
 				return *this;
 			}
 
 			// Compare()
-			inline bool operator==(const Position & pos) const {
+			inline bool operator==(const Position& pos) const {
 				return Compare(pos);
 			}
-			inline bool operator!=(const Position & pos) const {
+			inline bool operator!=(const Position& pos) const {
 				return !(*this == pos);
 			}
 
 			// IsEarlier()
-			inline bool operator<(const Position & pos) const {
+			inline bool operator<(const Position& pos) const {
 				return IsEarlier(pos);
 			}
 			// IsLater()
-			inline bool operator>(const Position & pos) const {
+			inline bool operator>(const Position& pos) const {
 				return IsLater(pos);
 			}
 
 			// Compare() || IsEarlier()
-			inline bool operator<=(const Position & pos) const {
+			inline bool operator<=(const Position& pos) const {
 				return Compare(pos) || IsEarlier(pos);
 			}
 			// Compare() || IsLater()
-			inline bool operator>=(const Position & pos) const {
+			inline bool operator>=(const Position& pos) const {
 				return Compare(pos) || IsLater(pos);
 			}
 
@@ -390,9 +359,19 @@ namespace SCRambl
 			}
 
 			// String formatter
-			static inline std::string Formatter(const Position & pos) {
+			static inline std::string Formatter(const Position& pos) {
 				return std::to_string(pos.GetLine().GetLine());
 			}
+		
+		private:
+			Code* m_pCode = nullptr;
+			CodeList::iterator m_LineIt;		// (x)
+			CodeLine::iterator m_CodeIt;		// (y)
+
+			inline CodeList::iterator GetLineIt() { return m_LineIt; }
+			inline CodeLine::iterator GetSymbolIt() { return m_CodeIt; }
+
+			void GetCodeLine();
 		};
 
 		/*\ Scripts::Range - Range of Position's in the script \*/
