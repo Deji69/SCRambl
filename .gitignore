@@ -2,6 +2,7 @@
 *.suo
 *.sdf
 *.user
+*.opensdf
 Debug/
 SCRambl.Console/Debug/
 SCRambl.Console/Release/

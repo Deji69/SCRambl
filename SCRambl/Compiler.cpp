@@ -57,12 +57,10 @@ namespace SCRambl
 				auto command = cmd.GetCommand();
 
 				auto it = m_CommandNames.find(command->GetName());
-				if (it != m_CommandNames.end()) {
+				if (it != m_CommandNames.end())
 					Output<uint16_t>(it->second);
-				}
-				else {
+				else
 					Output<uint16_t>(AddCommandName(command->GetName()));
-				}
 				
 				Output<uint16_t>(cmd.GetNumArgs());
 
@@ -86,6 +84,7 @@ namespace SCRambl
 			++m_SymbolIt;
 		}
 		void Compiler::Finish() {
+			Output<uint32_t>(m_CommandNameVec.size());
 			for (auto name : m_CommandNameVec) {
 				Output<uint16_t>(name.second);
 				Output(name.first.c_str(), name.first.size());

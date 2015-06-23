@@ -1,15 +1,40 @@
 //--------------------------------------
 //--- 010 Editor v5.0 Binary Template
 //
-// File:
-// Author:
+// File: SCRambl Symbol File Template
+// Author: Deji
 // Revision:
 // Purpose:
 //--------------------------------------
 
+struct FileHeader
+{
+    FILETIME SourceTime;
+    uchar NameSize;
+    char Name[NameSize];
+};
+
+struct CommandSymbol
+{
+    uint16 ID;
+    
+};
+
 struct SymbolFile
 {
-    uint64              SourceTime;
-    char                Name[];
-    int                 Aaa;
+    FileHeader Header;
+    
+    struct SymbolItem
+	{
+        //uchar Type;
+        // command
+        uint16 CommandID;
+        //uint16 CommandNameIndex;
+	} Symbol;
+	
+	uint32 NumCommandNames;
+    struct CommandNameStruct
+    {
+	    char CommandNames[];
+    } CommandNames[NumCommandNames] <optimize=false>;
 } File;
