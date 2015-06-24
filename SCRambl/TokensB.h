@@ -8,12 +8,18 @@
 #include "Scripts-code.h"
 #include "Tokens.h"
 #include "Numbers.h"
-#include "Labels.h"
+//#include "Labels.h"
+//#include "Commands.h"
+//#include "Variables.h"
 #include "Symbols.h"
 #include "ScriptObjects.h"
 
 namespace SCRambl
 {
+	class Command;
+	class Label;
+	class Variable;
+
 	/*\ Tokens \*/
 	namespace Tokens
 	{
@@ -52,18 +58,18 @@ namespace SCRambl
 		public:
 			static const enum Parameter { ScriptRange, EXTRA };
 			static const size_t c_Extra = EXTRA;
-			template<typename ...TData>
+			template<typename... TData>
 			using Info = TokenInfo<Type, Scripts::Range, TData...>;
 		};
 		class Label {
 		public:
 			static const enum Parameter { ScriptRange, LabelValue };
-			using Info = TokenInfo<Type, Scripts::Range, Scripts::Label*>;
+			using Info = TokenInfo<Type, Scripts::Range, SCRambl::Label*>;
 
 			/* Tokens::Command::Call - Carries symbolic data for a command call */
 			class Jump : public Symbol
 			{
-				const Scripts::Label* m_Label;
+				const SCRambl::Label* m_Label;
 				size_t m_Offset;
 
 			public:
@@ -161,42 +167,38 @@ namespace SCRambl
 		class Command {
 		public:
 			static const enum Parameter { ScriptRange, CommandType };
-			template<typename TCommandType>
-			using Info = TokenInfo<Type, Scripts::Range, TCommandType*>;
-			template<typename TCommandType, typename TCont = std::vector<TCommandType*>>
-			using OverloadInfo = TokenInfo<Type, Scripts::Range, TCont>;
+			using Info = TokenInfo<Type, Scripts::Range, SCRambl::Command*>;
+			using OverloadInfo = TokenInfo<Type, Scripts::Range, std::vector<SCRambl::Command*>>;
 
 			/*\ Tokens::Command:Decl - Carries symbolic data for a command declaration \*/
-			template<typename TCommandType>
 			class Decl : public Symbol {
 				size_t m_ID;
-				const TCommandType* m_Command;
+				const SCRambl::Command* m_Command;
 
 			public:
-				Decl(size_t id, const TCommandType* ptr) : Symbol(Type::CommandDecl),
+				Decl(size_t id, const SCRambl::Command* ptr) : Symbol(Type::CommandDecl),
 					m_ID(id), m_Command(ptr)
 				{ }
 
 				inline size_t GetID() const { return m_ID; }
-				inline const TCommandType* GetCommand()	const { return m_Command; }
+				inline const SCRambl::Command* GetCommand()	const { return m_Command; }
 			};
 
 			/*\ Tokens::Command::Call - Carries symbolic data for a command call \*/
-			template<typename TCommandType>
 			class Call : public Symbol {
-				const TCommandType* m_Command;
+				const SCRambl::Command* m_Command;
 				size_t m_NumArgs;
 				std::vector<Symbol*> m_Args;
 
 			public:
-				Call(const Info<TCommandType>& info, size_t num_args) : Symbol(Type::CommandCall),
+				Call(const Info& info, size_t num_args) : Symbol(Type::CommandCall),
 					m_Command(info.GetValue<CommandType>()),
 					m_NumArgs(num_args)
 				{ }
-				Call(const IToken* info, size_t num_args) : Call(info->Get<Info<TCommandType>>(), num_args)
+				Call(const IToken* info, size_t num_args) : Call(info->Get<Info>(), num_args)
 				{ }
 
-				inline const TCommandType* GetCommand() const { return m_Command; }
+				inline const SCRambl::Command* GetCommand() const { return m_Command; }
 				inline size_t GetNumArgs() const { return m_NumArgs; }
 
 				inline void AddArg(Symbol* symbol) { m_Args.emplace_back(symbol); }
@@ -245,6 +247,5 @@ namespace SCRambl
 			template<typename TCharType>
 			using Info = TokenInfo<Type, Scripts::Position, TCharType>;
 		};
-
 	}
 }

@@ -17,6 +17,7 @@ namespace SCRambl
 	class Engine;
 	class Build;
 
+	/* CommandArg - Consists simply of the expected type, the command index, and whether it's a return */
 	class CommandArg
 	{
 	public:
@@ -35,7 +36,8 @@ namespace SCRambl
 		size_t m_Index;						// nth arg
 		bool m_IsReturn = false;
 	};
-
+	
+	/*\ Command - At the heart of SCR \*/
 	class Command
 	{
 	public:
@@ -43,12 +45,12 @@ namespace SCRambl
 		using ArgVec = std::vector<Arg>;
 
 	private:
-		size_t m_Index;				// unique index/hash
-		std::string m_Name;			// command name/id
-		ArgVec m_Args;				// Arg vector me matey!
+		XMLValue m_Index;			// index, which could be name/id/hash, depends on translation
+		std::string m_Name;			// command name identifier
+		ArgVec m_Args;				// arg vector me matey!
 
 	public:
-		Command(std::string name, size_t index);
+		Command(std::string name, XMLValue index);
 
 		void AddArg(Arg::Type* type, bool isRet = false);
 		Arg& GetArg(size_t i);
@@ -58,8 +60,8 @@ namespace SCRambl
 		inline ArgVec::iterator BeginArg() { return m_Args.begin(); }
 		inline ArgVec::const_iterator EndArg() const { return m_Args.end(); }
 		inline ArgVec::iterator EndArg() { return m_Args.end(); }
-		inline size_t GetNumArgs() const { return m_Args.size(); }
-		inline std::string GetName() const { return m_Name; }
+		inline size_t NumArgs() const { return m_Args.size(); }
+		inline std::string Name() const { return m_Name; }
 	};
 
 	/*\ Commands - SCR command manager \*/
@@ -87,6 +89,7 @@ namespace SCRambl
 		void Init(Build& build);
 		std::string CaseConvert(std::string) const;
 		Command* AddCommand(std::string name, XMLValue id);
+		Command* GetCommand(size_t index);
 		
 		// Finds all commands matching the name and stores them in a passed vector of command handles
 		// Returns the number of commands found

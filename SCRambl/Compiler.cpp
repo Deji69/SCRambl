@@ -53,14 +53,14 @@ namespace SCRambl
 				BREAK();
 				break;
 			case Tokens::Type::CommandCall: {
-				auto cmd = symbol->Extend<Tokens::Command::Call<Command>>();
+				auto cmd = symbol->Extend<Tokens::Command::Call>();
 				auto command = cmd.GetCommand();
 
-				auto it = m_CommandNames.find(command->GetName());
+				auto it = m_CommandNames.find(command->Name());
 				if (it != m_CommandNames.end())
 					Output<uint16_t>(it->second);
 				else
-					Output<uint16_t>(AddCommandName(command->GetName()));
+					Output<uint16_t>(AddCommandName(command->Name()));
 				
 				Output<uint16_t>(cmd.GetNumArgs());
 

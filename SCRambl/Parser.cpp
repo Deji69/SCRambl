@@ -102,7 +102,7 @@ namespace SCRambl
 			if (m_State == overloading) {
 				m_CurrentCommand = *m_OverloadCommandsIt;
 			}
-			if (m_CurrentCommand->GetNumArgs()) {
+			if (m_CurrentCommand->NumArgs()) {
 				m_CommandArgIt = m_CurrentCommand->BeginArg();
 				m_ParsingCommandArgs = true;
 			}
@@ -119,8 +119,8 @@ namespace SCRambl
 					break;
 				case state_parsing_command:
 				case state_parsing_command_args:
-					m_CommandTokenMap.emplace(m_CommandParseState.command->GetName(), m_CommandTokenIt);
-					CreateSymbol<Tokens::Command::Call<Command>>(m_CommandTokenIt->GetToken(), m_CommandParseState.parameters.size());
+					m_CommandTokenMap.emplace(m_CommandParseState.command->Name(), m_CommandTokenIt);
+					CreateSymbol<Tokens::Command::Call>(m_CommandTokenIt->GetToken(), m_CommandParseState.parameters.size());
 					for (auto& param : m_CommandParseState.parameters) {
 						//CreateSymbol()
 					}
@@ -156,9 +156,9 @@ namespace SCRambl
 			else if (m_Commands.FindCommands(name, vec) > 0) {
 				// make a token and store it
 				if (vec.size() == 1)
-					m_TokenIt.Get()->SetToken(CreateToken<Tokens::Command::Info<Command>>(Tokens::Type::Command, range, vec[0]));
+					m_TokenIt.Get()->SetToken(CreateToken<Tokens::Command::Info>(Tokens::Type::Command, range, vec[0]));
 				else
-					m_TokenIt.Get()->SetToken(CreateToken<Tokens::Command::OverloadInfo<Command>>(Tokens::Type::CommandOverload, range, vec));
+					m_TokenIt.Get()->SetToken(CreateToken<Tokens::Command::OverloadInfo>(Tokens::Type::CommandOverload, range, vec));
 
 				if (ParseCommandOverloads(vec)) {
 					BeginCommandParsing();
@@ -320,7 +320,7 @@ namespace SCRambl
 		States Parser::Parse_Variable() {
 			if (m_ActiveState == state_parsing_operator) {
 				if (m_OperationParseState.IsInChain()) {
-					m_OperationParseState.Chain(m_CurrentOperator, { m_Variable, m_Variable->Get().GetValue() });
+					m_OperationParseState.Chain(m_CurrentOperator, { m_Variable, m_Variable->Get().Value() });
 				}
 				else {
 					m_ActiveState = state_neutral;

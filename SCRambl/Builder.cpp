@@ -18,16 +18,18 @@ namespace SCRambl
 		auto var = m_Variables.Find(name);
 		return var;
 	}
-	ScriptLabel* Build::AddScriptLabel(std::string name) {
+	ScriptLabel* Build::AddScriptLabel(std::string name, Scripts::Position pos) {
 		std::vector<Types::Value*> vals;
 		m_Types.GetValues(Types::ValueSet::Label, 0, vals);
 		if (vals.empty() || vals.size() > 1) BREAK();
-		return m_Labels.Add(vals[0]->GetType(), name);
+		auto label = m_Labels.Add(vals[0]->GetType(), name, pos);
+		m_LabelPosMap.emplace(label->Get().Pos(), label);
+		return label;
 	}
 	ScriptLabel* Build::GetScriptLabel(std::string name) {
 		return m_Labels.Find(name);
 	}
-	ScriptLabel* Build::GetScriptLabel(Scripts::Label* label) {
+	ScriptLabel* Build::GetScriptLabel(Label* label) {
 		return m_Labels.Find(label);
 	}
 	void Build::AddDeclaration(TokenSymbol* tok) {
@@ -53,9 +55,9 @@ namespace SCRambl
 
 					auto argit = it->second;
 					++argit;
-					auto& cmdtok = it->second->GetToken()->Get<Tokens::Command::Info<Command>>();
+					auto& cmdtok = it->second->GetToken()->Get<Tokens::Command::Info>();
 					auto cmd = cmdtok.GetValue<Tokens::Command::CommandType>();
-					for (unsigned long i = 0; i < cmd->GetNumArgs(); ++i, ++argit) {
+					for (unsigned long i = 0; i < cmd->NumArgs(); ++i, ++argit) {
 						if (cmd->GetArg(i).GetType()->GetName() == type) {
 							found_type = true;
 							check_type = false;
@@ -78,10 +80,10 @@ namespace SCRambl
 								val = toke->Get<Tokens::Identifier::Info<>>().GetValue<Tokens::Identifier::ScriptRange>().Format();
 								break;
 							case Tokens::Type::Command:
-								val = toke->Get<Tokens::Command::Info<Command>>().GetValue<Tokens::Command::CommandType>()->GetName();
+								val = toke->Get<Tokens::Command::Info>().GetValue<Tokens::Command::CommandType>()->Name();
 								break;
 							case Tokens::Type::Label:
-								val = toke->Get<Tokens::Label::Info>().GetValue<Tokens::Label::LabelValue>()->GetName();
+								val = toke->Get<Tokens::Label::Info>().GetValue<Tokens::Label::LabelValue>()->Name();
 								break;
 							default: BREAK();
 							}
@@ -151,7 +153,7 @@ namespace SCRambl
 		}
 	}
 	bool Build::IsCommandArgParsed(Command* command, unsigned long index) const {
-		if (index < command->GetNumArgs()) {
+		if (index < command->NumArgs()) {
 			auto& arg = command->GetArg(index);
 		}
 		return true;

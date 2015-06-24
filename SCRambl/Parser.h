@@ -41,8 +41,8 @@ namespace SCRambl
 			max_state
 		};
 
-		using CommandInfo = Tokens::Command::Info<Command>;
-		using OLCommandInfo = Tokens::Command::OverloadInfo<Commands::Vector>;
+		using CommandInfo = Tokens::Command::Info;
+		using OLCommandInfo = Tokens::Command::OverloadInfo;
 
 		/*\ Parser::Symbols - Symbolic data for parsed scripts \*/
 		class Symbols
@@ -110,12 +110,12 @@ namespace SCRambl
 		\*/
 		class Jump : public Symbolic {
 			Scripts::Tokens::Iterator m_TokenIt;
-			Scripts::Label* m_Dest;
+			Label* m_Dest;
 
 		public:
 			using Vector = std::vector<Jump>;
 
-			Jump(Scripts::Label* dest, Scripts::Tokens::Iterator it) :
+			Jump(Label* dest, Scripts::Tokens::Iterator it) :
 				m_Dest(dest), m_TokenIt(it)
 			{ }
 		};
@@ -141,7 +141,7 @@ namespace SCRambl
 				m_VariableValue(var), m_Text(var->Get().Name())
 			{ }
 			Operand(ScriptLabel* label) : m_Type(LabelValue),
-				m_LabelValue(label), m_Text(label->Get().GetName())
+				m_LabelValue(label), m_Text(label->Get().Name())
 			{ }
 			Operand(Tokens::Number::Info<Numbers::IntegerType>* info) : m_Type(IntValue),
 				m_IntValue(info->GetValue<Tokens::Number::NumberValue>()),
@@ -161,8 +161,8 @@ namespace SCRambl
 				m_Text(v)
 			{ }
 
-			Type GetType() const { return m_Type; }
-			std::string Text() const { return m_Text; }
+			inline Type GetType() const { return m_Type; }
+			inline std::string Text() const { return m_Text; }
 
 		private:
 			Type m_Type = NullValue;
@@ -188,8 +188,8 @@ namespace SCRambl
 			ChainOperation(Operators::OperatorRef op, Parameter param) : m_Operator(op), m_Parameter(param)
 			{ }
 
-			Operators::OperatorRef GetOperator() const { return m_Operator; }
-			Parameter& GetOperand() { return m_Parameter; }
+			inline Operators::OperatorRef GetOperator() const { return m_Operator; }
+			inline Parameter& GetOperand() { return m_Parameter; }
 
 		private:
 			Operators::OperatorRef m_Operator;
@@ -583,17 +583,17 @@ namespace SCRambl
 				++m_OverloadCommandsIt;
 			}
 			void FinishCommandParsing() {
-				auto tok = m_CommandTokenIt.Get()->GetToken<Tokens::Command::Info<Command>>();
-				auto symbol = m_Build.CreateSymbol<Tokens::Command::Call<Command>>(*tok, m_NumCommandArgs);
+				auto tok = m_CommandTokenIt.Get()->GetToken<Tokens::Command::Info>();
+				auto symbol = m_Build.CreateSymbol<Tokens::Command::Call>(*tok, m_NumCommandArgs);
 				m_CommandTokenIt.Get()->GetSymbol() = symbol;
 
 				size_t cmdid = m_CommandVector.size();
-				auto it = m_CommandMap.empty() ? m_CommandMap.end() : m_CommandMap.find(m_CurrentCommand->GetName());
+				auto it = m_CommandMap.empty() ? m_CommandMap.end() : m_CommandMap.find(m_CurrentCommand->Name());
 				if (it != m_CommandMap.end()) {
 					cmdid = it->second;
 				}
 				else {
-					m_CommandMap.emplace(m_CurrentCommand->GetName(), m_CommandVector.size());
+					m_CommandMap.emplace(m_CurrentCommand->Name(), m_CommandVector.size());
 					m_CommandVector.emplace_back(m_CurrentCommand);
 				}
 
@@ -602,7 +602,7 @@ namespace SCRambl
 				}
 				m_CommandArgTokens.clear();
 
-				m_Build.GetDeclarations().emplace_back(m_Build.CreateSymbol<Tokens::Command::Decl<Command>>(cmdid, m_CurrentCommand));
+				m_Build.GetDeclarations().emplace_back(m_Build.CreateSymbol<Tokens::Command::Decl>(cmdid, m_CurrentCommand));
 
 				m_ParsingCommandArgs = false;
 			}

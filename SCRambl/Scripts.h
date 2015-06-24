@@ -129,9 +129,7 @@ namespace SCRambl
 			Vector m_Tokens;
 
 		public:
-			/*\
-			 * Scripts::Tokens::Iterator - All this just to pair together an index with it
-			\*/
+			/*\ Scripts::Tokens::Iterator - All this just to pair together an index with it \*/
 			class Iterator
 			{
 				Vector::iterator m_It;

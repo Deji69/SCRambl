@@ -16,7 +16,7 @@ namespace SCRambl
 	void Command::AddArg(Arg::Type* type, bool isRet) {
 		m_Args.emplace_back(type, m_Args.size(), isRet);
 	}
-	Command::Command(std::string name, size_t index) : m_Name(name), m_Index(index)
+	Command::Command(std::string name, XMLValue index) : m_Name(name), m_Index(index)
 	{ }
 
 	// Commands
@@ -56,6 +56,9 @@ namespace SCRambl
 				name.size();
 			}
 		});
+	}
+	Command* Commands::GetCommand(size_t index) {
+		return index >= m_Commands.size() ? nullptr : &m_Commands[index];
 	}
 	Command* Commands::AddCommand(std::string name, XMLValue id) {
 		if (name.empty()) return nullptr;

@@ -153,6 +153,7 @@
     <ClCompile Include="Environment.cpp" />
     <ClCompile Include="Exception.cpp" />
     <ClCompile Include="Identifiers.cpp" />
+    <ClCompile Include="Labels.cpp" />
     <ClCompile Include="Linker.cpp" />
     <ClCompile Include="Macros.cpp" />
     <ClCompile Include="Operators.cpp" />
@@ -174,6 +175,7 @@
     <ClCompile Include="utils\pugixml\pugixml.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Variables.cpp" />
     <ClCompile Include="XML.cpp" />
   </ItemGroup>
   <ItemGroup>

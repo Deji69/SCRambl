@@ -12,25 +12,19 @@
 
 namespace SCRambl
 {
-	namespace Scripts
-	{
-		/*\ Scripts::Label - Labels in scripts \*/
-		class Label {
-			std::string m_Name;
-			Types::Type* m_Type;
-			uint32_t m_Offset = 0;
+	/*\ Label - Labels in scripts \*/
+	class Label {
+		std::string m_Name;
+		Types::Type* m_Type;
+		Scripts::Position m_Position;
 
-		public:
-			Label(Types::Type* type, std::string name) : m_Name(name), m_Type(type)
-			{ }
+	public:
+		Label(Types::Type* type, std::string name, Scripts::Position pos);
 
-			inline const std::string& GetName() const { return m_Name; }
-			inline Types::Type* GetType() const { return m_Type; }
-			inline uint32_t GetOffset() const { return m_Offset; }
+		inline std::string Name() const { return m_Name; }
+		inline Types::Type* Type() const { return m_Type; }
+		inline Scripts::Position Pos() const { return m_Position; }
 
-			static inline std::string Formatter(Label* label) {
-				return "(" + label->GetName() + ")";
-			}
-		};
-	}
+		static std::string Formatter(Label* label);
+	};
 }

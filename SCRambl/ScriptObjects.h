@@ -17,9 +17,7 @@ namespace SCRambl
 	template<typename TObj, typename TKey = std::string>
 	class ScriptObject;
 	
-	/*\
-	 * Scope - Scope of variables, labels, you name it
-	\*/
+	/*\ Scope - Scope of variables, labels, you name it \*/
 	template<typename TObj, typename TKey = std::string>
 	class Scope
 	{
@@ -60,9 +58,7 @@ namespace SCRambl
 		}
 	};
 
-	/*\
-	 * ScriptObjects - Manager for script objects
-	\*/
+	/*\ ScriptObjects - Manager for script objects \*/
 	template<typename TObj, typename TKey = std::string>
 	class ScriptObjects
 	{
@@ -83,12 +79,26 @@ namespace SCRambl
 			auto& obj = m_Objects.back();
 			// add to scope
 			(type->IsGlobal() ? Global() : Local()).Add(key, obj.Ptr());
+			// add to position map
+			//m_PosMap.emplace(pos, &obj);
 			// add to global map
 			m_Map.emplace(key, &obj);
 			// add to object map
 			m_ObjectMap.emplace(obj.Ptr(), &obj);
 			return &obj;
 		}
+		/*std::pair<ScriptObject*, ScriptObject*> FindClosest(Scripts::Position pos) {
+			auto pair = std::make_pair(nullptr, nullptr);
+			auto it = m_PosMap.lower_bound(pos);
+			if (it != map.end()) {
+				pair.first = it->second;
+				if (it!= map.begin()) {
+					--it;
+					pair.second = it->second;
+				}
+			}
+			return pair;
+		}*/
 		ScriptObject* Find(Key key) const {
 			auto it = m_Map.find(key);
 			return it == m_Map.end() ? nullptr : it->second;
@@ -158,8 +168,6 @@ namespace SCRambl
 
 		inline TObj* Ptr() { return &m_Object; }
 		inline const TObj* Ptr() const { return &m_Object; }
-
-		inline const Scope& GetScope() const { return m_Scope; }
 
 		inline TObj& operator*() const { return Ptr(); }
 		inline TObj* operator->() const { return Ptr(); }

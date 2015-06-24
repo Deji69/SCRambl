@@ -85,7 +85,7 @@ namespace SCRambl
 			m_Engine.SetFormatter<Scripts::Position>(Scripts::Position::Formatter);
 			m_Engine.SetFormatter<Scripts::Range>(Scripts::Range::Formatter);
 			m_Engine.SetFormatter<Directive>(Directive::Formatter);
-			m_Engine.SetFormatter<Scripts::Label*>(Scripts::Label::Formatter);
+			m_Engine.SetFormatter<Label*>(Label::Formatter);
 		}
 		void Preprocessor::Reset() {
 			switch (m_State) {
@@ -168,7 +168,7 @@ namespace SCRambl
 			case TokenType::Label: {
 				auto name = range.Format();
 				// TODO: do
-				auto label = m_Build.AddScriptLabel(name);
+				auto label = m_Build.AddScriptLabel(name, pos);
 				m_Build.CreateToken<Tokens::Label::Info>(pos, Tokens::Type::Label, range, label->Ptr());
 				m_Task(Event::AddedToken, range);
 				break;

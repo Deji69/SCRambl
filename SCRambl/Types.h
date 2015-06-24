@@ -42,7 +42,7 @@ namespace SCRambl
 				Char, String
 			};
 
-			Type		m_Type;
+			Type m_Type;
 
 		public:
 			DataType()
@@ -81,6 +81,8 @@ namespace SCRambl
 		class Basic;
 		class Extended;
 		class Variable;
+		class VariableValue;
+		class ArrayValue;
 
 		/* Types::VarType */
 		class VarType {
@@ -128,8 +130,8 @@ namespace SCRambl
 			const Basic* ToBasic() const;
 			const Extended* ToExtended() const;
 			const Variable* ToVariable() const;
-			VarType* GetVarType() const;
-			VarType* GetArrayType() const;
+			VariableValue* GetVarValue() const;
+			ArrayValue* GetArrayValue() const;
 
 			Type* GetValueType();
 
@@ -303,14 +305,14 @@ namespace SCRambl
 				Compatible,
 			};
 
-			inline CompatibilityLevel& GetCompatLevel()						{ return m_Level; }
-			inline const CompatibilityLevel& GetCompatLevel() const			{ return m_Level; }
+			inline CompatibilityLevel& GetCompatLevel() { return m_Level; }
+			inline const CompatibilityLevel& GetCompatLevel() const { return m_Level; }
 
-			inline bool IsFullyCompatible() const							{ return GetCompatLevel() == Compatible; }
-			inline bool IsBasicallyCompatible() const						{ return GetCompatLevel() != Incompatible; }
+			inline bool IsFullyCompatible() const { return GetCompatLevel() == Compatible; }
+			inline bool IsBasicallyCompatible() const { return GetCompatLevel() != Incompatible; }
 
-			inline operator CompatibilityLevel&()							{ return GetCompatLevel(); }
-			inline operator const CompatibilityLevel&() const				{ return GetCompatLevel(); }
+			inline operator CompatibilityLevel&() { return GetCompatLevel(); }
+			inline operator const CompatibilityLevel&() const { return GetCompatLevel(); }
 
 			TypeCompat(CompatibilityLevel lvl) : m_Level(lvl)
 			{ }
@@ -553,10 +555,6 @@ namespace SCRambl
 		public:
 			VariableValueAttributes(XMLValue type, XMLValue value) : m_Type(type), m_Value(value)
 			{ }
-
-			//void SetVarType(Variable* type) { m_VarType.SetType(type); }
-			//void SetValType(Type* type) { m_VarType.SetValue(type); }
-			//void SetType(VarType type) { m_VarType = type; }
 			VarType GetVarType() const;
 		};
 
@@ -600,15 +598,21 @@ namespace SCRambl
 		};
 		class VariableValue : public Value, public VariableValueAttributes {
 		public:
-			VariableValue(Type* type, size_t size, XMLValue var, XMLValue val) : Value(type, ValueSet::Variable, size),
-				VariableValueAttributes(var, val)
-			{ }
+			VariableValue(Type* type, size_t size, XMLValue var, XMLValue val);
+
+			inline bool IsArray() const { return GetValueType() == ValueSet::Array; }
+			ArrayValue* ToArray();
+			const ArrayValue* ToArray() const;
+
+		protected:
+			VariableValue(Type* type, size_t size, XMLValue var, XMLValue val, bool);
 		};
-		class ArrayValue : public Value, public VariableValueAttributes {
+		class ArrayValue : public VariableValue {
 		public:
-			ArrayValue(Type* type, size_t size, XMLValue var, XMLValue val) : Value(type, ValueSet::Array, size),
-				VariableValueAttributes(var, val)
-			{ }
+			ArrayValue(Type* type, size_t size, XMLValue var, XMLValue val);
+			
+			inline bool IsArray() const { return true; }
+			ArrayValue* ToArray() = delete;
 		};
 
 		class Types {

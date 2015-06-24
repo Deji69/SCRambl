@@ -22,6 +22,8 @@ namespace SCRambl
 			return it == table.end() ? ValueSet::INVALID : it->second;
 		}
 
+
+
 #if 0
 		void AddSizeAttribute(SCRambl::Configuration::Config & obj) {
 			obj.AddClass("Size", [](const pugi::xml_node vec, std::shared_ptr<void> & obj){
@@ -55,6 +57,26 @@ namespace SCRambl
 			return VarType(type ? type->ToVariable() : nullptr, valtype);
 		}
 
+		/* VariableValue */
+		inline ArrayValue* VariableValue::ToArray() {
+			ASSERT(IsArray());
+			return static_cast<ArrayValue*>(this);
+		}
+		inline const ArrayValue* VariableValue::ToArray() const {
+			ASSERT(IsArray());
+			return static_cast<const ArrayValue*>(this);
+		}
+		VariableValue::VariableValue(Type* type, size_t size, XMLValue var, XMLValue val, bool) : Value(type, ValueSet::Array, size),
+			VariableValueAttributes(var, val)
+		{ }
+		VariableValue::VariableValue(Type* type, size_t size, XMLValue var, XMLValue val) : Value(type, ValueSet::Variable, size),
+			VariableValueAttributes(var, val)
+		{ }
+
+		/* ArrayValue */
+		ArrayValue::ArrayValue(Type* type, size_t size, XMLValue var, XMLValue val) : VariableValue(type, size, var, val, true)
+		{ }
+
 		/* Type */
 		MatchLevel Type::GetMatchLevel(Type* type) {
 			if (type == this) return MatchLevel::Strict;
@@ -65,8 +87,8 @@ namespace SCRambl
 		}
 		Type* Type::GetValueType() {
 			if (IsVariableType()) {
-				if (auto vartype = ToVariable()->GetVarType()) {
-					return vartype->GetValue();
+				if (auto vt = ToVariable()->GetVarValue()) {
+					return vt->GetType();
 				}
 			}
 			else if (IsExtendedType()) {
@@ -77,7 +99,7 @@ namespace SCRambl
 			}
 			return nullptr;
 		}
-		VarType* Type::GetVarType() const {
+		VariableValue* Type::GetVarValue() const {
 			VariableValue* value = nullptr;
 			AllValues<Value>([&value](Value* val){
 				if (val->GetValueType() == ValueSet::Variable) {
@@ -86,9 +108,9 @@ namespace SCRambl
 				}
 				return false;
 			});
-			return value ? &value->GetVarType() : nullptr;
+			return value ? value : nullptr;
 		}
-		VarType* Type::GetArrayType() const {
+		ArrayValue* Type::GetArrayValue() const {
 			ArrayValue* value = nullptr;
 			AllValues<Value>([&value](Value* val){
 				if (val->GetValueType() == ValueSet::Array) {
@@ -97,7 +119,7 @@ namespace SCRambl
 				}
 				return false;
 			});
-			return value ? &value->GetVarType() : nullptr;
+			return value ? value : nullptr;
 		}
 		bool Type::HasValueType(ValueSet type) const {
 			for (auto& val : m_Values) {
@@ -205,7 +227,6 @@ namespace SCRambl
 				}
 			});
 		}
-
 		void Types::Init(Build& build) {
 
 			m_Config = build.AddConfig("VariableTypes");
@@ -381,7 +402,6 @@ namespace SCRambl
 				});
 			}
 		}
-
 		Types::Types()
 		{ }
 	}

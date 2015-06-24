@@ -23,7 +23,7 @@ namespace SCRambl
 	};
 
 	using ScriptVariable = ScriptObject<Variable>;
-	using ScriptLabel = ScriptObject<Scripts::Label>;
+	using ScriptLabel = ScriptObject<Label>;
 
 	struct BuildVariable {
 		XMLValue Value;
@@ -192,7 +192,8 @@ namespace SCRambl
 
 		//
 		ScriptObjects<Variable> m_Variables;
-		ScriptObjects<Scripts::Label> m_Labels;
+		ScriptObjects<Label> m_Labels;
+		std::map<Scripts::Position, ScriptLabel*> m_LabelPosMap;
 
 		// Tasks
 		using TaskMap = std::map<int, std::unique_ptr<TaskSystem::ITask>>;
@@ -243,11 +244,11 @@ namespace SCRambl
 		ScriptVariable* GetScriptVariable(std::string name);
 
 		// Labels
-		inline ScriptObjects<Scripts::Label>& GetLabels() { return m_Labels; }
-		inline const ScriptObjects<Scripts::Label>& GetLabels() const { return m_Labels; }
-		ScriptLabel* AddScriptLabel(std::string name);
+		inline ScriptObjects<Label>& GetLabels() { return m_Labels; }
+		inline const ScriptObjects<Label>& GetLabels() const { return m_Labels; }
+		ScriptLabel* AddScriptLabel(std::string name, Scripts::Position);
 		ScriptLabel* GetScriptLabel(std::string name);
-		ScriptLabel* GetScriptLabel(Scripts::Label* label);
+		ScriptLabel* GetScriptLabel(Label* label);
 
 		// "Declarations"
 		inline std::vector<TokenSymbol*> & GetDeclarations() { return m_Declarations; }
