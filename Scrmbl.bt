@@ -17,7 +17,6 @@ struct FileHeader
 struct CommandSymbol
 {
     uint16 ID;
-    
 };
 
 struct SymbolFile
@@ -28,8 +27,7 @@ struct SymbolFile
 	{
         uchar Type;
         // command
-        uint16 CommandID;
-        uint16 NumArgs;
+        CommandSymbol Command;
         //uint16 CommandNameIndex;
 	} Symbol;
 	

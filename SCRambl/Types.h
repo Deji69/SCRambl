@@ -6,6 +6,7 @@
 /**********************************************************/
 #pragma once
 #include <string>
+#include <iterator>
 #include "utils.h"
 #include "Configuration.h"
 #include "SCR.h"
@@ -37,9 +38,7 @@ namespace SCRambl
 		// Internal data types
 		class DataType {
 			enum Type {
-				Int32, Int24, Int16, Int8,
-				Float32, Float24, Float16, Fixed16,
-				Char, String
+				Int, Float, Fixed, Char, String
 			};
 
 			Type m_Type;
@@ -50,31 +49,15 @@ namespace SCRambl
 			DataType(Type type) : m_Type(type)
 			{ }
 
-			inline operator const Type&() const			{ return m_Type; }
-			inline operator Type&()						{ return m_Type; }
-			inline bool IsInteger() const	{
-				return m_Type == Int32 || m_Type == Int24 || m_Type == Int16 || m_Type == Int8;
-			}
-			inline bool IsFloat() const {
-				return m_Type == Float32 || m_Type == Float24 || m_Type == Float16 || m_Type == Fixed16;
-			}
-			inline bool IsString() const {
-				return m_Type == String;
-			}
+			inline operator const Type&() const	{ return m_Type; }
+			inline operator Type&()	{ return m_Type; }
+			inline bool IsInteger() const { return m_Type == Int; }
+			inline bool IsFloat() const { return m_Type == Float || m_Type == Fixed; }
+			inline bool IsFixed() const { return m_Type == Fixed; }
+			inline bool IsChar() const { return m_Type == Char; }
+			inline bool IsString() const { return m_Type == String; }
 
-			inline static bool GetByName(std::string str, Type & out) {
-				static const std::map<std::string, Type> map = {
-					{ "Int32", Int32 }, { "Int24", Int24 }, { "Int16", Int16 }, { "Int8", Int8 }, 
-					{ "Float32", Float32 }, { "Float24", Float24 }, { "Float16", Float16 }, { "Fixed16", Fixed16 },
-					{ "Char", Char }, { "String", String }
-				};
-				auto it = map.find(str);
-				if (it != map.end()) {
-					out = it->second;
-					return true;
-				}
-				return false;
-			}
+			static bool GetByName(std::string str, Type& dest_type, size_t& dest_size);
 		};
 
 		class Value;
@@ -393,10 +376,12 @@ namespace SCRambl
 		};
 
 		/*\ Translation \*/
-		//template<typename TDataType = DataType, typename TDataSource = DataSourceID, typename TDataAttribute = DataAttributeID>
 		class Translation
 		{
 		public:
+			using Ref = VecRef<Translation>;
+			static const Ref BadRef;
+
 			class Data
 			{
 			public:
@@ -427,13 +412,8 @@ namespace SCRambl
 						m_Type(type), m_Source(src), m_Attribute(attr), m_Size(size), m_SizeLimit(true)
 					{ }
 					
-					template<typename T>
-					void SetValue(const T& val) {
-						m_Value = std::make_shared<Value<T>>(val);
-					}
-
-					template<typename T>
-					T* GetValue() const { return static_cast<T*>(m_Value.get()); }
+					void SetValue(XMLValue val) { m_Value = val; }
+					XMLValue GetValue() const { return m_Value; }
 
 					inline DataType GetDataType() const { return m_Type; }
 					inline DataSourceID GetDataSource() const { return m_Source; }
@@ -447,7 +427,7 @@ namespace SCRambl
 					DataAttributeID m_Attribute;
 					bool m_SizeLimit;
 					size_t m_Size;
-					std::shared_ptr<IValue> m_Value;
+					XMLValue m_Value;
 				};
 
 				Data() = default;
@@ -514,8 +494,8 @@ namespace SCRambl
 			inline Type* GetType() const { return m_Type; }
 			inline ValueSet GetValueType() const { return m_ValueType; }
 
-			inline Translation* GetTranslation() const { return m_Translation; }
-			inline void SetTranslation(Translation* v) { m_Translation = v; }
+			inline Translation::Ref GetTranslation() const { return m_Translation; }
+			inline void SetTranslation(Translation::Ref v) { m_Translation = v; }
 
 			template<typename T>
 			inline T& Extend() { return *static_cast<T*>(this); }
@@ -526,7 +506,7 @@ namespace SCRambl
 			ValueSet m_ValueType;
 			Type* m_Type;
 			size_t m_Size;
-			Translation* m_Translation = nullptr;
+			Translation::Ref m_Translation = Translation::BadRef;
 		};
 
 		/*\ Number Value \*/
@@ -709,12 +689,6 @@ namespace SCRambl
 				return DataAttributeID::None;
 			}
 
-			/*template<typename T>
-			inline void AddTypePointer(T** optr) {
-				auto ptr = reinterpret_cast<Type**>(optr);
-				m_TypePointers.emplace(*ptr, ptr);
-			}*/
-
 			inline Type* AddType(std::string name) {
 				auto old = GetAllTypesVector();
 				size_t cap = m_TypePointers.empty() ? 0 : m_Types.GetCapacity();
@@ -743,10 +717,7 @@ namespace SCRambl
 				m_Values.emplace(valtype, value);
 			}
 			
-			inline Translation* AddTranslation(Type* type, ValueSet valuetype, size_t size) {
-				m_Translations.emplace_back(type, valuetype, size);
-				return &m_Translations.back();
-			}
+			Translation::Ref AddTranslation(Type* type, ValueSet valuetype, size_t size);
 
 			/*\
 			 * Types::Types::AllValues - Calls the requested function for each value of 'valtype'
@@ -757,13 +728,13 @@ namespace SCRambl
 				auto rg = m_Values.equal_range(valtype);
 				int n = 0;
 				for (auto i = rg.first; i != rg.second; ++i) {
-					func(i->second);
+					if (func(i->second)) break;
 				}
 				return n;
 			}
 
 			/*\
-			 * Types::Types::GetValues - Pushes out a list of values of 'valtype' which contain values of at least 'size' in bits
+			 * Types::Types::GetValues - Pushes out a full list of values of 'valtype' which contain values of at least 'size' in bits
 			 * Returns the number of values added to the list
 			 * Optional bool(Value*) function which should return true if it wants to push the Value
 			\*/
@@ -774,6 +745,7 @@ namespace SCRambl
 						out.push_back(value);
 						++i;
 					}
+					return false;
 				});
 				return i;
 			}

@@ -396,6 +396,7 @@ namespace SCRambl
 						if (!best_value || best_value->GetSize() > value->GetSize())
 							best_value = value;
 					}
+					return false;
 				});
 				return best_value;
 			}

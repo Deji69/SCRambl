@@ -381,6 +381,11 @@ namespace SCRambl
 		States Parser::Parse_Command() {
 			m_ActiveState = state_parsing_command_args;
 			m_CommandParseState.Begin(m_CurrentCommand, m_CurrentCommand->BeginArg());
+
+
+			m_Types.AllValues(Types::ValueSet::Command, [](Types::Value* value){
+				return false;
+			});
 			return state_neutral;
 		}
 		States Parser::Parse_Command_Args() {

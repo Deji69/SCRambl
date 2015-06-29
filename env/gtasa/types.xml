@@ -106,13 +106,13 @@
 			Name="" - Name of type
 			>
 				<Variable - Begin variable type specification
-				Type="" - Basic variable type
-				Value="" - Basic value type
+				TYPE="" - Basic variable type
+				BASIC="" - Basic value type
 				/ > - End variable type specification
 				
 				<Array - Begin array type specification
-				Type="" - Basic variable array type
-				Value="" - Basic value type
+				TYPE="" - Basic variable array type
+				BASIC="" - Basic value type
 				/> - End array type specification
 			</Type> - End Type declaration
 		-->
@@ -194,11 +194,8 @@
 				<Data>				- Begins the Data definition of the translation, tags must be used to specify what to encode
 				Attributes <None>
 				Tags:
-					<Int8>			- The compiler will encode the contained integer data (or data pulled from a value specified by the Source attribute)
-					<Int16>			- ...
-					<Int24>			- ...
-					<Int32>			- ...
-					<Float32>		- The compiler will encode the contained float data (or data pulled from a value specified by the Source attribute)
+					<IntNN>			- The compiler will encode the contained integer data (or data pulled from a value specified by the Source attribute)
+					<FloatNN>		- The compiler will encode the contained float data (or data pulled from a value specified by the Source attribute)
 					
 					| Attributes:
 						Source		- Data will be retrieved from the given source (requires Attribute)
@@ -208,7 +205,7 @@
 		<!-- 'Value' only needs specifying if a different tranlsation is needed depending on the type of value being translated -->
 		<Translate Type="COMMAND">
 			<Data>
-				<Int16 Source="Command" Attribute="ID" />
+				<Int15 Source="Command" Attribute="ID" />
 			</Data>
 		</Translate>
 		

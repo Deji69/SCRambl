@@ -13,7 +13,6 @@ namespace SCRambl
 	class Variable
 	{
 		std::string	m_Name;
-		Types::VarType m_VarType;
 		Types::Type* m_Type;
 		size_t m_ArraySize = 0;
 		bool m_IsGlobal = false;

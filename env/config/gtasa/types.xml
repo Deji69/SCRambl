@@ -80,7 +80,7 @@
 		
 		<Type Name="COMMAND">
 			<!-- Command with 15 bit integer ID (last bit used as NOT modifier) -->
-			<Command Type="int" Size="15" />
+			<Command Type="int" Value="Command.ID" Size="15" />
 		</Type>
 		
 		<Type Name="LABEL">
@@ -175,26 +175,22 @@
 			Attributes:
 				Type	(req.)		- Name of a Type defined in BasicTypes or ExtendedTypes
 				Value				- Specifies the only Value type (Number/Label/Text etc...) this translation apllies to
-				Size				- Specifies the only value size (in bits) this translation applies to (e.g. 16 if it translates a 16 bit value)
+				Size				- Specifies the highest value size (in bits) this translation applies to (e.g. 16 if it translates a 16 bit value)
 			Tags:
 				<Data>				- Begins the Data definition of the translation, tags must be used to specify what to encode
 				Attributes <None>
 				Tags:
-					<Int8>			- The compiler will encode the contained integer data (or data pulled from a value specified by the Source attribute)
-					<Int16>			- ...
-					<Int24>			- ...
-					<Int32>			- ...
-					<Float32>		- The compiler will encode the contained float data (or data pulled from a value specified by the Source attribute)
+					<IntNN>			- The compiler will encode the contained integer data (or data pulled from a value specified by the Source attribute)
+					<FloatNN>		- The compiler will encode the contained float data (or data pulled from a value specified by the Source attribute)
 					
 					| Attributes:
 						Source		- Data will be retrieved from the given source (requires Attribute)
 						Attribute	- Attribute of the source to retrieve data from (requires Source)
 	-->
 	<Translations>
-		<!-- 'Value' only needs specifying if a different tranlsation is needed depending on the type of value being translated -->
-		<Translate Type="COMMAND">
+		<Translate Type="COMMAND" Value="Command" >
 			<Data>
-				<Int16 Source="Command" Attribute="ID" />
+				<Int15 Source="Value" />
 			</Data>
 		</Translate>
 		
@@ -203,7 +199,7 @@
 			<Data>
 				<!--<Int16>0x7FFF</Int16>--/
 				<Int8>0x7F</Int8>
-				<Int32 Source="Command.Hash" />
+				<Int32 Source="Command" Attribute="Hash" />
 			</Data>
 		</Translate> -->
 		

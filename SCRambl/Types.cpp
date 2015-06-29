@@ -8,6 +8,8 @@ namespace SCRambl
 {
 	namespace Types
 	{
+		const Translation::Ref Translation::BadRef;
+
 		ValueSet GetValueTypeByName(std::string name) {
 			static const std::unordered_map<std::string, ValueSet> table = {
 				{ "Null", ValueSet::Null },
@@ -21,8 +23,6 @@ namespace SCRambl
 			auto it = table.find(name);
 			return it == table.end() ? ValueSet::INVALID : it->second;
 		}
-
-
 
 #if 0
 		void AddSizeAttribute(SCRambl::Configuration::Config & obj) {
@@ -154,7 +154,31 @@ namespace SCRambl
 			MoveValues(type);
 		}
 
+		/* DataType */
+		bool DataType::GetByName(std::string str, Type& out, size_t& size_out) {
+			static const std::map<std::string, Type> map = {
+				{ "Int", Int }, { "Float", Float }, { "Fixed", Fixed },
+				{ "Char", Char }, { "String", String }
+			};
+			std::string name = strcpy_while(str.begin(), str.end(), [](char c){ return !isdigit(c); });
+
+			auto it = map.find(name);
+			if (it != map.end()) {
+				out = it->second;
+				if (name.size() != str.size()) {
+					size_out = std::stol(str.substr(name.size()));
+				}
+				return true;
+			}
+			return false;
+		}
+
 		/* Types */
+		Translation::Ref Types::AddTranslation(Type* type, ValueSet valuetype, size_t size) {
+			auto idx = m_Translations.size();
+			m_Translations.emplace_back(type, valuetype, size);
+			return m_Translations.size() != idx ? Translation::Ref(m_Translations, idx) : Translation::BadRef;
+		}
 		void Types::AddValueAttributes(XMLConfig* type) {
 			auto value = type->AddClass("Number", [this](const XMLNode vec, void*& obj){
 				auto type = static_cast<Type*>(obj);
@@ -309,12 +333,12 @@ namespace SCRambl
 			m_Config = build.AddConfig("Translations");
 			{
 				auto trans = m_Config->AddClass("Translate", [this](const XMLNode vec, void*& obj){
-					std::string type_name = vec.GetAttribute("Type").GetValue().AsString();
+					auto type_name = vec.GetAttribute("Type").GetValue().AsString();
 					if (auto type = GetType(type_name)) {
 						auto val = vec.GetAttribute("Value").GetValue();
-						ValueSet valtype = GetValueTypeByName(val.AsString());
+						auto valtype = GetValueTypeByName(val.AsString());
 
-						size_t size = vec.GetAttribute("Size").GetValue().AsNumber<size_t>(-1);
+						auto size = vec.GetAttribute("Size").GetValue().AsNumber<size_t>(-1);
 						auto translation = AddTranslation(type, valtype, size);
 
 						type->AllValues<Value>([valtype, size, translation](Value* value){
@@ -326,7 +350,7 @@ namespace SCRambl
 							return false;
 						});
 
-						obj = translation;
+						obj = translation.Ptr();
 						return;
 					}
 					else {
@@ -343,7 +367,8 @@ namespace SCRambl
 						{
 							std::string name = it.Name();
 							DataType data_type;
-							if (DataType::GetByName(name, data_type)) {
+							size_t size;
+							if (DataType::GetByName(name, data_type, size)) {
 								auto src_attr = it.GetAttribute("Source");
 								auto attr_attr = it.GetAttribute("Attribute");
 								Translation::Data::Field* field;
@@ -353,13 +378,13 @@ namespace SCRambl
 									auto attr_id = GetDataAttribute(src_id, attr_attr.GetValue().AsString());
 									if (src_id == DataSourceID::None || attr_id == DataAttributeID::None) {
 										BREAK();
-										field = data.AddField(data_type, DataSourceID::None, DataAttributeID::None);
+										field = data.AddField(data_type, DataSourceID::None, DataAttributeID::None, size);
 									}
 									else {
-										field = data.AddField(data_type, src_id, attr_id);
+										field = data.AddField(data_type, src_id, attr_id, size);
 									}
 								}
-								else field = data.AddField(data_type, DataSourceID::None, DataAttributeID::None);
+								else field = data.AddField(data_type, DataSourceID::None, DataAttributeID::None, size);
 
 								if (!it.GetValue().AsString().empty())
 								{
@@ -370,7 +395,7 @@ namespace SCRambl
 											auto txt = it.GetValue();
 											auto convert_result = Numbers::StringToInt<long long>(it.GetValue().AsString().c_str(), int_num, true);
 											if (convert_result == Numbers::ConvertResult::success) {
-												field->SetValue(int_num);
+												field->SetValue(int_num.GetValue<long long>());
 											}
 											else {
 												BREAK();
@@ -380,16 +405,16 @@ namespace SCRambl
 										else if (data_type.IsFloat()) {
 											auto convert_result = Numbers::StringToFloat<float>(it.GetValue().AsString().c_str(), flt_num, true);
 											if (convert_result == Numbers::ConvertResult::success) {
-												field->SetValue(flt_num);
+												field->SetValue(flt_num.GetValue<float>());
 											}
 											else {
 												BREAK();
-												field->SetValue(0);
+												field->SetValue(0.0);
 											}
 										}
 									}
 									else if (data_type.IsString()) {
-										field->SetValue<std::string>(it.GetValue().AsString());
+										field->SetValue(it.GetValue());
 									}
 									else {
 										BREAK();

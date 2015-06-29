@@ -166,6 +166,15 @@ namespace SCRambl
 
 	// try to get an identifier
 
+	// copies while predicate returns true
+	template<class InputIt, class UnaryPredicate>
+	std::string strcpy_while(InputIt first, InputIt last, UnaryPredicate pred) {
+		std::string str;
+		while (first != last && pred(*first)) {
+			str += *first++;
+		}
+		return str;
+	}
 
 	// strncpy + zero-terminate last character
 	template<class T>

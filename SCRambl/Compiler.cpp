@@ -45,8 +45,9 @@ namespace SCRambl
 		void Compiler::Compile()
 		{	
 			auto symbol = *m_SymbolIt;
-			Output<uint8_t>(symbol->GetType());
+			//Output<uint8_t>(symbol->GetType());
 
+			Types::Type* type = nullptr;
 			switch (symbol->GetType()) {
 			case Tokens::Type::Command:
 			case Tokens::Type::CommandOverload:
@@ -55,7 +56,7 @@ namespace SCRambl
 			case Tokens::Type::CommandCall: {
 				auto cmd = symbol->Extend<Tokens::Command::Call>();
 				auto command = cmd.GetCommand();
-
+				
 				auto it = m_CommandNames.find(command->Name());
 				if (it != m_CommandNames.end())
 					Output<uint16_t>(it->second);
