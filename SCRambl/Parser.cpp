@@ -107,7 +107,7 @@ namespace SCRambl
 				m_ParsingCommandArgs = true;
 			}
 		}
-		
+
 		States Parser::Parse_Neutral_CheckCharacter(IToken* tok) {
 			if (IsCharacterEOL(tok)) {
 				switch (m_ActiveState) {
@@ -381,9 +381,11 @@ namespace SCRambl
 		States Parser::Parse_Command() {
 			m_ActiveState = state_parsing_command_args;
 			m_CommandParseState.Begin(m_CurrentCommand, m_CurrentCommand->BeginArg());
-
-
-			m_Types.AllValues(Types::ValueSet::Command, [](Types::Value* value){
+			m_CurrentCommand->Type()->Values<CommandValue>(Types::ValueSet::Command, [](CommandValue* value){
+				value->CanFitSize();
+				auto translation = value->GetTranslation();
+				auto xlation = translation->Xlate();
+				//translation->GetTranslationSize();
 				return false;
 			});
 			return state_neutral;

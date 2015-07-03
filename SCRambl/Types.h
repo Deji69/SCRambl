@@ -375,6 +375,18 @@ namespace SCRambl
 			}
 		};
 
+		using NumberAttributeSet = DataAttributeSet<DataSourceID::Number>;
+		using TextAttributeSet = DataAttributeSet<DataSourceID::Text>;
+		using CommandAttributeSet = DataAttributeSet<DataSourceID::Command>;
+		using LabelAttributeSet = DataAttributeSet<DataSourceID::Label>;
+		using VariableAttributeSet = DataAttributeSet<DataSourceID::Variable>;
+
+		/*\ The Xlation's Will Convert You! \*/
+		class Xlation
+		{
+			
+		};
+
 		/*\ Translation \*/
 		class Translation
 		{
@@ -382,13 +394,12 @@ namespace SCRambl
 			using Ref = VecRef<Translation>;
 			static const Ref BadRef;
 
-			class Data
-			{
+			class Data {
 			public:
 				class Field
 				{
 				public:
-					class IValue {
+					/*class IValue {
 					public:
 						inline virtual ~IValue() { }
 					};
@@ -403,7 +414,7 @@ namespace SCRambl
 
 						inline operator T&() { return m_Value; }
 						inline operator const T&() const { return m_Value; }
-					};
+					};*/
 
 					Field(DataType type, DataSourceID src, DataAttributeID attr) :
 						m_Type(type), m_Source(src), m_Attribute(attr), m_Size(0), m_SizeLimit(false)
@@ -430,18 +441,28 @@ namespace SCRambl
 					XMLValue m_Value;
 				};
 
-				Data() = default;
+				Data(size_t& size) : m_TranslationSize(size)
+				{ }
 
 				Field* AddField(DataType type, DataSourceID src, DataAttributeID attr) {
+					if (type.IsChar()) m_TranslationSize += sizeof(uint8_t);
+					else if (type.IsFloat()) m_TranslationSize += sizeof(float);
+					else BREAK();	// error: gotta have a size
 					m_Fields.emplace_back(type, src, attr);
 					return &m_Fields.back();
 				}
 				Field* AddField(DataType type, DataSourceID src, DataAttributeID attr, size_t size) {
+					if (type.IsInteger()) m_TranslationSize += size;
+					else if (type.IsFloat()) m_TranslationSize += size;
+					else if (type.IsFixed()) m_TranslationSize += size;
+					else if (type.IsString()) m_TranslationSize += size * sizeof(uint8_t);
+					else BREAK();   // error: doesn't support size
 					m_Fields.emplace_back(type, src, attr, size);
 					return &m_Fields.back();
 				}
 
 			private:
+				size_t& m_TranslationSize;
 				std::vector<Field> m_Fields;
 			};
 
@@ -452,6 +473,7 @@ namespace SCRambl
 				m_Data.emplace_back();
 				return m_Data.back();
 			}
+			Xlation Xlate() const;
 
 		private:
 			Type* m_Type = nullptr;
@@ -475,7 +497,7 @@ namespace SCRambl
 		};
 
 		/*\ Value of Type for translation \*/
-		class Value : public ValueAttributes
+		class Value : public virtual ValueAttributes
 		{
 			friend Type;
 
@@ -524,7 +546,6 @@ namespace SCRambl
 			NumberValueAttributes()
 			{ }
 		};
-
 		class VariableValueAttributes {
 			friend class Types;
 			Types* m_Types = nullptr;
@@ -536,6 +557,16 @@ namespace SCRambl
 			VariableValueAttributes(XMLValue type, XMLValue value) : m_Type(type), m_Value(value)
 			{ }
 			VarType GetVarType() const;
+		};
+
+		enum class CommandAttributeID {
+			Name, ID, IsConditional
+		};
+		class CommandValueAttributes : public virtual ValueAttributes {
+		public:
+			CommandValueAttributes() {
+				//AddAttribte("Name", )
+			}
 		};
 
 		class NumberValue : public Value
@@ -568,12 +599,6 @@ namespace SCRambl
 		{
 		public:
 			LabelValue(Type* type, size_t size) : Value(type, ValueSet::Label, size)
-			{ }
-		};
-		class CommandValue : public Value
-		{
-		public:
-			CommandValue(Type* type, size_t size) : Value(type, ValueSet::Command, size)
 			{ }
 		};
 		class VariableValue : public Value, public VariableValueAttributes {
@@ -723,12 +748,12 @@ namespace SCRambl
 			 * Types::Types::AllValues - Calls the requested function for each value of 'valtype'
 			 * Returns the number of values found
 			\*/
-			template<typename TFunc>
+			template<typename T = Value, typename TFunc>
 			size_t AllValues(ValueSet valtype, TFunc func) const {
 				auto rg = m_Values.equal_range(valtype);
 				int n = 0;
 				for (auto i = rg.first; i != rg.second; ++i) {
-					if (func(i->second)) break;
+					if (func(i->second->Extend<T*>())) break;
 				}
 				return n;
 			}

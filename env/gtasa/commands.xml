@@ -29,6 +29,14 @@
 		-->
 		<Case From="lowercase" To="uppercase" Convert="true" />
 		
+		<!-- CommandType
+			Attributes:
+			 Type (string): the type name
+			Description:
+			 Sets the TYPE used for commands for the rest of <Command>
+		-->
+		<CommandType Type="COMMANDS" />
+		
         <Command Name="wait" ID="0x1">
             <Args>
                 <Arg Type="INT" Desc="Time (ms)" />

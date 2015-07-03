@@ -88,8 +88,8 @@
 		</Type>
 		
 		<Type NAME="COMMAND">
-			<!-- Command with 16 bit ID -->
-			<Command TYPE="ID" SIZE="16" />
+			<!-- Command with 15 bit ID -->
+			<Command TYPE="ID" SIZE="15" />
 		</Type>
 		
 		<Type NAME="LABEL">
@@ -206,6 +206,7 @@
 		<Translate Type="COMMAND">
 			<Data>
 				<Int15 Source="Command" Attribute="ID" />
+				<Int1 Source="Condition" Attribute="IsNOT" />
 			</Data>
 		</Translate>
 		

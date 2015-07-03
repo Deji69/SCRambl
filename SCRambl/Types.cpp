@@ -40,6 +40,11 @@ namespace SCRambl
 		}
 #endif
 
+		/* Translation */
+		Xlation Translation::Xlate() const {
+			//Xlation ;
+		}
+
 		/* VariableValueAttributes */
 		VarType VariableValueAttributes::GetVarType() const {
 			auto type = m_Types->GetType(m_Type.AsString());

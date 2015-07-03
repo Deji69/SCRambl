@@ -9,6 +9,11 @@ namespace SCRambl
 	// CommandArg
 	CommandArg::CommandArg(Type* type, size_t index, bool isRet) : m_Type(type), m_Index(index), m_IsReturn(isRet)
 	{ }
+	
+	// CommandValue
+	size_t CommandValue::GetValueSize(Command* command) const {
+		return 0;
+	}
 
 	// Command
 	CommandArg& Command::GetArg(size_t i) { return m_Args[i]; }
@@ -16,7 +21,7 @@ namespace SCRambl
 	void Command::AddArg(Arg::Type* type, bool isRet) {
 		m_Args.emplace_back(type, m_Args.size(), isRet);
 	}
-	Command::Command(std::string name, XMLValue index) : m_Name(name), m_Index(index)
+	Command::Command(std::string name, XMLValue index, Types::Type* type) : m_Name(name), m_Index(index), m_Type(type)
 	{ }
 
 	// Commands
@@ -32,6 +37,7 @@ namespace SCRambl
 		auto& usecc = m_UseCaseConversion;
 		auto& ccdest = m_DestCasing;
 		auto& ccsrc = m_SourceCasing;
+		Types::Type* type = nullptr;
 
 		m_Config = build.AddConfig("Commands");
 
@@ -40,9 +46,12 @@ namespace SCRambl
 			ccdest = GetCasingByName(xml.GetAttribute("To").GetValue().AsString());
 			ccsrc = GetCasingByName(xml.GetAttribute("From").GetValue().AsString());
 		});
-		auto args = m_Config->AddClass("Command", [this](const XMLNode xml, void*& obj){
+		m_Config->AddClass("CommandType", [this, &type, &types](const XMLNode xml, void*& obj){
+			type = types.GetType(xml.GetAttribute("Type").GetValue().AsString());
+		});
+		auto args = m_Config->AddClass("Command", [this, type](const XMLNode xml, void*& obj){
 			// store the command to the object pointer so we can access it again
-			auto command = AddCommand(CaseConvert(xml.GetAttribute("Name").GetValue().AsString()), xml.GetAttribute("ID").GetValue());
+			auto command = AddCommand(CaseConvert(xml.GetAttribute("Name").GetValue().AsString()), xml.GetAttribute("ID").GetValue(), type);
 			obj = command;
 		})->AddClass("Args");
 		args->AddClass("Arg", [this, &types](const XMLNode xml, void*& obj){
@@ -60,7 +69,7 @@ namespace SCRambl
 	Command* Commands::GetCommand(size_t index) {
 		return index >= m_Commands.size() ? nullptr : &m_Commands[index];
 	}
-	Command* Commands::AddCommand(std::string name, XMLValue id) {
+	Command* Commands::AddCommand(std::string name, XMLValue id, Types::Type* type) {
 		if (name.empty()) return nullptr;
 
 		if (m_SourceCasing != m_DestCasing) {
@@ -68,7 +77,7 @@ namespace SCRambl
 				std::transform(name.begin(), name.end(), name.begin(), m_DestCasing == Casing::lowercase ? std::tolower : std::toupper);
 		}
 
-		m_Commands.emplace_back(name, id);
+		m_Commands.emplace_back(name, id, type);
 		auto ptr = &m_Commands.back();
 		m_Map.emplace(name, m_Commands.size() - 1);
 		return ptr;
