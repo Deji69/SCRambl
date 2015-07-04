@@ -33,13 +33,6 @@ namespace SCRambl
 		operator bool() const;
 		
 		template<typename T> auto AsNumber(T default_value) const->T;
-		/*template<> auto AsNumber(int) const->int;	
-		template<> auto AsNumber(long) const->long;
-		template<> auto AsNumber(unsigned long) const->unsigned long;
-		template<> auto AsNumber(long long) const->long long;
-		template<> auto AsNumber(unsigned long long) const->unsigned long long;
-		template<> auto AsNumber(float) const->float;
-		template<> auto AsNumber(double) const->double;*/
 		template<typename T> inline auto AsNumber() const->T { return AsNumber<T>(0); }
 
 		auto AsString(const std::string& default_value = "") const->const std::string&;

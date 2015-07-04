@@ -196,9 +196,7 @@ namespace SCRambl
 			Parameter m_Parameter;
 		};
 		
-		/*\
-		 * Parser::Operation
-		\*/
+		/*\ Parser::Operation \*/
 		class Operation : public TokenSymbol
 		{
 		public:
@@ -225,6 +223,18 @@ namespace SCRambl
 			Operand m_LOperand, m_ROperand;
 			Operators::OperationRef m_Operation;
 			bool m_Condition = false;
+		};
+
+		/*\ Parser::CommandCall \*/
+		class CommandCall : public Tokens::Symbol {
+		public:
+			CommandCall(Types::Translation::Ref translation, CommandAttributes attributes) : Tokens::Symbol(Tokens::Type::CommandCall),
+				m_Translation(translation), m_Attributes(attributes)
+			{ }
+
+		private:
+			Types::Translation::Ref m_Translation;
+			CommandAttributes m_Attributes;
 		};
 
 		/*\ Parser::Parser - Now this is what we're here for \*/

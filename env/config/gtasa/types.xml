@@ -80,7 +80,7 @@
 		
 		<Type Name="COMMAND">
 			<!-- Command with 15 bit integer ID (last bit used as NOT modifier) -->
-			<Command Type="int" Value="Command.ID" Size="15" />
+			<Command Type="int" Value="ID" Size="15" />
 		</Type>
 		
 		<Type Name="LABEL">
@@ -188,9 +188,12 @@
 						Attribute	- Attribute of the source to retrieve data from (requires Source)
 	-->
 	<Translations>
-		<Translate Type="COMMAND" Value="Command" >
+		<!-- 'Value' only needs specifying if a different tranlsation is needed depending on the type of value being translated -->
+		<Translate Type="COMMAND">
 			<Data>
-				<Int15 Source="Value" />
+				<Int15 Source="Command" Attribute="ID" />
+				<Int1 Source="Condition" Attribute="IsNOT" />
+				<Args />
 			</Data>
 		</Translate>
 		

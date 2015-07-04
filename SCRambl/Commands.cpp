@@ -6,12 +6,31 @@
 
 namespace SCRambl
 {
+	const std::map<std::string, CommandAttributeID> CommandAttributes::map = {
+		{ "Name", CommandAttributeID::Name },
+		{ "ID", CommandAttributeID::ID },
+		{ "Conditional", CommandAttributeID::Conditional },
+		{ "NumArgs", CommandAttributeID::NumArgs }
+	};
+	const AttributeSet<CommandAttributeID> CommandAttributes::attribute_set = { CommandAttributeID::None, map };
+
 	// CommandArg
 	CommandArg::CommandArg(Type* type, size_t index, bool isRet) : m_Type(type), m_Index(index), m_IsReturn(isRet)
 	{ }
 	
 	// CommandValue
-	size_t CommandValue::GetValueSize(Command* command) const {
+	size_t CommandValue::GetValueSize(const CommandAttributes* cmd) const {
+		switch (m_ValueType) {
+		case Types::DataType::Int:
+			return CountBitOccupation(cmd->GetAttribute(m_ValueID).AsNumber<long long>());
+		case Types::DataType::String:
+			return cmd->GetAttribute(m_ValueID).AsString().size() * 8;
+		case Types::DataType::Float:
+			return sizeof(float);
+		case Types::DataType::Char:
+			return sizeof(char);
+		default: BREAK();
+		}
 		return 0;
 	}
 
@@ -20,9 +39,14 @@ namespace SCRambl
 	const CommandArg& Command::GetArg(size_t i) const { return m_Args[i]; }
 	void Command::AddArg(Arg::Type* type, bool isRet) {
 		m_Args.emplace_back(type, m_Args.size(), isRet);
+		SetAttribute(CommandAttributeID::NumArgs, m_Args.size());
 	}
 	Command::Command(std::string name, XMLValue index, Types::Type* type) : m_Name(name), m_Index(index), m_Type(type)
-	{ }
+	{
+		SetAttribute(CommandAttributeID::Name, name);
+		SetAttribute(CommandAttributeID::ID, index);
+		if (!m_Type) BREAK();
+	}
 
 	// Commands
 	Commands::Casing Commands::GetCasingByName(std::string name) {
@@ -47,11 +71,16 @@ namespace SCRambl
 			ccsrc = GetCasingByName(xml.GetAttribute("From").GetValue().AsString());
 		});
 		m_Config->AddClass("CommandType", [this, &type, &types](const XMLNode xml, void*& obj){
-			type = types.GetType(xml.GetAttribute("Type").GetValue().AsString());
+			type = types.GetType(xml["Type"]->AsString());
+			if (!type) BREAK();
 		});
-		auto args = m_Config->AddClass("Command", [this, type](const XMLNode xml, void*& obj){
+		auto args = m_Config->AddClass("Command", [this, &type, &types](const XMLNode xml, void*& obj){
 			// store the command to the object pointer so we can access it again
-			auto command = AddCommand(CaseConvert(xml.GetAttribute("Name").GetValue().AsString()), xml.GetAttribute("ID").GetValue(), type);
+			auto stype = type;
+			if (auto type_attr = xml.GetAttribute("Type")) {
+				stype = types.GetType(type_attr->AsString());
+			}
+			auto command = AddCommand(CaseConvert(xml["Name"]->AsString()), *xml["ID"], stype);
 			obj = command;
 		})->AddClass("Args");
 		args->AddClass("Arg", [this, &types](const XMLNode xml, void*& obj){

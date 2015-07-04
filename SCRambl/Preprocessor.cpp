@@ -313,7 +313,7 @@ namespace SCRambl
 					if (Lex(TokenType::Identifier, [this](const LexerToken& tok){
 						SendError(Error::dir_expected_identifier, m_Directive);
 					})) {
-						auto command = m_Commands.AddCommand(m_Identifier, opcode);
+						auto command = m_Commands.AddCommand(m_Identifier, opcode, nullptr);
 						
 						if (Lex() == Lexer::Result::found_token) {
 							bool openParen = m_Token == TokenType::OpenParen;

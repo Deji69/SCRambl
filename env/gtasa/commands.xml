@@ -35,7 +35,7 @@
 			Description:
 			 Sets the TYPE used for commands for the rest of <Command>
 		-->
-		<CommandType Type="COMMANDS" />
+		<CommandType Type="COMMAND" />
 		
         <Command Name="wait" ID="0x1">
             <Args>

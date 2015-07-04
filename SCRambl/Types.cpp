@@ -9,7 +9,7 @@ namespace SCRambl
 	namespace Types
 	{
 		const Translation::Ref Translation::BadRef;
-
+		
 		ValueSet GetValueTypeByName(std::string name) {
 			static const std::unordered_map<std::string, ValueSet> table = {
 				{ "Null", ValueSet::Null },
@@ -41,8 +41,9 @@ namespace SCRambl
 #endif
 
 		/* Translation */
-		Xlation Translation::Xlate() const {
-			//Xlation ;
+		template<typename T>
+		Xlation<T> Translation::Xlate() const {
+			return Xlation<T>();
 		}
 
 		/* VariableValueAttributes */
@@ -160,6 +161,14 @@ namespace SCRambl
 		}
 
 		/* DataType */
+		DataType::Type DataType::GetByName(std::string name) {
+			static const std::map<std::string, Type> map = {
+				{ "int", Int }, { "float", Float }, { "fixed", Fixed },
+				{ "char", Char }, { "string", String }
+			};
+			auto it = map.find(name);
+			return it != map.end() ? it->second : INVALID;
+		}
 		bool DataType::GetByName(std::string str, Type& out, size_t& size_out) {
 			static const std::map<std::string, Type> map = {
 				{ "Int", Int }, { "Float", Float }, { "Fixed", Fixed },
@@ -201,7 +210,10 @@ namespace SCRambl
 			});
 			auto command = type->AddClass("Command", [this](const XMLNode vec, void*& obj) {
 				auto type = static_cast<Type*>(obj);
-				auto value = type->AddValue<CommandValue>(type, vec["Size"]->AsNumber<uint32_t>());
+				auto datatype = DataType::GetByName(vec["Type"]->AsString());
+				if (datatype == DataType::INVALID)
+					BREAK();
+				auto value = type->AddValue<CommandValue>(type, vec["Size"]->AsNumber<uint32_t>(), vec["Value"]->AsString(), datatype);
 				AddValue(ValueSet::Command, value);
 				obj = value;
 			});
@@ -373,10 +385,13 @@ namespace SCRambl
 							std::string name = it.Name();
 							DataType data_type;
 							size_t size;
-							if (DataType::GetByName(name, data_type, size)) {
+							Translation::Data::Field* field;
+							if (name == "Args") {
+								field = data.AddField(DataType::Args, DataSourceID::None, DataAttributeID::None);
+							}
+							else if (DataType::GetByName(name, data_type, size)) {
 								auto src_attr = it.GetAttribute("Source");
 								auto attr_attr = it.GetAttribute("Attribute");
-								Translation::Data::Field* field;
 
 								if (src_attr && attr_attr) {
 									auto src_id = GetDataSource(src_attr.GetValue().AsString());

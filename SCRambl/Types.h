@@ -7,6 +7,7 @@
 #pragma once
 #include <string>
 #include <iterator>
+#include <map>
 #include "utils.h"
 #include "Configuration.h"
 #include "SCR.h"
@@ -37,13 +38,11 @@ namespace SCRambl
 
 		// Internal data types
 		class DataType {
+		public:
 			enum Type {
-				Int, Float, Fixed, Char, String
+				Int, Float, Fixed, Char, String, Args, INVALID
 			};
 
-			Type m_Type;
-
-		public:
 			DataType()
 			{ }
 			DataType(Type type) : m_Type(type)
@@ -57,7 +56,11 @@ namespace SCRambl
 			inline bool IsChar() const { return m_Type == Char; }
 			inline bool IsString() const { return m_Type == String; }
 
+			static Type GetByName(std::string str);
 			static bool GetByName(std::string str, Type& dest_type, size_t& dest_size);
+
+		private:
+			Type m_Type;
 		};
 
 		class Value;
@@ -305,10 +308,12 @@ namespace SCRambl
 		};
 
 		enum class DataSourceID {
-			None, Value, Number, Text, Command, Variable, Label,
+			None, Value, Number, Text, Command, Variable, Label, Condition,
 		};
 		enum class DataAttributeID {
-			None, ID, Value, Size, Offset, Index, Name
+			None, ID, Value, Size, Offset, Index, Name,
+			// Condition
+			IsNOT,
 		};
 
 		class DataSourceSet : public AttributeSet < DataSourceID >
@@ -322,6 +327,7 @@ namespace SCRambl
 				AddAttribute("Command", DataSourceID::Command);
 				AddAttribute("Variable", DataSourceID::Variable);
 				AddAttribute("Label", DataSourceID::Label);
+				AddAttribute("Condition", DataSourceID::Condition);
 			}
 		};
 
@@ -346,12 +352,23 @@ namespace SCRambl
 		{ };
 
 		template<>
+		class DataAttributeSet<DataSourceID::Condition> : public AttributeSet<DataAttributeID>
+		{
+		public:
+			DataAttributeSet() : AttributeSet(DataAttributeID::None)
+			{
+				AddAttribute("IsNOT", DataAttributeID::IsNOT);
+			}
+		};
+
+		template<>
 		class DataAttributeSet<DataSourceID::Command> : public AttributeSet<DataAttributeID>
 		{
 		public:
 			DataAttributeSet() : AttributeSet(DataAttributeID::None)
 			{
 				AddAttribute("ID", DataAttributeID::ID);
+				AddAttribute("Name", DataAttributeID::Name);
 			}
 		};
 
@@ -381,11 +398,7 @@ namespace SCRambl
 		using LabelAttributeSet = DataAttributeSet<DataSourceID::Label>;
 		using VariableAttributeSet = DataAttributeSet<DataSourceID::Variable>;
 
-		/*\ The Xlation's Will Convert You! \*/
-		class Xlation
-		{
-			
-		};
+		template<typename TAttributeSet> class Xlation;
 
 		/*\ Translation \*/
 		class Translation
@@ -395,6 +408,8 @@ namespace SCRambl
 			static const Ref BadRef;
 
 			class Data {
+				static const size_t c_invalid_size;
+
 			public:
 				class Field
 				{
@@ -433,11 +448,11 @@ namespace SCRambl
 					inline size_t GetSizeLimit() const { return m_Size; }
 
 				private:
-					DataType m_Type;
-					DataSourceID m_Source;
-					DataAttributeID m_Attribute;
-					bool m_SizeLimit;
-					size_t m_Size;
+					DataType m_Type = DataType::INVALID;
+					DataSourceID m_Source = DataSourceID::None;
+					DataAttributeID m_Attribute = DataAttributeID::None;
+					bool m_SizeLimit = false;
+					size_t m_Size = 0;
 					XMLValue m_Value;
 				};
 
@@ -447,7 +462,7 @@ namespace SCRambl
 				Field* AddField(DataType type, DataSourceID src, DataAttributeID attr) {
 					if (type.IsChar()) m_TranslationSize += sizeof(uint8_t);
 					else if (type.IsFloat()) m_TranslationSize += sizeof(float);
-					else BREAK();	// error: gotta have a size
+					//else BREAK();	// error: gotta have a size
 					m_Fields.emplace_back(type, src, attr);
 					return &m_Fields.back();
 				}
@@ -470,10 +485,10 @@ namespace SCRambl
 			{ }
 
 			Data& AddData() {
-				m_Data.emplace_back();
+				m_Data.emplace_back(m_Size);
 				return m_Data.back();
 			}
-			Xlation Xlate() const;
+			template<typename T> Xlation<T> Xlate() const;
 
 		private:
 			Type* m_Type = nullptr;
@@ -482,22 +497,29 @@ namespace SCRambl
 			std::vector<Data> m_Data;
 		};
 
+		/*\ The Xlation's Will Convert You! \*/
+		class IXlation {
+		protected:
+			virtual ~IXlation() { }
+		};
+		template<typename TAttributeSet>
+		class Xlation : IXlation
+		{
+		public:
+			Xlation(Translation* translation) { }
+
+		private:
+			Translation* m_Translation;
+
+		};
+
 		/*\ AttributeSet of a Value \*/
 		enum class ValueAttributeID {
 			None, Value, Size
 		};
-		class ValueAttributes : public AttributeSet<ValueAttributeID>
-		{
-
-		public:
-			ValueAttributes() : AttributeSet(ValueAttributeID::None) {
-				AddAttribute("Value", ValueAttributeID::Value);
-				AddAttribute("Size", ValueAttributeID::Size);
-			}
-		};
 
 		/*\ Value of Type for translation \*/
-		class Value : public virtual ValueAttributes
+		class Value
 		{
 			friend Type;
 
@@ -540,7 +562,7 @@ namespace SCRambl
 			None, Value, Size
 		};
 
-		class NumberValueAttributes : public ValueAttributes
+		class NumberValueAttributes
 		{
 		public:
 			NumberValueAttributes()
@@ -557,16 +579,6 @@ namespace SCRambl
 			VariableValueAttributes(XMLValue type, XMLValue value) : m_Type(type), m_Value(value)
 			{ }
 			VarType GetVarType() const;
-		};
-
-		enum class CommandAttributeID {
-			Name, ID, IsConditional
-		};
-		class CommandValueAttributes : public virtual ValueAttributes {
-		public:
-			CommandValueAttributes() {
-				//AddAttribte("Name", )
-			}
 		};
 
 		class NumberValue : public Value
@@ -680,6 +692,11 @@ namespace SCRambl
 			}
 			DataAttributeID GetDataAttribute(DataSourceID src, std::string name) {
 				switch (src) {
+				case DataSourceID::Condition:
+				{
+					static const DataAttributeSet<DataSourceID::Condition> s_set;
+					return s_set.GetAttribute(name);
+				}
 				case DataSourceID::Command:
 				{
 					static const DataAttributeSet<DataSourceID::Command> s_set;
@@ -753,7 +770,7 @@ namespace SCRambl
 				auto rg = m_Values.equal_range(valtype);
 				int n = 0;
 				for (auto i = rg.first; i != rg.second; ++i) {
-					if (func(i->second->Extend<T*>())) break;
+					if (func(&i->second->Extend<T>())) break;
 				}
 				return n;
 			}

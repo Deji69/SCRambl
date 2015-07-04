@@ -18,10 +18,19 @@ namespace SCRambl
 	class Build;
 
 	/* CommandAttributes */
-	/* class CommandAttributes : public Attribute
-	{
+	enum class CommandAttributeID {
+		Name, ID, Conditional, NumArgs,
+		None
+	};
+	class CommandAttributes : public Attributes<CommandAttributeID, CommandAttributeID::None> {
+		static const std::map<std::string, CommandAttributeID> map;
 
-	};*/
+	public:
+		static const AttributeSet<CommandAttributeID> attribute_set;
+
+		CommandAttributes() : Attributes(attribute_set)
+		{ }
+	};
 
 	/* CommandArg - Consists simply of the expected type, the command index, and whether it's a return */
 	class CommandArg
@@ -42,9 +51,9 @@ namespace SCRambl
 		size_t m_Index;						// nth arg
 		bool m_IsReturn = false;
 	};
-	
+
 	/*\ Command - At the heart of SCR \*/
-	class Command
+	class Command : public CommandAttributes
 	{
 	public:
 		using Arg = CommandArg;
@@ -74,15 +83,18 @@ namespace SCRambl
 	};
 	
 	/*\ CommandValue \*/
-	class CommandValue : public Value
+	class CommandValue : public Types::Value
 	{
-		Types::CommandValueAttributes m_Attributes;
+		CommandAttributeID m_ValueID;
+		Types::DataType::Type m_ValueType;
 
 	public:
-		CommandValue(Types::Type* type, size_t size) : Value(type, Types::ValueSet::Command, size)
+		CommandValue(Types::Type* type, size_t size, std::string valueid, Types::DataType datatype) : Value(type, Types::ValueSet::Command, size),
+			m_ValueID(CommandAttributes::attribute_set.GetAttribute(valueid)),
+			m_ValueType(datatype)
 		{ }
 
-		size_t GetValueSize(Command*) const;
+		size_t GetValueSize(const CommandAttributes*) const;
 	};
 
 	/*\ Commands - SCR command manager \*/

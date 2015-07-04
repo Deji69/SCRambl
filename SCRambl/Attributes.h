@@ -9,24 +9,12 @@
 #include <set>
 #include "utils.h"
 #include "Configuration.h"
+#include "XML.h"
 #include "SCR.h"
 
 namespace SCRambl
 {
 	class Engine;
-
-	template<typename TID, typename T>
-	class Attribute {
-		TID m_ID;
-		T m_Val;
-
-	public:
-		inline const TID &	GetID() const			{ return m_ID; }
-		inline T &			GetValue()				{ return m_Val; }
-		inline const T &	GetValue() const		{ return m_Val; }
-
-	private:
-	};
 
 	template<typename T, typename TKey = std::string, typename TLess = std::less<TKey>>
 	class AttributeSet {
@@ -35,7 +23,7 @@ namespace SCRambl
 
 		AttributeSet(T default_id) : m_Default(default_id)
 		{ }
-		AttributeSet(T default_id, const std::map<TKey, T, TLess>& set) : m_Default(default_id), m_Map(map)
+		AttributeSet(T default_id, const std::map<TKey, T, TLess>& map) : m_Default(default_id), m_Map(map)
 		{ }
 
 		inline T GetAttribute(TKey key) const {
@@ -43,6 +31,10 @@ namespace SCRambl
 			return it != m_Map.end() ? it->second : m_Default;
 		}
 		inline const Map& GetMap() const { return m_Map; }
+
+		inline size_t Size() const { return m_Map.size(); }
+		inline typename Map::const_iterator begin() const { return m_Map.begin(); }
+		inline typename Map::const_iterator end() const { return m_Map.end(); }
 
 	protected:
 		inline void AddAttribute(TKey key, T attr_id) {
@@ -55,12 +47,37 @@ namespace SCRambl
 	};
 
 	/*\
-	 * Attributes - Standard dynamic handling of object attributes
-	 * TSet = AttributeSet or derivitive class
-	 * TAttributes = type of attributes
+	 * Attributes - Fondling of object attributes
 	\*/
-	template<typename TSet, typename TAttributes>
+	template<typename TAttributes, TAttributes TMax>
 	class Attributes {
-		TSet m_Set;
+	public:
+		using Set = AttributeSet<TAttributes>;
+
+	public:
+		Attributes(const Set& set) : m_Set(set)
+		{ }
+		virtual ~Attributes() { }
+
+		TAttributes GetAttributeID(std::string name) const {
+			return m_Set.GetAttribute(name);
+		}
+		void SetAttribute(TAttributes id, XMLValue value) {
+			m_Attributes[id] = value;
+		}
+		void SetAttribute(std::string id, XMLValue value) {
+			SetAttribute(GetAttributeID(id), value);
+		}
+		XMLValue GetAttribute(TAttributes id) const {
+			auto it = m_Attributes.find(id);
+			return it != m_Attributes.end() ? it->second : "";
+		}
+		XMLValue GetAttribute(std::string id) const {
+			return GetAttribute(GetAttributeID(id));
+		}
+
+	private:
+		const Set& m_Set;
+		std::map<TAttributes, XMLValue> m_Attributes;
 	};
 }

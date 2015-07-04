@@ -381,13 +381,19 @@ namespace SCRambl
 		States Parser::Parse_Command() {
 			m_ActiveState = state_parsing_command_args;
 			m_CommandParseState.Begin(m_CurrentCommand, m_CurrentCommand->BeginArg());
-			m_CurrentCommand->Type()->Values<CommandValue>(Types::ValueSet::Command, [](CommandValue* value){
-				value->CanFitSize();
-				auto translation = value->GetTranslation();
-				auto xlation = translation->Xlate();
-				//translation->GetTranslationSize();
+			auto cmd = m_CurrentCommand;
+			CommandValue* cmdval;
+			m_CurrentCommand->Type()->Values<CommandValue>(Types::ValueSet::Command, [&cmd, &cmdval](CommandValue* value){
+				if (value->CanFitSize(value->GetValueSize(cmd))) {
+					cmdval = value;
+					return true;
+					//auto translation = value->GetTranslation();
+					//auto xlation = translation->Xlate();
+					//translation->GetTranslationSize();
+				}
 				return false;
 			});
+			m_Build.CreateSymbol<CommandCall>(cmdval->GetTranslation(), *cmd);
 			return state_neutral;
 		}
 		States Parser::Parse_Command_Args() {
