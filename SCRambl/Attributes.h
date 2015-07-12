@@ -27,7 +27,7 @@ namespace SCRambl
 		{ }
 
 		inline T GetAttribute(TKey key) const {
-			auto it = m_Map.find(key);
+			auto it = m_Map.find(tolower(key));
 			return it != m_Map.end() ? it->second : m_Default;
 		}
 		inline const Map& GetMap() const { return m_Map; }
@@ -38,7 +38,7 @@ namespace SCRambl
 
 	protected:
 		inline void AddAttribute(TKey key, T attr_id) {
-			m_Map.emplace(key, attr_id);
+			m_Map.emplace(tolower(key), attr_id);
 		}
 	
 	private:
@@ -47,25 +47,41 @@ namespace SCRambl
 	};
 
 	/*\
+	 * IAttributes
+	\*/
+	class IAttributes {
+	public:
+		virtual ~IAttributes() { }
+
+		virtual void SetAttribute(const char* attr, XMLValue val) = 0;
+		virtual XMLValue GetAttribute(const char* attr) const = 0;
+	};
+
+	/*\
 	 * Attributes - Fondling of object attributes
 	\*/
-	template<typename TAttributes, TAttributes TMax>
-	class Attributes {
+	template<typename TAttributes, typename TAttributeSet = AttributeSet<TAttributes>>
+	class Attributes : public IAttributes {
+		static const TAttributeSet s_AttributeSet;
+
 	public:
 		using Set = AttributeSet<TAttributes>;
 
 	public:
-		Attributes(const Set& set) : m_Set(set)
+		Attributes()
 		{ }
 		virtual ~Attributes() { }
 
 		TAttributes GetAttributeID(std::string name) const {
-			return m_Set.GetAttribute(name);
+			return s_AttributeSet.GetAttribute(name);
 		}
 		void SetAttribute(TAttributes id, XMLValue value) {
 			m_Attributes[id] = value;
 		}
 		void SetAttribute(std::string id, XMLValue value) {
+			SetAttribute(GetAttributeID(id), value);
+		}
+		void SetAttribute(const char* id, XMLValue value) override {
 			SetAttribute(GetAttributeID(id), value);
 		}
 		XMLValue GetAttribute(TAttributes id) const {
@@ -75,9 +91,11 @@ namespace SCRambl
 		XMLValue GetAttribute(std::string id) const {
 			return GetAttribute(GetAttributeID(id));
 		}
+		XMLValue GetAttribute(const char* id) const override {
+			return GetAttribute(GetAttributeID(id));
+		}
 
 	private:
-		const Set& m_Set;
 		std::map<TAttributes, XMLValue> m_Attributes;
 	};
 }

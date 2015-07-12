@@ -86,11 +86,15 @@ namespace SCRambl
 		using Vec = std::vector<T>;
 		VecRef() = default;
 		VecRef(const VecRef& v) = default;
+		VecRef(Vec* vec) : VecRef(*vec)
+		{ }
 		VecRef(Vec& vec) : VecRef(vec, vec.size())
 		{ }
-		VecRef(Vec* vec, TIt index) : m_Vector(vec), m_Index(index)
+		template<typename TIndex>
+		VecRef(Vec* vec, TIndex index) : VecRef(*vec, index)
 		{ }
-		VecRef(Vec& vec, TIt index) : m_Vector(&vec), m_Index(index)
+		template<typename TIndex>
+		VecRef(Vec& vec, TIndex index) : m_Vector(&vec), m_Index(index < 0 ? vec.size() + index : index)
 		{ }
 		~VecRef() { }
 
@@ -110,7 +114,7 @@ namespace SCRambl
 		T& Get() const {
 			return m_Vector.at(m_Index);
 		}
-		inline size_t Index() const { return m_Index; }
+		inline TIt Index() const { return m_Index; }
 
 	private:
 		Vec* m_Vector = nullptr;

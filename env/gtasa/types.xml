@@ -88,7 +88,7 @@
 		</Type>
 		
 		<Type NAME="COMMAND">
-			<!-- Command with 15 bit ID -->
+			<!-- Command with 15 bit integer ID (last bit used as NOT modifier) -->
 			<Command TYPE="int" VALUE="ID" SIZE="15" />
 		</Type>
 		
@@ -214,8 +214,8 @@
 		<!-- (Just a suggestion...) -->
 		<!-- <Translate Type="COMMAND_EXT">
 			<Data>
-				<Int16>0xFFFF</Int16>
-				<Int32 Source="Command.Hash" />
+				<Int8>0x7F</Int8>
+				<Int32 Source="Command" Attribute="Hash" />
 			</Data>
 		</Translate> -->
 		

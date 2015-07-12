@@ -14,6 +14,7 @@ namespace SCRambl
 		void Compiler::Init() {
 			m_TokenIt = m_Tokens.Begin();
 			m_SymbolIt = m_Build->GetSymbolsBegin();
+			m_XlationIt = m_Build->GetXlationsBegin();
 			m_Task(Event::Begin);
 			m_State = compiling;
 
@@ -35,7 +36,7 @@ namespace SCRambl
 				Init();
 				return;
 			case compiling:
-				if (m_SymbolIt != m_Build->GetSymbolsEnd())
+				if (m_XlationIt != m_Build->GetXlationsEnd())
 					Compile();
 				else
 					Finish();
@@ -43,11 +44,54 @@ namespace SCRambl
 			}
 		}
 		void Compiler::Compile()
-		{	
-			auto symbol = *m_SymbolIt;
-			//Output<uint8_t>(symbol->GetType());
+		{
+			auto xlate = *m_XlationIt;
+			auto translation = xlate.GetTranslation();
+			
+			for (size_t y = 0; y < translation->GetDataCount(); ++y) {
+				auto data = translation->GetData(y);
 
-			Types::Type* type = nullptr;
+				bool complete_val = false;
+				for (size_t x = 0; x < data->GetNumFields(); ++x) {
+					auto field = data->GetField(x);
+					auto value = xlate.GetAttribute(field->GetDataSource(), field->GetDataAttribute());
+					size_t size = field->HasSizeLimit() ? field->GetSizeLimit() : 0;
+
+					switch (field->GetDataType()) {
+					case Types::DataType::Int:
+						if (!field->HasSizeLimit()) {
+							size = CountBitOccupation(value.AsNumber<size_t>());
+							if (size > 32) size = 64;
+							else if (size > 16) size = 32;
+							else if (size > 8) size = 16;
+							else size = 8;
+						}
+
+						if (size > 32) {
+							uint64_t v = value.AsNumber<uint64_t>();
+							Output<uint64_t>(v);
+						}
+						else if (size > 16) {
+							uint32_t v = value.AsNumber<uint32_t>();
+							Output<uint32_t>(v);
+						}
+						else if (size > 8) {
+							uint16_t v = value.AsNumber<uint16_t>();
+							Output<uint16_t>(v);
+						}
+						else {
+							uint8_t v = value.AsNumber<uint8_t>();
+							Output<uint8_t>(v);
+						}
+						break;
+					}
+				}
+			}
+			
+			++m_XlationIt;
+			return;
+
+			/*Types::Type* type = nullptr;
 			switch (symbol->GetType()) {
 			case Tokens::Type::Command:
 			case Tokens::Type::CommandOverload:
@@ -55,6 +99,8 @@ namespace SCRambl
 				break;
 			case Tokens::Type::CommandCall: {
 				auto cmd = symbol->Extend<Tokens::Command::Call>();
+				
+				
 				auto command = cmd.GetCommand();
 				
 				auto it = m_CommandNames.find(command->Name());
@@ -82,7 +128,7 @@ namespace SCRambl
 				break;
 			}
 
-			++m_SymbolIt;
+			++m_SymbolIt;*/
 		}
 		void Compiler::Finish() {
 			Output<uint32_t>(m_CommandNameVec.size());

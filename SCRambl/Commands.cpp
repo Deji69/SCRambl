@@ -6,25 +6,27 @@
 
 namespace SCRambl
 {
-	const std::map<std::string, CommandAttributeID> CommandAttributes::map = {
+	/*const std::map<std::string, CommandAttributeID> CommandAttributes::map = {
 		{ "Name", CommandAttributeID::Name },
 		{ "ID", CommandAttributeID::ID },
 		{ "Conditional", CommandAttributeID::Conditional },
 		{ "NumArgs", CommandAttributeID::NumArgs }
 	};
-	const AttributeSet<CommandAttributeID> CommandAttributes::attribute_set = { CommandAttributeID::None, map };
+	const AttributeSet<CommandAttributeID> CommandAttributes::attribute_set = { CommandAttributeID::None, map };*/
+
+	const CommandAttributeSet Attributes<CommandAttributeID, CommandAttributeSet>::s_AttributeSet;
 
 	// CommandArg
 	CommandArg::CommandArg(Type* type, size_t index, bool isRet) : m_Type(type), m_Index(index), m_IsReturn(isRet)
 	{ }
 	
 	// CommandValue
-	size_t CommandValue::GetValueSize(const CommandAttributes* cmd) const {
+	size_t CommandValue::GetValueSize(const Command::Attributes& cmd) const {
 		switch (m_ValueType) {
 		case Types::DataType::Int:
-			return CountBitOccupation(cmd->GetAttribute(m_ValueID).AsNumber<long long>());
+			return CountBitOccupation(cmd.GetAttribute(m_ValueID).AsNumber<long long>());
 		case Types::DataType::String:
-			return cmd->GetAttribute(m_ValueID).AsString().size() * 8;
+			return cmd.GetAttribute(m_ValueID).AsString().size() * 8;
 		case Types::DataType::Float:
 			return sizeof(float);
 		case Types::DataType::Char:
@@ -35,16 +37,21 @@ namespace SCRambl
 	}
 
 	// Command
+	Command::Attributes Command::GetAttributes() const {
+		Attributes attr;
+		attr.SetAttribute(Types::DataAttributeID::ID, m_Index);
+		attr.SetAttribute(Types::DataAttributeID::Name, m_Name);
+		attr.SetAttribute(Types::DataAttributeID::NumArgs, m_Args.size());
+		return attr;
+	}
 	CommandArg& Command::GetArg(size_t i) { return m_Args[i]; }
 	const CommandArg& Command::GetArg(size_t i) const { return m_Args[i]; }
+
 	void Command::AddArg(Arg::Type* type, bool isRet) {
 		m_Args.emplace_back(type, m_Args.size(), isRet);
-		SetAttribute(CommandAttributeID::NumArgs, m_Args.size());
 	}
 	Command::Command(std::string name, XMLValue index, Types::Type* type) : m_Name(name), m_Index(index), m_Type(type)
 	{
-		SetAttribute(CommandAttributeID::Name, name);
-		SetAttribute(CommandAttributeID::ID, index);
 		if (!m_Type) BREAK();
 	}
 

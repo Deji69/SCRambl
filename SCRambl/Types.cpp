@@ -6,9 +6,15 @@
 
 namespace SCRambl
 {
+	const Types::DataSourceSet Attributes<Types::DataSourceID, Types::DataSourceSet>::s_AttributeSet;
+	const Types::DataAttributeSet Attributes<Types::DataAttributeID, Types::DataAttributeSet>::s_AttributeSet;
+
 	namespace Types
 	{
 		const Translation::Ref Translation::BadRef;
+
+		//template<typename TAttributes, typename TAttributeSet = AttributeSet<TAttributes>>
+		//class Attributes : public IAttributes {
 		
 		ValueSet GetValueTypeByName(std::string name) {
 			static const std::unordered_map<std::string, ValueSet> table = {
@@ -41,27 +47,9 @@ namespace SCRambl
 #endif
 
 		/* Translation */
-		template<typename T>
-		Xlation<T> Translation::Xlate() const {
-			return Xlation<T>();
-		}
-
-		/* VariableValueAttributes */
-		VarType VariableValueAttributes::GetVarType() const {
-			auto type = m_Types->GetType(m_Type.AsString());
-			auto valtype = m_Types->GetType(m_Value.AsString());
-			if (!type) BREAK();
-			else if (!type->IsVariableType()) {
-				BREAK();
-				type = nullptr;
-			}
-			if (!valtype) BREAK();
-			else if (valtype->IsVariableType()) {
-				BREAK();
-				valtype = nullptr;
-			}
-			return VarType(type ? type->ToVariable() : nullptr, valtype);
-		}
+		/*Xlation Translation::Xlate(IAttributes* attributes) const {
+			return Xlation(this, attributes);
+		}*/
 
 		/* VariableValue */
 		inline ArrayValue* VariableValue::ToArray() {
@@ -72,11 +60,9 @@ namespace SCRambl
 			ASSERT(IsArray());
 			return static_cast<const ArrayValue*>(this);
 		}
-		VariableValue::VariableValue(Type* type, size_t size, XMLValue var, XMLValue val, bool) : Value(type, ValueSet::Array, size),
-			VariableValueAttributes(var, val)
+		VariableValue::VariableValue(Type* type, size_t size, XMLValue var, XMLValue val, bool) : Value(type, ValueSet::Array, size)
 		{ }
-		VariableValue::VariableValue(Type* type, size_t size, XMLValue var, XMLValue val) : Value(type, ValueSet::Variable, size),
-			VariableValueAttributes(var, val)
+		VariableValue::VariableValue(Type* type, size_t size, XMLValue var, XMLValue val) : Value(type, ValueSet::Variable, size)
 		{ }
 
 		/* ArrayValue */
@@ -239,7 +225,7 @@ namespace SCRambl
 				}
 				else {
 					auto value = type->AddValue<VariableValue>(type, vec["Size"]->AsNumber<uint32_t>(), type_attr, value_attr);
-					value->m_Types = this;
+					//value->m_Types = this;
 
 					AddValue(ValueSet::Variable, value);
 					obj = value;
@@ -261,7 +247,7 @@ namespace SCRambl
 				}
 				else {
 					auto value = type->AddValue<ArrayValue>(type, vec["Size"]->AsNumber<uint32_t>(), type_attr, value_attr);
-					value->m_Types = this;
+					//value->m_Types = this;
 
 					AddValue(ValueSet::Array, value);
 					obj = value;
@@ -273,9 +259,9 @@ namespace SCRambl
 			m_Config = build.AddConfig("VariableTypes");
 			{
 				auto vartype = m_Config->AddClass("Type", [this](const XMLNode vec, void*& obj) {
-					auto scope = vec.GetAttribute("Scope").GetValue();
-					auto isarray = vec.GetAttribute("IsArray").GetValue();
-					auto name = vec.GetAttribute("Name").GetValue().AsString();
+					auto scope = *vec["Scope"];
+					auto isarray = *vec["IsArray"];
+					auto name = vec["Name"]->AsString();
 					auto type = AddVariableType(name, scope, isarray.AsBool(false));
 
 					auto rg = m_ValsToUpdate.equal_range(name);
@@ -298,7 +284,7 @@ namespace SCRambl
 			{
 				auto type = m_Config->AddClass("Type", [this](const XMLNode vec, void*& obj){
 					// store the command to the object pointer so we can access it again
-					auto name = vec.GetAttribute("Name").GetValue().AsString();
+					auto name = vec["Name"]->AsString();
 					auto type = AddType(name);
 
 					auto rg = m_ValsToUpdate.equal_range(name);
@@ -320,15 +306,15 @@ namespace SCRambl
 			{
 				auto extype = m_Config->AddClass("Type", [this](const XMLNode vec, void*& obj){
 					unsigned long id = 0;
-					if (auto attr = vec.GetAttribute("ID"))
+					if (auto attr = vec["ID"])
 						id = attr.GetValue().AsNumber<unsigned int>();
 
-					if (auto attr = vec.GetAttribute("Hash")) {
+					if (auto attr = vec["Hash"]) {
 						std::hash<std::string> hasher;
-						id = hasher(vec.GetAttribute(attr.GetValue().AsString()).GetValue().AsString());
+						id = hasher(vec[attr->AsString()]->AsString());
 					}
 
-					auto name = vec.GetAttribute("Name").GetValue().AsString();
+					auto name = vec["Name"]->AsString();
 					auto type = AddExtendedType(name);
 
 					auto rg = m_ValsToUpdate.equal_range(name);
@@ -350,12 +336,12 @@ namespace SCRambl
 			m_Config = build.AddConfig("Translations");
 			{
 				auto trans = m_Config->AddClass("Translate", [this](const XMLNode vec, void*& obj){
-					auto type_name = vec.GetAttribute("Type").GetValue().AsString();
+					auto type_name = vec["Type"]->AsString();
 					if (auto type = GetType(type_name)) {
-						auto val = vec.GetAttribute("Value").GetValue();
+						auto val = *vec["Value"];
 						auto valtype = GetValueTypeByName(val.AsString());
 
-						auto size = vec.GetAttribute("Size").GetValue().AsNumber<size_t>(-1);
+						auto size = vec["Size"]->AsNumber<size_t>(-1);
 						auto translation = AddTranslation(type, valtype, size);
 
 						type->AllValues<Value>([valtype, size, translation](Value* value){
@@ -390,12 +376,12 @@ namespace SCRambl
 								field = data.AddField(DataType::Args, DataSourceID::None, DataAttributeID::None);
 							}
 							else if (DataType::GetByName(name, data_type, size)) {
-								auto src_attr = it.GetAttribute("Source");
-								auto attr_attr = it.GetAttribute("Attribute");
+								auto src_attr = it["Source"];
+								auto attr_attr = it["Attribute"];
 
 								if (src_attr && attr_attr) {
-									auto src_id = GetDataSource(src_attr.GetValue().AsString());
-									auto attr_id = GetDataAttribute(src_id, attr_attr.GetValue().AsString());
+									auto src_id = GetDataSource(src_attr->AsString());
+									auto attr_id = GetDataAttribute(src_id, attr_attr->AsString());
 									if (src_id == DataSourceID::None || attr_id == DataAttributeID::None) {
 										BREAK();
 										field = data.AddField(data_type, DataSourceID::None, DataAttributeID::None, size);
@@ -406,14 +392,14 @@ namespace SCRambl
 								}
 								else field = data.AddField(data_type, DataSourceID::None, DataAttributeID::None, size);
 
-								if (!it.GetValue().AsString().empty())
+								if (!it->AsString().empty())
 								{
 									if (data_type.IsInteger() || data_type.IsFloat()) {
 										SCRambl::Numbers::IntegerType int_num;
 										SCRambl::Numbers::FloatType flt_num;
 										if (data_type.IsInteger()) {
-											auto txt = it.GetValue();
-											auto convert_result = Numbers::StringToInt<long long>(it.GetValue().AsString().c_str(), int_num, true);
+											auto txt = *it;
+											auto convert_result = Numbers::StringToInt<long long>(it->AsString().c_str(), int_num, true);
 											if (convert_result == Numbers::ConvertResult::success) {
 												field->SetValue(int_num.GetValue<long long>());
 											}
@@ -423,7 +409,7 @@ namespace SCRambl
 											}
 										}
 										else if (data_type.IsFloat()) {
-											auto convert_result = Numbers::StringToFloat<float>(it.GetValue().AsString().c_str(), flt_num, true);
+											auto convert_result = Numbers::StringToFloat<float>(it->AsString().c_str(), flt_num, true);
 											if (convert_result == Numbers::ConvertResult::success) {
 												field->SetValue(flt_num.GetValue<float>());
 											}
@@ -434,7 +420,7 @@ namespace SCRambl
 										}
 									}
 									else if (data_type.IsString()) {
-										field->SetValue(it.GetValue());
+										field->SetValue(*it);
 									}
 									else {
 										BREAK();

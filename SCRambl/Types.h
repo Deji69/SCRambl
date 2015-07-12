@@ -21,7 +21,12 @@ namespace SCRambl
 
 	namespace Types
 	{
-		typedef unsigned long long TypeID;
+		class Value;
+		class Basic;
+		class Extended;
+		class Variable;
+		class VariableValue;
+		class ArrayValue;
 
 		enum class TypeSet {
 			Basic, Extended, Variable
@@ -62,13 +67,6 @@ namespace SCRambl
 		private:
 			Type m_Type;
 		};
-
-		class Value;
-		class Basic;
-		class Extended;
-		class Variable;
-		class VariableValue;
-		class ArrayValue;
 
 		/* Types::VarType */
 		class VarType {
@@ -311,12 +309,14 @@ namespace SCRambl
 			None, Value, Number, Text, Command, Variable, Label, Condition,
 		};
 		enum class DataAttributeID {
-			None, ID, Value, Size, Offset, Index, Name,
+			None, Value, Size, Offset,
+			// Command
+			ID, Name, NumArgs,
 			// Condition
-			IsNOT,
+			IsNOT
 		};
 
-		class DataSourceSet : public AttributeSet < DataSourceID >
+		class DataSourceSet : public AttributeSet<DataSourceID>
 		{
 		public:
 			DataSourceSet() : AttributeSet(DataSourceID::None)
@@ -330,83 +330,25 @@ namespace SCRambl
 				AddAttribute("Condition", DataSourceID::Condition);
 			}
 		};
-
-		template<DataSourceID> class DataAttributeSet;
-
-		template<>
-		class DataAttributeSet<DataSourceID::Value> : public AttributeSet<DataAttributeID>
-		{
+		class DataAttributeSet : public AttributeSet<DataAttributeID> {
 		public:
-			DataAttributeSet() : AttributeSet(DataAttributeID::None)
-			{
+			DataAttributeSet() : AttributeSet(DataAttributeID::None) {
+				AddAttribute("ID", DataAttributeID::ID);
+				AddAttribute("Index", DataAttributeID::ID);
 				AddAttribute("Value", DataAttributeID::Value);
 				AddAttribute("Size", DataAttributeID::Size);
-			}
-		};
-
-		template<>
-		class DataAttributeSet<DataSourceID::Number> : public DataAttributeSet<DataSourceID::Value>
-		{ };
-		template<>
-		class DataAttributeSet<DataSourceID::Text> : public DataAttributeSet<DataSourceID::Value>
-		{ };
-
-		template<>
-		class DataAttributeSet<DataSourceID::Condition> : public AttributeSet<DataAttributeID>
-		{
-		public:
-			DataAttributeSet() : AttributeSet(DataAttributeID::None)
-			{
+				AddAttribute("Offset", DataAttributeID::Offset);
+				AddAttribute("Name", DataAttributeID::Name);
 				AddAttribute("IsNOT", DataAttributeID::IsNOT);
 			}
 		};
 
-		template<>
-		class DataAttributeSet<DataSourceID::Command> : public AttributeSet<DataAttributeID>
-		{
-		public:
-			DataAttributeSet() : AttributeSet(DataAttributeID::None)
-			{
-				AddAttribute("ID", DataAttributeID::ID);
-				AddAttribute("Name", DataAttributeID::Name);
-			}
-		};
-
-		template<>
-		class DataAttributeSet<DataSourceID::Label> : public AttributeSet<DataAttributeID>
-		{
-		public:
-			DataAttributeSet() : AttributeSet(DataAttributeID::None)
-			{
-				AddAttribute("Offset", DataAttributeID::Offset);
-			}
-		};
-
-		template<>
-		class DataAttributeSet<DataSourceID::Variable> : public AttributeSet<DataAttributeID>
-		{
-		public:
-			DataAttributeSet() : AttributeSet(DataAttributeID::None)
-			{
-				AddAttribute("Index", DataAttributeID::Index);
-			}
-		};
-
-		using NumberAttributeSet = DataAttributeSet<DataSourceID::Number>;
-		using TextAttributeSet = DataAttributeSet<DataSourceID::Text>;
-		using CommandAttributeSet = DataAttributeSet<DataSourceID::Command>;
-		using LabelAttributeSet = DataAttributeSet<DataSourceID::Label>;
-		using VariableAttributeSet = DataAttributeSet<DataSourceID::Variable>;
-
-		template<typename TAttributeSet> class Xlation;
+		class Xlation;
 
 		/*\ Translation \*/
 		class Translation
 		{
 		public:
-			using Ref = VecRef<Translation>;
-			static const Ref BadRef;
-
 			class Data {
 				static const size_t c_invalid_size;
 
@@ -414,30 +356,13 @@ namespace SCRambl
 				class Field
 				{
 				public:
-					/*class IValue {
-					public:
-						inline virtual ~IValue() { }
-					};
-
-					template<typename T>
-					class Value : public IValue {
-						T m_Value;
-
-					public:
-						Value(const T& val) : m_Value(val)
-						{ }
-
-						inline operator T&() { return m_Value; }
-						inline operator const T&() const { return m_Value; }
-					};*/
-
 					Field(DataType type, DataSourceID src, DataAttributeID attr) :
 						m_Type(type), m_Source(src), m_Attribute(attr), m_Size(0), m_SizeLimit(false)
 					{ }
 					Field(DataType type, DataSourceID src, DataAttributeID attr, size_t size) :
 						m_Type(type), m_Source(src), m_Attribute(attr), m_Size(size), m_SizeLimit(true)
 					{ }
-					
+
 					void SetValue(XMLValue val) { m_Value = val; }
 					XMLValue GetValue() const { return m_Value; }
 
@@ -475,11 +400,18 @@ namespace SCRambl
 					m_Fields.emplace_back(type, src, attr, size);
 					return &m_Fields.back();
 				}
-
+				size_t GetNumFields() const { return m_Fields.size(); }
+				VecRef<Field> GetField(size_t i) { return {m_Fields, i}; }
+				
 			private:
 				size_t& m_TranslationSize;
 				std::vector<Field> m_Fields;
 			};
+
+			using Ref = VecRef<Translation>;
+			using DataRef = VecRef<Data>;
+			using FieldRef = VecRef<Data::Field>;
+			static const Ref BadRef;
 
 			Translation(Type* type, ValueSet valuetype, size_t size) : m_Type(type), m_ValueType(valuetype), m_Size(size)
 			{ }
@@ -488,7 +420,8 @@ namespace SCRambl
 				m_Data.emplace_back(m_Size);
 				return m_Data.back();
 			}
-			template<typename T> Xlation<T> Xlate() const;
+			DataRef GetData(size_t i) { return {m_Data, i}; }
+			size_t GetDataCount() const { return m_Data.size(); }
 
 		private:
 			Type* m_Type = nullptr;
@@ -498,24 +431,24 @@ namespace SCRambl
 		};
 
 		/*\ The Xlation's Will Convert You! \*/
-		class IXlation {
-		protected:
-			virtual ~IXlation() { }
-		};
-		template<typename TAttributeSet>
-		class Xlation : IXlation
+		class Xlation
 		{
 		public:
-			Xlation(Translation* translation) { }
+			using Attributes = Attributes<DataAttributeID, DataAttributeSet>;
+
+			Xlation() = default;
+			Xlation(Translation::Ref translation) : m_Translation(translation)
+			{ }
+
+			Translation::Ref GetTranslation() const { return m_Translation; }
+			void SetAttribute(DataSourceID src, DataAttributeID attr, XMLValue val) { m_AttributesMap[src].SetAttribute(attr, val); }
+			void SetAttributes(DataSourceID src, Attributes attributes) { m_AttributesMap[src] = attributes; }
+			XMLValue GetAttribute(DataSourceID src, DataAttributeID attr) const { return m_AttributesMap.at(src).GetAttribute(attr); }
+			const Attributes& GetAttributes(DataSourceID id) const { return m_AttributesMap.at(id); }
 
 		private:
-			Translation* m_Translation;
-
-		};
-
-		/*\ AttributeSet of a Value \*/
-		enum class ValueAttributeID {
-			None, Value, Size
+			Translation::Ref m_Translation;
+			std::map<DataSourceID, Attributes> m_AttributesMap;
 		};
 
 		/*\ Value of Type for translation \*/
@@ -558,41 +491,13 @@ namespace SCRambl
 			Integer, Float
 		};
 
-		enum class NumberValueAttributeID {
-			None, Value, Size
-		};
-
-		class NumberValueAttributes
-		{
-		public:
-			NumberValueAttributes()
-			{ }
-		};
-		class VariableValueAttributes {
-			friend class Types;
-			Types* m_Types = nullptr;
-			
-			XMLValue m_Type;
-			XMLValue m_Value;
-
-		public:
-			VariableValueAttributes(XMLValue type, XMLValue value) : m_Type(type), m_Value(value)
-			{ }
-			VarType GetVarType() const;
-		};
-
 		class NumberValue : public Value
 		{
 		public:
 			NumberValue(Type* type, NumberValueType numtype, size_t size) : Value(type, ValueSet::Number, size), m_Type(numtype)
 			{ }
 
-			inline NumberValueType	GetNumberType() const			{ return m_Type; }
-
-			template<typename T, typename... TArgs>
-			inline std::shared_ptr<T> CreateToken(TArgs&&... args) {
-				return std::make_shared<T>(Tokens::Type::Number, *this, std::forward<TArgs>(args)...);
-			}
+			inline NumberValueType	GetNumberType() const { return m_Type; }
 
 		private:
 			NumberValueType	m_Type;
@@ -613,7 +518,7 @@ namespace SCRambl
 			LabelValue(Type* type, size_t size) : Value(type, ValueSet::Label, size)
 			{ }
 		};
-		class VariableValue : public Value, public VariableValueAttributes {
+		class VariableValue : public Value {
 		public:
 			VariableValue(Type* type, size_t size, XMLValue var, XMLValue val);
 
@@ -691,44 +596,8 @@ namespace SCRambl
 				return s_set.GetAttribute(name);
 			}
 			DataAttributeID GetDataAttribute(DataSourceID src, std::string name) {
-				switch (src) {
-				case DataSourceID::Condition:
-				{
-					static const DataAttributeSet<DataSourceID::Condition> s_set;
-					return s_set.GetAttribute(name);
-				}
-				case DataSourceID::Command:
-				{
-					static const DataAttributeSet<DataSourceID::Command> s_set;
-					return s_set.GetAttribute(name);
-				}
-				case DataSourceID::Label:
-				{
-					static const DataAttributeSet<DataSourceID::Label> s_set;
-					return s_set.GetAttribute(name);
-				}
-				case DataSourceID::Number:
-				{
-					static const DataAttributeSet<DataSourceID::Text> s_set;
-					return s_set.GetAttribute(name);
-				}
-				case DataSourceID::Text:
-				{
-					static const DataAttributeSet<DataSourceID::Text> s_set;
-					return s_set.GetAttribute(name);
-				}
-				case DataSourceID::Value:
-				{
-					static const DataAttributeSet<DataSourceID::Value> s_set;
-					return s_set.GetAttribute(name);
-				}
-				case DataSourceID::Variable:
-				{
-					static const DataAttributeSet<DataSourceID::Variable> s_set;
-					return s_set.GetAttribute(name);
-				}
-				}
-				return DataAttributeID::None;
+				static const DataAttributeSet s_set;
+				return s_set.GetAttribute(name);
 			}
 
 			inline Type* AddType(std::string name) {

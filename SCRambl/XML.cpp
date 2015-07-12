@@ -195,8 +195,12 @@ namespace SCRambl
 	auto XMLValue::Size() const->size_t {
 		return m_str.size();
 	}
-	template<> auto XMLValue::AsNumber(int v) const->int { return sto<int>(m_str, v, [](std::string str){ return std::stoi(str); }); }
+	template<> auto XMLValue::AsNumber(char v) const->char { return sto<char>(m_str, v, [](std::string str){ return std::stoi(str, nullptr, 0); }); }
+	template<> auto XMLValue::AsNumber(short v) const->short { return sto<short>(m_str, v, [](std::string str){ return std::stoi(str, nullptr, 0); }); }
+	template<> auto XMLValue::AsNumber(int v) const->int { return sto<int>(m_str, v, [](std::string str){ return std::stoi(str, nullptr, 0); }); }
 	template<> auto XMLValue::AsNumber(long v) const->long { return sto<long>(m_str, v, [](std::string str){ return std::stol(str, nullptr, 0); }); }
+	template<> auto XMLValue::AsNumber(unsigned char v) const->unsigned char { return sto<unsigned char>(m_str, v, [](std::string str){ return std::stoi(str, nullptr, 0); }); }
+	template<> auto XMLValue::AsNumber(unsigned short v) const->unsigned short { return sto<unsigned short>(m_str, v, [](std::string str){ return std::stoi(str, nullptr, 0); }); }
 	template<> auto XMLValue::AsNumber(unsigned int v) const->unsigned int { return sto<unsigned long>(m_str, v, [](std::string str){ return std::stoul(str, nullptr, 0); }); }
 	template<> auto XMLValue::AsNumber(unsigned long v) const->unsigned long { return sto<unsigned long>(m_str, v, [](std::string str){ return std::stoul(str, nullptr, 0); }); }
 	template<> auto XMLValue::AsNumber(long long v) const->long long { return sto<long long>(m_str, v, [](std::string str){ return std::stoll(str, nullptr, 0); }); }

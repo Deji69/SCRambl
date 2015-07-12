@@ -672,6 +672,7 @@ namespace SCRambl
 			Commands::Vector m_OverloadCommands;
 			Commands::Vector::iterator m_OverloadCommandsIt;
 			Jump::Vector m_Jumps;
+			VecRef<Types::Xlation> m_Xlation;
 
 			std::map<ScriptLabel*, LabelRef> m_LabelReferences;
 			std::vector<std::shared_ptr<const Command>> m_CommandVector;

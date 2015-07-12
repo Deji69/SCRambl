@@ -173,40 +173,9 @@ namespace SCRambl
 			{ }
 		};
 
-		Engine& m_Engine;
-		Constants m_Constants;
-		Commands m_Commands;
-		Operators::Operators m_Operators;
-		Types::Types m_Types;
-		BuildEnvironment m_Env;
-		BuildConfig* m_Config;
-		ConfigMap m_ConfigMap;
-
-		Script m_Script;
-		std::vector<BuildScript> m_BuildScripts;
-		std::vector<BuildInput> m_BuildInputs;
-		std::vector<std::string> m_Files;
-		TokenPtrVec m_Tokens;
-		SymbolPtrVec m_Symbols;
-		SymbolPtrVec m_Declarations;
-
-		//
-		ScriptObjects<Variable> m_Variables;
-		ScriptObjects<Label> m_Labels;
-		std::map<Scripts::Position, ScriptLabel*> m_LabelPosMap;
-
-		// Tasks
-		using TaskMap = std::map<int, std::unique_ptr<TaskSystem::ITask>>;
-		TaskMap m_Tasks;
-		TaskMap::iterator m_CurrentTask;
-		bool m_HaveTask;
-
-		void Setup();
-		void Init();
-		void LoadDefinitions();
-
 	public:
 		using Symbols = std::vector<TokenSymbol*>;
+		using Xlations = std::vector<Types::Xlation>;
 
 		Build(Engine&, BuildConfig*);
 		Build(const Build&) = delete;
@@ -255,6 +224,12 @@ namespace SCRambl
 		inline const std::vector<TokenSymbol*> & GetDeclarations() const { return m_Declarations; }
 		void AddDeclaration(TokenSymbol* tok);
 
+		Xlations::const_iterator GetXlationsBegin() const {
+			return m_Xlations.begin();
+		}
+		Xlations::const_iterator GetXlationsEnd() const {
+			return m_Xlations.end();
+		}
 		Symbols::const_iterator GetSymbolsBegin() const {
 			return m_Symbols.begin();
 		}
@@ -271,6 +246,10 @@ namespace SCRambl
 			auto ptr = new TSymbolType(args...);
 			m_Symbols.emplace_back(ptr);
 			return ptr;
+		}
+		VecRef<Types::Xlation> AddSymbol(Types::Translation::Ref translation) {
+			m_Xlations.emplace_back(translation);
+			return {m_Xlations, -1};
 		}
 
 		void DoParseActions(std::string val, const ParseObjectConfig::ActionVec& vec);
@@ -319,6 +298,40 @@ namespace SCRambl
 		bool IsTaskFinished() override { return m_CurrentTask == std::end(m_Tasks); }
 		void ResetTask() override { Init(); }
 		void RunTask() override { Run(); }
+
+	private:
+		Engine& m_Engine;
+		Constants m_Constants;
+		Commands m_Commands;
+		Operators::Operators m_Operators;
+		Types::Types m_Types;
+		BuildEnvironment m_Env;
+		BuildConfig* m_Config;
+		ConfigMap m_ConfigMap;
+
+		Script m_Script;
+		std::vector<BuildScript> m_BuildScripts;
+		std::vector<BuildInput> m_BuildInputs;
+		std::vector<std::string> m_Files;
+		TokenPtrVec m_Tokens;
+		Xlations m_Xlations;
+		SymbolPtrVec m_Symbols;
+		SymbolPtrVec m_Declarations;
+
+		//
+		ScriptObjects<Variable> m_Variables;
+		ScriptObjects<Label> m_Labels;
+		std::map<Scripts::Position, ScriptLabel*> m_LabelPosMap;
+
+		// Tasks
+		using TaskMap = std::map<int, std::unique_ptr<TaskSystem::ITask>>;
+		TaskMap m_Tasks;
+		TaskMap::iterator m_CurrentTask;
+		bool m_HaveTask;
+
+		void Setup();
+		void Init();
+		void LoadDefinitions();
 	};
 
 	class Builder

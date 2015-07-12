@@ -7,7 +7,7 @@
 <SCRambl Version="1.0" FileVersion="0.0.0.0">
 	<VariableTypes>
 		<Type Name="LVAR" Scope="local">
-			<MaxIndex>32</MaxIndex>
+			<MaxIndex>31</MaxIndex>
 		</Type>
 		<Type Name="VAR" Scope="global">
 			<MinIndex>2</MinIndex>
@@ -203,6 +203,7 @@
 				<!--<Int16>0x7FFF</Int16>--/
 				<Int8>0x7F</Int8>
 				<Int32 Source="Command" Attribute="Hash" />
+				<Args />
 			</Data>
 		</Translate> -->
 		

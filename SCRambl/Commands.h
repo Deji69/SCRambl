@@ -22,13 +22,19 @@ namespace SCRambl
 		Name, ID, Conditional, NumArgs,
 		None
 	};
-	class CommandAttributes : public Attributes<CommandAttributeID, CommandAttributeID::None> {
-		static const std::map<std::string, CommandAttributeID> map;
-
+	class CommandAttributeSet : public AttributeSet<CommandAttributeID>
+	{
 	public:
-		static const AttributeSet<CommandAttributeID> attribute_set;
-
-		CommandAttributes() : Attributes(attribute_set)
+		CommandAttributeSet() : AttributeSet(CommandAttributeID::None) {
+			AddAttribute("ID", CommandAttributeID::ID);
+			AddAttribute("Name", CommandAttributeID::Name);
+			AddAttribute("NumArgs", CommandAttributeID::NumArgs);
+			AddAttribute("Conditional", CommandAttributeID::Conditional);
+		}
+	};
+	class CommandAttributes : public Attributes<CommandAttributeID, CommandAttributeSet> {
+	public:
+		CommandAttributes()
 		{ }
 	};
 
@@ -53,11 +59,12 @@ namespace SCRambl
 	};
 
 	/*\ Command - At the heart of SCR \*/
-	class Command : public CommandAttributes
+	class Command
 	{
 	public:
 		using Arg = CommandArg;
 		using ArgVec = std::vector<Arg>;
+		using Attributes = Attributes<Types::DataAttributeID, Types::DataAttributeSet>;
 
 	private:
 		XMLValue m_Index;			// index, which could be name/id/hash, depends on translation
@@ -67,6 +74,8 @@ namespace SCRambl
 
 	public:
 		Command(std::string name, XMLValue index, Types::Type* type);
+
+		Attributes GetAttributes() const;
 
 		void AddArg(Arg::Type* type, bool isRet = false);
 		Arg& GetArg(size_t i);
@@ -85,16 +94,16 @@ namespace SCRambl
 	/*\ CommandValue \*/
 	class CommandValue : public Types::Value
 	{
-		CommandAttributeID m_ValueID;
+		Types::DataAttributeID m_ValueID;
 		Types::DataType::Type m_ValueType;
 
 	public:
 		CommandValue(Types::Type* type, size_t size, std::string valueid, Types::DataType datatype) : Value(type, Types::ValueSet::Command, size),
-			m_ValueID(CommandAttributes::attribute_set.GetAttribute(valueid)),
+			m_ValueID(Types::DataAttributeID::None),
 			m_ValueType(datatype)
 		{ }
 
-		size_t GetValueSize(const CommandAttributes*) const;
+		size_t GetValueSize(const Command::Attributes&) const;
 	};
 
 	/*\ Commands - SCR command manager \*/

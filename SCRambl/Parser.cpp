@@ -120,7 +120,8 @@ namespace SCRambl
 				case state_parsing_command:
 				case state_parsing_command_args:
 					m_CommandTokenMap.emplace(m_CommandParseState.command->Name(), m_CommandTokenIt);
-					CreateSymbol<Tokens::Command::Call>(m_CommandTokenIt->GetToken(), m_CommandParseState.parameters.size());
+					//CreateSymbol<Tokens::Command::Call>(m_CommandTokenIt->GetToken(), m_CommandParseState.parameters.size());
+
 					for (auto& param : m_CommandParseState.parameters) {
 						//CreateSymbol()
 					}
@@ -381,19 +382,17 @@ namespace SCRambl
 		States Parser::Parse_Command() {
 			m_ActiveState = state_parsing_command_args;
 			m_CommandParseState.Begin(m_CurrentCommand, m_CurrentCommand->BeginArg());
-			auto cmd = m_CurrentCommand;
+			auto attributes = m_CurrentCommand->GetAttributes();
 			CommandValue* cmdval;
-			m_CurrentCommand->Type()->Values<CommandValue>(Types::ValueSet::Command, [&cmd, &cmdval](CommandValue* value){
-				if (value->CanFitSize(value->GetValueSize(cmd))) {
+			m_CurrentCommand->Type()->Values<CommandValue>(Types::ValueSet::Command, [&attributes, &cmdval](CommandValue* value){
+				if (value->CanFitSize(value->GetValueSize(attributes))) {
 					cmdval = value;
 					return true;
-					//auto translation = value->GetTranslation();
-					//auto xlation = translation->Xlate();
-					//translation->GetTranslationSize();
 				}
 				return false;
 			});
-			m_Build.CreateSymbol<CommandCall>(cmdval->GetTranslation(), *cmd);
+			m_Xlation = m_Build.AddSymbol(cmdval->GetTranslation());
+			m_Xlation->SetAttributes(Types::DataSourceID::Command, attributes);
 			return state_neutral;
 		}
 		States Parser::Parse_Command_Args() {

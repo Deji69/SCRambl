@@ -78,6 +78,8 @@ namespace SCRambl
 			Engine& m_Engine;
 			Build* m_Build;
 			Build::Symbols::const_iterator m_SymbolIt;
+			Build::Xlations::const_iterator m_XlationIt;
+			
 			Scripts::Tokens& m_Tokens;
 			Scripts::Tokens::Iterator m_TokenIt;
 			std::ofstream m_File;
@@ -109,8 +111,7 @@ namespace SCRambl
 			inline bool operator()(Event id, Args&&... args) { return CallEventHandler(id, std::forward<Args>(args)...); }
 
 		public:
-			Task(Engine& engine, Build* build) :
-				Compiler(*this, engine, build),
+			Task(Engine& engine, Build* build) : Compiler(*this, engine, build),
 				m_Engine(engine)
 			{ }
 
