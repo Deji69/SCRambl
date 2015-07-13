@@ -248,7 +248,12 @@ namespace SCRambl
 			return ptr;
 		}
 		VecRef<Types::Xlation> AddSymbol(Types::Translation::Ref translation) {
-			m_Xlations.emplace_back(translation);
+			m_Xlations.emplace_back(translation, [this](Types::DataSourceID id){
+				switch (id) {
+				case Types::DataSourceID::Env:
+					m_Env.
+				}
+			});
 			return {m_Xlations, -1};
 		}
 

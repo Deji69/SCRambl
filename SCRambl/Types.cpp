@@ -8,9 +8,10 @@ namespace SCRambl
 {
 	const Types::DataSourceSet Attributes<Types::DataSourceID, Types::DataSourceSet>::s_AttributeSet;
 	const Types::DataAttributeSet Attributes<Types::DataAttributeID, Types::DataAttributeSet>::s_AttributeSet;
-
+	
 	namespace Types
 	{
+		const Xlation::AttributesMap Xlation::s_NullMap;
 		const Translation::Ref Translation::BadRef;
 
 		//template<typename TAttributes, typename TAttributeSet = AttributeSet<TAttributes>>

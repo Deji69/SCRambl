@@ -51,13 +51,28 @@ namespace SCRambl
 			for (size_t y = 0; y < translation->GetDataCount(); ++y) {
 				auto data = translation->GetData(y);
 
-				bool complete_val = false;
+				size_t data_size = 0, totes_size = 0;
+				Types::DataType data_type = Types::DataType::INVALID;
+				union {
+					uint64_t	uint64;
+					uint32_t	uint32;
+					uint16_t	uint16;
+					uint8_t		uint8;
+				};
+				uint64 = 0;
+				std::string str;
+				bool init = true;
+				const bool big_edian = false;
+
 				for (size_t x = 0; x < data->GetNumFields(); ++x) {
 					auto field = data->GetField(x);
 					auto value = xlate.GetAttribute(field->GetDataSource(), field->GetDataAttribute());
 					size_t size = field->HasSizeLimit() ? field->GetSizeLimit() : 0;
 
+					bool isstr = false;
 					switch (field->GetDataType()) {
+					case Types::DataType::Float:
+					case Types::DataType::Fixed:
 					case Types::DataType::Int:
 						if (!field->HasSizeLimit()) {
 							size = CountBitOccupation(value.AsNumber<size_t>());
@@ -66,24 +81,135 @@ namespace SCRambl
 							else if (size > 8) size = 16;
 							else size = 8;
 						}
-
-						if (size > 32) {
-							uint64_t v = value.AsNumber<uint64_t>();
-							Output<uint64_t>(v);
-						}
-						else if (size > 16) {
-							uint32_t v = value.AsNumber<uint32_t>();
-							Output<uint32_t>(v);
-						}
-						else if (size > 8) {
-							uint16_t v = value.AsNumber<uint16_t>();
-							Output<uint16_t>(v);
-						}
-						else {
-							uint8_t v = value.AsNumber<uint8_t>();
-							Output<uint8_t>(v);
-						}
 						break;
+					case Types::DataType::Char:
+						size = 8;
+						break;
+					case Types::DataType::String:
+						size = field->HasSizeLimit() ? size : value.AsString().size();
+						isstr = true;
+						break;
+					default: BREAK();
+					}
+
+					size_t valsize = 0;
+					if (!isstr) {
+						if (size > 64) BREAK();
+						else if (size > 32)
+							valsize = 64;
+						else if (size > 16)
+							valsize = 32;
+						else if (size > 8)
+							valsize = 16;
+						else
+							valsize = 8;
+					}
+					else valsize = size;
+
+					if (init) {
+						data_size = valsize;
+
+						if (data_size == size) {
+							if (data_size == 64)
+								Output<uint64_t>(value.AsNumber<uint64_t>());
+							else if (data_size == 32)
+								Output<uint32_t>(value.AsNumber<uint32_t>());
+							else if (data_size == 16)
+								Output<uint16_t>(value.AsNumber<uint16_t>());
+							else if (data_size == 8)
+								Output<uint8_t>(value.AsNumber<uint8_t>());
+							continue;
+						}
+						
+						init = false;
+						uint64 = 0;
+						totes_size = 0;
+					}
+
+					size_t req_size = totes_size + size,
+						   left_size = data_size - totes_size;
+					if (req_size > left_size) {
+						if (data_size == 64)
+							Output<uint64_t>(uint64);
+						else if (data_size == 32)
+							Output<uint32_t>(uint32);
+						else if (data_size == 16)
+							Output<uint16_t>(uint16);
+						else if (data_size == 8)
+							Output<uint8_t>(uint8);
+
+						ASSERT(!init);
+						totes_size = size;
+						if (!isstr) {
+							if (valsize == 64)
+								uint64 = value.AsNumber<uint64_t>();
+							else if (valsize == 32)
+								uint32 = value.AsNumber<uint32_t>();
+							else if (valsize == 16)
+								uint16 = value.AsNumber<uint16_t>();
+							else
+								uint8 = value.AsNumber<uint8_t>();
+						}
+						else str = value.AsString().substr(0, size);
+						continue;
+					}
+					/*else {
+						if (data_size == 64)
+							uint64_t |= value.AsNu
+					}
+
+					if (totes_size < data_size) {
+						init = true;
+					}*/
+					else {
+						if (!isstr) {
+							if (!totes_size) {
+								if (valsize == 64)
+									uint64 = value.AsNumber<uint64_t>();
+								else if (valsize == 32)
+									uint32 = value.AsNumber<uint32_t>();
+								else if (valsize == 16)
+									uint16 = value.AsNumber<uint16_t>();
+								else if (valsize == 8)
+									uint8 = value.AsNumber<uint8_t>();
+
+							}
+							else if (big_edian) {
+								if (valsize == 64)
+									uint64 |= value.AsNumber<uint64_t>() << totes_size;
+								else if (valsize == 32)
+									uint32 |= value.AsNumber<uint32_t>() << totes_size;
+								else if (valsize == 16)
+									uint16 |= value.AsNumber<uint16_t>() << totes_size;
+								else if (valsize == 8)
+									uint8 |= value.AsNumber<uint8_t>() << totes_size;
+							}
+							else {
+								if (valsize == 64)
+									uint64 = (uint64 << size) | value.AsNumber<uint64_t>();
+								else if (valsize == 32)
+									uint32 = (uint32 << size) | value.AsNumber<uint32_t>();
+								else if (valsize == 16)
+									uint16 = (uint16 << size) | value.AsNumber<uint16_t>();
+								else if (valsize == 8)
+									uint8 = (uint8 << size) | value.AsNumber<uint8_t>();
+							}
+							
+							if (req_size != left_size)
+								totes_size += size;
+							else {
+								if (data_size == 64)
+									Output<uint64_t>(uint64);
+								else if (data_size == 32)
+									Output<uint32_t>(uint32);
+								else if (data_size == 16)
+									Output<uint16_t>(uint16);
+								else if (data_size == 8)
+									Output<uint8_t>(uint8);
+								init = true;
+							}
+						}
+						else str = value.AsString().substr(0, size);
 					}
 				}
 			}

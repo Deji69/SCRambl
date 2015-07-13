@@ -306,7 +306,7 @@ namespace SCRambl
 		};
 
 		enum class DataSourceID {
-			None, Value, Number, Text, Command, Variable, Label, Condition,
+			None, Env, Value, Number, Text, Command, Variable, Label, Condition,
 		};
 		enum class DataAttributeID {
 			None, Value, Size, Offset,
@@ -430,25 +430,44 @@ namespace SCRambl
 			std::vector<Data> m_Data;
 		};
 
+		using DataAttributes = Attributes<DataAttributeID, DataAttributeSet>;
+		using DataAttributesMap = std::map<DataSourceID, DataAttributes>;
+		using DataAttributesFunc = std::function<XMLValue(DataSourceID, DataAttributeID)>;
+
 		/*\ The Xlation's Will Convert You! \*/
 		class Xlation
 		{
 		public:
-			using Attributes = Attributes<DataAttributeID, DataAttributeSet>;
-
 			Xlation() = default;
-			Xlation(Translation::Ref translation) : m_Translation(translation)
+			Xlation(Translation::Ref translation, DataAttributesFunc&& func) : m_Func(func), m_Translation(translation)
 			{ }
+			virtual ~Xlation() = default;
 
 			Translation::Ref GetTranslation() const { return m_Translation; }
-			void SetAttribute(DataSourceID src, DataAttributeID attr, XMLValue val) { m_AttributesMap[src].SetAttribute(attr, val); }
-			void SetAttributes(DataSourceID src, Attributes attributes) { m_AttributesMap[src] = attributes; }
-			XMLValue GetAttribute(DataSourceID src, DataAttributeID attr) const { return m_AttributesMap.at(src).GetAttribute(attr); }
-			const Attributes& GetAttributes(DataSourceID id) const { return m_AttributesMap.at(id); }
+			void SetAttribute(DataSourceID src, DataAttributeID attr, XMLValue val) {
+				m_AttributesMap[src].SetAttribute(attr, val);
+			}
+			void SetAttributes(DataSourceID src, DataAttributes attributes) { m_AttributesMap[src] = attributes; }
+			XMLValue GetAttribute(DataSourceID src, DataAttributeID attr) const {
+				try {
+					return GetAttributes(src).GetAttribute(attr);
+				}
+				catch (...) {
+					m_Func(src, attr);
+					BREAK();
+				}
+				return "";
+			}
+
+		protected:
+			const DataAttributes& GetAttributes(DataSourceID id) const { return m_AttributesMap.at(id); }
 
 		private:
+			static const DataAttributesMap s_NullMap;
+
 			Translation::Ref m_Translation;
-			std::map<DataSourceID, Attributes> m_AttributesMap;
+			DataAttributesFunc m_Func;
+			DataAttributesMap m_AttributesMap;
 		};
 
 		/*\ Value of Type for translation \*/
