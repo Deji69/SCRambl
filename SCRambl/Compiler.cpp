@@ -61,16 +61,17 @@ namespace SCRambl
 				};
 				uint64 = 0;
 				std::string str;
-				bool init = true;
-				const bool big_edian = false;
+				bool init = true, args = false;
 
-				for (size_t x = 0; x < data->GetNumFields(); ++x) {
+				for (size_t x = 0; x < data->GetNumFields(); !args ? ++x : x=x) {
 					auto field = data->GetField(x);
 					auto value = xlate.GetAttribute(field->GetDataSource(), field->GetDataAttribute());
 					size_t size = field->HasSizeLimit() ? field->GetSizeLimit() : 0;
 
 					bool isstr = false;
-					switch (field->GetDataType()) {
+					auto type = field->GetDataType();
+
+					switch (type) {
 					case Types::DataType::Float:
 					case Types::DataType::Fixed:
 					case Types::DataType::Int:
@@ -89,7 +90,14 @@ namespace SCRambl
 						size = field->HasSizeLimit() ? size : value.AsString().size();
 						isstr = true;
 						break;
+					case Types::DataType::Args:
+						args = true;
+						break;
 					default: BREAK();
+					}
+
+					if (args) {
+
 					}
 
 					size_t valsize = 0;
@@ -128,7 +136,7 @@ namespace SCRambl
 
 					size_t req_size = totes_size + size,
 						   left_size = data_size - totes_size;
-					if (req_size > left_size) {
+					if (left_size < size) {
 						if (data_size == 64)
 							Output<uint64_t>(uint64);
 						else if (data_size == 32)
@@ -174,28 +182,18 @@ namespace SCRambl
 									uint8 = value.AsNumber<uint8_t>();
 
 							}
-							else if (big_edian) {
+							else {
 								if (valsize == 64)
 									uint64 |= value.AsNumber<uint64_t>() << totes_size;
 								else if (valsize == 32)
-									uint32 |= value.AsNumber<uint32_t>() << totes_size;
+									uint64 |= value.AsNumber<uint32_t>() << totes_size;
 								else if (valsize == 16)
-									uint16 |= value.AsNumber<uint16_t>() << totes_size;
+									uint64 |= value.AsNumber<uint16_t>() << totes_size;
 								else if (valsize == 8)
-									uint8 |= value.AsNumber<uint8_t>() << totes_size;
-							}
-							else {
-								if (valsize == 64)
-									uint64 = (uint64 << size) | value.AsNumber<uint64_t>();
-								else if (valsize == 32)
-									uint32 = (uint32 << size) | value.AsNumber<uint32_t>();
-								else if (valsize == 16)
-									uint16 = (uint16 << size) | value.AsNumber<uint16_t>();
-								else if (valsize == 8)
-									uint8 = (uint8 << size) | value.AsNumber<uint8_t>();
+									uint64 |= value.AsNumber<uint8_t>() << totes_size;
 							}
 							
-							if (req_size != left_size)
+							if (size != left_size)
 								totes_size += size;
 							else {
 								if (data_size == 64)

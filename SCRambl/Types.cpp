@@ -11,12 +11,78 @@ namespace SCRambl
 	
 	namespace Types
 	{
-		const Xlation::AttributesMap Xlation::s_NullMap;
+		const DataAttributesMap Xlation::s_NullMap;
 		const Translation::Ref Translation::BadRef;
 
 		//template<typename TAttributes, typename TAttributeSet = AttributeSet<TAttributes>>
 		//class Attributes : public IAttributes {
 		
+		std::string DataSource::GetNameByID(DataSourceID id) {
+			switch (id) {
+			case DataSourceID::Env:
+				return "Env";
+			case DataSourceID::Value:
+				return "Value";
+			case DataSourceID::Number:
+				return "Number";
+			case DataSourceID::Text:
+				return "Text";
+			case DataSourceID::Command:
+				return "Command";
+			case DataSourceID::Variable:
+				return "Variable";
+			case DataSourceID::Label:
+				return "Label";
+			case DataSourceID::Condition:
+				return "Condition";
+			}
+			return "";
+		}
+		DataSourceID DataSource::GetIDByName(std::string id) {
+			static const std::map<std::string, DataSourceID> map = {
+				{ "Env", DataSourceID::Env },
+				{ "Value", DataSourceID::Value },
+				{ "Number", DataSourceID::Number },
+				{ "Text", DataSourceID::Text },
+				{ "Command", DataSourceID::Command },
+				{ "Variable", DataSourceID::Variable },
+				{ "Condition", DataSourceID::Condition },
+			};
+			auto it = map.find(id);
+			return it != map.end() ? it->second : DataSourceID::None;
+		}
+		std::string DataAttribute::GetNameByID(DataAttributeID id) {
+			switch (id) {
+			case DataAttributeID::Value:
+				return "Value";
+			case DataAttributeID::Size:
+				return "Size";
+			case DataAttributeID::Offset:
+				return "Offset";
+			case DataAttributeID::ID:
+				return "ID";
+			case DataAttributeID::Name:
+				return "Name";
+			case DataAttributeID::NumArgs:
+				return "NumArgs";
+			case DataAttributeID::IsNOT:
+				return "IsNOT";
+			}
+			return "";
+		}
+		DataAttributeID DataAttribute::GetIDByName(std::string id) {
+			static const std::map<std::string, DataAttributeID> map = {
+				{ "Value", DataAttributeID::Value },
+				{ "Size", DataAttributeID::Size },
+				{ "Offset", DataAttributeID::Offset },
+				{ "ID", DataAttributeID::ID },
+				{ "Name", DataAttributeID::Name },
+				{ "NumArgs", DataAttributeID::NumArgs },
+				{ "IsNOT", DataAttributeID::IsNOT },
+			};
+			auto it = map.find(id);
+			return it != map.end() ? it->second : DataAttributeID::None;
+		}
 		ValueSet GetValueTypeByName(std::string name) {
 			static const std::unordered_map<std::string, ValueSet> table = {
 				{ "Null", ValueSet::Null },

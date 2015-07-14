@@ -315,9 +315,45 @@ namespace SCRambl
 			// Condition
 			IsNOT
 		};
+		
+		class DataSource {
+		public:
+			static std::string GetNameByID(DataSourceID);
+			static DataSourceID GetIDByName(std::string);
 
-		class DataSourceSet : public AttributeSet<DataSourceID>
-		{
+			DataSource() = default;
+			DataSource(DataSourceID id) : m_ID(id), m_Name(GetNameByID(id))
+			{ }
+			DataSource(std::string name) : m_ID(GetIDByName(name)), m_Name(name)
+			{ }
+
+			DataSourceID ID() const { return m_ID; }
+			std::string Name() const { return m_Name; }
+
+		private:
+			DataSourceID m_ID = DataSourceID::None;
+			std::string m_Name;
+		};
+		class DataAttribute {
+		public:
+			static std::string GetNameByID(DataAttributeID);
+			static DataAttributeID GetIDByName(std::string);
+
+			DataAttribute() = default;
+			DataAttribute(DataAttributeID id) : m_ID(id), m_Name(GetNameByID(m_ID))
+			{ }
+			DataAttribute(std::string name) : m_ID(GetIDByName(name)), m_Name(name)
+			{ }
+
+			DataAttributeID ID() const { return m_ID; }
+			std::string Name() const { return m_Name; }
+
+		private:
+			DataAttributeID m_ID = DataAttributeID::None;
+			std::string m_Name;
+		};
+
+		class DataSourceSet : public AttributeSet<DataSourceID> {
 		public:
 			DataSourceSet() : AttributeSet(DataSourceID::None)
 			{
@@ -449,14 +485,8 @@ namespace SCRambl
 			}
 			void SetAttributes(DataSourceID src, DataAttributes attributes) { m_AttributesMap[src] = attributes; }
 			XMLValue GetAttribute(DataSourceID src, DataAttributeID attr) const {
-				try {
-					return GetAttributes(src).GetAttribute(attr);
-				}
-				catch (...) {
-					m_Func(src, attr);
-					BREAK();
-				}
-				return "";
+				auto it = m_AttributesMap.find(src);
+				return it != m_AttributesMap.end() ? it->second.GetAttribute(attr) : m_Func(src, attr);
 			}
 
 		protected:
@@ -669,7 +699,7 @@ namespace SCRambl
 			 * Optional bool(Value*) function which should return true if it wants to push the Value
 			\*/
 			size_t GetValues(ValueSet valtype, size_t size, std::vector<Value*> & out) const {
-				int i = 0;
+				size_t i = 0;
 				AllValues(valtype, [&](Value* value){
 					if (value->CanFitSize(size)) {
 						out.push_back(value);
@@ -681,7 +711,7 @@ namespace SCRambl
 			}
 			template<typename TFunc>
 			size_t GetValues(ValueSet valtype, size_t size, std::vector<Value*> & out, TFunc func) const {
-				int i = 0;
+				size_t i = 0;
 				AllValues(valtype, [&](Value* value){
 					if (value->CanFitSize(size) && func(value)) {
 						out.push_back(value);
