@@ -39,7 +39,7 @@ namespace SCRambl
 			None, Loose, Basic, Strict
 		};
 
-		static ValueSet GetValueTypeByName(std::string name);
+		static ValueSet GetValueTypeByName(std::string);
 
 		// Internal data types
 		class DataType {

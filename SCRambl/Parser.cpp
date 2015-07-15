@@ -144,7 +144,7 @@ namespace SCRambl
 
 			else if (auto ptr = m_Build.GetScriptLabel(name)) {
 				// this is a label pointer!
-				m_Jumps.emplace_back(ptr->Ptr(), m_TokenIt);
+				//m_Jumps.emplace_back(ptr->Ptr(), m_TokenIt);
 
 				auto tok = CreateToken<Tokens::Label::Info>(Tokens::Type::LabelRef, range, ptr->Ptr());
 				m_TokenIt.Get()->SetToken(tok);

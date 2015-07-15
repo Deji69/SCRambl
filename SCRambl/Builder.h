@@ -149,6 +149,18 @@ namespace SCRambl
 		void DoAction(const ParseObjectConfig::Action& action, XMLValue v);
 	};
 
+	class BuildSymbol
+	{
+	public:
+		BuildSymbol(VecRef<Types::Xlation> xlation) : m_Xlation(xlation)
+		{ }
+
+		inline Types::Xlation& GetXlation() const { return *m_Xlation; }
+
+	private:
+		VecRef<Types::Xlation> m_Xlation;
+	};
+
 	class Build : public TaskSystem::Task<BuildEvent>
 	{
 		friend class Builder;

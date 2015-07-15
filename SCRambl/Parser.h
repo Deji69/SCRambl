@@ -99,27 +99,6 @@ namespace SCRambl
 			ID			m_ID;
 		};
 
-		class Symbolic {
-		public:
-			inline virtual ~Symbolic()
-			{ }
-		};
-
-		/*\
-		 * Parser::Jump - Jumps from a code position to a label
-		\*/
-		class Jump : public Symbolic {
-			Scripts::Tokens::Iterator m_TokenIt;
-			Label* m_Dest;
-
-		public:
-			using Vector = std::vector<Jump>;
-
-			Jump(Label* dest, Scripts::Tokens::Iterator it) :
-				m_Dest(dest), m_TokenIt(it)
-			{ }
-		};
-
 		class Task;
 
 		struct LabelRef {
@@ -131,8 +110,7 @@ namespace SCRambl
 			{ }
 		};
 
-		class Operand
-		{
+		class Operand {
 		public:
 			enum Type { NullValue, IntValue, FloatValue, TextValue, LabelValue, VariableValue };
 
@@ -671,7 +649,6 @@ namespace SCRambl
 			Command::Arg::Iterator m_CommandArgIt;
 			Commands::Vector m_OverloadCommands;
 			Commands::Vector::iterator m_OverloadCommandsIt;
-			Jump::Vector m_Jumps;
 			VecRef<Types::Xlation> m_Xlation;
 
 			std::map<ScriptLabel*, LabelRef> m_LabelReferences;
