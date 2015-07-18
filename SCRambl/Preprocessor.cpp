@@ -208,8 +208,7 @@ namespace SCRambl
 					while (m_CodePos && m_CodePos->IsIgnorable()) ++m_CodePos;
 
 					// gather up thy symbols
-					if (m_CodePos && m_CodePos->GetType() != Symbol::eol)
-					{
+					if (m_CodePos && m_CodePos->GetType() != Symbol::eol) {
 						std::set<const Macro*> macrosThatAreNotMacros;
 						CodeLine code;
 
@@ -275,8 +274,7 @@ namespace SCRambl
 				break;
 
 			case Directive::ELIF:
-				if (!GetSourceControl())
-				{
+				if (!GetSourceControl()) {
 					PopSourceControl();
 					PushSourceControl(GetSourceControl() ? (ProcessExpression() != 0) : false);
 				}

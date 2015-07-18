@@ -85,7 +85,7 @@ namespace SCRambl
 	public:
 		using Vec = std::vector<T>;
 		VecRef() = default;
-		VecRef(const VecRef& v) = default;
+		VecRef(const VecRef&) = default;
 		VecRef(Vec* vec) : VecRef(*vec)
 		{ }
 		VecRef(Vec& vec) : VecRef(vec, vec.size())
@@ -96,7 +96,7 @@ namespace SCRambl
 		template<typename TIndex>
 		VecRef(Vec& vec, TIndex index) : m_Vector(&vec), m_Index(index < 0 ? vec.size() + index : index)
 		{ }
-		~VecRef() { }
+		virtual ~VecRef() { }
 
 		inline T& operator*() const { return *Ptr(); }
 		inline T* operator->() const { return Ptr(); }

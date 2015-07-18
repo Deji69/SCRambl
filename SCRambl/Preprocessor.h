@@ -74,7 +74,7 @@ namespace SCRambl
 		/*\ BlockCommentScanner - Lexer::Scanner for block comments \*/
 		class BlockCommentScanner : public Lexer::Scanner
 		{
-			int				depth = 0;
+			int depth = 0;
 
 		public:
 			enum class Error {
@@ -86,29 +86,22 @@ namespace SCRambl
 
 		class Task;
 
-		/*\
-		 * Preprocessor::Information - Externally accessible info about the preprocessors current state
-		\*/
-		class Information
-		{
+		/*\ Preprocessor::Information - Externally accessible info about the preprocessors current state \*/
+		class Information {
 			friend class Preprocessor;
 			Scripts::Position& m_ScriptPosition;
 
 			void SetScriptPos(Scripts::Position& pos) { m_ScriptPosition = pos; }
 
 		public:
-			Information(Scripts::Position& pos):
-				m_ScriptPosition(pos)
-			{}
+			Information(Scripts::Position& pos) : m_ScriptPosition(pos)
+			{ }
 
 			inline const Scripts::Position& GetScriptPos() const { return m_ScriptPosition; }
 		};
 
-		/*\
-		 * Preprocessor::Error - Errors that can happen while preprocessing
-		\*/
-		class Error
-		{
+		/*\ Preprocessor::Error - Errors that can happen while preprocessing \*/
+		class Error {
 		public:
 			enum ID {
 				// involuntary errors (errors that should be impossible)
@@ -148,17 +141,14 @@ namespace SCRambl
 
 			Error(ID id) : m_ID(id)
 			{ }
-			inline operator ID() const			{ return m_ID; }
+			inline operator ID() const { return m_ID; }
 
 		private:
-			ID			m_ID;
+			ID m_ID;
 		};
 
-		/*\
-		 * Preprocessor::Directive - Preprocessor directive stuff
-		\*/
-		class Directive
-		{
+		/*\ Preprocessor::Directive - Preprocessor directive stuff \*/
+		class Directive {
 		public:
 			enum Type {
 				INVALID,
@@ -176,15 +166,11 @@ namespace SCRambl
 				REGISTER_COMMAND,
 			};
 
-		private:
-			Type		m_Type;
-
-		public:
 			Directive() = default;
 			Directive(Type type) : m_Type(type)
 			{ }
 
-			inline operator Type() const		{ return m_Type; }
+			inline operator Type() const { return m_Type; }
 
 			static inline std::string Formatter(Directive type) {
 				std::string name = "";
@@ -214,11 +200,13 @@ namespace SCRambl
 				}
 				return !name.empty() ? ("#" + name) : "(invalid)";
 			}
+
+		private:
+			Type m_Type;
 		};
 
 		/*\ Preprocessor::Character - Preprocessor character stuff \*/
-		class Character
-		{
+		class Character {
 		public:
 			enum Type { EOL };
 
@@ -248,7 +236,7 @@ namespace SCRambl
 			};
 
 			Delimiter() = default;
-			Delimiter(Type type) : m_Type(type) {}
+			Delimiter(Type type) : m_Type(type) { }
 
 			inline operator Type() const { return m_Type; }
 			
@@ -270,6 +258,29 @@ namespace SCRambl
 			template<typename... T>
 			using TToken = TokenInfo<Tokens::Type, T...>;
 
+		public:
+			enum State {
+				init,
+				lexing,
+				found_directive,
+				found_comment,
+				found_token,
+				finished,
+				bad_state,
+				max_state = bad_state,
+			};
+
+			Preprocessor(Task&, Engine&, Build&);
+
+			inline bool IsRunning() const { return m_State != finished; }
+			inline bool IsFinished() const { return m_State == finished; }
+			void Run();
+			void Reset();
+
+		protected:
+			const Information & GetInfo() const { return m_Information; }
+
+		private:
 			Engine&	m_Engine;
 			Task& m_Task;
 			Information m_Information;
@@ -296,32 +307,10 @@ namespace SCRambl
 			std::string m_String;					// last scanned string
 			std::string	m_Identifier;				// last scanned identifier
 			MacroMap m_Macros;
-			
+
 			std::stack<Scripts::Token> m_Delimiters;
 
-		public:
-			enum State {
-				init,
-				lexing,
-				found_directive,
-				found_comment,
-				found_token,
-				finished,
-				bad_state,
-				max_state = bad_state,
-			};
-
-			Preprocessor(Task&, Engine&, Build&);
-
-			inline bool IsRunning() const			{ return m_State != finished; }
-			inline bool IsFinished() const			{ return m_State == finished; }
-			void Run();
-			void Reset();
-
-		protected:
-			const Information & GetInfo() const		{ return m_Information; }
-
-		private:
+			//
 			State m_State = init;
 			Build& m_Build;
 			Scripts::Tokens& m_Tokens;
@@ -436,11 +425,6 @@ namespace SCRambl
 				m_WasLastTokenEOL = false;
 				return m_Tokens.Add<T>(pos, token, std::forward<TArgs&&>(args)...);
 			}
-			/*template<typename... TArgs>
-			inline std::shared_ptr<Token<TArgs...>> AddToken(PreprocessingToken::Type token, TArgs... args)
-			{
-				return m_Tokens.Add < Token<TArgs...> >(token, std::forward<TArgs>(args)...);
-			}*/
 
 			// Handle expressions
 			int ProcessExpression(bool paren = false);
@@ -475,9 +459,7 @@ namespace SCRambl
 			}
 		};
 
-		/*\
-		 * Preprocessor::Event - Interesting stuff that the Preprocessor does
-		\*/
+		/*\ Preprocessor::Event - Interesting stuff that the Preprocessor does \*/
 		enum class Event
 		{
 			Begin, Finish,
@@ -487,16 +469,14 @@ namespace SCRambl
 			FoundToken,
 		};
 
-		/*\
-		 * Preprocessor::Task - The Preprocessor and Task become one
-		\*/
+		/*\ Preprocessor::Task - The Preprocessor and Task become one \*/
 		class Task : public TaskSystem::Task<Event>, private Preprocessor
 		{
 			friend Preprocessor;
 			Engine& m_Engine;
 			const Information& m_Info;
 
-			inline Engine & GetEngine() { return m_Engine; }
+			inline Engine& GetEngine() { return m_Engine; }
 
 			inline bool operator()(Event id) { return CallEventHandler(id); }
 
@@ -504,8 +484,7 @@ namespace SCRambl
 			inline bool operator()(Event id, Args&&... args) { return CallEventHandler(id, std::forward<Args>(args)...); }
 
 		public:
-			Task(Engine& engine, Build* build):
-				Preprocessor(*this, engine, *build),
+			Task(Engine& engine, Build* build) : Preprocessor(*this, engine, *build),
 				m_Engine(engine), m_Info(GetInfo())
 			{ }
 

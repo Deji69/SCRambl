@@ -21,6 +21,9 @@ namespace SCRambl
 	enum class BuildEvent {
 
 	};
+	enum class BuildSymbolType {
+		None, Command, Data
+	};
 
 	using ScriptVariable = ScriptObject<Variable>;
 	using ScriptLabel = ScriptObject<Label>;
@@ -149,16 +152,34 @@ namespace SCRambl
 		void DoAction(const ParseObjectConfig::Action& action, XMLValue v);
 	};
 
+	class BuildCommand
+	{
+	public:
+		BuildCommand(BuildEnvironment& env, VecRef<ParseObjectConfig::Action> act, XMLValue val) : m_Environment(env), m_Action(act), m_Value(val)
+		{ }
+
+	private:
+		BuildEnvironment& m_Environment;
+		VecRef<ParseObjectConfig::Action> m_Action;
+		XMLValue m_Value;
+	};
+
 	class BuildSymbol
 	{
 	public:
-		BuildSymbol(VecRef<Types::Xlation> xlation) : m_Xlation(xlation)
+		BuildSymbol(BuildEnvironment& env) : m_Env(env)
 		{ }
 
-		inline Types::Xlation& GetXlation() const { return *m_Xlation; }
+	protected:
+		inline BuildEnvironment& Environment() const { return m_Env; }
 
 	private:
-		VecRef<Types::Xlation> m_Xlation;
+		BuildEnvironment& m_Env;
+	};
+
+	class BuildCommand
+	{
+
 	};
 
 	class Build : public TaskSystem::Task<BuildEvent>

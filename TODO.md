@@ -1,10 +1,10 @@
 # SCRambl
 
-Deadline: V?
+Deadline: Christmas...
 
-**Completed: 39 / 96**
+**Completed: 44 / 99**
 
-est. 40% Complete
+est. 44.444...% Complete
 
 ## Engine ##
 - [x] Task System
@@ -13,12 +13,12 @@ est. 40% Complete
 	- [x] Message Formatting
 - [x] Lexer Engine
 - [x] Preprocessor Tasks
-- [ ] Parser Tasks
-- [ ] Compiler Tasks
+- [x] Parser Tasks
+- [x] Compiler Tasks
 - [ ] Linker Tasks
 - [ ] Build Files
 
-Completed: 6 / 9
+Completed: 8 / 10
 
 ## Lexer ##
 - [x] Scanner Engine
@@ -71,6 +71,8 @@ Completed: 20 / 31
 ## Parser ##
 - [ ] SCR Elements
 	- [ ] Commands
+		- [x] Built-in
+		- [ ] User-defined
 	- [ ] Labels
 	- [ ] Operators
 	- [x] Constants
@@ -96,8 +98,8 @@ Completed: 20 / 31
 - [ ] Variable Syntax
 	- [ ] Scope
 - [ ] Operator Syntax
-	- [ ] Basic Operations
-	- [ ] Incremental Operations
+	- [x] Basic Operations
+	- [x] Incremental Operations
 	- [ ] Complex Operations
 	- [ ] Chained Operations
 	- [ ] Operator Overloading
@@ -105,7 +107,7 @@ Completed: 20 / 31
 - [ ] Other
 	- [ ] Constant Expressions ?
 
-Completed: 4 / 35
+Completed: 7 / 37
 
 ## Compiler ##
 - [ ] Translation
