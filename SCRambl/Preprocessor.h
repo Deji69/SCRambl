@@ -86,6 +86,17 @@ namespace SCRambl
 
 		class Task;
 
+		template<typename T, Numbers::Type TType>
+		class TokenNumber : public Tokens::Number::Info<T> {
+			using Parent = Tokens::Number::Info<T>;
+			T m_Val;
+
+		public:
+			TokenNumber(Scripts::Range rg, T val) : Parent(Tokens::Type::Number, rg, TType, &m_Val),
+				m_Val(val)
+			{ }
+		};
+
 		/*\ Preprocessor::Information - Externally accessible info about the preprocessors current state \*/
 		class Information {
 			friend class Preprocessor;
@@ -208,7 +219,7 @@ namespace SCRambl
 		/*\ Preprocessor::Character - Preprocessor character stuff \*/
 		class Character {
 		public:
-			enum Type { EOL };
+			enum Type { EOL, Colonnector };
 
 			Character() = default;
 			Character(Type type) : m_Type(type) { }
@@ -219,12 +230,14 @@ namespace SCRambl
 				switch (type) {
 				case EOL: rep = "[EOL]";
 					break;
+				case Colonnector: rep = ":";
+					break;
 				}
 				return !rep.empty() ? rep : "[UNK]";
 			}
 
 		private:
-			Type		m_Type;
+			Type m_Type;
 		};
 
 		/*\ Preprocessor::Delimiter - Preprocessor delimiter stuff \*/

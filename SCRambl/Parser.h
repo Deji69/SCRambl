@@ -37,7 +37,8 @@ namespace SCRambl
 		enum States {
 			state_neutral, state_parsing_type, state_parsing_command, state_parsing_operator,
 			state_parsing_number, state_parsing_string, state_parsing_label, state_parsing_variable,
-			state_parsing_subscript, state_parsing_type_varlist, state_parsing_command_args,
+			state_parsing_subscript, state_parsing_type_varlist, state_parsing_type_command,
+			state_parsing_command_args,
 			max_state
 		};
 
@@ -83,7 +84,10 @@ namespace SCRambl
 				invalid_operator,
 				label_on_line,
 				unsupported_value_type,
-				expected_identifier,
+				expected_identifier,			// expected an identifier (_id1/i_d1/_1id)
+				expected_key_identifier,		// expected a key identifier (identifier/number/"string")
+				expected_colon_punctuator,		// expected a :
+				expected_integer_constant,
 
 				// fatal errors
 				fatal_begin = 4000,
@@ -122,11 +126,11 @@ namespace SCRambl
 				m_LabelValue(label), m_Text(label->Get().Name())
 			{ }
 			Operand(Tokens::Number::Info<Numbers::IntegerType>* info) : m_Type(IntValue),
-				m_IntValue(info->GetValue<Tokens::Number::NumberValue>()),
+				m_IntValue(*info->GetValue<Tokens::Number::NumberValue>()),
 				m_Text(info->GetValue<Tokens::Number::ScriptRange>().Format())
 			{ }
 			Operand(Tokens::Number::Info<Numbers::FloatType>* info) : m_Type(FloatValue),
-				m_FloatValue(info->GetValue<Tokens::Number::NumberValue>()),
+				m_FloatValue(*info->GetValue<Tokens::Number::NumberValue>()),
 				m_Text(info->GetValue<Tokens::Number::ScriptRange>().Format())
 			{ }
 			Operand(int64_t v, std::string str) : m_Type(IntValue),
@@ -362,6 +366,7 @@ namespace SCRambl
 			States Parse_Neutral_CheckString(IToken*);
 			States Parse_Type();
 			States Parse_Type_Varlist();
+			States Parse_Type_CommandDef();
 			States Parse_Command();
 			States Parse_Command_Args();
 			States Parse_Operator();
@@ -403,12 +408,13 @@ namespace SCRambl
 
 			// Sends errors and returns default if fail
 			template<typename T>
-			static T GetIntegerConstant(IToken* toke, T default_val = 0) {
+			T GetIntegerConstant(IToken* toke, T default_val = 0) {
 				auto intinfo = GetIntInfo(toke);
-				if (!intinfo)
-					BREAK();
+				if (!intinfo) {
+					SendError(Error::expected_integer_constant);
+				}
 				else
-					return static_cast<T>(intinfo->GetValue<SCRambl::Tokens::Number::NumberValue>());
+					return static_cast<T>(*intinfo->GetValue<SCRambl::Tokens::Number::NumberValue>());
 				return default_val;
 			}
 
@@ -419,9 +425,14 @@ namespace SCRambl
 				return Tokens::Number::IsTypeFloat(*ptr) ? static_cast<Tokens::Number::Info<Numbers::FloatType>*>(ptr) : nullptr;
 			}
 
+			static Tokens::Type GetTokenType(IToken* toke) {
+				return toke->GetType<Tokens::Type>();
+			}
+			static bool IsTokenType(IToken* toke, Tokens::Type type) {
+				return GetTokenType(toke) == type;
+			}
 			static std::string GetIdentifierName(IToken* toke) {
-				auto token = static_cast<Tokens::Identifier::Info<>*>(toke);
-				return token->GetValue<Tokens::Identifier::ScriptRange>().Format();
+				return Tokens::Identifier::GetScriptRange(*toke).Format();
 			}
 			static std::string GetTextString(IToken* toke) {
 				auto token = static_cast<Tokens::String::Info*>(toke);
@@ -431,36 +442,41 @@ namespace SCRambl
 				auto tok = static_cast<Tokens::Operator::Info<Operators::OperatorRef>*>(toke);
 				return tok->GetValue<Tokens::Operator::ScriptRange>();
 			}
-			
+			static std::string GetTokenString(IToken* toke) {
+				auto type = toke->GetType<Tokens::Type>();
+				switch (type) {
+				case Tokens::Type::Identifier:
+					return Tokens::Identifier::GetScriptRange(*toke).Format();
+				case Tokens::Type::Number:
+					return Tokens::Number::GetScriptRange(toke).Format();
+				case Tokens::Type::String:
+					return Tokens::String::GetString(*toke);
+				default:
+					BREAK(); // ?
+				}
+				return "";
+			}
+
 			static Character GetCharacterValue(IToken* toke) {
-				auto token = static_cast<CharacterInfo*>(toke);
-				return token->GetValue<Tokens::Character::Parameter::CharacterValue>();
+				return Tokens::Character::GetCharacter<Character>(*toke);
 			}
 			static bool IsCharacter(IToken* toke) {
 				return toke->GetType<Tokens::Type>() == Tokens::Type::Character;
 			}
 			static bool IsCharacterEOL(IToken* toke) {
-				auto tok = static_cast<CharacterInfo*>(toke);
-				return IsCharacter(tok) && tok->GetValue<Tokens::Character::Parameter::CharacterValue>() == Character::EOL;
+				return IsCharacter(toke) && GetCharacterValue(toke) == Character::EOL;
 			}
 			static bool IsSubscriptDelimiter(IToken* toke) {
-				auto info = static_cast<Tokens::Delimiter::Info<Delimiter>*>(toke);
-				auto delimtype = info->GetValue<Tokens::Delimiter::Parameter::DelimiterType>();
-				return delimtype == Delimiter::Subscript;
+				return Tokens::Delimiter::GetDelimiterType<Delimiter>(*toke) == Delimiter::Subscript;
 			}
 			static bool IsSubscriptDelimiterClosing(IToken* toke) {
-				auto tok = static_cast<DelimiterInfo*>(toke);
-				auto delimtype = tok->GetValue<Tokens::Delimiter::Parameter::DelimiterType>();
-				return IsSubscriptDelimiter(toke) && tok->GetValue<Tokens::Delimiter::ScriptRange>().End() == tok->GetValue<Tokens::Delimiter::ScriptPosition>();
+				return IsSubscriptDelimiter(toke) && Tokens::Delimiter::GetScriptRange(*toke).End() == Tokens::Delimiter::GetScriptPosition(*toke);
 			}
 			static bool IsScopeDelimiter(IToken* toke) {
-				auto info = static_cast<Tokens::Delimiter::Info<Delimiter>*>(toke);
-				auto delimtype = info->GetValue<Tokens::Delimiter::Parameter::DelimiterType>();
-				return delimtype == Delimiter::Scope;
+				return Tokens::Delimiter::GetDelimiterType<Delimiter>(*toke) == Delimiter::Scope;
 			}
 			static bool IsScopeDelimiterClosing(IToken* toke) {
-				auto tok = static_cast<DelimiterInfo*>(toke);
-				return IsScopeDelimiter(toke) && tok->GetValue<Tokens::Delimiter::ScriptRange>().End() == tok->GetValue<Tokens::Delimiter::ScriptPosition>();
+				return IsScopeDelimiter(toke) && Tokens::Delimiter::GetScriptRange(*toke).End() == Tokens::Delimiter::GetScriptPosition(*toke);
 			}
 			static bool IsOperator(IToken* toke) {
 				//return static_cast<TokenBase<Tokens::Type>*>(toke)->GetType() == Tokens::Type::Operator;
@@ -470,10 +486,14 @@ namespace SCRambl
 				auto operater = GetOperator(toke);
 				return operater && operater->IsConditional();
 			}
+			static bool IsColonPunctuator(IToken* toke) {
+				return IsTokenType(toke, Tokens::Type::Character) && GetCharacterValue(toke) == Character::Colonnector;
+			}
 			static Operators::OperatorRef GetOperator(IToken* toke) {
 				auto tok = static_cast<Tokens::Operator::Info<Operators::OperatorRef>*>(toke);
 				auto operater = tok->GetValue<Tokens::Operator::OperatorType>();
 				return operater;
+				return Tokens::Operator::GetOperator<Operators::OperatorRef>(*toke);
 			}
 
 			bool GetDelimitedArrayIntegerConstant(size_t& i) {

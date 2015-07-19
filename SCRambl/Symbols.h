@@ -145,14 +145,15 @@ namespace SCRambl
 			m_Character(GetGenericTypeChar(generic_type))
 		{ }
 
-		inline char GetChar() const				{ return m_Character; }
-		inline Type GetType() const				{ return m_Type; }
-		inline Grapheme GetGrapheme() const		{ return m_Grapheme; }
-		inline operator char() const			{ return GetChar(); }
-		inline bool HasGrapheme() const			{ return m_Grapheme != Grapheme::max_type; }
-		inline bool IsEOL() const				{ return m_Type == eol; }
-		inline bool IsIgnorable() const			{ return m_Type == whitespace; }
-		inline bool IsDelimiter() const			{ return m_Type == delimiter; }
+		inline char GetChar() const	{ return m_Character; }
+		inline Type GetType() const	{ return m_Type; }
+		inline Grapheme GetGrapheme() const	{ return m_Grapheme; }
+		inline operator char() const { return GetChar(); }
+		inline bool HasGrapheme() const	{ return m_Grapheme != Grapheme::max_type; }
+		inline bool IsEOL() const { return m_Type == eol; }
+		inline bool IsIgnorable() const { return m_Type == whitespace; }
+		inline bool IsDelimiter() const	{ return m_Type == delimiter; }
+		inline bool IsPunctuator() const { return m_Type == punctuator; }
 		inline bool IsSeparating() const {
 			switch (m_Type)
 			{

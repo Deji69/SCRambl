@@ -22,9 +22,9 @@ namespace SCRambl
 
 	public:
 		template<typename T>
-		inline T & Get() { return *static_cast<T*>(this); }
+		inline T& Get() { return *static_cast<T*>(this); }
 		template<typename T>
-		inline const T & Get() const { return *static_cast<const T*>(this); }
+		inline const T& Get() const { return *static_cast<const T*>(this); }
 		template<typename T>
 		inline T GetType() const { return static_cast<const TokenBase<T>*>(this)->GetType(); }
 	};
@@ -53,15 +53,18 @@ namespace SCRambl
 		std::tuple<TValueType...> m_Value;
 
 	public:
+		template<std::size_t N>
+		using ValueType = typename std::tuple_element<N, std::tuple<TValueType...>>::type;
+
 		TokenInfo(TTokenType type, TValueType... val) : TokenBase(type), m_Value(val...)
 		{ }
 
 		template<std::size_t N>
-		inline const typename std::tuple_element<N, std::tuple<TValueType...>>::type& GetValue() const {
+		inline const ValueType<N>& GetValue() const {
 			return std::get<N>(m_Value);
 		}
 		template<std::size_t N>
-		inline typename std::tuple_element<N, std::tuple<TValueType...>>::type& GetValue() {
+		inline ValueType<N>& GetValue() {
 			return std::get<N>(m_Value);
 		}
 	};

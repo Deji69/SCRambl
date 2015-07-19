@@ -154,7 +154,7 @@ namespace SCRambl
 				AddLabelRef(ptr, m_TokenIt);
 				return state_parsing_label;
 			}
-			else if (m_Commands.FindCommands(name, vec) > 0) {
+			else if (m_ExtraCommands.FindCommands(name, vec) > 0 || m_Commands.FindCommands(name, vec) > 0) {
 				// make a token and store it
 				if (vec.size() == 1)
 					m_TokenIt.Get()->SetToken(CreateToken<Tokens::Command::Info>(Tokens::Type::Command, range, vec[0]));
@@ -251,6 +251,12 @@ namespace SCRambl
 		}
 		States Parser::Parse_Type() {
 			++m_TokenIt;
+			auto& type = m_TypeParseState.type;
+
+			// check for special declaration types such as commands, labels or constants
+			if (type->HasValueType(Types::ValueSet::Command)) {
+				return state_parsing_type_command;
+			}
 			return state_parsing_type_varlist;
 		}
 		States Parser::Parse_Number() {
@@ -261,13 +267,13 @@ namespace SCRambl
 				auto info = m_NumberParseState.IntInfo;
 				auto val = info->GetValue<Tokens::Number::NumberValue>();
 				operand = info;
-				size = val.Size();
+				size = val->Size();
 			}
 			else {
 				auto info = m_NumberParseState.FloatInfo;
 				auto val = info->GetValue<Tokens::Number::NumberValue>();
 				operand = info;
-				size = val.Size();
+				size = val->Size();
 			}
 
 			auto value = GetBestValue(Types::ValueSet::Number, size);
@@ -379,6 +385,51 @@ namespace SCRambl
 			++m_TokenIt;
 			return state_parsing_type_varlist;
 		}
+		States Parser::Parse_Type_CommandDef() {
+			if (IsEOLReached()) {
+				return state_neutral;
+			}
+			else if (!IsTokenType(m_TokenIt->GetToken(), Tokens::Type::Identifier)) {
+				SendError(Error::expected_identifier);
+			}
+			else {
+				auto name = GetIdentifierName(m_TokenIt->GetToken());
+				if (name.empty()) SendError(Error::expected_identifier);
+				else {
+					auto chartok = PeekToken(Tokens::Type::Character);
+					if (!chartok || !IsColonPunctuator(chartok))
+						SendError(Error::expected_colon_punctuator);
+					++m_TokenIt;
+					
+					auto id = GetTokenString(PeekToken());
+					if (!id.empty()) {
+						auto command = m_ExtraCommands.AddCommand(name, id, m_TypeParseState.type);
+						++m_TokenIt;
+
+						/*while (auto idtok = PeekToken()) {
+							if (idtok->GetType<Tokens::Type>() == Tokens::Type::Operator) {
+								auto op = Tokens::Operator::GetOperator<Operators::OperatorRef>(*idtok);
+
+								auto optok = PeekToken(Tokens::Type::Identifier, 1);
+							}
+
+							auto type = m_Types.GetType(GetTokenString(idtok));
+							if (!type) break;
+							
+							size_t size = 0;
+							GetDelimitedArrayIntegerConstant(size);
+
+							++m_TokenIt;
+						}*/
+					}
+					else SendError(Error::expected_key_identifier);
+				}
+			}
+			++m_TokenIt;
+			
+			
+			return state_parsing_type_command;
+		}
 		States Parser::Parse_Command() {
 			m_ActiveState = state_parsing_command_args;
 			m_CommandParseState.Begin(m_CurrentCommand, m_CurrentCommand->BeginArg());
@@ -464,7 +515,7 @@ namespace SCRambl
 					&Parser::Parse_Number, &Parser::Parse_String, &Parser::Parse_Label, &Parser::Parse_Variable,
 
 					&Parser::Parse_Subscript,
-					&Parser::Parse_Type_Varlist,
+					&Parser::Parse_Type_Varlist, &Parser::Parse_Type_CommandDef,
 					&Parser::Parse_Command_Args,
 				};
 				newstate = (this->*funcs[m_ParseState = newstate])();
@@ -758,6 +809,7 @@ namespace SCRambl
 
 		void Parser::SendError(Error type)
 		{
+			BREAK();
 			if (m_State == overloading) {
 				FailCommandOverload();
 			}

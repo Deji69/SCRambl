@@ -16,9 +16,6 @@ namespace SCRambl
 			Integer, Float, Byte, Word, DWord
 		};
 
-		//typedef int IntegerType;
-		//typedef float FloatType;
-
 		class IntegerType
 		{
 		public:
@@ -82,8 +79,6 @@ namespace SCRambl
 				}
 				return (T)m_Value.tLong;
 			}
-			//template<typename T>
-			//inline const T& GetValue() const		{ return GetValue<T>(); }
 
 			size_t Size() const { return m_Size; }
 

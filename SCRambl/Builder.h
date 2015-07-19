@@ -177,11 +177,6 @@ namespace SCRambl
 		BuildEnvironment& m_Env;
 	};
 
-	class BuildCommand
-	{
-
-	};
-
 	class Build : public TaskSystem::Task<BuildEvent>
 	{
 		friend class Builder;

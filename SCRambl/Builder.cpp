@@ -71,7 +71,7 @@ namespace SCRambl
 							auto toke = argit->GetToken();
 							switch (toke->GetType<Tokens::Type>()) {
 							case Tokens::Type::Number:
-								val = toke->Get<Tokens::Number::TypelessInfo>().GetValue<Tokens::Number::ScriptRange>().Format();
+								val = toke->Get<Tokens::Number::DummyInfo>().GetValue<Tokens::Number::ScriptRange>().Format();
 								break;
 							case Tokens::Type::String:
 								val = toke->Get<Tokens::String::Info>().GetValue<Tokens::String::StringValue>();

@@ -53,6 +53,10 @@ namespace SCRambl
 		public:
 			static const enum Parameter { ScriptRange };
 			using Info = TokenInfo<Type, Scripts::Range>;
+
+			static Scripts::Range GetScriptRange(const IToken& token) {
+				return token.Get<Info>().GetValue<ScriptRange>();
+			}
 		};
 		class Identifier {
 		public:
@@ -60,11 +64,22 @@ namespace SCRambl
 			static const size_t c_Extra = EXTRA;
 			template<typename... TData>
 			using Info = TokenInfo<Type, Scripts::Range, TData...>;
+
+			static Scripts::Range GetScriptRange(const IToken& token) {
+				return token.Get<const Info<>>().GetValue<ScriptRange>();
+			}
 		};
 		class Label {
 		public:
 			static const enum Parameter { ScriptRange, LabelValue };
 			using Info = TokenInfo<Type, Scripts::Range, SCRambl::Label*>;
+
+			static Scripts::Range GetScriptRange(const IToken& token) {
+				return token.Get<Info>().GetValue<ScriptRange>();
+			}
+			static SCRambl::Label* GetLabel(const IToken& token) {
+				return token.Get<Info>().GetValue<LabelValue>();
+			}
 
 			/* Tokens::Command::Call - Carries symbolic data for a command call */
 			class Jump : public Symbol
@@ -83,14 +98,17 @@ namespace SCRambl
 		public:
 			static const enum Parameter { ScriptRange, ValueType, NumberValue };
 			template<typename TNumberType>
-			using Info = TokenInfo<Type, Scripts::Range, Numbers::Type, TNumberType>;
-			using TypelessInfo = TokenInfo<Type, Scripts::Range, Numbers::Type>;
+			using Info = TokenInfo<Type, Scripts::Range, Numbers::Type, TNumberType*>;
+			using DummyInfo = TokenInfo<Type, Scripts::Range, Numbers::Type, void*>;
 
+			static Scripts::Range GetScriptRange(const IToken* token) {
+				return token->Get<DummyInfo>().GetValue<ScriptRange>();
+			}
 			static Numbers::Type GetValueType(const IToken& token) {
-				return token.Get<const TypelessInfo>().GetValue<ValueType>();
+				return token.Get<DummyInfo>().GetValue<ValueType>();
 			}
 			static bool IsTypeInt(const IToken& token) {
-				switch (token.Get<const TypelessInfo>().GetValue<ValueType>()) {
+				switch (token.Get<DummyInfo>().GetValue<ValueType>()) {
 				case Numbers::Type::Integer:
 				case Numbers::Type::DWord:
 				case Numbers::Type::Word:
@@ -100,7 +118,11 @@ namespace SCRambl
 				return false;
 			}
 			static bool IsTypeFloat(const IToken& token) {
-				return token.Get<const TypelessInfo>().GetValue<ValueType>() == Numbers::Type::Float;
+				return token.Get<DummyInfo>().GetValue<ValueType>() == Numbers::Type::Float;
+			}
+			template<typename TNumberType>
+			static TNumberType GetNumberValue(const IToken& token) {
+				return token.Get<Info<TNumberType>>().GetValue<NumberValue>();
 			}
 
 			/*\ Tokens::Number::Value - Carries all symbolic data for a number value \*/
@@ -146,9 +168,10 @@ namespace SCRambl
 		};
 		class Operator {
 		public:
-			static const enum Parameter { ScriptRange, OperatorType };
+			enum Parameter { ScriptRange, OperatorType };
 			template<typename TOperatorType>
-			using Info = TokenInfo < Type, Scripts::Range, TOperatorType >;
+			using Info = TokenInfo<Type, Scripts::Range, TOperatorType>;
+			using DummyInfo = TokenInfo<Type, Scripts::Range>;
 
 			template<typename TOperationType>
 			class Operation : public Symbol
@@ -163,12 +186,21 @@ namespace SCRambl
 			private:
 				TOperationType* m_Operation;
 			};
+		
+			static Scripts::Range GetScriptRange(const IToken& token) {
+				return token.Get<DummyInfo>().GetValue<ScriptRange>();
+			}
+			template<typename TOperatorType>
+			static TOperatorType GetOperator(const IToken& token) {
+				return token.Get<Info<TOperatorType>>().GetValue<OperatorType>();
+			}
 		};
 		class Command {
 		public:
-			static const enum Parameter { ScriptRange, CommandType };
+			enum Parameter { ScriptRange, CommandType };
 			using Info = TokenInfo<Type, Scripts::Range, SCRambl::Command*>;
 			using OverloadInfo = TokenInfo<Type, Scripts::Range, std::vector<SCRambl::Command*>>;
+			using DummyInfo = TokenInfo<Type, Scripts::Range>;
 
 			/*\ Tokens::Command:Decl - Carries symbolic data for a command declaration \*/
 			class Decl : public Symbol {
@@ -203,10 +235,20 @@ namespace SCRambl
 
 				inline void AddArg(Symbol* symbol) { m_Args.emplace_back(symbol); }
 			};
+
+			static Scripts::Range GetScriptRange(const IToken& token) {
+				return token.Get<DummyInfo>().GetValue<ScriptRange>();
+			}
+			static SCRambl::Command* GetCommand(const IToken& token) {
+				return token.Get<Info>().GetValue<CommandType>();
+			}
+			static std::vector<SCRambl::Command*> GetOverloads(const IToken& token) {
+				return token.Get<OverloadInfo>().GetValue<CommandType>();
+			}
 		};
 		class String {
 		public:
-			static const enum Parameter { ScriptRange, StringValue };
+			enum Parameter { ScriptRange, StringValue };
 			using Info = TokenInfo<Type, Scripts::Range, std::string>;
 
 			template<typename TValueType>
@@ -234,18 +276,46 @@ namespace SCRambl
 				std::string Value() const { return m_Value; }
 				size_t Size() const { return Value().size(); }
 			};
+		
+			static Scripts::Range GetScriptRange(const IToken& token) {
+				return token.Get<Info>().GetValue<ScriptRange>();
+			}
+			static std::string GetString(const IToken& token) {
+				return token.Get<Info>().GetValue<StringValue>();
+			}
 		};
 		class Delimiter {
 		public:
-			static const enum Parameter { ScriptPosition, ScriptRange, DelimiterType };
+			enum Parameter { ScriptPosition, ScriptRange, DelimiterType };
 			template<typename TDelimiterType>
 			using Info = TokenInfo<Type, Scripts::Position, Scripts::Range, TDelimiterType>;
+			using DummyInfo = TokenInfo<Type, Scripts::Position, Scripts::Range>;
+
+			static Scripts::Position GetScriptPosition(const IToken& token) {
+				return token.Get<DummyInfo>().GetValue<ScriptPosition>();
+			}
+			static Scripts::Range GetScriptRange(const IToken& token) {
+				return token.Get<DummyInfo>().GetValue<ScriptRange>();
+			}
+			template<typename TDelimiterType>
+			static TDelimiterType GetDelimiterType(const IToken& token) {
+				return token.Get<Info<TDelimiterType>>().GetValue<DelimiterType>();
+			}
 		};
 		class Character {
 		public:
-			static const enum Parameter { ScriptPosition, CharacterValue };
+			enum Parameter { ScriptPosition, CharacterValue };
 			template<typename TCharType>
 			using Info = TokenInfo<Type, Scripts::Position, TCharType>;
+			using TypelessInfo = TokenInfo<Type, Scripts::Position>;
+
+			template<typename TCharType>
+			static TCharType GetCharacter(const IToken& token) {
+				return token.Get<const Info<TCharType>>().GetValue<CharacterValue>();
+			}
+			static Scripts::Position GetPosition(const IToken& token) {
+				return token.Get<const TypelessInfo>().GetValue<ScriptPosition>();
+			}
 		};
 	}
 }

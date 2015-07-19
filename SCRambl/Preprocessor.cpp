@@ -159,9 +159,9 @@ namespace SCRambl
 			}
 			case TokenType::Number: {
 				if (m_NumericScanner.Is<int>())
-					m_Build.CreateToken<Tokens::Number::Info<Numbers::IntegerType>>(pos, Tokens::Type::Number, range, Numbers::Integer, m_NumericScanner.Get<long long>());
+					m_Build.CreateToken<TokenNumber<Numbers::IntegerType, Numbers::Integer>>(pos, range, m_NumericScanner.Get<long long>());
 				else
-					m_Build.CreateToken<Tokens::Number::Info<Numbers::FloatType>>(pos, Tokens::Type::Number, range, Numbers::Float, m_NumericScanner.Get<float>());
+					m_Build.CreateToken<TokenNumber<Numbers::FloatType, Numbers::Float>>(pos, range, m_NumericScanner.Get<float>());
 				m_Task(Event::AddedToken, range);
 				break;
 			}
@@ -365,6 +365,13 @@ namespace SCRambl
 						if (!m_WasLastTokenEOL) {
 							AddToken<Tokens::Character::Info<Character>>(m_CodePos, Tokens::Type::Character, m_CodePos, Character::EOL);
 							m_WasLastTokenEOL = true;
+						}
+					}
+					else if (m_CodePos->IsPunctuator() && m_CodePos->HasGrapheme()) {
+						switch (m_CodePos->GetGrapheme()) {
+						case Grapheme::colon:
+							AddToken<Tokens::Character::Info<Character>>(m_CodePos, Tokens::Type::Character, m_CodePos, Character::Colonnector);
+							break;
 						}
 					}
 					else {
@@ -1101,8 +1108,12 @@ namespace SCRambl
 				// make sure that a : followed the identifier chars
 			case Lexer::State::after:
 				if (pos && pos->GetGrapheme() == Grapheme::colon) {
-					++pos;
-					return true;
+					// not if there's something important immediately after the colon...
+					auto nextpos = pos + 1;
+					if (!nextpos || nextpos->IsIgnorable() || nextpos->IsEOL()) {
+						++pos;
+						return true;
+					}
 				}
 				return false;
 			}
