@@ -429,7 +429,7 @@ namespace SCRambl
 				return toke->GetType<Tokens::Type>();
 			}
 			static bool IsTokenType(IToken* toke, Tokens::Type type) {
-				return GetTokenType(toke) == type;
+				return toke && GetTokenType(toke) == type;
 			}
 			static std::string GetIdentifierName(IToken* toke) {
 				return Tokens::Identifier::GetScriptRange(*toke).Format();
@@ -443,16 +443,18 @@ namespace SCRambl
 				return tok->GetValue<Tokens::Operator::ScriptRange>();
 			}
 			static std::string GetTokenString(IToken* toke) {
-				auto type = toke->GetType<Tokens::Type>();
-				switch (type) {
-				case Tokens::Type::Identifier:
-					return Tokens::Identifier::GetScriptRange(*toke).Format();
-				case Tokens::Type::Number:
-					return Tokens::Number::GetScriptRange(toke).Format();
-				case Tokens::Type::String:
-					return Tokens::String::GetString(*toke);
-				default:
-					BREAK(); // ?
+				if (toke) {
+					auto type = toke->GetType<Tokens::Type>();
+					switch (type) {
+					case Tokens::Type::Identifier:
+						return Tokens::Identifier::GetScriptRange(*toke).Format();
+					case Tokens::Type::Number:
+						return Tokens::Number::GetScriptRange(*toke).Format();
+					case Tokens::Type::String:
+						return Tokens::String::GetString(*toke);
+					default:
+						BREAK(); // ?
+					}
 				}
 				return "";
 			}
@@ -485,6 +487,9 @@ namespace SCRambl
 			static bool IsOperatorConditional(IToken* toke) {
 				auto operater = GetOperator(toke);
 				return operater && operater->IsConditional();
+			}
+			static bool IsConditionPunctuator(IToken* toke) {
+				return IsTokenType(toke, Tokens::Type::Character) && GetCharacterValue(toke) == Character::Conditioner;
 			}
 			static bool IsColonPunctuator(IToken* toke) {
 				return IsTokenType(toke, Tokens::Type::Character) && GetCharacterValue(toke) == Character::Colonnector;

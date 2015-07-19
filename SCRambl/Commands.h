@@ -46,16 +46,18 @@ namespace SCRambl
 		using Vector = std::vector<CommandArg>;
 		using Iterator = Vector::iterator;
 
-		CommandArg(Type* type, size_t index, bool isRet = false);
+		CommandArg(Type* type, size_t index, bool isRet = false, size_t size = 0);
 
 		inline bool IsReturn() const { return m_IsReturn; }
 		inline size_t GetIndex() const { return m_Index; }
+		inline size_t GetSize() const { return m_Size; }
 		inline Type* GetType() const { return m_Type; }
 
 	private:
 		Type* m_Type;
 		size_t m_Index;						// nth arg
 		bool m_IsReturn = false;
+		size_t m_Size = 0;					// 0 = 'auto'
 	};
 
 	/*\ Command - At the heart of SCR \*/
@@ -77,7 +79,7 @@ namespace SCRambl
 
 		Attributes GetAttributes() const;
 
-		void AddArg(Arg::Type* type, bool isRet = false);
+		void AddArg(Arg::Type* type, bool isRet = false, size_t valueSize = 0);
 		Arg& GetArg(size_t i);
 		const Arg& Command::GetArg(size_t i) const;
 

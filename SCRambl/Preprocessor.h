@@ -219,7 +219,7 @@ namespace SCRambl
 		/*\ Preprocessor::Character - Preprocessor character stuff \*/
 		class Character {
 		public:
-			enum Type { EOL, Colonnector };
+			enum Type { EOL, Colonnector, Conditioner };
 
 			Character() = default;
 			Character(Type type) : m_Type(type) { }
@@ -231,6 +231,8 @@ namespace SCRambl
 				case EOL: rep = "[EOL]";
 					break;
 				case Colonnector: rep = ":";
+					break;
+				case Conditioner: rep = "?";
 					break;
 				}
 				return !rep.empty() ? rep : "[UNK]";

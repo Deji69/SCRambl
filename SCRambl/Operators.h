@@ -303,6 +303,7 @@ namespace SCRambl
 
 			OperatorRef GetRef() { return m_Ref; }
 
+			bool IsAssignment() const { return m_IsAssignment; }
 			bool IsConditional() const { return m_IsConditional; }
 
 			OperationRef AddOperation(size_t id, Types::Type* lhs, Types::Type* rhs) {

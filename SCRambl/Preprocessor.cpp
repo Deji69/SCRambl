@@ -372,6 +372,9 @@ namespace SCRambl
 						case Grapheme::colon:
 							AddToken<Tokens::Character::Info<Character>>(m_CodePos, Tokens::Type::Character, m_CodePos, Character::Colonnector);
 							break;
+						case Grapheme::condition:
+							AddToken<Tokens::Character::Info<Character>>(m_CodePos, Tokens::Type::Character, m_CodePos, Character::Conditioner);
+							break;
 						}
 					}
 					else {

@@ -396,7 +396,13 @@ namespace SCRambl
 				auto name = GetIdentifierName(m_TokenIt->GetToken());
 				if (name.empty()) SendError(Error::expected_identifier);
 				else {
+					bool cond = false;
 					auto chartok = PeekToken(Tokens::Type::Character);
+					if (chartok && IsConditionPunctuator(chartok)) {
+						cond = true;
+						++m_TokenIt;
+						chartok = PeekToken(Tokens::Type::Character);
+					}
 					if (!chartok || !IsColonPunctuator(chartok))
 						SendError(Error::expected_colon_punctuator);
 					++m_TokenIt;
@@ -406,21 +412,34 @@ namespace SCRambl
 						auto command = m_ExtraCommands.AddCommand(name, id, m_TypeParseState.type);
 						++m_TokenIt;
 
-						/*while (auto idtok = PeekToken()) {
-							if (idtok->GetType<Tokens::Type>() == Tokens::Type::Operator) {
+						while (auto idtok = PeekToken()) {
+							// check for assignment operator as 'return' flag for arg
+							bool isret = false;
+							if (GetTokenType(idtok) == Tokens::Type::Operator) {
 								auto op = Tokens::Operator::GetOperator<Operators::OperatorRef>(*idtok);
+								if (!op->IsAssignment()) break;
+								isret = true;
 
 								auto optok = PeekToken(Tokens::Type::Identifier, 1);
+								if (!optok) break;
+								std::swap(idtok, optok);
+								++m_TokenIt;
 							}
+							if (GetTokenType(idtok) != Tokens::Type::Identifier) break;
 
+							// get the type
 							auto type = m_Types.GetType(GetTokenString(idtok));
 							if (!type) break;
 							
+							// size-specific value?
 							size_t size = 0;
 							GetDelimitedArrayIntegerConstant(size);
 
+							// add to command
+							command->AddArg(type, isret, size);
+
 							++m_TokenIt;
-						}*/
+						}
 					}
 					else SendError(Error::expected_key_identifier);
 				}

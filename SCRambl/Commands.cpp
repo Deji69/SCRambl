@@ -17,7 +17,7 @@ namespace SCRambl
 	const CommandAttributeSet Attributes<CommandAttributeID, CommandAttributeSet>::s_AttributeSet;
 
 	// CommandArg
-	CommandArg::CommandArg(Type* type, size_t index, bool isRet) : m_Type(type), m_Index(index), m_IsReturn(isRet)
+	CommandArg::CommandArg(Type* type, size_t index, bool isRet, size_t size) : m_Type(type), m_Index(index), m_IsReturn(isRet), m_Size(size)
 	{ }
 	
 	// CommandValue
@@ -47,8 +47,8 @@ namespace SCRambl
 	CommandArg& Command::GetArg(size_t i) { return m_Args[i]; }
 	const CommandArg& Command::GetArg(size_t i) const { return m_Args[i]; }
 
-	void Command::AddArg(Arg::Type* type, bool isRet) {
-		m_Args.emplace_back(type, m_Args.size(), isRet);
+	void Command::AddArg(Arg::Type* type, bool isRet, size_t size) {
+		m_Args.emplace_back(type, m_Args.size(), isRet, size);
 	}
 	Command::Command(std::string name, XMLValue index, Types::Type* type) : m_Name(name), m_Index(index), m_Type(type)
 	{

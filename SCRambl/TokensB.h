@@ -101,8 +101,8 @@ namespace SCRambl
 			using Info = TokenInfo<Type, Scripts::Range, Numbers::Type, TNumberType*>;
 			using DummyInfo = TokenInfo<Type, Scripts::Range, Numbers::Type, void*>;
 
-			static Scripts::Range GetScriptRange(const IToken* token) {
-				return token->Get<DummyInfo>().GetValue<ScriptRange>();
+			static Scripts::Range GetScriptRange(const IToken& token) {
+				return token.Get<DummyInfo>().GetValue<ScriptRange>();
 			}
 			static Numbers::Type GetValueType(const IToken& token) {
 				return token.Get<DummyInfo>().GetValue<ValueType>();
