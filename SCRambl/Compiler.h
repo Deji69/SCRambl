@@ -38,9 +38,9 @@ namespace SCRambl
 				return m_Tokens.Size();
 			}
 			inline size_t GetCurrentToken() const {
-				return m_TokenIt.GetIndex();
+				return m_TokenIt.Index();
 			}
-			inline Scripts::Token GetToken() const {
+			inline Tokens::Token GetToken() const {
 				return m_TokenIt.Get();
 			}
 			template<typename T, typename U = T>
@@ -77,11 +77,10 @@ namespace SCRambl
 			Task& m_Task;
 			Engine& m_Engine;
 			Build* m_Build;
-			Build::Symbols::const_iterator m_SymbolIt;
 			Build::Xlations::const_iterator m_XlationIt;
 			
-			Scripts::Tokens& m_Tokens;
-			Scripts::Tokens::Iterator m_TokenIt;
+			Tokens::Storage& m_Tokens;
+			Tokens::Iterator m_TokenIt;
 			std::ofstream m_File;
 
 			std::map<std::string, int32_t> m_CommandNames;

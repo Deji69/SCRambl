@@ -106,11 +106,11 @@ namespace SCRambl
 		class Task;
 
 		struct LabelRef {
-			Scripts::Tokens::Iterator TokenIt;
+			Tokens::Iterator TokenIt;
 			bool IsReference;
 			size_t NumUses;
 
-			LabelRef(Scripts::Tokens::Iterator it, bool isref) : TokenIt(it), IsReference(isref)
+			LabelRef(Tokens::Iterator it, bool isref) : TokenIt(it), IsReference(isref)
 			{ }
 		};
 
@@ -179,24 +179,24 @@ namespace SCRambl
 		};
 		
 		/*\ Parser::Operation \*/
-		class Operation : public TokenSymbol
+		class Operation //: public TokenSymbol
 		{
 		public:
 			enum Type { PrefixUnary, SuffixUnary, Inline, Compounded };
 			// PrefixUnary
-			Operation(Operators::OperationRef op, ScriptVariable* var) : Symbol(Tokens::Type::Operator),
+			Operation(Operators::OperationRef op, ScriptVariable* var) : //Symbol(Tokens::Type::Operator),
 				m_Operation(op), m_Type(PrefixUnary), m_ROperand(var)
 			{ }
 			// SuffixUnary
-			Operation(ScriptVariable* var, Operators::OperationRef op) : Symbol(Tokens::Type::Operator),
+			Operation(ScriptVariable* var, Operators::OperationRef op) : //Symbol(Tokens::Type::Operator),
 				m_Operation(op), m_Type(SuffixUnary), m_LOperand(var)
 			{ }
 			// Inline var + var
-			Operation(Operand lop, Operators::OperationRef op, Operand rop) : Symbol(Tokens::Type::Operator),
+			Operation(Operand lop, Operators::OperationRef op, Operand rop) : //Symbol(Tokens::Type::Operator),
 				m_Operation(op), m_Type(Inline), m_LOperand(lop), m_ROperand(rop)
 			{ }
 			// Compounded
-			Operation(Operators::OperationRef op, Operand lop, Operand rop) : Symbol(Tokens::Type::Operator),
+			Operation(Operators::OperationRef op, Operand lop, Operand rop) : //Symbol(Tokens::Type::Operator),
 				m_Operation(op), m_Type(Compounded), m_LOperand(lop), m_ROperand(rop)
 			{ }
 
@@ -243,16 +243,15 @@ namespace SCRambl
 			};
 			struct TypeParseState {
 				struct TypeVarDeclaration {
-					Scripts::Tokens::Iterator var_iterator;
+					Tokens::Iterator var_iterator;
 					size_t array_size;
 
-					TypeVarDeclaration(Scripts::Tokens::Iterator it) {
-						
-					}
+					TypeVarDeclaration(Tokens::Iterator it) : var_iterator(it)
+					{ }
 				};
 
 				Types::Type* type;
-				Scripts::Tokens::Iterator type_iterator;
+				Tokens::Iterator type_iterator;
 				IToken* token;
 				std::vector<TypeVarDeclaration> var_declarations;
 
@@ -535,18 +534,13 @@ namespace SCRambl
 			}
 
 			std::vector<IToken*> m_ParserTokens;
-			std::vector<TokenSymbol*> m_ParserSymbols;
 			template<typename TTokenType, typename... TArgs>
 			TTokenType* CreateToken(TArgs&&... args) {
 				auto token = new TTokenType(args...);
 				m_ParserTokens.emplace_back(token);
 				return token;
 			}
-			template<typename TSymbolType, typename... TArgs>
-			TSymbolType* CreateSymbol(TArgs&&... args) {
-				return m_Build.CreateSymbol<TSymbolType>(args...);
-			}
-
+			
 		public:
 			enum State {
 				init, parsing, overloading, finished,
@@ -563,7 +557,7 @@ namespace SCRambl
 
 			size_t GetNumTokens() const;
 			size_t GetCurrentToken() const;
-			Scripts::Token GetToken() const;
+			Tokens::Token GetToken() const;
 
 		private:
 			// Send an error event
@@ -597,9 +591,9 @@ namespace SCRambl
 				++m_OverloadCommandsIt;
 			}
 			void FinishCommandParsing() {
-				auto tok = m_CommandTokenIt.Get()->GetToken<Tokens::Command::Info>();
-				auto symbol = m_Build.CreateSymbol<Tokens::Command::Call>(*tok, m_NumCommandArgs);
-				m_CommandTokenIt.Get()->GetSymbol() = symbol;
+				auto tok = m_CommandTokenIt.Get().GetToken<Tokens::Command::Info>();
+				//auto symbol = m_Build.CreateSymbol<Tokens::Command::Call>(*tok, m_NumCommandArgs);
+				//m_CommandTokenIt.Get().GetSymbol() = symbol;
 
 				size_t cmdid = m_CommandVector.size();
 				auto it = m_CommandMap.empty() ? m_CommandMap.end() : m_CommandMap.find(m_CurrentCommand->Name());
@@ -612,11 +606,11 @@ namespace SCRambl
 				}
 
 				for (auto argtok : m_CommandArgTokens) {
-					symbol->AddArg(argtok->GetSymbol());
+					//symbol->AddArg(argtok->GetSymbol());
 				}
 				m_CommandArgTokens.clear();
 
-				m_Build.GetDeclarations().emplace_back(m_Build.CreateSymbol<Tokens::Command::Decl>(cmdid, m_CurrentCommand));
+				//m_Build.GetDeclarations().emplace_back(m_Build.CreateSymbol<Tokens::Command::Decl>(cmdid, m_CurrentCommand));
 
 				m_ParsingCommandArgs = false;
 			}
@@ -629,10 +623,10 @@ namespace SCRambl
 			size_t GetNumberOfOverloadFailures() const {
 				return m_NumOverloadFailures;
 			}
-			void AddLabel(ScriptLabel* label, Scripts::Tokens::Iterator it) {
+			void AddLabel(ScriptLabel* label, Tokens::Iterator it) {
 				m_LabelReferences.emplace(label, LabelRef(it, false));
 			}
-			void AddLabelRef(ScriptLabel* label, Scripts::Tokens::Iterator it) {
+			void AddLabelRef(ScriptLabel* label, Tokens::Iterator it) {
 				auto iter = m_LabelReferences.find(label);
 				if (iter == m_LabelReferences.end()) {
 					m_LabelReferences.emplace(label, LabelRef(it, true));
@@ -655,13 +649,13 @@ namespace SCRambl
 			Engine& m_Engine;
 			Task& m_Task;
 			Build& m_Build;
-			Scripts::Tokens& m_Tokens;
-			Scripts::Tokens::Iterator m_TokenIt;
-			Scripts::Tokens::Iterator m_VariableTokenIt;
-			Scripts::Tokens::Iterator m_CommandTokenIt;
-			Scripts::Tokens::Iterator m_OperatorTokenIt;
-			Scripts::Tokens::Iterator::CVector m_CommandTokens;			// positions of all parsed command tokens
-			Scripts::Tokens::Iterator::CVector m_LabelTokens;
+			Tokens::Storage& m_Tokens;
+			Tokens::Iterator m_TokenIt;
+			Tokens::Iterator m_VariableTokenIt;
+			Tokens::Iterator m_CommandTokenIt;
+			Tokens::Iterator m_OperatorTokenIt;
+			std::vector<const Tokens::Iterator> m_CommandTokens;			// positions of all parsed command tokens
+			std::vector<const Tokens::Iterator> m_LabelTokens;
 			//Scripts::Labels& m_Labels;
 			Types::Types& m_Types;
 			size_t m_NumCommandArgs;
@@ -679,10 +673,10 @@ namespace SCRambl
 			std::map<ScriptLabel*, LabelRef> m_LabelReferences;
 			std::vector<VecRef<Command>> m_CommandVector;
 			std::unordered_map<std::string, size_t> m_CommandMap;
-			std::multimap<const std::string, Scripts::Tokens::Iterator> m_CommandTokenMap;
+			std::multimap<const std::string, Tokens::Iterator> m_CommandTokenMap;
 			std::vector<IToken*> m_Subscripts;
 
-			std::vector<Scripts::Token*> m_CommandArgTokens;
+			std::vector<Tokens::Token*> m_CommandArgTokens;
 
 			// Status
 			bool m_OnNewLine;
@@ -717,7 +711,7 @@ namespace SCRambl
 
 			inline size_t GetProgressCurrent() const { return GetCurrentToken(); }
 			inline size_t GetProgressTotal() const { return GetNumTokens(); }
-			inline Scripts::Token GetToken() const { return Parser::GetToken(); }
+			inline Tokens::Token GetToken() const { return Parser::GetToken(); }
 
 			bool IsRunning() const { return Parser::IsRunning(); }
 			bool IsTaskFinished() final override { return Parser::IsFinished(); }

@@ -13,7 +13,6 @@ namespace SCRambl
 	{
 		void Compiler::Init() {
 			m_TokenIt = m_Tokens.Begin();
-			m_SymbolIt = m_Build->GetSymbolsBegin();
 			m_XlationIt = m_Build->GetXlationsBegin();
 			m_Task(Event::Begin);
 			m_State = compiling;
@@ -97,7 +96,7 @@ namespace SCRambl
 					}
 
 					if (args) {
-
+						m_TokenIt;
 					}
 
 					size_t valsize = 0;

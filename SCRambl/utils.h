@@ -107,7 +107,6 @@ namespace SCRambl
 		inline bool OK() const {
 			return m_Vector != nullptr && m_Index < m_Vector->size();
 		}
-
 		inline T* Ptr() const {
 			return OK() ? &(*m_Vector)[m_Index] : nullptr;
 		}
@@ -119,6 +118,105 @@ namespace SCRambl
 	private:
 		Vec* m_Vector = nullptr;
 		TIt m_Index = 0;
+	};
+
+	template<typename T, typename TKey = size_t, typename TCont = std::vector<T>, typename TIt = TCont::const_iterator>
+	class VecIndex {
+	public:
+		using ValType = T;
+		using Vector = TCont;
+		using IndexType = TKey;
+
+		VecIndex() = default;
+		VecIndex(IndexType index, Vector& vec) : m_Vector(&vec), m_Index(index < 0 ? vec.size() + index : index)
+		{ }
+		VecIndex(TIt it, Vector& vec) : m_Vector(&vec), m_Index(it != vec.end() ? std::distance<TIt>(std::begin(vec), it) : vec.size())
+		{ }
+		VecIndex(Vector& vec, IndexType index) : m_Vector(&vec), m_Index(index < 0 ? vec.size() + index : index)
+		{ }
+		VecIndex(Vector& vec, TIt it) : m_Vector(&vec), m_Index(it != vec.end() ? std::distance<TIt>(std::begin(vec), it) : vec.size())
+		{ }
+		virtual ~VecIndex() { }
+
+		inline VecIndex& operator=(TIt it) {
+			*this = std::distance(std::begin(m_Vector), it);
+			return *this;
+		}
+		inline VecIndex& operator=(IndexType i) {
+			m_Index = i;
+			return *this;
+		}
+		inline VecIndex& operator++() {
+			Increase();
+			return *this;
+		}
+		inline VecIndex operator++(int) {
+			auto v = *this;
+			++(*this);
+			return v;
+		}
+		inline VecIndex& operator--() {
+			Decrease();
+		}
+		inline VecIndex operator--(int) {
+			auto v = *this;
+			--(*this);
+			return v;
+		}
+		inline VecIndex& operator+=(IndexType n) {
+			Increase(n);
+			return *this;
+		}
+		inline VecIndex& operator-=(IndexType n) {
+			Decrease(n);
+			return *this;
+		}
+		inline VecIndex operator+(IndexType n) const {
+			auto v = *this;
+			v.Increase(n);
+			return v;
+		}
+		inline VecIndex operator-(IndexType n) const  {
+			auto v = *this;
+			v.Decrease(n);
+			return v;
+		}
+		inline ValType& operator*() const { return *Ptr(); }
+		inline ValType* operator->() const { return Ptr(); }
+		inline bool operator==(const ValType& v) const { return Ptr() == v.Ptr(); }
+		inline bool operator!=(const ValType& v) const { return !(*this == v); }
+		inline operator bool() const { return OK(); }
+
+		inline bool OK() const {
+			return m_Vector != nullptr && m_Index < m_Vector->size();
+		}
+		inline ValType* Ptr() const {
+			return OK() ? &(*m_Vector)[m_Index] : nullptr;
+		}
+		inline ValType& Get() const {
+			return m_Vector->at(m_Index);
+		}
+		inline IndexType Index() const { return m_Index; }
+
+	private:
+		inline void Increase(size_t i = 1) {
+			if (m_Vector) {
+				if ((m_Index + i) >= m_Vector->size())
+					m_Index = m_Vector->size();
+				else
+					m_Index += i;
+			}
+			else m_Index = 0;
+		}
+		inline void Decrease(size_t i = 1) {
+			if (m_Vector && i < m_Index)
+				m_Index -= i;
+			else 
+				m_Index = 0;
+		}
+
+		Vector* m_Vector = nullptr;
+		IndexType m_Index = 0;
 	};
 
 

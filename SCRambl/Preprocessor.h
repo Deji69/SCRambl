@@ -335,12 +335,12 @@ namespace SCRambl
 			std::string	m_Identifier;				// last scanned identifier
 			MacroMap m_Macros;
 
-			std::stack<Scripts::Token> m_Delimiters;
+			std::stack<Tokens::Token> m_Delimiters;
 
 			//
 			State m_State = init;
 			Build& m_Build;
-			Scripts::Tokens& m_Tokens;
+			Tokens::Storage& m_Tokens;
 			Scripts::Position m_CodePos;
 			Types::Types& m_Types;
 			Commands& m_Commands;
@@ -449,7 +449,7 @@ namespace SCRambl
 
 			// Add a preprocessing token
 			template<typename T, typename... TArgs>
-			inline Scripts::Token AddToken(Scripts::Position pos, TArgs&&... args) {
+			inline Tokens::Token AddToken(Scripts::Position pos, TArgs&&... args) {
 				m_WasLastTokenEOL = false;
 				return m_Tokens.Add<T>(pos, std::forward<TArgs&&>(args)...);
 			}

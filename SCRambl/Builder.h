@@ -202,7 +202,6 @@ namespace SCRambl
 		};
 
 	public:
-		using Symbols = std::vector<TokenSymbol*>;
 		using Xlations = std::vector<Types::Xlation>;
 
 		Build(Engine&, BuildConfig*);
@@ -247,33 +246,16 @@ namespace SCRambl
 		ScriptLabel* GetScriptLabel(std::string name);
 		ScriptLabel* GetScriptLabel(Label* label);
 
-		// "Declarations"
-		inline std::vector<TokenSymbol*> & GetDeclarations() { return m_Declarations; }
-		inline const std::vector<TokenSymbol*> & GetDeclarations() const { return m_Declarations; }
-		void AddDeclaration(TokenSymbol* tok);
-
 		Xlations::const_iterator GetXlationsBegin() const {
 			return m_Xlations.begin();
 		}
 		Xlations::const_iterator GetXlationsEnd() const {
 			return m_Xlations.end();
 		}
-		Symbols::const_iterator GetSymbolsBegin() const {
-			return m_Symbols.begin();
-		}
-		Symbols::const_iterator GetSymbolsEnd() const {
-			return m_Symbols.end();
-		}
 
 		template<typename TTokenType, typename... TArgs>
-		Scripts::Token CreateToken(Scripts::Position pos, TArgs&&... args) {
+		Tokens::Token CreateToken(Scripts::Position pos, TArgs&&... args) {
 			return m_Script.GetTokens().Add<TTokenType>(pos, args...);
-		}
-		template<typename TSymbolType, typename... TArgs>
-		TSymbolType* CreateSymbol(TArgs&&... args) {
-			auto ptr = new TSymbolType(args...);
-			m_Symbols.emplace_back(ptr);
-			return ptr;
 		}
 		VecRef<Types::Xlation> AddSymbol(Types::Translation::Ref translation) {
 			m_Xlations.emplace_back(translation, [this](Types::DataSource src, Types::DataAttribute attr)->XMLValue{
@@ -287,7 +269,7 @@ namespace SCRambl
 		}
 
 		void DoParseActions(std::string val, const ParseObjectConfig::ActionVec& vec);
-		void ParseCommands(const std::multimap<const std::string, Scripts::Tokens::Iterator>& map);
+		void ParseCommands(const std::multimap<const std::string, Tokens::Iterator>& map);
 
 		template<typename T, typename ID, typename... Params>
 		const T* AddTask(ID id, Params&&... prms) {
@@ -349,8 +331,6 @@ namespace SCRambl
 		std::vector<std::string> m_Files;
 		TokenPtrVec m_Tokens;
 		Xlations m_Xlations;
-		SymbolPtrVec m_Symbols;
-		SymbolPtrVec m_Declarations;
 
 		//
 		ScriptObjects<Variable> m_Variables;

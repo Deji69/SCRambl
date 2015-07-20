@@ -85,6 +85,9 @@
     <ClCompile Include="Labels.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Tokens.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Builder.h">

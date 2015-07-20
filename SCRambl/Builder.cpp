@@ -32,15 +32,12 @@ namespace SCRambl
 	ScriptLabel* Build::GetScriptLabel(Label* label) {
 		return m_Labels.Find(label);
 	}
-	void Build::AddDeclaration(TokenSymbol* tok) {
-		m_Declarations.emplace_back(tok);
-	}
 	void Build::DoParseActions(std::string val, const ParseObjectConfig::ActionVec& vec) {
 		for (auto& action : vec) {
 			m_Env.DoAction(action, val);
 		}
 	}
-	void Build::ParseCommands(const std::multimap<const std::string, Scripts::Tokens::Iterator>& map) {
+	void Build::ParseCommands(const std::multimap<const std::string, Tokens::Iterator>& map) {
 		for (auto& parsecmd : m_Config->GetParseCommands()) {
 			auto v = m_Env.Val(parsecmd.first).AsString();
 			auto rg = map.equal_range(v);
@@ -197,11 +194,7 @@ namespace SCRambl
 	{
 		Setup();
 	}
-	Build::~Build() {
-		for (auto ptr : m_Symbols) {
-			if (ptr) delete ptr;
-		}
-	}
+	Build::~Build() { }
 
 	/* BuildEnvironment */
 	void BuildEnvironment::DoAction(const ParseObjectConfig::Action& action, XMLValue v) {

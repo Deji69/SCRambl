@@ -4,6 +4,7 @@
 #include "Directives.h"
 #include "Literals.h"
 #include "Symbols.h"
+#include "Tokens.h"
 
 namespace SCRambl
 {
@@ -129,17 +130,17 @@ namespace SCRambl
 		return pos;
 	}
 
-	TokenMap Script::GenerateTokenMap() {
-		TokenMap map;
+	Tokens::Map Script::GenerateTokenMap() {
+		Tokens::Map map;
 		decltype(map.AddLine(0)) line = nullptr;
 		int nline = -1;
-		for (auto ptr : m_Tokens) {
+		for (auto ptr = m_Tokens.Begin(); ptr != m_Tokens.End(); ++ptr) {
 			auto curr_line = ptr->GetPosition().GetLine();
 
 			if (nline == -1 || curr_line != nline)
 				line = map.AddLine(nline = curr_line);
 
-			line->AddToken(ptr);
+			line->AddToken(ptr.Ptr());
 		}
 		return map;
 	}
@@ -239,22 +240,6 @@ namespace SCRambl
 		m_Includes.emplace_back(this, path);
 		pos.NextLine();
 		return ref;
-	}
-	
-	/* Scripts::TokenMap */
-	TokenLine* TokenMap::AddLine(long long line) {
-		auto it = m_Map.find(line);
-		if (it != m_Map.end())
-			return &it->second;
-		auto pr = m_Map.emplace(line, TokenLine());
-		if (pr.second) {
-			return &pr.first->second;
-		}
-		return nullptr;
-	}
-	TokenLine* TokenMap::GetLine(long long line) {
-		auto it = m_Map.find(line);
-		return it != m_Map.end() ? &it->second : nullptr;
 	}
 
 	/* Scripts::Position */

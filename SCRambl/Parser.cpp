@@ -114,8 +114,8 @@ namespace SCRambl
 				case state_parsing_operator:
 					if (m_OperationParseState.RequireRVal())
 						BREAK();
-					else if (m_OperationParseState.CheckForRVal())
-						CreateSymbol<Operation>(m_OperationParseState.lh_var, m_OperationParseState.operation);
+					//else if (m_OperationParseState.CheckForRVal())
+						//CreateSymbol<Operation>(m_OperationParseState.lh_var, m_OperationParseState.operation);
 					break;
 				case state_parsing_command:
 				case state_parsing_command_args:
@@ -147,9 +147,9 @@ namespace SCRambl
 				//m_Jumps.emplace_back(ptr->Ptr(), m_TokenIt);
 
 				auto tok = CreateToken<Tokens::Label::Info>(Tokens::Type::LabelRef, range, ptr->Ptr());
-				m_TokenIt.Get()->SetToken(tok);
-				auto sym = CreateSymbol<Tokens::Label::Jump>(tok, 0);
-				m_TokenIt.Get()->SetSymbol(sym);
+				m_TokenIt->SetToken(tok);
+				//auto sym = CreateSymbol<Tokens::Label::Jump>(tok, 0);
+				//m_TokenIt->SetSymbol(sym);
 
 				AddLabelRef(ptr, m_TokenIt);
 				return state_parsing_label;
@@ -157,9 +157,9 @@ namespace SCRambl
 			else if (m_ExtraCommands.FindCommands(name, vec) > 0 || m_Commands.FindCommands(name, vec) > 0) {
 				// make a token and store it
 				if (vec.size() == 1)
-					m_TokenIt.Get()->SetToken(CreateToken<Tokens::Command::Info>(Tokens::Type::Command, range, vec[0]));
+					m_TokenIt->SetToken(CreateToken<Tokens::Command::Info>(Tokens::Type::Command, range, vec[0]));
 				else
-					m_TokenIt.Get()->SetToken(CreateToken<Tokens::Command::OverloadInfo>(Tokens::Type::CommandOverload, range, vec));
+					m_TokenIt->SetToken(CreateToken<Tokens::Command::OverloadInfo>(Tokens::Type::CommandOverload, range, vec));
 
 				if (ParseCommandOverloads(vec)) {
 					BeginCommandParsing();
@@ -297,7 +297,7 @@ namespace SCRambl
 						++m_TokenIt;
 					}
 					else {
-						m_Build.CreateSymbol<Operation>(m_OperationParseState.operation, m_OperationParseState.lh_var, operand);
+						//m_Build.CreateSymbol<Operation>(m_OperationParseState.operation, m_OperationParseState.lh_var, operand);
 						m_ActiveState = state_neutral;
 						++m_TokenIt;
 					}
@@ -334,7 +334,7 @@ namespace SCRambl
 					if (m_OperationParseState.looksPrefixed) {
 						// rhs of a =var unary operation
 						if (auto op = m_CurrentOperator->GetUnaryOperation(m_Variable->Ptr(), true)) {
-							m_Build.CreateSymbol<Operation>(op, m_Variable);
+							//m_Build.CreateSymbol<Operation>(op, m_Variable);
 							return state_neutral;
 						}
 						else BREAK();		// error?
@@ -819,10 +819,10 @@ namespace SCRambl
 			return m_Tokens.Size();
 		}
 		size_t Parser::GetCurrentToken() const {
-			return m_TokenIt.GetIndex();
+			return m_TokenIt.Index();
 		}
-		Scripts::Token Parser::GetToken() const {
-			return m_TokenIt.Get();
+		Tokens::Token Parser::GetToken() const {
+			return *m_TokenIt;
 		}
 
 		void Parser::SendError(Error type)

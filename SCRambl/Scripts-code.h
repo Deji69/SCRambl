@@ -24,8 +24,6 @@ namespace SCRambl
 		class Column;
 		class Range;
 		class Position;
-		class Token;
-		class Tokens;
 		class Label;
 
 		using CodeList = std::list<Line>;
