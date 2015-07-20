@@ -391,6 +391,7 @@ namespace SCRambl
 			}
 			else if (!IsTokenType(m_TokenIt->GetToken(), Tokens::Type::Identifier)) {
 				SendError(Error::expected_identifier);
+				++m_TokenIt;
 			}
 			else {
 				auto name = GetIdentifierName(m_TokenIt->GetToken());
@@ -413,6 +414,8 @@ namespace SCRambl
 						++m_TokenIt;
 
 						while (auto idtok = PeekToken()) {
+							if (IsEOLReached()) break;
+
 							// check for assignment operator as 'return' flag for arg
 							bool isret = false;
 							if (GetTokenType(idtok) == Tokens::Type::Operator) {
@@ -430,23 +433,19 @@ namespace SCRambl
 							// get the type
 							auto type = m_Types.GetType(GetTokenString(idtok));
 							if (!type) break;
-							
+							++m_TokenIt;
+
 							// size-specific value?
 							size_t size = 0;
 							GetDelimitedArrayIntegerConstant(size);
 
 							// add to command
 							command->AddArg(type, isret, size);
-
-							++m_TokenIt;
 						}
 					}
 					else SendError(Error::expected_key_identifier);
 				}
 			}
-			++m_TokenIt;
-			
-			
 			return state_parsing_type_command;
 		}
 		States Parser::Parse_Command() {

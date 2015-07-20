@@ -198,27 +198,27 @@ namespace SCRambl
 		class Command {
 		public:
 			enum Parameter { ScriptRange, CommandType };
-			using Info = TokenInfo<Type, Scripts::Range, SCRambl::Command*>;
-			using OverloadInfo = TokenInfo<Type, Scripts::Range, std::vector<SCRambl::Command*>>;
+			using Info = TokenInfo<Type, Scripts::Range, VecRef<SCRambl::Command>>;
+			using OverloadInfo = TokenInfo<Type, Scripts::Range, std::vector<VecRef<SCRambl::Command>>>;
 			using DummyInfo = TokenInfo<Type, Scripts::Range>;
 
 			/*\ Tokens::Command:Decl - Carries symbolic data for a command declaration \*/
 			class Decl : public Symbol {
 				size_t m_ID;
-				const SCRambl::Command* m_Command;
+				const VecRef<SCRambl::Command> m_Command;
 
 			public:
-				Decl(size_t id, const SCRambl::Command* ptr) : Symbol(Type::CommandDecl),
+				Decl(size_t id, const VecRef<SCRambl::Command> ptr) : Symbol(Type::CommandDecl),
 					m_ID(id), m_Command(ptr)
 				{ }
 
 				inline size_t GetID() const { return m_ID; }
-				inline const SCRambl::Command* GetCommand()	const { return m_Command; }
+				inline const VecRef<SCRambl::Command> GetCommand()	const { return m_Command; }
 			};
 
 			/*\ Tokens::Command::Call - Carries symbolic data for a command call \*/
 			class Call : public Symbol {
-				const SCRambl::Command* m_Command;
+				const VecRef<SCRambl::Command> m_Command;
 				size_t m_NumArgs;
 				std::vector<Symbol*> m_Args;
 
@@ -230,7 +230,7 @@ namespace SCRambl
 				Call(const IToken* info, size_t num_args) : Call(info->Get<Info>(), num_args)
 				{ }
 
-				inline const SCRambl::Command* GetCommand() const { return m_Command; }
+				inline const VecRef<SCRambl::Command> GetCommand() const { return m_Command; }
 				inline size_t GetNumArgs() const { return m_NumArgs; }
 
 				inline void AddArg(Symbol* symbol) { m_Args.emplace_back(symbol); }
@@ -239,10 +239,10 @@ namespace SCRambl
 			static Scripts::Range GetScriptRange(const IToken& token) {
 				return token.Get<DummyInfo>().GetValue<ScriptRange>();
 			}
-			static SCRambl::Command* GetCommand(const IToken& token) {
+			static VecRef<SCRambl::Command> GetCommand(const IToken& token) {
 				return token.Get<Info>().GetValue<CommandType>();
 			}
-			static std::vector<SCRambl::Command*> GetOverloads(const IToken& token) {
+			static std::vector<VecRef<SCRambl::Command>> GetOverloads(const IToken& token) {
 				return token.Get<OverloadInfo>().GetValue<CommandType>();
 			}
 		};
@@ -288,9 +288,12 @@ namespace SCRambl
 		public:
 			enum Parameter { ScriptPosition, ScriptRange, DelimiterType };
 			template<typename TDelimiterType>
-			using Info = TokenInfo<Type, Scripts::Position, Scripts::Range, TDelimiterType>;
-			using DummyInfo = TokenInfo<Type, Scripts::Position, Scripts::Range>;
+			using Info = TokenInfo<Type, Scripts::Position, Scripts::Range, TDelimiterType*>;
+			using DummyInfo = TokenInfo<Type, Scripts::Position, Scripts::Range, void*>;
 
+			static bool IsClosing(const IToken& token) {
+				return GetScriptPosition(token) == GetScriptRange(token).End();
+			}
 			static Scripts::Position GetScriptPosition(const IToken& token) {
 				return token.Get<DummyInfo>().GetValue<ScriptPosition>();
 			}
@@ -299,7 +302,7 @@ namespace SCRambl
 			}
 			template<typename TDelimiterType>
 			static TDelimiterType GetDelimiterType(const IToken& token) {
-				return token.Get<Info<TDelimiterType>>().GetValue<DelimiterType>();
+				return *token.Get<Info<TDelimiterType>>().GetValue<DelimiterType>();
 			}
 		};
 		class Character {

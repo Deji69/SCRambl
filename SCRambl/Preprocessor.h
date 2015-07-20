@@ -86,17 +86,6 @@ namespace SCRambl
 
 		class Task;
 
-		template<typename T, Numbers::Type TType>
-		class TokenNumber : public Tokens::Number::Info<T> {
-			using Parent = Tokens::Number::Info<T>;
-			T m_Val;
-
-		public:
-			TokenNumber(Scripts::Range rg, T val) : Parent(Tokens::Type::Number, rg, TType, &m_Val),
-				m_Val(val)
-			{ }
-		};
-
 		/*\ Preprocessor::Information - Externally accessible info about the preprocessors current state \*/
 		class Information {
 			friend class Preprocessor;
@@ -259,6 +248,29 @@ namespace SCRambl
 			Type m_Type = None;
 		};
 
+		template<typename T, Numbers::Type TType>
+		class TokenNumber : public Tokens::Number::Info<T> {
+			using Parent = Tokens::Number::Info<T>;
+			T m_Val;
+
+		public:
+			TokenNumber(Scripts::Range rg, T val) : Parent(Tokens::Type::Number, rg, TType, &m_Val),
+				m_Val(val)
+			{ }
+		};
+
+		class TokenDelimiter : public Tokens::Delimiter::Info<Delimiter> {
+			using Parent = Tokens::Delimiter::Info<Delimiter>;
+
+		public:
+			TokenDelimiter(Scripts::Position pos, Scripts::Range range, Delimiter type) : Parent(Tokens::Type::Delimiter, pos, range, &m_Delimiter),
+				m_Delimiter(type)
+			{ }
+
+		private:
+			Delimiter m_Delimiter = Delimiter::None;
+		};
+
 		/*\ Preprocessor::Preprocessor - Main Preprocessor task routine \*/
 		class Preprocessor
 		{
@@ -372,20 +384,21 @@ namespace SCRambl
 
 			// Add
 			bool OpenDelimiter(Scripts::Position pos, Delimiter type) {
-				auto token = m_Build.CreateToken<Tokens::Delimiter::Info<Delimiter>>(pos, Tokens::Type::Delimiter, pos, Scripts::Range(pos, pos), type);
+				auto token = m_Build.CreateToken<TokenDelimiter>(pos, pos, Scripts::Range(pos, pos), type);
 				m_Delimiters.push(token);
 				return true;
 			}
 			//
 			bool CloseDelimiter(Scripts::Position pos, Delimiter type) {
 				auto& token = m_Delimiters.top();
-				auto tok = token.GetToken<Tokens::Delimiter::Info<Delimiter>>();
+				auto tok = token.GetToken();
 				// ensure the delimiters are for the same purpose, otherwise there's error
-				if (tok->GetValue<Tokens::Delimiter::DelimiterType>() == type) {
+				if (Tokens::Delimiter::GetDelimiterType<Delimiter>(*tok) == type) {
+					auto begin = Tokens::Delimiter::GetScriptRange(*tok).Begin();
 					// replace the token with an updated Scripts::Range
-					token = m_Build.CreateToken<Tokens::Delimiter::Info<Delimiter>>(pos, Tokens::Type::Delimiter, pos, Scripts::Range(tok->GetValue<Tokens::Delimiter::ScriptRange>().Begin(), pos), type);
+					token.SetToken(new TokenDelimiter(begin, Scripts::Range(begin, pos), type));
 					// mark the closing position
-					AddToken<Tokens::Delimiter::Info<Delimiter>>(pos, Tokens::Type::Delimiter, pos, Scripts::Range(tok->GetValue<Tokens::Delimiter::ScriptRange>().Begin(), pos), type);
+					m_Build.CreateToken<TokenDelimiter>(pos, pos, Scripts::Range(begin, pos), type);
 					m_Delimiters.pop();
 					return true;
 				}
@@ -436,9 +449,9 @@ namespace SCRambl
 
 			// Add a preprocessing token
 			template<typename T, typename... TArgs>
-			inline Scripts::Token AddToken(Scripts::Position pos, Tokens::Type token, TArgs&&... args) {
+			inline Scripts::Token AddToken(Scripts::Position pos, TArgs&&... args) {
 				m_WasLastTokenEOL = false;
-				return m_Tokens.Add<T>(pos, token, std::forward<TArgs&&>(args)...);
+				return m_Tokens.Add<T>(pos, std::forward<TArgs&&>(args)...);
 			}
 
 			// Handle expressions

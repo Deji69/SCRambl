@@ -104,14 +104,14 @@ namespace SCRambl
 		inline bool operator==(const T& v) const { return Ptr() == v.Ptr(); }
 		inline bool operator!=(const T& v) const { return !(*this == v); }
 
-		bool OK() const {
+		inline bool OK() const {
 			return m_Vector != nullptr && m_Index < m_Vector->size();
 		}
 
-		T* Ptr() const {
+		inline T* Ptr() const {
 			return OK() ? &(*m_Vector)[m_Index] : nullptr;
 		}
-		T& Get() const {
+		inline T& Get() const {
 			return m_Vector.at(m_Index);
 		}
 		inline TIt Index() const { return m_Index; }
@@ -120,6 +120,7 @@ namespace SCRambl
 		Vec* m_Vector = nullptr;
 		TIt m_Index = 0;
 	};
+
 
 	class line
 	{

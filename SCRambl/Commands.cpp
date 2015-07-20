@@ -88,7 +88,7 @@ namespace SCRambl
 				stype = types.GetType(type_attr->AsString());
 			}
 			auto command = AddCommand(CaseConvert(xml["Name"]->AsString()), *xml["ID"], stype);
-			obj = command;
+			obj = command.Ptr();
 		})->AddClass("Args");
 		args->AddClass("Arg", [this, &types](const XMLNode xml, void*& obj){
 			// retrieve the object poiter as a SCR command we know it to be
@@ -102,10 +102,10 @@ namespace SCRambl
 			}
 		});
 	}
-	Command* Commands::GetCommand(size_t index) {
-		return index >= m_Commands.size() ? nullptr : &m_Commands[index];
+	Command::Ref Commands::GetCommand(size_t index) {
+		return Command::Ref(m_Commands, index);
 	}
-	Command* Commands::AddCommand(std::string name, XMLValue id, Types::Type* type) {
+	Command::Ref Commands::AddCommand(std::string name, XMLValue id, Types::Type* type) {
 		if (name.empty()) return nullptr;
 
 		if (m_SourceCasing != m_DestCasing) {
@@ -114,12 +114,11 @@ namespace SCRambl
 		}
 
 		m_Commands.emplace_back(name, id, type);
-		auto ptr = &m_Commands.back();
 		m_Map.emplace(name, m_Commands.size() - 1);
-		return ptr;
+		return { m_Commands, m_Commands.size() - 1 };
 	}
 	long Commands::FindCommands(std::string name, Vector& vec) {
-		return ForCommandsNamed(name, [&vec](Command* ptr){ vec.push_back(ptr); });
+		return ForCommandsNamed(name, [&vec](Command::Ref ptr){ vec.push_back(ptr); });
 	}
 	std::string Commands::CaseConvert(std::string str) const {
 		if (m_UseCaseConversion) {

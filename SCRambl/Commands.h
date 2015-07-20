@@ -67,6 +67,7 @@ namespace SCRambl
 		using Arg = CommandArg;
 		using ArgVec = std::vector<Arg>;
 		using Attributes = Attributes<Types::DataAttributeID, Types::DataAttributeSet>;
+		using Ref = VecRef<Command>;
 
 	private:
 		XMLValue m_Index;			// index, which could be name/id/hash, depends on translation
@@ -117,7 +118,7 @@ namespace SCRambl
 		};
 
 		using Map = std::unordered_multimap<std::string, size_t>;
-		using Vector = std::vector<Command*>;
+		using Vector = std::vector<Command::Ref>;
 
 	private:
 		XMLConfiguration* m_Config;
@@ -132,8 +133,8 @@ namespace SCRambl
 
 		void Init(Build& build);
 		std::string CaseConvert(std::string) const;
-		Command* AddCommand(std::string name, XMLValue id, Types::Type*);
-		Command* GetCommand(size_t index);
+		Command::Ref AddCommand(std::string name, XMLValue id, Types::Type*);
+		Command::Ref GetCommand(size_t index);
 		
 		// Finds all commands matching the name and stores them in a passed vector of command handles
 		// Returns the number of commands found

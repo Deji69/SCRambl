@@ -262,12 +262,12 @@ namespace SCRambl
 				{ }
 			} m_TypeParseState;
 			struct CommandParseState {
-				Command* command = nullptr;
+				VecRef<Command> command;
 				CommandArg::Iterator commandArgIt;
 				std::vector<Parameter> parameters;
 
 				CommandParseState() = default;
-				void Begin(Command* cmd, CommandArg::Iterator argit) {
+				void Begin(VecRef<Command> cmd, CommandArg::Iterator argit) {
 					CommandParseState();
 					command = cmd;
 					commandArgIt = argit;
@@ -377,7 +377,7 @@ namespace SCRambl
 			States Parse_Subscript();
 
 			inline bool IsEOLReached() const {
-				return IsCharacterEOL(m_TokenIt->GetToken());
+				return m_TokenIt == m_Tokens.end() || IsCharacterEOL(m_TokenIt->GetToken());
 			}
 			inline Tokens::Type GetCurrentTokenType() const {
 				return m_TokenIt->GetToken()->GetType<Tokens::Type>();
@@ -669,7 +669,7 @@ namespace SCRambl
 			ScriptVariable* m_Variable = nullptr;
 			Commands& m_Commands;
 			Commands m_ExtraCommands;
-			Command* m_CurrentCommand;
+			VecRef<Command> m_CurrentCommand;
 			Operators::OperatorRef m_CurrentOperator;
 			Command::Arg::Iterator m_CommandArgIt;
 			Commands::Vector m_OverloadCommands;
@@ -677,7 +677,7 @@ namespace SCRambl
 			VecRef<Types::Xlation> m_Xlation;
 
 			std::map<ScriptLabel*, LabelRef> m_LabelReferences;
-			std::vector<std::shared_ptr<const Command>> m_CommandVector;
+			std::vector<VecRef<Command>> m_CommandVector;
 			std::unordered_map<std::string, size_t> m_CommandMap;
 			std::multimap<const std::string, Scripts::Tokens::Iterator> m_CommandTokenMap;
 			std::vector<IToken*> m_Subscripts;
