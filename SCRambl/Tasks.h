@@ -25,16 +25,17 @@ namespace SCRambl
 			template<typename>
 			friend class Task;
 
-			// imagine if there was a way to store functions by how they need to be called...
-			std::multimap<const std::type_info*, void*>	m_Handlers;
-
-		protected:
-			EventType m_ID;
-
 		public:
 			Event() = default;
 			Event(EventType id) : m_ID(id)
 			{ }
+			virtual ~Event() {
+				// delete the function pointers
+				for (auto pair : m_Handlers) {
+					// looks really simple...
+					delete static_cast<std::function<bool(void)>*>(pair.second);
+				}
+			}
 
 			// Add event handler
 			template<typename Func>
@@ -67,14 +68,11 @@ namespace SCRambl
 				}
 				return true;
 			}
-
-			virtual ~Event() {
-				// delete the function pointers
-				for (auto pair : m_Handlers) {
-					// looks really simple...
-					delete static_cast<std::function<bool(void)>*>(pair.second);
-				}
-			}
+		
+		private:
+			EventType m_ID;
+			// imagine if there was a way to store functions by how they need to be called...
+			std::multimap<const std::type_info*, void*>	m_Handlers;
 		};
 
 		// Task interface - Task placeholder
@@ -89,24 +87,11 @@ namespace SCRambl
 
 		// Task - Kinda the point of this whole file
 		template<typename EventType>
-		class Task : public ITask
-		{
+		class Task : public ITask {
 			friend class SCRambl::Engine;
 
 		public:
 			enum State { running, error, finished };
-
-		private:
-			State m_State;
-
-			// events can be handled by the implementor
-			std::map<EventType, Event<EventType>> m_Events;
-
-		protected:
-			inline State& TaskState() { return m_State; }		// unused?
-
-		public:
-			inline State GetState()	const { return m_State; }
 
 			// Add an event handler, plus the event if it doesn't exist already
 			template<EventType id, typename Func>
@@ -129,6 +114,8 @@ namespace SCRambl
 				// nothing called
 				return false;
 			}
+			// Gets the current state
+			inline State GetState()	const { return m_State; }
 
 		protected:
 			// a running start!
@@ -138,7 +125,7 @@ namespace SCRambl
 			{ };
 
 			// When you say run, I say go fuck yourself...
-			const Task& Run() {
+			inline const Task& Run() {
 				do {
 					// continue from where we left off...
 					switch (m_State) {
@@ -170,6 +157,13 @@ namespace SCRambl
 				} while (false);
 				return *this;
 			};
+			inline State& TaskState() { return m_State; }
+
+		private:
+			State m_State;
+
+			// events can be handled by the implementor
+			std::map<EventType, Event<EventType>> m_Events;
 		};
 	}
 }

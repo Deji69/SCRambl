@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "Standard.h"
 #include "Engine.h"
 #include "Preprocessor.h"
 #include "Parser.h"
@@ -63,7 +64,6 @@ bool Engine::LoadBuildFile(const std::string& path, const std::string& buildConf
 	}
 	return false;
 }
-
 bool Engine::LoadXML(const std::string& path) {
 	XML xml(path);
 	if (xml) {
@@ -88,3 +88,17 @@ Engine::Engine() : m_Builder(*this)
 { }
 Engine::~Engine()
 { }
+
+Basic::Error::Error(const Preprocessor::Error& err) : m_Type(preprocessor),
+	m_Payload(std::make_unique<Info<Preprocessor::Error>>(err))
+{ }
+Basic::Error::Error(const Parser::Error& err) : m_Type(parser),
+	m_Payload(std::make_unique<Info<Parser::Error>>(err))
+{ }
+Basic::Error::Error(Error&& o) : m_Payload(std::move(o.m_Payload))
+{ }
+Basic::Error& Basic::Error::operator=(Error&& o) {
+	if (this != &o)
+		m_Payload = std::move(o.m_Payload);
+	return *this;
+}

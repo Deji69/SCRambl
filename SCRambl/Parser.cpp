@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "Standard.h"
 #include "Parser.h"
-#include "Exception.h"
 #include "Scripts.h"
 #include "Preprocessor.h"
 #include "TokensB.h"

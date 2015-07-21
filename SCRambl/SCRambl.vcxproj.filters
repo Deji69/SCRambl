@@ -13,9 +13,6 @@
     <ClCompile Include="Engine.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Exception.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Identifiers.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -103,9 +100,6 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="Environment.h">
-      <Filter>Header</Filter>
-    </ClInclude>
-    <ClInclude Include="Exception.h">
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="Identifiers.h">
