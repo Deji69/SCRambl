@@ -15,7 +15,6 @@ bool Engine::BuildScript(Build* build) {
 	auto state = build->Run().GetState();
 	return true;
 }
-
 Build* Engine::InitBuild(std::vector<std::string> files) {
 	auto config = m_Builder.GetConfig();
 	auto build = new Build(*this, config);
@@ -35,7 +34,34 @@ Build* Engine::InitBuild(std::vector<std::string> files) {
 	return build;
 }
 void Engine::FreeBuild(Build* build) {
-	if (build) delete build;
+	if (build) {
+		delete build;
+		build = nullptr;
+	}
+}
+BuildConfig* Engine::GetBuildConfig() const {
+	return m_Builder.GetConfig();
+}
+bool Engine::SetBuildConfig(const std::string& name) {
+	return m_Builder.SetConfig(name);
+}
+XMLConfiguration* Engine::AddConfig(const std::string& name) {
+	if (name.empty()) return nullptr;
+	if (m_Config.find(name) != m_Config.end()) return nullptr;
+	auto pr = m_Config.emplace(name, name);
+	return pr.second ? &pr.first->second : nullptr;
+}
+bool Engine::LoadFile(const std::string& path, Script& script) {
+	return GetFilePathExtension(path) == "xml" ? LoadXML(path) : m_Builder.LoadScriptFile(path, script);
+}
+bool Engine::LoadBuildFile(const std::string& path, const std::string& buildConfig) {
+	if (LoadXML(path)) {
+		m_Builder.SetConfig(buildConfig);
+		if (auto config = m_Builder.GetConfig()) {
+			return true;
+		}
+	}
+	return false;
 }
 
 bool Engine::LoadXML(const std::string& path) {
@@ -58,26 +84,7 @@ bool Engine::LoadXML(const std::string& path) {
 	}
 	return false;
 }
-const TaskSystem::Task<EngineEvent>& Engine::Run() {
-	if(CurrentTask == std::end(Tasks)) CurrentTask = std::begin(Tasks);
-	auto & it = CurrentTask;
-	
-	if (it != std::end(Tasks)) {
-		auto task = it->second.get();
-		
-		while (task->IsTaskFinished()) {
-			if (++it == std::end(Tasks)) {
-				m_State = finished;
-				return *this;
-			}
-			task = it->second.get();
-		}
-
-		task->RunTask();
-	}
-	return *this;
-}
-Engine::Engine() : HaveTask(false),
-// in that order...
-m_Builder(*this)
+Engine::Engine() : m_Builder(*this)
+{ }
+Engine::~Engine()
 { }

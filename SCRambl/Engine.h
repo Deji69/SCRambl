@@ -26,9 +26,8 @@ namespace SCRambl
 		ConfigurationError,
 	};
 
-	class Engine : public TaskSystem::Task<EngineEvent>
+	class Engine
 	{
-		//using TaskEntry = std::pair<int, TypeSystem::Task>;
 		using TaskMap = std::map<int, std::unique_ptr<TaskSystem::ITask>>;
 		using FormatMap = std::map<const std::type_info*, std::unique_ptr<IFormatter>>;
 		using ConfigMap = std::map<std::string, XMLConfiguration>;
@@ -36,113 +35,44 @@ namespace SCRambl
 		// Configuration
 		ConfigMap m_Config;
 
-		// Tasks
-		bool HaveTask;
-		TaskMap Tasks;
-		TaskMap::iterator CurrentTask;
-
 		// BuildSystem
 		Builder	m_Builder;
 
 		// Message formatting
 		FormatMap Formatters;
 		
-		inline void Init() {
-			CurrentTask = std::begin(Tasks);
-		}
-		bool LoadXML(const std::string & path);
-
 	public:
 		Engine();
-		virtual ~Engine()
-		{ }
+		virtual ~Engine();
 
+		// Initiate the build
 		Build* InitBuild(std::vector<std::string> files);
+		// Free the build
 		void FreeBuild(Build*);
+		// Run the build
 		bool BuildScript(Build*);
+		// Load XML configuration/definition file
+		bool LoadXML(const std::string& path);
 
-		/*\ Engine::GetBuildConfig \*/
-		inline BuildConfig* GetBuildConfig() const {
-			return m_Builder.GetConfig();
-		}
-		/*\ Engine::SetBuildConfig \*/
-		inline bool SetBuildConfig(std::string name) {
-			return m_Builder.SetConfig(name);
-		}
+		// Obtain current build configuration
+		BuildConfig* GetBuildConfig() const;
+		// Set current build configuration
+		bool SetBuildConfig(const std::string& name);
 
-		/*\ Engine::AddConfig - Returns shared Configuration element \*/
-		XMLConfiguration* AddConfig(const std::string& name) {
-			if (name.empty()) return nullptr;
-			if (m_Config.find(name) != m_Config.end()) return nullptr;
-			auto pr = m_Config.emplace(name, name);
-			return pr.second ? &pr.first->second : nullptr;
-		}
+		// Add configuration (name = XML section)
+		XMLConfiguration* AddConfig(const std::string& name);
 
-		/*\ Engine::AddConfig \*/
-		//void AddConfig(Configuration* config) {
-			//m_Config.emplace(config->GetName(), config);
-		//}
-
-		/*\ Engine::LoadFile \*/
-		bool LoadFile(const std::string& path, Script& script) {
-			return GetFilePathExtension(path) == "xml" ? LoadXML(path) : m_Builder.LoadScriptFile(path, script);
-		}
-		/*\ Engine::LoadConfigFile - Loads a build file (e.g. build.xml) and applies the buildConfig \*/
-		bool LoadBuildFile(const std::string& path, const std::string& buildConfig = "") {
-			if (LoadXML(path)) {
-				m_Builder.SetConfig(buildConfig);
-				if (auto config = m_Builder.GetConfig()) {
-					return true;
-				}
-			}
-			return false;
-		}
-		/*\ Engine::LoadDefinition \*/
-		bool LoadDefinition(std::string filename, std::string * full_path_out = nullptr) {
-			if(LoadXML(filename)) {
-				return true;
-			}
-			return false;
-		}
-
-		/*\ Engine::SetFormatter<> - Set, override or cancel the override of a string formatter \*/
-		template<typename T, typename F> void SetFormatter(F &func) {
+		// Load file based on extension and type
+		bool LoadFile(const std::string& path, Script& script);
+		// Load build XML file and apply specified build config
+		bool LoadBuildFile(const std::string& path, const std::string& buildConfig = "");
+		
+		// Set, override or cancel override of a string formatter (T = source type)
+		template<typename T, typename F> inline void SetFormatter(F& func) {
 			Formatters[&typeid(T)] = std::make_unique<Formatter<T>>(func);
 		}
 
-		/*\ Engine::AddTask<> - Add task to the running engine \*/
-		template<typename T, typename ID, typename... Params>
-		const T* AddTask(ID id, Params&&... prms) {
-			auto pr = Tasks.emplace(id, std::make_shared<T>(*this, prms...));
-			if (pr.second) {
-				if (!HaveTask) {
-					Init();
-					HaveTask = true;
-				}
-				return pr.first->second.get();
-			}
-			return nullptr;
-		}
-		/*\ Engine::RemoveTask<> - Remove task from the running engine \*/
-		template<typename ID>
-		bool RemoveTask(ID id) {
-			if (!Tasks.empty()) {
-				auto it = std::find(std::begin(Tasks), std::end(Tasks), id);
-				if (it != std::end(Tasks)) {
-					delete it->second;
-					Tasks.erase(it);
-
-					if (Tasks.empty()) {
-						HaveTask = false;
-						CurrentTask = std::end(Tasks);
-					}
-					return true;
-				}
-			}
-			return false;
-		}
-
-		/*\ Engine::Format<> - String format a SCRambl type \*/
+		// SCRambl string formatting for generic and SCRambl types
 		template<typename T>
 		inline std::string Format(const T& param) const {
 			if (!Formatters.empty()) {
@@ -155,7 +85,7 @@ namespace SCRambl
 			return "";
 		}
 
-		// specialisations for easy non-SCRambl types
+		// Specialisations for easy generic types
 		template<> inline std::string Format(const std::string& param) const { return param; }
 		template<> inline std::string Format(const int& param) const { return std::to_string(param); }
 		template<> inline std::string Format(const unsigned int& param) const { return std::to_string(param); }
@@ -167,33 +97,21 @@ namespace SCRambl
 		template<> inline std::string Format(const double& param) const { return std::to_string(param); }
 		template<> inline std::string Format(const long double& param) const { return std::to_string(param); }
 
-		/*\ Engine::Format<T, T, ...> - String format multiple types \*/
+		// String format multiple types (sprintf)
 		template<typename First, typename... Args>
-		void Format(std::vector<std::string>& out, First&& first, Args&&... args) {
+		inline void Format(std::vector<std::string>& out, First&& first, Args&&... args) {
 			// do one
 			out.push_back(Format(first));
 			// continue
 			Format(out, args...);
 		}
-		/*\ Engine::Format<T> - String format multiple types \*/
+		
+	private:
+		// String format multiple types (sprintf) (pt2)
 		template<typename Last>
 		inline void Format(std::vector<std::string>& out, Last&& last) {
 			// finale
-			out.push_back(Format(std::forward<Last>(last)));
+			out.emplace_back(Format(std::forward<Last>(last)));
 		}
-
-	public:
-		template<typename T>
-		inline T & GetCurrentTask() { return reinterpret_cast<T&>(*CurrentTask->second); }
-		inline int GetCurrentTaskID() const { return std::ref(CurrentTask->first); }
-		inline size_t GetNumTasks() const  { return Tasks.size(); }
-		inline void ClearTasks() { Tasks.clear(); }
-
-		const TaskSystem::Task<EngineEvent> & Run();
-
-	protected:
-		bool IsTaskFinished() override { return CurrentTask == std::end(Tasks); }
-		void ResetTask() override { Init(); }
-		void RunTask() override	{ Run(); }
 	};
 }

@@ -59,5 +59,6 @@ SCRAMBLAPI bool SCRambl_Build(SCRamblInst* inst) {
 	while (true) {
 		engine.BuildScript(build);
 	}
+	engine.FreeBuild(build);
 	return true;
 }

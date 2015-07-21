@@ -426,11 +426,11 @@ namespace SCRambl
 		auto definitions = GetConfig()->GetDefinitions();
 		for (auto path : GetConfig()->GetDefinitionPaths()) {
 			for (auto def : path.Definitions) {
-				m_Engine.LoadDefinition(path.Path + def);
+				m_Engine.LoadXML(path.Path + def);
 			}
 
 			for (auto it = definitions.begin(); it != definitions.end(); ++it) {
-				if (m_Engine.LoadDefinition(*it))
+				if (m_Engine.LoadXML(*it))
 					it = definitions.erase(it);
 			}
 		}

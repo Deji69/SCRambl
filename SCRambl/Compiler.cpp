@@ -18,8 +18,10 @@ namespace SCRambl
 			m_State = compiling;
 
 			auto name = m_Build->GetEnvVar("ScriptName").AsString();
-			if (name.empty())
+			if (name.empty()) {
 				BREAK();
+				name = "main";
+			}
 			m_File.open(name + ".scrmbl", std::ios::out | std::ios::binary);
 			
 			Output<uint64_t>(GetTime());
