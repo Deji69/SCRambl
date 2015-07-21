@@ -135,15 +135,7 @@ namespace SCRambl
 	public:
 		BuildEnvironment(Engine&);
 
-		template<typename T>
-		BuildVariable& Set(XMLValue id, const T& v) {
-			auto it = m_Variables.find(Val(id).AsString());
-			if (it != std::end(m_Variables))
-				it->second.Value = Val(v);
-			else
-				it = m_Variables.emplace(Val(id).AsString(), Val(v)).first;
-			return it->second;
-		}
+		BuildVariable& Set(XMLValue id, XMLValue v);
 		BuildVariable& Get(XMLValue id);
 		const BuildVariable& Get(XMLValue id) const;
 
@@ -151,7 +143,6 @@ namespace SCRambl
 	
 		void DoAction(const ParseObjectConfig::Action& action, XMLValue v);
 	};
-
 	class BuildCommand
 	{
 	public:
@@ -163,7 +154,6 @@ namespace SCRambl
 		VecRef<ParseObjectConfig::Action> m_Action;
 		XMLValue m_Value;
 	};
-
 	class BuildSymbol
 	{
 	public:
@@ -176,7 +166,6 @@ namespace SCRambl
 	private:
 		BuildEnvironment& m_Env;
 	};
-
 	class Build : public TaskSystem::Task<BuildEvent>
 	{
 		friend class Builder;
@@ -236,15 +225,15 @@ namespace SCRambl
 		inline const ScriptObjects<Variable>& GetVariables() const { return m_Variables; }
 		inline const ScriptVariable::Scope& OpenVarScope() { return m_Variables.BeginLocal(); }
 		inline const ScriptVariable::Scope& CloseVarScope() { return m_Variables.EndLocal(); }
-		ScriptVariable* AddScriptVariable(std::string name, Types::Type* type, size_t array_size);
-		ScriptVariable* GetScriptVariable(std::string name);
+		ScriptVariable* AddScriptVariable(std::string name, Types::Type*, size_t array_size);
+		ScriptVariable* GetScriptVariable(std::string);
 
 		// Labels
 		inline ScriptObjects<Label>& GetLabels() { return m_Labels; }
 		inline const ScriptObjects<Label>& GetLabels() const { return m_Labels; }
 		ScriptLabel* AddScriptLabel(std::string name, Scripts::Position);
-		ScriptLabel* GetScriptLabel(std::string name);
-		ScriptLabel* GetScriptLabel(Label* label);
+		ScriptLabel* GetScriptLabel(std::string);
+		ScriptLabel* GetScriptLabel(Label*);
 
 		Xlations::const_iterator GetXlationsBegin() const {
 			return m_Xlations.begin();
@@ -316,6 +305,10 @@ namespace SCRambl
 		void RunTask() override { Run(); }
 
 	private:
+		void Setup();
+		void Init();
+		void LoadDefinitions();
+
 		Engine& m_Engine;
 		Constants m_Constants;
 		Commands m_Commands;
@@ -342,28 +335,22 @@ namespace SCRambl
 		TaskMap m_Tasks;
 		TaskMap::iterator m_CurrentTask;
 		bool m_HaveTask;
-
-		void Setup();
-		void Init();
-		void LoadDefinitions();
 	};
-
-	class Builder
-	{
-		Engine& m_Engine;
-		XMLConfiguration* m_Configuration;
-		XMLConfig* m_Config;
-		std::unordered_map<std::string, BuildConfig> m_BuildConfigurations;
-		BuildConfig* m_BuildConfig;
-
+	class Builder {
 	public:
 		Builder(Engine&);
 		
 		Scripts::FileRef LoadFile(Build*, std::string);
 		bool LoadDefinitions(Build*);
-
 		bool LoadScriptFile(std::string, Script&);
 		bool SetConfig(std::string) const;
 		BuildConfig* GetConfig() const;
+
+	private:
+		Engine& m_Engine;
+		XMLConfiguration* m_Configuration = nullptr;
+		XMLConfig* m_Config = nullptr;
+		BuildConfig* m_BuildConfig = nullptr;
+		std::unordered_map<std::string, BuildConfig> m_BuildConfigurations;
 	};
 }

@@ -7,22 +7,21 @@
 #pragma once
 #include <queue>
 #include <memory>
+#include <map>
 #include <set>
 #include <functional>
 #include <typeinfo>
-#include "Reporting.h"
 #include "utils\function_traits.h"
 
 namespace SCRambl
 {
 	class Engine;
-	
+
 	// This was HELL to write...
-	namespace TaskSystem
-	{
+	namespace TaskSystem {
+		// Events & handlers
 		template<typename EventType>
-		class Event
-		{
+		class Event {
 			template<typename>
 			friend class Task;
 
@@ -30,7 +29,7 @@ namespace SCRambl
 			std::multimap<const std::type_info*, void*>	m_Handlers;
 
 		protected:
-			EventType			m_ID;
+			EventType m_ID;
 
 		public:
 			Event() = default;
@@ -39,19 +38,16 @@ namespace SCRambl
 
 			// Add event handler
 			template<typename Func>
-			void AddHandler(Func handler)
-			{
+			void AddHandler(Func handler) {
 				// do some weird, but very necessary shit
 				auto function = new decltype(to_function(handler))(to_function(handler));
 
 				// add the function to the list and associate its type
 				m_Handlers.emplace(&typeid(function), static_cast<void*>(function));
 			}
-
 			// Call capable handlers, returns false if none were called
 			template<typename... Args>
-			bool CallHandler(Args&&... args)
-			{
+			bool CallHandler(Args&&... args) {
 				// this is surely impossible...?
 				if (m_Handlers.empty()) return false;
 
@@ -63,19 +59,16 @@ namespace SCRambl
 				if (it_pair.first == m_Handlers.end()) return false;
 
 				// call all handlers, or until the first one that returns 'false'
-				for (auto it = it_pair.first; it != it_pair.second; ++it)
-				{
+				for (auto it = it_pair.first; it != it_pair.second; ++it) {
 					// cast it back to the function
 					auto func = static_cast<std::function<bool(Args...)>*>(it->second);
-
 					// if it returns false, abort in case it did something that could screw up future calls
 					if (!(*func)(std::forward<Args>(args)...)) break;
 				}
 				return true;
 			}
 
-			virtual ~Event()
-			{
+			virtual ~Event() {
 				// delete the function pointers
 				for (auto pair : m_Handlers) {
 					// looks really simple...
@@ -84,9 +77,7 @@ namespace SCRambl
 			}
 		};
 
-		/*\
-		 * Task interface - Task placeholder
-		\*/
+		// Task interface - Task placeholder
 		class ITask
 		{
 		public:
@@ -96,9 +87,7 @@ namespace SCRambl
 			virtual void ResetTask() = 0;
 		};
 
-		/*\
-		 * TaskSystem::Task - Kinda the point of this whole file
-		\*/
+		// Task - Kinda the point of this whole file
 		template<typename EventType>
 		class Task : public ITask
 		{
@@ -108,22 +97,16 @@ namespace SCRambl
 			enum State { running, error, finished };
 
 		private:
-			State									m_State;
+			State m_State;
 
 			// events can be handled by the implementor
-			std::map<EventType, Event<EventType>>	m_Events;
+			std::map<EventType, Event<EventType>> m_Events;
 
 		protected:
-			inline State & TaskState()				{ return m_State; }		// unused?
+			inline State& TaskState() { return m_State; }		// unused?
 
 		public:
-			inline State GetState()	const			{ return m_State; }
-
-			// don't need this - instead we'll do it when a handler is added which is way more efficient in so many ways
-			/*template<EventType id>
-			inline void AddEvent() {
-				m_Events.emplace(id, id);
-			}*/
+			inline State GetState()	const { return m_State; }
 
 			// Add an event handler, plus the event if it doesn't exist already
 			template<EventType id, typename Func>
@@ -131,16 +114,14 @@ namespace SCRambl
 				auto & ev = m_Events[id];
 				ev.AddHandler<Func>(std::forward<Func>(std::ref(func)));
 			}
-
 			// Call all handlers for an event
-			// Returns false if none were called
+			// - Returns false if none were called
 			template<typename... Args>
 			inline bool CallEventHandler(EventType id, Args&&... args) {
 				// if no event is found, there must not be a handler for it anyway
 				if (m_Events.empty()) return false;
 				auto it = m_Events.find(id);
-				if (it != m_Events.end())
-				{
+				if (it != m_Events.end()) {
 					// pass the message
 					if(it->second.CallHandler(std::forward<Args>(args)...))
 						return true;
@@ -153,30 +134,26 @@ namespace SCRambl
 			// a running start!
 			Task() : m_State(running)
 			{ }
-			virtual ~Task() { };
+			virtual ~Task()
+			{ };
 
 			// When you say run, I say go fuck yourself...
-			const Task & Run()
-			{
-				do
-				{
+			const Task& Run() {
+				do {
 					// continue from where we left off...
-					switch (m_State)
-					{
+					switch (m_State) {
 					case error:
 						// error last time? oh well, moving on...
 						m_State = running;
 					case running:
-						try
-						{
+						try {
 							// great, now redirect to the REAL task
 							RunTask();
 
 							// finished? what d'yeh want, a cookie?
 							if (IsTaskFinished()) m_State = finished;
 						}
-						catch (...)
-						{
+						catch (...) {
 							// I doubt this will ever happen...
 							m_State = error;
 						}
@@ -184,8 +161,7 @@ namespace SCRambl
 					case finished:
 						// run again (y/n)?
 						ResetTask();
-						if (!IsTaskFinished())
-						{
+						if (!IsTaskFinished()) {
 							m_State = running;
 							continue;
 						}

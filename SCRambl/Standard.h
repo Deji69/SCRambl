@@ -25,40 +25,48 @@ namespace SCRambl
 		private:
 			class Payload
 			{
-			protected:
+			public:
 				inline virtual ~Payload() { }
 			};
 
 			template<class T>
 			class Info : public Payload
 			{
-				T			m_Error;
+				T m_Error;
 
 			public:
-				Info(const T & err) : m_Error(err)
+				Info(const T& err) : m_Error(err)
 				{ }
-				inline T & Get()					{ return m_Error; }
-				inline const T & Get() const		{ return m_Error; }
+				inline T& Get() { return m_Error; }
+				inline const T& Get() const { return m_Error; }
 			};
 
-			Type						m_Type;
-			std::shared_ptr<Payload>	m_Payload;
+			Type m_Type;
+			std::unique_ptr<Payload> m_Payload;
 
 		public:
-			Error(const Preprocessor::Error & err): m_Type(preprocessor),
+			Error(const Preprocessor::Error& err): m_Type(preprocessor),
 				m_Payload(std::make_unique<Info<Preprocessor::Error>>(err))
 			{ }
-			Error(const Parser::Error & err) : m_Type(parser),
+			Error(const Parser::Error& err) : m_Type(parser),
 				m_Payload(std::make_unique<Info<Parser::Error>>(err))
 			{ }
-			//Error(const Error &) = delete;
+			Error(Error&& o) : m_Payload(std::move(o.m_Payload))
+			{ }
+			Error(const Error&) = delete;
+			Error& operator=(const Error&) = delete;
+			Error& operator=(Error&& o) {
+				if (this != &o)
+					m_Payload = std::move(o.m_Payload);
+				return *this;
+			}
 
-			inline Type GetType() const			{ return m_Type; }
+			inline Type GetType() const { return m_Type; }
 			
 			template<typename T>
-			inline T & Get();
+			inline T& Get();
 			template<typename T>
-			inline const T & Get() const;
+			inline const T& Get() const;
 
 			template<> inline Preprocessor::Error & Get<Preprocessor::Error>()	{
 				ASSERT(m_Type == preprocessor);
@@ -67,7 +75,6 @@ namespace SCRambl
 			template<> inline const Preprocessor::Error & Get<Preprocessor::Error>() const	{
 				return Get<Preprocessor::Error>();
 			}
-
 			template<> inline Parser::Error & Get<Parser::Error>()	{
 				ASSERT(m_Type == parser);
 				return static_cast<Info<Parser::Error>&>(*m_Payload).Get();

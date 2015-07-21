@@ -115,7 +115,6 @@
     <ClInclude Include="Literals.h" />
     <ClInclude Include="Macros.h" />
     <ClInclude Include="Parser.h" />
-    <ClInclude Include="Preparser.h" />
     <ClInclude Include="Preprocessor.h" />
     <ClInclude Include="ProjectManager.h" />
     <ClInclude Include="Reporting.h" />
@@ -158,7 +157,6 @@
     <ClCompile Include="Macros.cpp" />
     <ClCompile Include="Operators.cpp" />
     <ClCompile Include="Parser.cpp" />
-    <ClCompile Include="Preparser.cpp" />
     <ClCompile Include="Preprocessor.cpp" />
     <ClCompile Include="ProjectManager.cpp" />
     <ClCompile Include="Reporting.cpp" />

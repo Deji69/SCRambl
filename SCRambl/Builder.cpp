@@ -194,7 +194,8 @@ Build::Build(Engine& engine, BuildConfig* config) : m_Env(engine), m_Engine(engi
 {
 	Setup();
 }
-Build::~Build() { }
+Build::~Build()
+{ }
 
 /* BuildEnvironment */
 void BuildEnvironment::DoAction(const ParseObjectConfig::Action& action, XMLValue v) {
@@ -244,6 +245,15 @@ void BuildEnvironment::DoAction(const ParseObjectConfig::Action& action, XMLValu
 		break;
 	}
 }
+BuildVariable& BuildEnvironment::Set(XMLValue id, XMLValue v) {
+	std::string str = Val(id).AsString();
+	auto it = m_Variables.find(str);
+	if (it != std::end(m_Variables))
+		it->second.Value = Val(v);
+	else
+		it = m_Variables.emplace(str, Val(v)).first;
+	return it->second;
+}
 const BuildVariable& BuildEnvironment::Get(XMLValue id) const {
 	return m_Variables[Val(id).AsString()];
 }
@@ -264,10 +274,8 @@ XMLValue BuildEnvironment::Val(XMLValue v) const {
 					if (lbr != raw.npos) {
 						end = lbr;
 						auto rbr = raw.find_first_of(']', lbr);
-						if (rbr != raw.npos) {
-							arr = std::stoul(raw.substr(lbr, rbr - lbr));
-						}
-						else lbr = rbr;
+						if (rbr == raw.npos) lbr = rbr;
+						else arr = std::stoul(raw.substr(lbr, rbr - lbr));
 					}
 
 					if (lbr != raw.npos) {
@@ -286,7 +294,8 @@ XMLValue BuildEnvironment::Val(XMLValue v) const {
 	}
 	return m_Engine.Format(val);
 }
-BuildEnvironment::BuildEnvironment(Engine& engine) : m_Engine(engine) { }
+BuildEnvironment::BuildEnvironment(Engine& engine) : m_Engine(engine)
+{ }
 	
 /* Builder */
 BuildConfig* Builder::GetConfig() const { return m_BuildConfig; }

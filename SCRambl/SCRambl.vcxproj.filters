@@ -28,12 +28,6 @@
     <ClCompile Include="Operators.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Parser.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Preparser.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Preprocessor.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -89,6 +83,9 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="BuildConfig.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Parser.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
@@ -148,12 +145,6 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="ProjectManager.h">
-      <Filter>Header</Filter>
-    </ClInclude>
-    <ClInclude Include="Preparser.h">
-      <Filter>Header</Filter>
-    </ClInclude>
-    <ClInclude Include="Parser.h">
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="Operators.h">
@@ -265,6 +256,9 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="Matching.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Parser.h">
       <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>

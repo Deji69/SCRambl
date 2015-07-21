@@ -10,7 +10,6 @@
 #include "SCRambl/Engine.h"
 #include "SCRambl/Scripts.h"
 #include "SCRambl/ProjectManager.h"
-#include "SCRambl/Preparser.h"
 #include "SCRambl/Preprocessor.h"
 #include "SCRambl/Parser.h"
 #include "SCRambl/Compiler.h"
