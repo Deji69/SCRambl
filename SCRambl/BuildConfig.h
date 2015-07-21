@@ -14,15 +14,14 @@ namespace SCRambl
 {
 	struct build_xmlvalue_less {
 		class BuildEnvironment& env;
+		bool caseSensitive = true;
 		bool operator()(const XMLValue& lhs, const XMLValue& rhs) const;
 	};
 	struct BuildDefinitionPath
 	{
 		std::string Path;
 		std::vector<std::string> Definitions;
-
-		//BuildDefinitionPath() = default;
-		BuildDefinitionPath(std::string path);
+		BuildDefinitionPath(std::string);
 	};
 
 	struct InputConfig {
@@ -69,6 +68,45 @@ namespace SCRambl
 	class BuildConfig
 	{
 		friend class Build;
+		using ParseNameVec = std::vector<std::pair<XMLValue, ParseObjectConfig*>>;
+		using ParseConfigVec = std::vector<ParseObjectConfig>;
+		using ScriptConfigMap = std::map<std::string, ScriptConfig>;
+
+	public:
+		BuildConfig::BuildConfig(std::string id, std::string name, XMLConfig* config);
+
+		// Add script type configuration
+		ScriptConfig* AddScript(std::string id, XMLValue name, XMLValue ext = "");
+		// Add definition path
+		void AddDefinitionPath(std::string);
+		// Add definition path + default definition files
+		void AddDefinitionPath(std::string, const std::vector<std::string>&);
+		// Add configuration for a parse object
+		ParseObjectConfig* AddParseObjectConfig(XMLValue name, XMLValue required, XMLValue type);
+
+		inline size_t GetNumDefinitionPaths() const { return m_DefinitionPaths.size(); }
+		inline size_t GetNumDefaultLoads() const {
+			size_t n = 0;
+			for (auto& defpath : m_DefinitionPaths) {
+				n += defpath.Definitions.size();
+			}
+			return n + m_Definitions.size();
+		}
+		//inline std::string GetDefaultLoad(size_t i = 0) const { return ""; }
+		inline std::string GetDefinitionPath(size_t i) const { return m_DefinitionPaths[i].Path; }
+		inline const std::vector<std::string>& GetDefinitions() const { return m_Definitions; }
+		inline const std::vector<BuildDefinitionPath>& GetDefinitionPaths() const { return m_DefinitionPaths; }
+
+	protected:
+		const ParseNameVec& GetParseCommands() const { return m_ParseCommandNames; }
+		const ParseNameVec& GetParseVariables() const { return m_ParseVariableNames; }
+		const ParseNameVec& GetParseLabels() const { return m_ParseLabelNames; }
+
+	private:
+		BuildDefinitionPath& AddDefPath(std::string);
+		size_t GetDefinitionPathID(std::string);				// returns -1 on failure
+
+		inline const ScriptConfigMap& GetScripts() const  { return m_Scripts; }
 
 		XMLConfiguration* m_Config;
 
@@ -82,41 +120,10 @@ namespace SCRambl
 		std::vector<std::string> m_Definitions;
 
 		//
-		using ParseNameVec = std::vector<std::pair<XMLValue, ParseObjectConfig*>>;
-		std::map<std::string, ScriptConfig> m_Scripts;
+		ScriptConfigMap m_Scripts;
 		ParseNameVec m_ParseCommandNames;
 		ParseNameVec m_ParseVariableNames;
 		ParseNameVec m_ParseLabelNames;
-		std::vector<ParseObjectConfig> m_ObjectConfigs;
-
-		BuildDefinitionPath& AddDefPath(std::string);
-		size_t GetDefinitionPathID(std::string);				// returns -1 on failure
-
-		inline auto GetScripts() const->const decltype(m_Scripts)&  {
-			return m_Scripts;
-		}
-
-	protected:
-		const ParseNameVec& GetParseCommands() const { return m_ParseCommandNames; }
-		const ParseNameVec& GetParseVariables() const { return m_ParseVariableNames; }
-		const ParseNameVec& GetParseLabels() const { return m_ParseLabelNames; }
-
-	public:
-		//BuildConfig::BuildConfig(std::string id, std::string name);
-		BuildConfig::BuildConfig(std::string id, std::string name, XMLConfig* config);
-
-		ScriptConfig* AddScript(std::string id, XMLValue name, XMLValue ext = "");
-		void AddDefinitionPath(std::string);
-		void AddDefinitionPath(std::string, const std::vector<std::string>&);
-
-		ParseObjectConfig* AddParseObjectConfig(XMLValue name, XMLValue required, XMLValue type);
-
-		size_t GetNumDefinitionPaths() const { return m_DefinitionPaths.size(); }
-		size_t GetNumDefaultLoads() const { return 0; }
-		std::string GetDefaultLoad(size_t i = 0) const { return ""; }
-		std::string GetDefinitionPath(size_t i) const { return m_DefinitionPaths[i].Path; }
-
-		const std::vector<std::string>& GetDefinitions() const { return m_Definitions; }
-		const std::vector<BuildDefinitionPath>& GetDefinitionPaths() const { return m_DefinitionPaths; }
+		ParseConfigVec m_ObjectConfigs;
 	};
 }

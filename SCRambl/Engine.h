@@ -106,7 +106,6 @@ namespace SCRambl
 			Format(out, args...);
 		}
 		
-	private:
 		// String format multiple types (sprintf) (pt2)
 		template<typename Last>
 		inline void Format(std::vector<std::string>& out, Last&& last) {

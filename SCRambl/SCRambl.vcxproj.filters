@@ -88,12 +88,12 @@
     <ClCompile Include="Tokens.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="BuildConfig.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Builder.h">
-      <Filter>Header</Filter>
-    </ClInclude>
-    <ClInclude Include="BuildSystem.h">
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="Configuration.h">

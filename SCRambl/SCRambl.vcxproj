@@ -106,7 +106,6 @@
     <ClInclude Include="Symbols.h" />
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="Engine.h" />
-    <ClInclude Include="BuildSystem.h" />
     <ClInclude Include="Directives.h" />
     <ClInclude Include="Environment.h" />
     <ClInclude Include="Exception.h" />
@@ -142,6 +141,7 @@
     <ClInclude Include="XML.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BuildConfig.cpp" />
     <ClCompile Include="Builder.cpp" />
     <ClCompile Include="Commands.cpp" />
     <ClCompile Include="Compiler.cpp" />
