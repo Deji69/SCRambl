@@ -7,6 +7,7 @@
 #pragma once
 #include <string>
 #include "utils.h"
+#include "Standard.h"
 #include "Engine.h"
 #include "Scripts.h"
 #include "Preprocessor.h"
@@ -14,7 +15,7 @@
 #include "Tokens.h"
 #include "TokensB.h"
 #include "TokenInfo.h"
-#include "Types.h"
+//#include "Types.h"
 
 namespace SCRambl
 {
@@ -23,17 +24,13 @@ namespace SCRambl
 		using Character = Preprocessor::Character;
 		using Delimiter = Preprocessor::Delimiter;
 
-		/*\ Parser::Token - Parser wrapper for script tokens \*/
-		enum class ParsedType {
-			Command, OLCommand,
+		// Interesting stuff that the parser does
+		enum class Event {
+			Begin, Finish,
+			Warning, Error,
+			FoundToken,
 		};
-		/*\ Parser::Symbolic - Symbolic parser data \*/
-		enum class SymbolTypes {
-			Label, Command, Value
-		};
-		enum class CommandParam {
-			Command = Tokens::Identifier::EXTRA,
-		};
+		// Parser states
 		enum States {
 			state_neutral, state_parsing_type, state_parsing_command, state_parsing_operator,
 			state_parsing_number, state_parsing_string, state_parsing_label, state_parsing_variable,
@@ -42,10 +39,11 @@ namespace SCRambl
 			max_state
 		};
 
+		class Task; class Parser;
 		using CommandInfo = Tokens::Command::Info;
 		using OLCommandInfo = Tokens::Command::OverloadInfo;
 
-		/*\ Parser::Symbols - Symbolic data for parsed scripts \*/
+		// Symbolic data for parsed scripts
 		class Symbols
 		{
 		public:
@@ -56,8 +54,7 @@ namespace SCRambl
 
 			};
 
-			class Data
-			{
+			class Data {
 				Tokens::ValueToken<Types::Value*>* m_ValToken;
 			};
 
@@ -70,13 +67,11 @@ namespace SCRambl
 				T();
 			}
 		};
-
-		/*\ Parser::Error - Errors that can happen while preprocessing \*/
-		class Error
-		{
+		// Errors that can happen while parsing
+		class Error {
 		public:
 			enum ID {
-				// involuntary errors (errors that should be impossible)
+				// involuntary errors (errors that should be impossible!!)
 				invalid_character = 500,
 
 				// normal errors
@@ -103,17 +98,7 @@ namespace SCRambl
 			ID			m_ID;
 		};
 
-		class Task;
-
-		struct LabelRef {
-			Tokens::Iterator TokenIt;
-			bool IsReference;
-			size_t NumUses;
-
-			LabelRef(Tokens::Iterator it, bool isref) : TokenIt(it), IsReference(isref)
-			{ }
-		};
-
+		// Operand
 		class Operand {
 		public:
 			enum Type { NullValue, IntValue, FloatValue, TextValue, LabelValue, VariableValue };
@@ -156,7 +141,7 @@ namespace SCRambl
 			};
 			std::string m_Text;
 		};
-
+		// Parameter
 		struct Parameter {
 			Operand operand;
 			Types::Value* value;
@@ -164,7 +149,7 @@ namespace SCRambl
 			Parameter(Operand op, Types::Value* val) : operand(op), value(val)
 			{ }
 		};
-
+		// Chain operation
 		class ChainOperation {
 		public:
 			ChainOperation(Operators::OperatorRef op, Parameter param) : m_Operator(op), m_Parameter(param)
@@ -177,8 +162,7 @@ namespace SCRambl
 			Operators::OperatorRef m_Operator;
 			Parameter m_Parameter;
 		};
-		
-		/*\ Parser::Operation \*/
+		// Operation symbol
 		class Operation //: public TokenSymbol
 		{
 		public:
@@ -206,8 +190,7 @@ namespace SCRambl
 			Operators::OperationRef m_Operation;
 			bool m_Condition = false;
 		};
-
-		/*\ Parser::CommandCall \*/
+		// Command call symbol
 		class CommandCall : public Tokens::Symbol {
 		public:
 			CommandCall(Types::Translation::Ref translation, CommandAttributes attributes) : Tokens::Symbol(Tokens::Type::CommandCall),
@@ -218,10 +201,18 @@ namespace SCRambl
 			Types::Translation::Ref m_Translation;
 			CommandAttributes m_Attributes;
 		};
+		// Label reference
+		struct LabelRef {
+			Tokens::Iterator TokenIt;
+			bool IsReference;
+			size_t NumUses;
 
-		/*\ Parser::Parser - Now this is what we're here for \*/
-		class Parser
-		{
+			LabelRef(Tokens::Iterator it, bool isref) : TokenIt(it), IsReference(isref)
+			{ }
+		};
+		
+		// The parser
+		class Parser {
 			using DelimiterInfo = Tokens::Delimiter::Info<Delimiter>;
 			using CharacterInfo = Tokens::Character::Info<Character>;
 			using IdentifierInfo = Tokens::Identifier::Info<>;
@@ -393,17 +384,7 @@ namespace SCRambl
 				return best_value;
 			}
 
-			IToken* PeekToken(Tokens::Type type = Tokens::Type::None, size_t off = 1) {
-				auto it = m_TokenIt + off;
-				if (it != m_Tokens.End()) {
-					auto tok = it->GetToken();
-					auto ty = tok->GetType<Tokens::Type>();
-					if (type == Tokens::Type::None || type == ty) {
-						return tok;
-					}
-				}
-				return nullptr;
-			}
+			IToken* PeekToken(Tokens::Type type = Tokens::Type::None, size_t off = 1);
 
 			// Sends errors and returns default if fail
 			template<typename T>
@@ -480,7 +461,6 @@ namespace SCRambl
 				return IsScopeDelimiter(toke) && Tokens::Delimiter::GetScriptRange(*toke).End() == Tokens::Delimiter::GetScriptPosition(*toke);
 			}
 			static bool IsOperator(IToken* toke) {
-				//return static_cast<TokenBase<Tokens::Type>*>(toke)->GetType() == Tokens::Type::Operator;
 				return toke->GetType<Tokens::Type>() == Tokens::Type::Operator;
 			}
 			static bool IsOperatorConditional(IToken* toke) {
@@ -497,31 +477,10 @@ namespace SCRambl
 				auto tok = static_cast<Tokens::Operator::Info<Operators::OperatorRef>*>(toke);
 				auto operater = tok->GetValue<Tokens::Operator::OperatorType>();
 				return operater;
-				return Tokens::Operator::GetOperator<Operators::OperatorRef>(*toke);
+				//return Tokens::Operator::GetOperator<Operators::OperatorRef>(*toke);
 			}
 
-			bool GetDelimitedArrayIntegerConstant(size_t& i) {
-				bool b = false;
-				auto next = PeekToken(Tokens::Type::Delimiter);
-				if (next) {
-					if (!IsSubscriptDelimiter(next)) {
-						//SendError();
-						BREAK();
-					}
-					EnterSubscript(next);
-					if (next = PeekToken(Tokens::Type::Number, 2)) {
-						i = GetIntegerConstant<size_t>(next);
-						b = true;
-						++m_TokenIt;
-					}
-					++m_TokenIt;
-					auto next = PeekToken(Tokens::Type::Delimiter);
-					if (!next || !IsSubscriptDelimiterClosing(next))
-							BREAK();
-					m_TokenIt += 2;
-				}
-				return b;
-			}
+			bool GetDelimitedArrayIntegerConstant(size_t&);
 
 			void EnterSubscript(IToken *token) {
 				m_Subscripts.emplace_back(token);
@@ -561,8 +520,10 @@ namespace SCRambl
 
 		private:
 			// Send an error event
-			void SendError(Error);
-			template<typename First, typename... Args> void SendError(Error, First&&, Args&&...);
+			inline void SendError(Error);
+			// Send an error event (with args)
+			template<typename First, typename... Args>
+			inline void SendError(Error, First&&, Args&&...);
 
 			bool ParseCommandOverloads(const Commands::Vector & vec);
 			void BeginCommandParsing();
@@ -683,42 +644,31 @@ namespace SCRambl
 			bool m_ParsingCommandArgs;
 			bool m_EndOfCommandArgs;
 		};
-		
-		/*\ Parser::Event - Interesting stuff that the Preprocessor does \*/
-		enum class Event
-		{
-			Begin, Finish,
-			Warning,
-			Error,
-			FoundToken,
-		};
-		
-		/*\ Parser::Task \*/
-		class Task : public TaskSystem::Task<Event>, private Parser
-		{
+		// The parser task
+		class Task : public TaskSystem::Task<Event>, private Parser {
 			friend Parser;
-			Engine&	m_Engine;
 
+		public:
+			Task(Engine&, Build*);
+
+			size_t GetProgressCurrent() const;
+			size_t GetProgressTotal() const;
+			Tokens::Token GetToken() const;
+
+			bool IsRunning() const;
+			bool IsTaskFinished() final override;
+
+		protected:
+			void RunTask() final override;
+			void ResetTask() final override;
+			// Call event
 			inline bool operator()(Event id) { return CallEventHandler(id); }
+			// Call event with args
 			template<typename... Args>
 			inline bool operator()(Event id, Args&&... args) { return CallEventHandler(id, std::forward<Args>(args)...); }
 
-		public:
-			Task(Engine& engine, Build* build) :
-				Parser(*this, engine, *build),
-				m_Engine(engine)
-			{ }
-
-			inline size_t GetProgressCurrent() const { return GetCurrentToken(); }
-			inline size_t GetProgressTotal() const { return GetNumTokens(); }
-			inline Tokens::Token GetToken() const { return Parser::GetToken(); }
-
-			bool IsRunning() const { return Parser::IsRunning(); }
-			bool IsTaskFinished() final override { return Parser::IsFinished(); }
-
-		protected:
-			void RunTask() final override { Parser::Run(); }
-			void ResetTask() final override { Parser::Reset(); }
+		private:
+			Engine&	m_Engine;
 		};
 	}
 }

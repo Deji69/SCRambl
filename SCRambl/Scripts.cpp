@@ -7,7 +7,7 @@
 #include "Tokens.h"
 
 using namespace SCRambl;
-using namespace Scripts;
+using namespace SCRambl::Scripts;
 
 // returns 0 on failure
 char GetTrigraphChar(char c) {

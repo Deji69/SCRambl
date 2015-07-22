@@ -5,7 +5,7 @@
 //	 or copy at http://opensource.org/licenses/MIT)
 /**********************************************************/
 #pragma once
-
+#include <vector>
 #include <assert.h>
 #include <algorithm>
 #include <functional>
@@ -119,7 +119,6 @@ namespace SCRambl
 		Vec* m_Vector = nullptr;
 		TIt m_Index = 0;
 	};
-
 	template<typename T, typename TKey = size_t, typename TCont = std::vector<T>, typename TIt = TCont::const_iterator>
 	class VecIndex {
 	public:
@@ -218,7 +217,6 @@ namespace SCRambl
 		Vector* m_Vector = nullptr;
 		IndexType m_Index = 0;
 	};
-
 
 	class line
 	{

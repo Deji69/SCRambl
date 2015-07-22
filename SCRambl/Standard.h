@@ -5,45 +5,32 @@
 //	 or copy at http://opensource.org/licenses/MIT)
 /**********************************************************/
 #pragma once
-#include "Preprocessor.h"
-#include "Parser.h"
-#include "Compiler.h"
+#include <memory>
 
 namespace SCRambl {
 	namespace Basic {
 		// Wrapper for varying error types
-		class Error
-		{
+		class Error {
 		public:
-			enum Type { preprocessor, parser, compiler, linker };
-
 			Error(const Error&) = delete;
-			Error(Error&&);
-			Error& operator=(Error&&);
+			Error(Error&& o) : m_Payload(std::move(o.m_Payload))
+			{ }
+			Error& operator=(Error&& o) {
+				if (this != &o) m_Payload = std::move(o.m_Payload);
+				return *this;
+			}
 			Error& operator=(const Error&) = delete;
-			Error(const Preprocessor::Error&);
-			Error(const Parser::Error&);
-
-			inline Type GetType() const { return m_Type; }
+			template<typename T>
+			Error(const T& err) : m_Payload(std::make_unique<Info<T>>(err))
+			{ }
 			
 			template<typename T>
-			inline T& Get();
+			inline T& Get() {
+				return static_cast<Info<T>&>(*m_Payload).Get();
+			}
 			template<typename T>
-			inline const T& Get() const;
-
-			template<> inline Preprocessor::Error& Get<Preprocessor::Error>()	{
-				ASSERT(m_Type == preprocessor);
-				return static_cast<Info<Preprocessor::Error>&>(*m_Payload).Get();
-			}
-			template<> inline const Preprocessor::Error& Get<Preprocessor::Error>() const	{
-				return Get<Preprocessor::Error>();
-			}
-			template<> inline Parser::Error& Get<Parser::Error>()	{
-				ASSERT(m_Type == parser);
-				return static_cast<Info<Parser::Error>&>(*m_Payload).Get();
-			}
-			template<> inline const Parser::Error& Get<Parser::Error>() const	{
-				return Get<Parser::Error>();
+			inline const T& Get() const {
+				return Get<T>();
 			}
 			
 		private:
@@ -62,7 +49,6 @@ namespace SCRambl {
 				inline const T& Get() const { return m_Error; }
 			};
 
-			Type m_Type;
 			std::unique_ptr<Payload> m_Payload;
 		};
 	}

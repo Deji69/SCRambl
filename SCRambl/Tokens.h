@@ -38,7 +38,7 @@ namespace SCRambl
 			Type m_Type;
 		};
 	
-		/*\ Tokens::Token - Script token wrapper \*/
+		// Script token wrapper
 		class Token {
 			Scripts::Position m_Position;
 			IToken*	m_Token = nullptr;
