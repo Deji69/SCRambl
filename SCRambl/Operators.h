@@ -186,7 +186,7 @@ namespace SCRambl
 
 		/* Operators::Scanner - Operator scanner for lexage */
 		template<typename T>
-		class Scanner : public Lexer::Scanner {
+		class Scanner : public Lexing::Scanner {
 			using OperatorCell = typename Table<T>::Cell;
 			Table<T>& m_Table;
 			Scripts::Position m_LastOperatorPos;
@@ -196,11 +196,11 @@ namespace SCRambl
 		public:
 			Scanner(Table<T>& table) : m_Table(table)
 			{}
-			bool Scan(Lexer::State& state, Scripts::Position& pos) {
+			bool Scan(Lexing::State& state, Scripts::Position& pos) {
 				switch (state)
 				{
 					// Check, check, check fo da cell dat sells
-				case Lexer::State::before:
+				case Lexing::State::before:
 					if (!pos->HasGrapheme()) return false;
 					m_Cell = &m_Table.GetCell(pos->GetGrapheme());
 					if (m_Cell->GetOperator()) {
@@ -208,11 +208,11 @@ namespace SCRambl
 						m_LastOperatorPos = pos;
 					}
 					else m_LastOperatorCell = nullptr;
-					state = Lexer::State::inside;
+					state = Lexing::State::inside;
 					++pos;
 					return true;
 
-				case Lexer::State::inside:
+				case Lexing::State::inside:
 					for (; pos && pos->HasGrapheme(); ++pos)
 					{
 						if (!m_Cell->Next(pos->GetGrapheme(), m_Cell)) break;
@@ -225,12 +225,12 @@ namespace SCRambl
 					{
 						m_Cell = m_LastOperatorCell;
 						pos = m_LastOperatorPos + 1;
-						state = Lexer::State::after;
+						state = Lexing::State::after;
 						return true;
 					}
 					return false;
 
-				case Lexer::State::after:
+				case Lexing::State::after:
 					return true;
 				}
 				return false;

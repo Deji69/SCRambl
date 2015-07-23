@@ -14,21 +14,21 @@ namespace SCRambl
 	/*\
 	 - StringScanner for lexing string literals
 	\*/
-	class StringScanner : public Lexer::Scanner
+	class StringScanner : public Lexing::Scanner
 	{
 	public:
-		bool Scan(Lexer::State & state, Scripts::Position & pos) override
+		bool Scan(Lexing::State & state, Scripts::Position & pos) override
 		{
 			switch (state)
 			{
-			case Lexer::State::before:
+			case Lexing::State::before:
 				if (*pos == '"') {
 					++pos;
-					state = Lexer::State::inside;
+					state = Lexing::State::inside;
 					return true;
 				}
 				return false;
-			case Lexer::State::inside:
+			case Lexing::State::inside:
 				for (bool escape = false; pos; ++pos)
 				{
 					if (pos->GetType() == Symbol::eol && !escape)

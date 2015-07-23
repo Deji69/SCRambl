@@ -8,7 +8,7 @@
 
 namespace SCRambl
 {
-	namespace Compiler
+	namespace Compiling
 	{
 		void Compiler::Init() {
 			m_TokenIt = m_Tokens.Begin();

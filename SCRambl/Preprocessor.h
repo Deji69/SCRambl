@@ -23,57 +23,56 @@
 
 namespace SCRambl
 {
-	namespace Preprocessor
+	namespace Preprocessing
 	{
-		/*\ WhitespaceScanner - Lexer::Scanner for nothingness (useless?) \*/
-		class WhitespaceScanner : public Lexer::Scanner
-		{
-		public:
-			bool Scan(Lexer::State& state, Scripts::Position& code) override;
+		// Task is a class
+		class Task;
+		
+		// Interesting stuff that the Preprocessor does
+		enum class Event {
+			Begin, Finish,
+			Warning,
+			Error,
+			AddedToken,
+			FoundToken,
 		};
 
-		/*\ IdentifierScanner - Lexer::Scanner for identifiers \*/
-		class IdentifierScanner : public Lexer::Scanner
-		{
+		// Lexing::Scanner for nothingness (useless?)
+		class WhitespaceScanner : public Lexing::Scanner {
 		public:
-			bool Scan(Lexer::State& state, Scripts::Position& pos) override;
+			bool Scan(Lexing::State& state, Scripts::Position& code) override;
 		};
-
-		/*\ LabelScanner - Lexer::Scanner for labels \*/
-		class LabelScanner : public Lexer::Scanner
-		{
+		// Lexing::Scanner for identifiers
+		class IdentifierScanner : public Lexing::Scanner {
 		public:
-			bool Scan(Lexer::State& state, Scripts::Position& pos) override;
+			bool Scan(Lexing::State& state, Scripts::Position& pos) override;
 		};
-
-		/*\ DirectiveScanner - Lexer::Scanner for directives \*/
-		class DirectiveScanner : public Lexer::Scanner
-		{
+		// Lexing::Scanner for labels
+		class LabelScanner : public Lexing::Scanner {
 		public:
-			bool Scan(Lexer::State& state, Scripts::Position& pos) override;
+			bool Scan(Lexing::State& state, Scripts::Position& pos) override;
 		};
-
-		/*\ StringLiteralScanner - Lexer::Scanner for string literals \*/
-		class StringLiteralScanner : public Lexer::Scanner
-		{
+		// Lexing::Scanner for directives
+		class DirectiveScanner : public Lexing::Scanner {
+		public:
+			bool Scan(Lexing::State& state, Scripts::Position& pos) override;
+		};
+		// Lexing::Scanner for string literals
+		class StringLiteralScanner : public Lexing::Scanner {
 		public:
 			enum class Error {
 				unterminated
 			};
 
-			bool Scan(Lexer::State& state, Scripts::Position& pos) override;
+			bool Scan(Lexing::State& state, Scripts::Position& pos) override;
 		};
-
-		/*\ CommentScanner - Lexer::Scanner for line comments \*/
-		class CommentScanner : public Lexer::Scanner
-		{
+		// Lexing::Scanner for line comments
+		class CommentScanner : public Lexing::Scanner {
 		public:
-			bool Scan(Lexer::State& state, Scripts::Position& pos) override;
+			bool Scan(Lexing::State& state, Scripts::Position& pos) override;
 		};
-
-		/*\ BlockCommentScanner - Lexer::Scanner for block comments \*/
-		class BlockCommentScanner : public Lexer::Scanner
-		{
+		// Lexing::Scanner for block comments
+		class BlockCommentScanner : public Lexing::Scanner {
 			int depth = 0;
 
 		public:
@@ -81,12 +80,10 @@ namespace SCRambl
 				end_of_file_reached,
 			};
 
-			bool Scan(Lexer::State& state, Scripts::Position& pos) override;
+			bool Scan(Lexing::State& state, Scripts::Position& pos) override;
 		};
-
-		class Task;
-
-		/*\ Preprocessor::Information - Externally accessible info about the preprocessors current state \*/
+		
+		// Externally accessible info about the preprocessors current state
 		class Information {
 			friend class Preprocessor;
 			Scripts::Position& m_ScriptPosition;
@@ -99,8 +96,7 @@ namespace SCRambl
 
 			inline const Scripts::Position& GetScriptPos() const { return m_ScriptPosition; }
 		};
-
-		/*\ Preprocessor::Error - Errors that can happen while preprocessing \*/
+		// Errors that can happen while preprocessing
 		class Error {
 		public:
 			enum ID {
@@ -146,8 +142,8 @@ namespace SCRambl
 		private:
 			ID m_ID;
 		};
-
-		/*\ Preprocessor::Directive - Preprocessor directive stuff \*/
+		
+		// Preprocessor directive stuff
 		class Directive {
 		public:
 			enum Type {
@@ -204,8 +200,7 @@ namespace SCRambl
 		private:
 			Type m_Type;
 		};
-
-		/*\ Preprocessor::Character - Preprocessor character stuff \*/
+		// Preprocessor character stuff
 		class Character {
 		public:
 			enum Type { EOL, Colonnector, Conditioner };
@@ -230,10 +225,8 @@ namespace SCRambl
 		private:
 			Type m_Type;
 		};
-
-		/*\ Preprocessor::Delimiter - Preprocessor delimiter stuff \*/
-		class Delimiter
-		{
+		// Preprocessor delimiter stuff
+		class Delimiter {
 		public:
 			enum Type {
 				None, Scope, Subscript, Cast
@@ -258,7 +251,6 @@ namespace SCRambl
 				m_Val(val)
 			{ }
 		};
-
 		class TokenDelimiter : public Tokens::Delimiter::Info<Delimiter> {
 			using Parent = Tokens::Delimiter::Info<Delimiter>;
 
@@ -271,14 +263,12 @@ namespace SCRambl
 			Delimiter m_Delimiter = Delimiter::None;
 		};
 
-		/*\ Preprocessor::Preprocessor - Main Preprocessor task routine \*/
-		class Preprocessor
-		{
+		// Main Preprocessor task routine
+		class Preprocessor {
 			friend class Information;
 
-		private:
-			using LexerToken = Lexer::Token<TokenType>;
-			using LexerMachine = Lexer::Lexer<TokenType>;
+			using LexerToken = Lexing::Token<TokenType>;
+			using LexerMachine = Lexing::Lexer<TokenType>;
 			using DirectiveMap = std::unordered_map<std::string, Directive>;
 			using OperatorTable = Operators::Table<Operators::Type>;
 			using OperatorScanner = Operators::Scanner<Operators::Type>;
@@ -299,10 +289,10 @@ namespace SCRambl
 
 			Preprocessor(Task&, Engine&, Build&);
 
-			inline bool IsRunning() const { return m_State != finished; }
-			inline bool IsFinished() const { return m_State == finished; }
 			void Run();
 			void Reset();
+			inline bool IsRunning() const { return m_State != finished; }
+			inline bool IsFinished() const { return m_State == finished; }
 
 		protected:
 			const Information & GetInfo() const { return m_Information; }
@@ -423,11 +413,11 @@ namespace SCRambl
 			}
 
 			// Lex main code
-			Lexer::Result Lex();
+			Lexing::Result Lex();
 			// Lex with error callback
 			template<typename TFunc>
 			inline bool Lex(TokenType type, TFunc func) {
-				if (Lex() == Lexer::Result::found_token && m_Token == type) {
+				if (Lex() == Lexing::Result::found_token && m_Token == type) {
 					return true;
 				}
 				func(m_Token);
@@ -436,7 +426,7 @@ namespace SCRambl
 			// Lex with custom comparison & error callback
 			template<typename TCompFunc, typename TFunc>
 			inline bool Lex(TCompFunc compFunc, TFunc func) {
-				if (Lex() == Lexer::Result::found_token && compFunc(m_Token)) {
+				if (Lex() == Lexing::Result::found_token && compFunc(m_Token)) {
 					return true;
 				}
 				func(m_Token);
@@ -487,17 +477,7 @@ namespace SCRambl
 			}
 		};
 
-		/*\ Preprocessor::Event - Interesting stuff that the Preprocessor does \*/
-		enum class Event
-		{
-			Begin, Finish,
-			Warning,
-			Error,
-			AddedToken,
-			FoundToken,
-		};
-
-		/*\ Preprocessor::Task - The Preprocessor and Task become one \*/
+		// The Preprocessor and Task become one
 		class Task : public TaskSystem::Task<Event>, private Preprocessor
 		{
 			friend Preprocessor;

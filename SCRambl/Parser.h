@@ -19,10 +19,10 @@
 
 namespace SCRambl
 {
-	namespace Parser
+	namespace Parsing
 	{
-		using Character = Preprocessor::Character;
-		using Delimiter = Preprocessor::Delimiter;
+		using Character = Preprocessing::Character;
+		using Delimiter = Preprocessing::Delimiter;
 
 		// Interesting stuff that the parser does
 		enum class Event {

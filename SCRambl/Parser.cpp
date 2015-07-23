@@ -10,7 +10,7 @@
 #include <cctype>
 
 //using namespace SCRambl;
-using namespace SCRambl::Parser;
+using namespace SCRambl::Parsing;
 using namespace SCRambl::Tokens;
 
 // SCRambl::Parser::Parser
@@ -59,7 +59,7 @@ void Parser::ParseOverloadedCommand() {
 		auto& token = m_CommandTokenIt->GetToken()->Get<Tokens::Identifier::Info<>>();
 		auto range = token.GetValue<Tokens::Identifier::ScriptRange>();
 		// TODO: fix this weirdness
-		m_CommandTokenIt->SetToken(m_Build.CreateToken<CommandInfo>(range.Begin(), Tokens::Type::Command, range, m_CurrentCommand).GetToken());
+		m_CommandTokenIt->SetToken(CreateToken<CommandInfo>(Tokens::Type::Command, range, m_CurrentCommand));
 				
 		m_State = parsing;
 		return;
@@ -167,13 +167,8 @@ States Parser::Parse_Neutral_CheckIdentifier(SCRambl::IToken* tok) {
 
 	else if (auto ptr = m_Build.GetScriptLabel(name)) {
 		// this is a label pointer!
-		//m_Jumps.emplace_back(ptr->Ptr(), m_TokenIt);
-
 		auto tok = CreateToken<Tokens::Label::Info>(Tokens::Type::LabelRef, range, ptr->Ptr());
 		m_TokenIt->SetToken(tok);
-		//auto sym = CreateSymbol<Tokens::Label::Jump>(tok, 0);
-		//m_TokenIt->SetSymbol(sym);
-
 		AddLabelRef(ptr, m_TokenIt);
 		return state_parsing_label;
 	}
@@ -320,7 +315,6 @@ States Parser::Parse_Number() {
 				++m_TokenIt;
 			}
 			else {
-				//m_Build.CreateSymbol<Operation>(m_OperationParseState.operation, m_OperationParseState.lh_var, operand);
 				m_ActiveState = state_neutral;
 				++m_TokenIt;
 			}
@@ -357,7 +351,6 @@ States Parser::Parse_Variable() {
 			if (m_OperationParseState.looksPrefixed) {
 				// rhs of a =var unary operation
 				if (auto op = m_CurrentOperator->GetUnaryOperation(m_Variable->Ptr(), true)) {
-					//m_Build.CreateSymbol<Operation>(op, m_Variable);
 					return state_neutral;
 				}
 				else BREAK();		// error?

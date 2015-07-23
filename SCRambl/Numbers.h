@@ -221,7 +221,7 @@ namespace SCRambl
 			return ConvertResult::success;
 		}
 
-		class Scanner : public Lexer::Scanner
+		class Scanner : public Lexing::Scanner
 		{
 		public:
 			enum Error {
@@ -241,9 +241,9 @@ namespace SCRambl
 			}
 
 		public:
-			bool Scan(Lexer::State & state, Scripts::Position & pos) override {
+			bool Scan(Lexing::State & state, Scripts::Position & pos) override {
 				switch (state) {
-				case Lexer::State::before:
+				case Lexing::State::before:
 					m_Hex = false;
 					m_Float = false;
 
@@ -260,12 +260,12 @@ namespace SCRambl
 								}
 							}
 						}
-						state = Lexer::State::inside;
+						state = Lexing::State::inside;
 						return true;
 					}
 					return false;
 
-				case Lexer::State::inside: {
+				case Lexing::State::inside: {
 					// avoid much use of floats
 					unsigned long n = 0;
 					unsigned long d = 1;		// number of decimal places
@@ -297,10 +297,10 @@ namespace SCRambl
 					} while (++pos);
 					if (m_Float) m_FloatVal = n + ((float)f / (float)d);
 					else m_IntVal = n;
-					state = Lexer::State::after;
+					state = Lexing::State::after;
 					return true;
 				}
-				case Lexer::State::after:
+				case Lexing::State::after:
 					return true;
 				}
 				return false;

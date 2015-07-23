@@ -28,10 +28,10 @@ Build* Engine::InitBuild(std::vector<std::string> files) {
 		}
 	}
 
-	auto preprocessor_task = build->AddTask<Preprocessor::Task>(preprocessor, build);
-	auto parser_task = build->AddTask<Parser::Task>(parser, build);
-	auto compiler_task = build->AddTask<Compiler::Task>(compiler, build);
-	auto linker_task = build->AddTask<Linker::Task>(linker, build);
+	auto preprocessor_task = build->AddTask<Preprocessing::Task>(preprocessor, build);
+	auto parser_task = build->AddTask<Parsing::Task>(parser, build);
+	auto compiler_task = build->AddTask<Compiling::Task>(compiler, build);
+	auto linker_task = build->AddTask<Linking::Task>(linker, build);
 	return build;
 }
 void Engine::FreeBuild(Build* build) {

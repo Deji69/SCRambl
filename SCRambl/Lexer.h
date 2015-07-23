@@ -16,7 +16,7 @@
 
 namespace SCRambl
 {
-	namespace Lexer
+	namespace Lexing
 	{
 		enum Result {
 			found_nothing,
@@ -24,11 +24,8 @@ namespace SCRambl
 			still_scanning
 		};
 
-		/*\
-		 - Lexer::Scanner is a base interface for token scanners
-		\*/
-		class Scanner
-		{
+		// Base interface for token scanners
+		class Scanner {
 			bool enabled = true;
 
 		protected:
@@ -43,9 +40,7 @@ namespace SCRambl
 			virtual ~Scanner() { }
 		};
 
-		/*\
-		 - Lexer::Token holds a copy of token information, with the token ID type externally defined to represent the scanner which produced it
-		\*/
+		// Holds a copy of token information, with the token ID type externally defined to represent the scanner which produced it
 		template<typename TokenIDType>
 		class Token
 		{
@@ -82,10 +77,7 @@ namespace SCRambl
 				m_End = end;
 			}
 		};
-
-		/*\
-		 - Lexer::State stores global state information about the in-use Lexer
-		\*/
+		// Stores global state information about the in-use Lexer
 		class State
 		{
 			template<class>
@@ -155,8 +147,7 @@ namespace SCRambl
 		 - This wonderful class makes adding new code elements a 2-step process
 		\*/
 		template<typename TokenIDType>
-		class Lexer
-		{
+		class Lexer {
 		private:
 			typedef std::pair<TokenIDType, Scanner*> TokenScanner;
 			typedef std::vector<TokenScanner> ScannerList;
@@ -169,7 +160,7 @@ namespace SCRambl
 			/*\
 			 - Adds a token scanner to this Lexer, causing Scan to attempt more detections on input
 			 - The token ID will be used by the lexer to represent which scanner detected a token
-			 - Scanners override the 'Scan' method of 'Lexer::Scanner' with state-dependent lexeme rules
+			 - Scanners override the 'Scan' method of 'Lexing::Scanner' with state-dependent lexeme rules
 			 - They must change state manually, and return true while valid
 			 - Usually each scanner only requires one call per the 3 states (before/inside/after)
 			\*/
@@ -266,8 +257,7 @@ namespace SCRambl
 			 - ScanFor something specific - will initiate similarly to 'Scan' except for a specific token type
 			 - After the first successful call, further calls made to this simply redirect to 'Scan'
 			\*/
-			Result ScanFor(TokenIDType type, const Scripts::Position& pos, Token<TokenIDType>& token)
-			{
+			Result ScanFor(TokenIDType type, const Scripts::Position& pos, Token<TokenIDType>& token) {
 				ASSERT(!m_Scanners.empty());			// better add a scanner
 
 				// if we haven't any active scanners, start trying to activate them

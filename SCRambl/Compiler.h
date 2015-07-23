@@ -11,7 +11,7 @@
 
 namespace SCRambl
 {
-	namespace Compiler
+	namespace Compiling
 	{
 		class Task;
 

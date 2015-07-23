@@ -11,7 +11,7 @@
 
 namespace SCRambl
 {
-	namespace Linker
+	namespace Linking
 	{
 		class Task;
 

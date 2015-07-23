@@ -53,15 +53,15 @@ namespace SCRambl
 	//using Identifier = std::unordered_map<
 	//using IdentifierMap = std::map<Identifier, T, IdentifierComp>;
 
-	/*class IdentifierScanner : public Lexer::Scanner
+	/*class IdentifierScanner : public Lexing::Scanner
 	{
 	public:
-		bool Scan(const Lexer::State & state, Symbol & str, std::string::const_iterator & it) override
+		bool Scan(const Lexing::State & state, Symbol & str, std::string::const_iterator & it) override
 		{
 			switch (state)
 			{
 				// return true if IsIdentifierStart
-			case Lexer::State::before:
+			case Lexing::State::before:
 				if (IsIdentifierStart(*it))
 				{
 					++it;
@@ -69,10 +69,10 @@ namespace SCRambl
 				}
 				break;
 				// return true once we've read all the identifier characters
-			case Lexer::State::inside:
+			case Lexing::State::inside:
 				return !IsIdentifier(*it++);
 				// make sure that a separator followed the identifier chars
-			case Lexer::State::after:
+			case Lexing::State::after:
 				if (!IsSeparator(*it)) return false;
 				return true;
 			}
