@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "Parser.h"
 #include "Scripts.h"
-#include "Directives.h"
 #include "Literals.h"
 #include "Symbols.h"
 #include "Tokens.h"
@@ -29,7 +28,7 @@ char GetTrigraphChar(char c) {
 /* Script */
 Script::Script() //: m_LScript(&m_LScriptMain)
 { }
-void Script::SetCode(const void * data) {
+void Script::SetCode(const void* data) {
 	const char * cdata = static_cast<const char*>(data);
 	int i = 0;
 	bool eol = false;
@@ -47,7 +46,7 @@ void Script::SetCode(const void * data) {
 		} while (cdata[++i]);
 	}
 }
-void Script::ReadFile(std::ifstream & file, Code & dest) {
+void Script::ReadFile(std::ifstream& file, Code& dest) {
 	std::string code;
 
 	// use this flag to prevent multiple concurrent eol's and escape new lines
@@ -114,7 +113,7 @@ bool Script::IsFileOpen() const {
 long long Script::GetNumLines() const {
 	return m_Code->NumLines();
 }
-Position Script::Include(Position & pos, const std::string & path) {
+Position Script::Include(Position& pos, const std::string& path) {
 	ASSERT(m_File);
 	try {
 		m_File->IncludeFile(pos, path);

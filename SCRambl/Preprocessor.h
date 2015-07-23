@@ -6,9 +6,6 @@
 /**********************************************************/
 #pragma once
 #include <stack>
-#include <typeinfo>
-#include <typeindex>
-#include <unordered_set>
 #include "Tasks.h"
 #include "Engine.h"
 #include "Scripts.h"
@@ -85,7 +82,6 @@ namespace SCRambl
 		
 		// Externally accessible info about the preprocessors current state
 		class Information {
-			friend class Preprocessor;
 			Scripts::Position& m_ScriptPosition;
 
 			void SetScriptPos(Scripts::Position& pos) { m_ScriptPosition = pos; }
@@ -198,7 +194,7 @@ namespace SCRambl
 			}
 
 		private:
-			Type m_Type;
+			Type m_Type = INVALID;
 		};
 		// Preprocessor character stuff
 		class Character {
@@ -291,109 +287,31 @@ namespace SCRambl
 
 			void Run();
 			void Reset();
-			inline bool IsRunning() const { return m_State != finished; }
-			inline bool IsFinished() const { return m_State == finished; }
+			inline State GetState() const { return m_State; }
+			inline bool IsRunning() const { return GetState() != finished; }
+			inline bool IsFinished() const { return GetState() == finished; }
 
 		protected:
-			const Information & GetInfo() const { return m_Information; }
+			const Information& GetInfo() const { return m_Information; }
 
 		private:
-			Engine&	m_Engine;
-			Task& m_Task;
-			Information m_Information;
-
-			BlockCommentScanner m_BlockCommentScanner;
-			CommentScanner m_CommentScanner;
-			DirectiveScanner m_DirectiveScanner;
-			IdentifierScanner m_IdentifierScanner;
-			Numbers::Scanner m_NumericScanner;
-			LabelScanner m_LabelScanner;
-			StringLiteralScanner m_StringLiteralScanner;
-			WhitespaceScanner m_WhitespaceScanner;
-
-			OperatorTable m_Operators;
-			OperatorScanner m_OperatorScanner;
-
-			Operators::Table<Operators::OperatorRef>& m_ParserOperators;
-			Operators::Scanner<Operators::OperatorRef> m_ParserOperatorScanner;
-
-			LexerMachine m_Lexer;
-			LexerToken m_Token;
-			DirectiveMap m_Directives;
-			Directive m_Directive = Directive::INVALID;
-			std::string m_String;					// last scanned string
-			std::string	m_Identifier;				// last scanned identifier
-			MacroMap m_Macros;
-
-			std::stack<Tokens::Token> m_Delimiters;
-
-			//
-			State m_State = init;
-			Build& m_Build;
-			Tokens::Storage& m_Tokens;
-			Scripts::Position m_CodePos;
-			Types::Types& m_Types;
-			Commands& m_Commands;
-			bool m_bScriptIsLoaded;						// if so, we only need to add-in any #include's
-			bool m_DisableMacroExpansion = false;
-			bool m_DisableMacroExpansionOnce = false;
-			bool m_WasLastTokenEOL = false;
-			unsigned long m_FalseLogicDepth = 0;					// for #if..#endif's ocurring within "#if FALSE"
-			std::stack<bool> m_PreprocessorLogic;
-			std::unordered_set<std::string> m_IdentifiersThatAreNotMacros;
-			
 			// Send an error event
 			void SendError(Error);
 			template<typename First, typename... Args> void SendError(Error, First&&, Args&&...);
 
 			// Enter conditional source compilation
-			void PushSourceControl(bool b) {
-				// if source is already deactivated, override b and deactivate again
-				m_PreprocessorLogic.push(GetSourceControl() ? b : false);
-			}
+			void PushSourceControl(bool);
 			// Return from conditional source compilation
-			void PopSourceControl() {
-				ASSERT(!m_PreprocessorLogic.empty() && "#endif when not in #if/#ifdef/#else?");
-				m_PreprocessorLogic.pop();
-			}
+			void PopSourceControl();
 			// Invert conditional source compilation state
-			void InvertSourceControl() {
-				ASSERT(!m_PreprocessorLogic.empty() && "Unmatched #else?");
-				
-				// don't invert if we're within an #if which is within an "#if FALSE"
-				if (!GetSourceControl()) {
-					PopSourceControl();
-					PushSourceControl(GetSourceControl() ? true : false);
-				}
-				else m_PreprocessorLogic.top() = false;
-			}
+			void InvertSourceControl();
 			// Get conditional source compilation state
-			inline bool GetSourceControl() const {
-				return m_PreprocessorLogic.empty() ? true : m_PreprocessorLogic.top();
-			}
+			bool GetSourceControl() const;
 
 			// Add
-			bool OpenDelimiter(Scripts::Position pos, Delimiter type) {
-				auto token = m_Build.CreateToken<TokenDelimiter>(pos, pos, Scripts::Range(pos, pos), type);
-				m_Delimiters.push(token);
-				return true;
-			}
+			bool OpenDelimiter(Scripts::Position, Delimiter);
 			//
-			bool CloseDelimiter(Scripts::Position pos, Delimiter type) {
-				auto& token = m_Delimiters.top();
-				auto tok = token.GetToken();
-				// ensure the delimiters are for the same purpose, otherwise there's error
-				if (Tokens::Delimiter::GetDelimiterType<Delimiter>(*tok) == type) {
-					auto begin = Tokens::Delimiter::GetScriptRange(*tok).Begin();
-					// replace the token with an updated Scripts::Range
-					token.SetToken(new TokenDelimiter(begin, Scripts::Range(begin, pos), type));
-					// mark the closing position
-					m_Build.CreateToken<TokenDelimiter>(pos, pos, Scripts::Range(begin, pos), type);
-					m_Delimiters.pop();
-					return true;
-				}
-				return false;
-			}
+			bool CloseDelimiter(Scripts::Position, Delimiter);
 
 			// Runs while running
 			void RunningState();
@@ -406,12 +324,8 @@ namespace SCRambl
 			void HandleDirective();
 			// Strips comments
 			void HandleComment();
-
-			inline Types::Type* GetType(const std::string& name) {
-				auto ptr = m_Types.GetType(name);
-				return ptr ? ptr : m_Build.GetTypes().GetType(name);
-			}
-
+			// Get type (including added script types)
+			Types::Type* GetType(const std::string&);
 			// Lex main code
 			Lexing::Result Lex();
 			// Lex with error callback
@@ -436,32 +350,25 @@ namespace SCRambl
 			bool Lexpect(TokenType);
 			// Lex around for a number
 			bool LexNumber();
-
 			// Add a preprocessing token
 			template<typename T, typename... TArgs>
 			inline Tokens::Token AddToken(Scripts::Position pos, TArgs&&... args) {
 				m_WasLastTokenEOL = false;
 				return m_Tokens.Add<T>(pos, std::forward<TArgs&&>(args)...);
 			}
-
 			// Handle expressions
 			int ProcessExpression(bool paren = false);
-
 			// Perform unary operation on passed value - returns false if no change could be made as the operator was unsupported
 			static bool ExpressUnary(Operators::Type op, int& val);
-
 			// Get current line number
 			inline long GetLineNumber() const { return m_CodePos.GetLine(); }
-
 			// Get code of the current line
 			inline CodeLine& GetLineCode() { return m_CodePos.GetLine().GetCode(); }
-
 			// Returns directive_invalid if it didnt exist
 			inline Directive GetDirective(const std::string& str) const {
 				DirectiveMap::const_iterator it;
 				return it = m_Directives.find(str), it != m_Directives.end() ? (*it).second : Directive::INVALID;
 			}
-
 			// Returns true if the directive should be processed in a false #if
 			inline bool DoesDirectiveIgnoreSourceControl(Directive::Type dir) {
 				switch (dir) {
@@ -475,35 +382,72 @@ namespace SCRambl
 				}
 				return false;
 			}
+
+		private:
+			// basic necessities
+			State m_State = init;
+			Information m_Information;
+			Engine&	m_Engine;
+			Build& m_Build;
+			Task& m_Task;
+			Commands& m_Commands;
+			Tokens::Storage& m_Tokens;
+			//
+			Scripts::Position m_CodePos;
+			//
+			std::string m_String;					// last scanned string
+			std::string	m_Identifier;				// last scanned identifier
+			Directive m_Directive;
+			//
+			LexerToken m_Token;
+			LexerMachine m_Lexer;
+			MacroMap m_Macros;
+			DirectiveMap m_Directives;
+			std::stack<Tokens::Token> m_Delimiters;
+			//
+			bool m_DisableMacroExpansion = false;
+			bool m_DisableMacroExpansionOnce = false;
+			bool m_WasLastTokenEOL = false;
+			std::stack<bool> m_PreprocessorLogic;
+			// our precious scanners
+			BlockCommentScanner m_BlockCommentScanner;
+			CommentScanner m_CommentScanner;
+			DirectiveScanner m_DirectiveScanner;
+			IdentifierScanner m_IdentifierScanner;
+			Numbers::Scanner m_NumericScanner;
+			LabelScanner m_LabelScanner;
+			StringLiteralScanner m_StringLiteralScanner;
+			WhitespaceScanner m_WhitespaceScanner;
+			// operator scanners are super special
+			OperatorTable m_Operators;
+			OperatorScanner m_OperatorScanner;
+			Operators::Table<Operators::OperatorRef>& m_ParserOperators;
+			Operators::Scanner<Operators::OperatorRef> m_ParserOperatorScanner;
 		};
 
 		// The Preprocessor and Task become one
-		class Task : public TaskSystem::Task<Event>, private Preprocessor
-		{
+		class Task : public TaskSystem::Task<Event>, private Preprocessor {
 			friend Preprocessor;
-			Engine& m_Engine;
-			const Information& m_Info;
 
-			inline Engine& GetEngine() { return m_Engine; }
+		public:
+			Task(Engine&, Build*);
 
+			const Information& Info() const;
+
+			bool IsRunning() const;
+			bool IsTaskFinished() final override;
+
+		protected:
+			void RunTask() final override;
+			void ResetTask() final override;
+
+		private:
 			inline bool operator()(Event id) { return CallEventHandler(id); }
-
 			template<typename... Args>
 			inline bool operator()(Event id, Args&&... args) { return CallEventHandler(id, std::forward<Args>(args)...); }
 
-		public:
-			Task(Engine& engine, Build* build) : Preprocessor(*this, engine, *build),
-				m_Engine(engine), m_Info(GetInfo())
-			{ }
-
-			const Information & Info() const { return m_Info; }
-
-			bool IsRunning() const { return Preprocessor::IsRunning(); }
-			bool IsTaskFinished() final override { return Preprocessor::IsFinished(); }
-
-		protected:
-			void RunTask() final override { Preprocessor::Run(); }
-			void ResetTask() final override { Preprocessor::Reset(); }
+			Engine& m_Engine;
+			const Information& m_Info;
 		};
 	}
 }

@@ -36,9 +36,7 @@ namespace SCRambl
 	void MacroMap::Undefine(const Macro::Name& name) {
 		m_Map.erase(name);
 	}
-
-	size_t MacroMap::Size() const
-	{
+	size_t MacroMap::Size() const {
 		return m_Map.size();
 	}
 }

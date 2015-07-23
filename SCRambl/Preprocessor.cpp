@@ -1,12 +1,24 @@
 #include "stdafx.h"
 #include "Standard.h"
-#include "Directives.h"
 #include "Preprocessor.h"
 #include "Lexer.h"
 #include "Reporting.h"
 
 using namespace SCRambl;
 using namespace SCRambl::Preprocessing;
+
+bool DoesDirectiveIgnoreSourceControl(Directive::Type dir) {
+	switch (dir) {
+	case Directive::IF:
+	case Directive::IFDEF:
+	case Directive::IFNDEF:
+	case Directive::ELIF:
+	case Directive::ELSE:
+	case Directive::ENDIF:
+		return true;
+	}
+	return false;
+}
 
 Preprocessor::Preprocessor(Task& task, Engine& engine, Build& build) :
 	m_State(init), m_Task(task),
@@ -15,7 +27,7 @@ Preprocessor::Preprocessor(Task& task, Engine& engine, Build& build) :
 	m_Lexer(),
 	m_OperatorScanner(m_Operators),
 	m_Information(m_CodePos),
-	m_Commands(build.GetCommands()), m_Types(build.GetTypes()),
+	m_Commands(build.GetCommands()),
 	m_ParserOperators(build.GetOperators().GetTable()),
 	m_ParserOperatorScanner(m_ParserOperators)
 {
@@ -539,8 +551,6 @@ int Preprocessor::ProcessExpression(bool paren) {
 			return result;
 
 		case TokenType::Number:
-			//ASSERT(!got_val && "Add error handling");
-			//ASSERT(!m_NumericScanner.Is<float>() && "Add error handling");
 			if (defined_operator) {
 				SendError(Error::expected_identifier, m_Token.Range());
 
@@ -1029,6 +1039,52 @@ bool Preprocessor::LexNumber() {
 	return false;
 }
 
+void Preprocessor::PushSourceControl(bool b) {
+	// if source is already deactivated, override b and deactivate again
+	m_PreprocessorLogic.push(GetSourceControl() ? b : false);
+}
+void Preprocessor::PopSourceControl() {
+	ASSERT(!m_PreprocessorLogic.empty() && "#endif when not in #if/#ifdef/#else?");
+	m_PreprocessorLogic.pop();
+}
+void Preprocessor::InvertSourceControl() {
+	ASSERT(!m_PreprocessorLogic.empty() && "Unmatched #else?");
+
+	// don't invert if we're within an #if which is within an "#if FALSE"
+	if (!GetSourceControl()) {
+		PopSourceControl();
+		PushSourceControl(GetSourceControl() ? true : false);
+	}
+	else m_PreprocessorLogic.top() = false;
+}
+bool Preprocessor::GetSourceControl() const {
+	return m_PreprocessorLogic.empty() ? true : m_PreprocessorLogic.top();
+}
+
+bool Preprocessor::OpenDelimiter(Scripts::Position pos, Delimiter type) {
+	auto token = m_Build.CreateToken<TokenDelimiter>(pos, pos, Scripts::Range(pos, pos), type);
+	m_Delimiters.push(token);
+	return true;
+}
+bool Preprocessor::CloseDelimiter(Scripts::Position pos, Delimiter type) {
+	auto& token = m_Delimiters.top();
+	auto tok = token.GetToken();
+	// ensure the delimiters are for the same purpose, otherwise there's error
+	if (Tokens::Delimiter::GetDelimiterType<Delimiter>(*tok) == type) {
+		auto begin = Tokens::Delimiter::GetScriptRange(*tok).Begin();
+		// replace the token with an updated Scripts::Range
+		token.SetToken(new TokenDelimiter(begin, Scripts::Range(begin, pos), type));
+		// mark the closing position
+		m_Build.CreateToken<TokenDelimiter>(pos, pos, Scripts::Range(begin, pos), type);
+		m_Delimiters.pop();
+		return true;
+	}
+	return false;
+}
+Types::Type* Preprocessor::GetType(const std::string& name) {
+	return m_Build.GetTypes().GetType(name);
+}
+
 // Printf-styled error reporting
 void Preprocessor::SendError(Error type) {
 	// send
@@ -1255,3 +1311,12 @@ bool BlockCommentScanner::Scan(Lexing::State& state, Scripts::Position& pos) {
 	}
 	return false;
 }
+
+bool Task::IsRunning() const { return Preprocessor::IsRunning(); }
+bool Task::IsTaskFinished() { return Preprocessor::IsFinished(); }
+void Task::RunTask() { Preprocessor::Run(); }
+void Task::ResetTask() { Preprocessor::Reset(); }
+const Information& Task::Info() const { return m_Info; }
+Task::Task(Engine& engine, Build* build) : Preprocessor(*this, engine, *build),
+	m_Engine(engine), m_Info(GetInfo())
+{ }

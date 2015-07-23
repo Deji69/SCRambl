@@ -42,8 +42,7 @@ namespace SCRambl
 #include "utils/function_traits.h"
 #include "utils/xml.h"
 
-namespace SCRambl
-{
+namespace SCRambl {
 	union VersionStruct
 	{
 		struct {
@@ -79,7 +78,7 @@ namespace SCRambl
 			return vec.end() != std::find(vec.begin(), vec.end(), v);
 		}
 	};
-
+	// index-based vector reference (won't invalidate when vector grows - could point to something unexpected)
 	template<typename T, typename TIt = size_t>
 	class VecRef {
 	public:
@@ -119,6 +118,7 @@ namespace SCRambl
 		Vec* m_Vector = nullptr;
 		TIt m_Index = 0;
 	};
+	// vector indexes - like iterators, except you know where they are quicker
 	template<typename T, typename TKey = size_t, typename TCont = std::vector<T>, typename TIt = TCont::const_iterator>
 	class VecIndex {
 	public:
@@ -218,8 +218,7 @@ namespace SCRambl
 		IndexType m_Index = 0;
 	};
 
-	class line
-	{
+	class line {
 		std::string str;
 	public:
 		operator std::string() const { return str; }
@@ -230,42 +229,39 @@ namespace SCRambl
 		}
 	};
 
+	// returns how long the strings match for (in bytes, not time - but that would be cool)
 	static inline size_t lengthcompare(const std::string& a, const std::string& b) {
 		size_t l = 0;
 		while (a.length() > l && b.length() > l && a[l] == b[l]) ++l;
 		return l;
 	}
 
+	// makes your string real lazy
 	static inline std::string tolower(std::string str) {
 		std::transform(str.begin(), str.end(), str.begin(), [](int c){ return std::tolower(c); });
 		return str;
 	}
+	// makes your string real shouty
 	static inline std::string toupper(std::string str) {
 		std::transform(str.begin(), str.end(), str.begin(), [](int c){ return std::toupper(c); });
 		return str;
 	}
 
 	// trim from start
-	static inline std::string &ltrim(std::string &s)
-	{
+	static inline std::string &ltrim(std::string &s) {
 		s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
 		return s;
 	}
-
 	// trim from end
-	static inline std::string &rtrim(std::string &s)
-	{
+	static inline std::string &rtrim(std::string &s) {
 		s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
 		return s;
 	}
-
-	// trim from both ends
+	// trim from both ends (ltrim + rtrim, nothing special)
 	static inline std::string &trim(std::string &s)
 	{
 		return ltrim(rtrim(s));
 	}
-
-	// try to get an identifier
 
 	// copies while predicate returns true
 	template<class InputIt, class UnaryPredicate>
@@ -276,22 +272,22 @@ namespace SCRambl
 		}
 		return str;
 	}
-
 	// strncpy + zero-terminate last character
 	template<class T>
-	inline T * szncpy(T *out, const char *src, size_t size)
+	inline T* szncpy(T *out, const char *src, size_t size)
 	{
 		strncpy(out, src, size);
 		out[size - 1] = 0;
 		return out;
 	}
 
+	// I can't stress how often I've needed a program to be aware of the number of bits its data used...
 	template<typename T>
 	inline size_t CountBitOccupation(T N) {
 		auto v = (size_t)std::log2(N);
 		return v ? v : 1;
 	}
-
+	// can magically turn an arbitrary number into a number representing the amount of data in bytes the prior number used up
 	template<typename T>
 	inline size_t CountByteOccupation(T v) {
 		size_t n = CountBitOccupation<unsigned long>(v);
@@ -321,7 +317,6 @@ namespace SCRambl
 		li.LowPart = low;
 		return li.QuadPart;
 	}
-
 	inline uint64_t GetTime()
 	{
 		SYSTEMTIME st;
@@ -330,14 +325,12 @@ namespace SCRambl
 		SystemTimeToFileTime(&st, &ft);
 		return JoinInt32(ft.dwHighDateTime, ft.dwLowDateTime);
 	}
-
 	inline uint64_t GetFileModifiedTime(FILE *hFile)
 	{
 		BY_HANDLE_FILE_INFORMATION fi;
 		GetFileInformationByHandle(hFile, &fi);
 		return JoinInt32(fi.ftLastWriteTime.dwHighDateTime, fi.ftLastWriteTime.dwLowDateTime);
 	}
-
 	inline uint64_t GetFileModifiedTime(const char *szPath)
 	{
 		WIN32_FILE_ATTRIBUTE_DATA fi;

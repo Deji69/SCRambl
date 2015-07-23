@@ -106,7 +106,6 @@
     <ClInclude Include="Symbols.h" />
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="Engine.h" />
-    <ClInclude Include="Directives.h" />
     <ClInclude Include="Environment.h" />
     <ClInclude Include="Identifiers.h" />
     <ClInclude Include="Language.h" />
@@ -146,7 +145,6 @@
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="Constants.cpp" />
     <ClCompile Include="Delimiters.cpp" />
-    <ClCompile Include="Directives.cpp" />
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="Environment.cpp" />
     <ClCompile Include="Identifiers.cpp" />
