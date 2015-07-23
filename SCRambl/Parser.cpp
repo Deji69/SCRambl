@@ -468,7 +468,7 @@ States Parser::Parse_Command() {
 	m_ActiveState = state_parsing_command_args;
 	m_CommandParseState.Begin(m_CurrentCommand, m_CurrentCommand->BeginArg());
 	auto attributes = m_CurrentCommand->GetAttributes();
-	CommandValue* cmdval;
+	CommandValue* cmdval = nullptr;
 	m_CurrentCommand->Type()->Values<CommandValue>(Types::ValueSet::Command, [&attributes, &cmdval](CommandValue* value){
 		if (value->CanFitSize(value->GetValueSize(attributes))) {
 			cmdval = value;
@@ -476,37 +476,15 @@ States Parser::Parse_Command() {
 		}
 		return false;
 	});
-	m_Xlation = m_Build.AddSymbol(cmdval->GetTranslation());
-	m_Xlation->SetAttributes(Types::DataSourceID::Command, attributes);
+	if (cmdval) {
+		m_Xlation = m_Build.AddSymbol(cmdval->GetTranslation());
+		m_Xlation->SetAttributes(Types::DataSourceID::Command, attributes);
+		return m_CurrentCommand->NumArgs() > 0 ? state_parsing_command_args : state_neutral;
+	}
+	else SendError(Error::invalid_command);
 	return state_neutral;
 }
 States Parser::Parse_Command_Args() {
-	/*if (IsCommandParsing() && !AreCommandArgsParsed()) {
-		if (m_CommandArgIt->IsReturn()) {
-			auto& vars = m_Build.GetScript().GetLScript()->GetVariables();
-			if (auto var = vars.Find(name)) {
-				// TODO: something
-			}
-			//else BREAK();
-		}
-		else {
-			auto type = m_CommandArgIt->GetType();
-			auto val_vec = type->GetValueTypes<>(Types::ValueSet::Text);
-			if (val_vec.size()) {
-				Types::Value::Shared val;
-				for (auto v : val_vec) {
-					auto stringval = std::static_pointer_cast<Types::StringValue>(v);
-					auto translation = stringval->GetTranslation();
-					ASSERT(translation);
-				}
-
-				auto symbol = Tokens::CreateToken<Tokens::String::Value<Types::Value::Shared>>(val, name);
-				m_TokenIt->GetSymbol() = symbol;
-				break;
-			}
-		}
-	}*/
-	//m_CommandArgIt->GetType()->GetMatchLevel();
 	return state_parsing_command_args;
 }
 States Parser::Parse_Operator() {

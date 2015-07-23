@@ -308,9 +308,9 @@ namespace SCRambl
 			// Get conditional source compilation state
 			bool GetSourceControl() const;
 
-			// Add
+			// Starte de limiting
 			bool OpenDelimiter(Scripts::Position, Delimiter);
-			//
+			// Ende de limiting
 			bool CloseDelimiter(Scripts::Position, Delimiter);
 
 			// Runs while running

@@ -77,6 +77,7 @@ namespace SCRambl
 				// normal errors
 				invalid_identifier = 1000,
 				invalid_operator,
+				invalid_command,
 				label_on_line,
 				unsupported_value_type,
 				expected_identifier,			// expected an identifier (_id1/i_d1/_1id)
@@ -217,9 +218,6 @@ namespace SCRambl
 			using CharacterInfo = Tokens::Character::Info<Character>;
 			using IdentifierInfo = Tokens::Identifier::Info<>;
 
-			States m_ParseState = state_neutral;
-			States m_ActiveState = state_neutral;
-
 			struct ParseState {
 				using TMap = std::map<States, ParseState>;
 				std::function<bool(ParseState*)> Func;
@@ -347,6 +345,25 @@ namespace SCRambl
 				}
 			} m_NumberParseState;
 
+		public:
+			enum State {
+				init, parsing, overloading, finished,
+				bad_state, max_state = bad_state,
+			};
+
+			Parser(Task& task, Engine& engine, Build& build);
+
+			bool IsFinished() const;
+			bool IsRunning() const;
+			void ParseOverloadedCommand();
+			void Run();
+			void Reset();
+
+			size_t GetNumTokens() const;
+			size_t GetCurrentToken() const;
+			Tokens::Token GetToken() const;
+
+		private:
 			States Parse_Neutral();
 			States Parse_Neutral_CheckCharacter(IToken*);
 			States Parse_Neutral_CheckIdentifier(IToken*);
@@ -500,24 +517,6 @@ namespace SCRambl
 				return token;
 			}
 			
-		public:
-			enum State {
-				init, parsing, overloading, finished,
-				bad_state, max_state = bad_state,
-			};
-
-			Parser(Task& task, Engine& engine, Build& build);
-
-			bool IsFinished() const;
-			bool IsRunning() const;
-			void ParseOverloadedCommand();
-			void Run();
-			void Reset();
-
-			size_t GetNumTokens() const;
-			size_t GetCurrentToken() const;
-			Tokens::Token GetToken() const;
-
 		private:
 			// Send an error event
 			inline void SendError(Error);
@@ -607,6 +606,8 @@ namespace SCRambl
 			void Parse();
 
 			State m_State = init;
+			States m_ActiveState = state_neutral;
+			States m_ParseState = state_neutral;
 			Engine& m_Engine;
 			Task& m_Task;
 			Build& m_Build;
@@ -617,7 +618,6 @@ namespace SCRambl
 			Tokens::Iterator m_OperatorTokenIt;
 			std::vector<const Tokens::Iterator> m_CommandTokens;			// positions of all parsed command tokens
 			std::vector<const Tokens::Iterator> m_LabelTokens;
-			//Scripts::Labels& m_Labels;
 			Types::Types& m_Types;
 			size_t m_NumCommandArgs;
 			size_t m_NumOverloadFailures;

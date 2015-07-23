@@ -189,7 +189,7 @@
 	-->
 	<Translations>
 		<!-- 'Value' only needs specifying if a different tranlsation is needed depending on the type of value being translated -->
-		<Translate Type="COMMAND">
+		<Translate Type="COMMAND" Value="Command">
 			<Data>
 				<Int15 Source="Command" Attribute="ID" />
 				<Int1 Source="Condition" Attribute="IsNOT" />

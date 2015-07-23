@@ -3,9 +3,9 @@
 	Written in SCR for SCRambl 1.0.40+
 */
 
-COMMAND SCRIPT_NAME:0x3A4(TEXT_LABEL[8])
-VAR_INT var1
-var1 = 0 + 1
+//COMMAND SCRIPT_NAME:0x3A4(TEXT_LABEL[8])
+//VAR_INT var1
+//var1 = 0 + 1
 SCRIPT_NAME "tool"
 /*{
 	LVAR_INT lvar1[2] pVehicleStruct

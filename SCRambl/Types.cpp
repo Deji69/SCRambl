@@ -13,9 +13,6 @@ namespace SCRambl
 	{
 		const DataAttributesMap Xlation::s_NullMap;
 		const Translation::Ref Translation::BadRef;
-
-		//template<typename TAttributes, typename TAttributeSet = AttributeSet<TAttributes>>
-		//class Attributes : public IAttributes {
 		
 		std::string DataSource::GetNameByID(DataSourceID id) {
 			switch (id) {
@@ -96,27 +93,6 @@ namespace SCRambl
 			auto it = table.find(name);
 			return it == table.end() ? ValueSet::INVALID : it->second;
 		}
-
-#if 0
-		void AddSizeAttribute(SCRambl::Configuration::Config & obj) {
-			obj.AddClass("Size", [](const pugi::xml_node vec, std::shared_ptr<void> & obj){
-				auto value = std::static_pointer_cast<SCR::Type::AnonymousValue>(obj);
-				bool is_variable = false;
-				if (auto attr = vec.attribute("Variable"))
-					is_variable = attr.as_bool(false);
-				Numbers::IntegerType size;
-				auto result = Numbers::StringToInt(vec.first_child().value(), size);
-				if (result == Numbers::ConvertResult::success) {
-					value->AddSize(size * 8, is_variable);
-				}
-			});
-		}
-#endif
-
-		/* Translation */
-		/*Xlation Translation::Xlate(IAttributes* attributes) const {
-			return Xlation(this, attributes);
-		}*/
 
 		/* VariableValue */
 		inline ArrayValue* VariableValue::ToArray() {
