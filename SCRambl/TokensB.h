@@ -8,25 +8,22 @@
 #include "Scripts-code.h"
 #include "Tokens.h"
 #include "Numbers.h"
-//#include "Labels.h"
-//#include "Commands.h"
-//#include "Variables.h"
 #include "Symbols.h"
 #include "ScriptObjects.h"
 
 namespace SCRambl
 {
+	namespace Types { class Value; }
+	using ScriptVariable = ScriptObject<class Variable>;
+	using ScriptLabel = ScriptObject<class Label>;
+
 	class Command;
 	class Label;
 	class Variable;
+	class Operand;
 
-	/*\ Tokens \*/
 	namespace Tokens
 	{
-		/*\
-		 * Tokens::ValueToken
-		 * TValue - Value type
-		\*/
 		template<typename TValueType>
 		class ValueToken : public Symbol
 		{
@@ -43,7 +40,7 @@ namespace SCRambl
 			TValueType m_ValueType;
 		};
 
-		/*\ Define token classes for each type \*/
+		// Define token classes for each type
 		class None {
 		public:
 			static const enum Parameter { };
@@ -125,7 +122,7 @@ namespace SCRambl
 				return token.Get<Info<TNumberType>>().GetValue<NumberValue>();
 			}
 
-			/*\ Tokens::Number::Value - Carries all symbolic data for a number value \*/
+			// Tokens::Number::Value - Carries all symbolic data for a number value
 			template<typename TValueType>
 			class Value : public ValueToken<TValueType>
 			{
@@ -157,7 +154,7 @@ namespace SCRambl
 				}
 			};
 		
-			/*\ Tokens::Number::Symbol \*/
+			// Tokens::Number::Symbol
 			class SymbolInfo : public Symbol {
 			public:
 				SymbolInfo() : Symbol(Tokens::Type::Number)
@@ -202,7 +199,7 @@ namespace SCRambl
 			using OverloadInfo = TokenInfo<Type, Scripts::Range, std::vector<VecRef<SCRambl::Command>>>;
 			using DummyInfo = TokenInfo<Type, Scripts::Range>;
 
-			/*\ Tokens::Command:Decl - Carries symbolic data for a command declaration \*/
+			// Carries symbolic data for a command declaration
 			class Decl : public Symbol {
 				size_t m_ID;
 				const VecRef<SCRambl::Command> m_Command;
@@ -216,26 +213,6 @@ namespace SCRambl
 				inline const VecRef<SCRambl::Command> GetCommand()	const { return m_Command; }
 			};
 
-			/*\ Tokens::Command::Call - Carries symbolic data for a command call \*/
-			class Call : public Symbol {
-				const VecRef<SCRambl::Command> m_Command;
-				size_t m_NumArgs;
-				std::vector<Symbol*> m_Args;
-
-			public:
-				Call(const Info& info, size_t num_args) : Symbol(Type::CommandCall),
-					m_Command(info.GetValue<CommandType>()),
-					m_NumArgs(num_args)
-				{ }
-				Call(const IToken* info, size_t num_args) : Call(info->Get<Info>(), num_args)
-				{ }
-
-				inline const VecRef<SCRambl::Command> GetCommand() const { return m_Command; }
-				inline size_t GetNumArgs() const { return m_NumArgs; }
-
-				inline void AddArg(Symbol* symbol) { m_Args.emplace_back(symbol); }
-			};
-
 			static Scripts::Range GetScriptRange(const IToken& token) {
 				return token.Get<DummyInfo>().GetValue<ScriptRange>();
 			}
@@ -244,6 +221,16 @@ namespace SCRambl
 			}
 			static std::vector<VecRef<SCRambl::Command>> GetOverloads(const IToken& token) {
 				return token.Get<OverloadInfo>().GetValue<CommandType>();
+			}
+		};
+		class CommandArgs {
+		public:
+			using Arg = std::pair<Operand, Types::Value*>;
+			enum Parameter { Vector };
+			using Info = TokenInfo<Type, std::vector<Arg>>;
+
+			static const std::vector<Arg>& GetVector(const IToken& token) {
+				return token.Get<Info>().GetValue<Vector>();
 			}
 		};
 		class String {

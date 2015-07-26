@@ -12,14 +12,16 @@ namespace SCRambl
 {
 	namespace Tokens
 	{
-		/*\ Tokens::Token - Types of token information \*/
+		using Iterator = VecIndex<class Token>;
+
+		// Tokens::Token - Types of token information
 		enum class Type : char {
 			None, Directive,
-			Command, CommandDecl, CommandCall, CommandOverload, Variable,
+			Command, CommandDecl, CommandCall, CommandOverload, Variable, ArgList,
 			Identifier, Label, LabelRef, Number, Operator, String, Character, Delimiter
 		};
-
-		/*\ Tokens::Symbol - Base for parsed token data \*/
+		
+		// Base for parsed token data
 		class Symbol {
 		public:
 			Symbol(Type type) : m_Type(type)
@@ -70,11 +72,11 @@ namespace SCRambl
 
 			inline operator IToken*() { return GetToken(); }
 			inline operator const IToken*() const { return GetToken(); }
+			inline IToken* operator->() { return GetToken(); }
+			inline const IToken* operator->() const { return GetToken(); }
 		};
 
-		using Iterator = VecIndex<Token>;
-
-		/*\ Tokens::Storage - Token container \*/
+		// Token container
 		class Storage {
 		public:
 			typedef std::vector<Token> Vector;
@@ -83,105 +85,6 @@ namespace SCRambl
 			Vector m_Tokens;
 
 		public:
-			/*class Iterator {
-				Vector::iterator m_It;
-				size_t m_Index = 0;
-
-			public:
-				//using Vector = std::vector<Iterator>;
-				using CVector = std::vector<Iterator>;
-
-				Iterator() = default;
-				Iterator(Vector& cont) : m_It(cont.begin()), m_Index(0)
-				{ }
-				Iterator(Vector::iterator it, const Vector& cont) : m_It(it), m_Index(it - cont.begin())
-				{ }
-
-				inline Token* Get() const {
-					return &*m_It;
-				}
-				inline size_t GetIndex() const {
-					return m_Index;
-				}
-
-				// Access
-				inline Token* operator*() const {
-					return Get();
-				}
-				inline Token* operator->() const {
-					return Get();
-				}
-				inline Token* operator[](size_t n) const {
-					return &m_It[n];
-				}
-
-				// Manipulation
-				inline Iterator& operator++() {
-					++m_It;
-					++m_Index;
-					return *this;
-				}
-				inline Iterator operator++(int) {
-					auto it = *this;
-					++m_It;
-					++m_Index;
-					return it;
-				}
-				inline Iterator& operator--() {
-					--m_It;
-					--m_Index;
-					return *this;
-				}
-				inline Iterator operator--(int) {
-					auto it = *this;
-					--m_It;
-					--m_Index;
-					return it;
-				}
-				inline Iterator& operator+=(size_t n) {
-					m_It += n;
-					m_Index += n;
-					return *this;
-				}
-				inline Iterator& operator-=(size_t n) {
-					m_It -= n;
-					m_Index -= n;
-					return *this;
-				}
-				inline Iterator operator+(size_t n) {
-					auto it = *this;
-					it.m_It += n;
-					it.m_Index += n;
-					return it;
-				}
-				inline Iterator operator-(size_t n) {
-					auto it = *this;
-					it.m_It -= n;
-					it.m_Index -= n;
-					return it;
-				}
-
-				// Comparison
-				inline bool operator==(const Iterator& rhs) const {
-					return m_It == rhs.m_It;
-				}
-				inline bool operator!=(const Iterator& rhs) const {
-					return !(*this == rhs);
-				}
-				inline bool operator<(const Iterator& rhs) const {
-					return m_Index < rhs.m_Index;
-				}
-				inline bool operator<=(const Iterator& rhs) const {
-					return m_Index <= rhs.m_Index;
-				}
-				inline bool operator>(const Iterator& rhs) const {
-					return m_Index > rhs.m_Index;
-				}
-				inline bool operator>=(const Iterator& rhs) const {
-					return m_Index >= rhs.m_Index;
-				}
-			};
-			-/*/
 			Storage() = default;
 			Storage(const Vector& vec) = delete;
 			~Storage() {
@@ -190,90 +93,55 @@ namespace SCRambl
 				}
 			}
 
-			/* Manipulation */
-
-			// Insert
+			// Manipulation //
 			template<typename TToken, typename... TArgs>
 			inline Token Add(Scripts::Position pos, TArgs&&... args) {
 				m_Tokens.emplace_back(pos, new TToken(args...));
 				return m_Tokens.back();
 			}
-
-			/* Navigation */
-
-			// Begin
+			// Navigation //
 			inline Iterator Begin() { return{ m_Tokens, m_Tokens.begin() }; }
-			// End
 			inline Iterator End() { return{ m_Tokens, m_Tokens.end() }; }
-
-			// STL hates my style
 			inline Iterator begin() { return Begin(); }
 			inline Iterator end() { return End(); }
-
-			/* Access */
+			// Access //
 			inline const Token Front() const { return m_Tokens.front(); }
 			inline const Token Back() const { return m_Tokens.back(); }
 			inline Token Front() { return m_Tokens.front(); }
 			inline Token Back() { return m_Tokens.back(); }
-
-			/* Info */
+			// Info //
 			inline size_t Size() const { return m_Tokens.size(); }
 			inline bool Empty() const { return m_Tokens.empty(); }
 		};
-		
+		// Token line vector
 		class Line {
 		private:
-			typedef std::vector<Token*> Vector;
-			Vector m_Line;
+			using Vector = std::vector<Token*>;
+			template<typename T>
+			using VectorIndex = VecIndex<Token*, size_t, Vector, T>;
 
 		public:
-			using Iter = Vector::iterator;
-			using RevIter = Vector::reverse_iterator;
-			using CIter = Vector::const_iterator;
-			using CRevIter = Vector::const_reverse_iterator;
-			using Ref = Vector::reference;
-			using CRef = Vector::reference;
+			using Iter = VectorIndex<Vector::iterator>;
+			using RevIter = VectorIndex<Vector::reverse_iterator>;
+			using CIter = VectorIndex<Vector::const_iterator>;
+			using CRevIter = VectorIndex<Vector::const_reverse_iterator>;
+			using Ref = VecRef<Token*>;
+			using CRef = VecRef<const Token*>;
 
 			Line() = default;
 
-			void AddToken(Token* tok) {
-				auto dest_it = m_Line.end();
-				auto dest_col = -1;
-				for (auto it = m_Line.begin(); it != m_Line.end(); ++it) {
-					auto ptr = *it;
-					auto col = ptr->GetPosition().GetColumn();
+			void AddToken(Token*);
+			Ref GetToken(size_t col);
 
-					if (dest_it == m_Line.end() || col < dest_col) {
-						dest_it = it;
-						dest_col = col;
-					}
-					else if (col >= dest_col) {
-						if (col == dest_col) dest_col = -1;
-						break;
-					}
-				}
+			inline Iter begin() { return{ m_Line.begin(), m_Line }; }
+			inline Iter end() { return{ m_Line.end(), m_Line }; }
+			inline CIter cbegin() { return{ m_Line.cbegin(), m_Line }; }
+			inline CIter cend() { return{ m_Line.cend(), m_Line }; }
 
-				if (dest_it != m_Line.end()) {
-					if (dest_col == -1) return;
-					m_Line.emplace(dest_it, tok);
-				}
-				else m_Line.emplace_back(tok);
-			}
-			Token* GetToken(int col) {
-				Token* r;
-				for (auto ptr : m_Line) {
-					if (ptr->GetPosition().GetColumn() >= col)
-						return r;
-					r = ptr;
-				}
-				return r;
-			}
-
-			inline Iter begin() { return m_Line.begin(); }
-			inline Iter end() { return m_Line.end(); }
-			inline CIter cbegin() { return m_Line.cbegin(); }
-			inline CIter cend() { return m_Line.cend(); }
+		private:
+			Vector m_Line;
 		};
+		// Token map
 		class Map {
 			typedef std::map<long long, Line> TokenList;
 

@@ -17,13 +17,12 @@ namespace SCRambl
 	class Engine;
 	class Build;
 
-	/* CommandAttributes */
+	// CommandAttributes
 	enum class CommandAttributeID {
 		Name, ID, Conditional, NumArgs,
 		None
 	};
-	class CommandAttributeSet : public AttributeSet<CommandAttributeID>
-	{
+	class CommandAttributeSet : public AttributeSet<CommandAttributeID> {
 	public:
 		CommandAttributeSet() : AttributeSet(CommandAttributeID::None) {
 			AddAttribute("ID", CommandAttributeID::ID);
@@ -38,7 +37,7 @@ namespace SCRambl
 		{ }
 	};
 
-	/* CommandArg - Consists simply of the expected type, the command index, and whether it's a return */
+	// CommandArg - Consists simply of the expected type, the command index, and whether it's a return
 	class CommandArg
 	{
 	public:
@@ -60,7 +59,7 @@ namespace SCRambl
 		size_t m_Size = 0;					// 0 = 'auto'
 	};
 
-	/*\ Command - At the heart of SCR \*/
+	// Command - At the heart of SCR
 	class Command
 	{
 	public:
@@ -94,9 +93,8 @@ namespace SCRambl
 		inline Types::Type* Type() const { return m_Type; }
 	};
 	
-	/*\ CommandValue \*/
-	class CommandValue : public Types::Value
-	{
+	// CommandValue 
+	class CommandValue : public Types::Value {
 		Types::DataAttributeID m_ValueID;
 		Types::DataType::Type m_ValueType;
 
@@ -109,9 +107,8 @@ namespace SCRambl
 		size_t GetValueSize(const Command::Attributes&) const;
 	};
 
-	/*\ Commands - SCR command manager \*/
-	class Commands
-	{
+	// Commands - SCR command manager
+	class Commands {
 	public:
 		enum class Casing {
 			none, uppercase, lowercase

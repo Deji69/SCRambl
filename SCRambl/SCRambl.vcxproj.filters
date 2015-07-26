@@ -249,6 +249,9 @@
     <ClInclude Include="Parser.h">
       <Filter>Header</Filter>
     </ClInclude>
+    <ClInclude Include="Operands.h">
+      <Filter>Header</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header">

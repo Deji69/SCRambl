@@ -15,6 +15,7 @@
 #include "Operators.h"
 #include "Constants.h"
 #include "Types.h"
+#include "Tokens.h"
 
 namespace SCRambl
 {
@@ -24,9 +25,6 @@ namespace SCRambl
 	enum class BuildSymbolType {
 		None, Command, Data
 	};
-
-	using ScriptVariable = ScriptObject<Variable>;
-	using ScriptLabel = ScriptObject<Label>;
 
 	struct BuildVariable {
 		XMLValue Value;
@@ -244,7 +242,8 @@ namespace SCRambl
 
 		template<typename TTokenType, typename... TArgs>
 		Tokens::Token CreateToken(Scripts::Position pos, TArgs&&... args) {
-			return m_Script.GetTokens().Add<TTokenType>(pos, args...);
+			Tokens::Token token = m_Script.GetTokens().Add<TTokenType>(pos, args...);
+			return token;
 		}
 		VecRef<Types::Xlation> AddSymbol(Types::Translation::Ref translation) {
 			m_Xlations.emplace_back(translation, [this](Types::DataSource src, Types::DataAttribute attr)->XMLValue{
@@ -322,7 +321,6 @@ namespace SCRambl
 		std::vector<BuildScript> m_BuildScripts;
 		std::vector<BuildInput> m_BuildInputs;
 		std::vector<std::string> m_Files;
-		TokenPtrVec m_Tokens;
 		Xlations m_Xlations;
 
 		//

@@ -100,10 +100,8 @@ namespace SCRambl
 
 		// Get the code list
 		Scripts::Code& GetCode() { return *m_Code; }
-
 		// Get the labels
 		Scripts::Labels& GetLabels() { return m_Labels ; }
-
 		// Get the tokens
 		Tokens::Storage& GetTokens() { return m_Tokens; }
 

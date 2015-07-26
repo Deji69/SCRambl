@@ -9,12 +9,12 @@
 
 #include <cctype>
 
-//using namespace SCRambl;
+using namespace SCRambl;
 using namespace SCRambl::Parsing;
 using namespace SCRambl::Tokens;
 
 // SCRambl::Parser::Parser
-Parser::Parser(Task& task, SCRambl::Engine& engine, SCRambl::Build& build) :
+Parser::Parser(Task& task, Engine& engine, Build& build) :
 	m_Task(task), m_Engine(engine), m_Build(build), m_State(init),
 	m_Tokens(build.GetScript().GetTokens()),
 	m_Commands(build.GetCommands()),
@@ -76,7 +76,7 @@ void Parser::ParseOverloadedCommand() {
 			NextCommandOverload();
 	}
 }
-bool Parser::ParseCommandOverloads(const SCRambl::Commands::Vector& vec) {
+bool Parser::ParseCommandOverloads(const Commands::Vector& vec) {
 	if (vec.size() == 1) {
 		m_CurrentCommand = vec[0];
 	}
@@ -131,7 +131,7 @@ bool Parser::GetDelimitedArrayIntegerConstant(size_t& i) {
 	return b;
 }
 
-States Parser::Parse_Neutral_CheckCharacter(SCRambl::IToken* tok) {
+States Parser::Parse_Neutral_CheckCharacter(IToken* tok) {
 	if (IsCharacterEOL(tok)) {
 		switch (m_ActiveState) {
 		case state_parsing_operator:
@@ -143,18 +143,14 @@ States Parser::Parse_Neutral_CheckCharacter(SCRambl::IToken* tok) {
 		case state_parsing_command:
 		case state_parsing_command_args:
 			m_CommandTokenMap.emplace(m_CommandParseState.command->Name(), m_CommandTokenIt);
-			//CreateSymbol<Tokens::Command::Call>(m_CommandTokenIt->GetToken(), m_CommandParseState.parameters.size());
-
-			for (auto& param : m_CommandParseState.parameters) {
-				//CreateSymbol()
-			}
+			m_CommandArgsSet.emplace(CreateToken<Tokens::CommandArgs::Info>(Tokens::Type::ArgList, m_CommandParseState.args));
 			break;
 		}
 		m_ActiveState = state_neutral;
 	}
 	return state_neutral;
 }
-States Parser::Parse_Neutral_CheckIdentifier(SCRambl::IToken* tok) {
+States Parser::Parse_Neutral_CheckIdentifier(IToken* tok) {
 	Commands::Vector vec;
 	auto& token = tok->Get<Tokens::Identifier::Info<>>();
 	auto range = token.GetValue<Tokens::Identifier::ScriptRange>();
@@ -198,7 +194,7 @@ States Parser::Parse_Neutral_CheckIdentifier(SCRambl::IToken* tok) {
 	}
 	return state_neutral;
 }
-States Parser::Parse_Neutral_CheckDelimiter(SCRambl::IToken* tok) {
+States Parser::Parse_Neutral_CheckDelimiter(IToken* tok) {
 	if (m_ActiveState == state_parsing_variable) {
 		if (IsSubscriptDelimiter(tok))
 			return state_parsing_subscript;
@@ -216,7 +212,7 @@ States Parser::Parse_Neutral_CheckDelimiter(SCRambl::IToken* tok) {
 	}
 	return state_neutral;
 }
-States Parser::Parse_Neutral_CheckOperator(SCRambl::IToken* tok) {
+States Parser::Parse_Neutral_CheckOperator(IToken* tok) {
 	if (m_CurrentOperator = GetOperator(tok)) {
 		m_OperatorTokenIt = m_TokenIt;
 		return state_parsing_operator;
@@ -224,7 +220,7 @@ States Parser::Parse_Neutral_CheckOperator(SCRambl::IToken* tok) {
 	else SendError(Error::invalid_operator, GetOperatorRange(tok));
 	return state_neutral;
 }
-States Parser::Parse_Neutral_CheckNumber(SCRambl::IToken* tok) {
+States Parser::Parse_Neutral_CheckNumber(IToken* tok) {
 	if (auto info = GetIntInfo(tok)) {
 		m_NumberParseState.Start(info);
 		return state_parsing_number;
@@ -235,7 +231,7 @@ States Parser::Parse_Neutral_CheckNumber(SCRambl::IToken* tok) {
 	}
 	return state_neutral;
 }
-States Parser::Parse_Neutral_CheckString(SCRambl::IToken* tok) {
+States Parser::Parse_Neutral_CheckString(IToken* tok) {
 	if (m_ActiveState != state_parsing_command_args && m_ActiveState != state_parsing_operator) {
 		BREAK();
 	}
@@ -465,7 +461,6 @@ States Parser::Parse_Type_CommandDef() {
 	return state_parsing_type_command;
 }
 States Parser::Parse_Command() {
-	m_ActiveState = state_parsing_command_args;
 	m_CommandParseState.Begin(m_CurrentCommand, m_CurrentCommand->BeginArg());
 	auto attributes = m_CurrentCommand->GetAttributes();
 	CommandValue* cmdval = nullptr;
@@ -484,8 +479,9 @@ States Parser::Parse_Command() {
 	else SendError(Error::invalid_command);
 	return state_neutral;
 }
-States Parser::Parse_Command_Args() {
-	return state_parsing_command_args;
+States Parser::Parse_Command_Arglist() {
+	m_ActiveState = state_parsing_command_args;
+	return state_neutral;
 }
 States Parser::Parse_Operator() {
 	if (m_ActiveState == state_parsing_variable) {
@@ -528,7 +524,6 @@ void Parser::Parse() {
 
 			&Parser::Parse_Subscript,
 			&Parser::Parse_Type_Varlist, &Parser::Parse_Type_CommandDef,
-			&Parser::Parse_Command_Args,
 		};
 		newstate = (this->*funcs[m_ParseState = newstate])();
 	} while (newstate != m_ParseState && newstate != state_neutral);
@@ -817,7 +812,7 @@ size_t Parser::GetCurrentToken() const {
 Token Parser::GetToken() const {
 	return *m_TokenIt;
 }
-SCRambl::IToken* Parser::PeekToken(SCRambl::Tokens::Type type, size_t off) {
+IToken* Parser::PeekToken(Tokens::Type type, size_t off) {
 	auto it = m_TokenIt + off;
 	if (it != m_Tokens.End()) {
 		auto tok = it->GetToken();
@@ -865,5 +860,5 @@ bool Task::IsRunning() const { return Parser::IsRunning(); }
 bool Task::IsTaskFinished() { return Parser::IsFinished(); }
 void Task::RunTask() { Parser::Run(); }
 void Task::ResetTask() { Parser::Reset(); }
-Task::Task(SCRambl::Engine& engine, SCRambl::Build* build) : Parser(*this, engine, *build), m_Engine(engine)
+Task::Task(Engine& engine, Build* build) : Parser(*this, engine, *build), m_Engine(engine)
 { }

@@ -15,7 +15,7 @@
 #include "Tokens.h"
 #include "TokensB.h"
 #include "TokenInfo.h"
-//#include "Types.h"
+#include "Operands.h"
 
 namespace SCRambl
 {
@@ -99,49 +99,6 @@ namespace SCRambl
 			ID			m_ID;
 		};
 
-		// Operand
-		class Operand {
-		public:
-			enum Type { NullValue, IntValue, FloatValue, TextValue, LabelValue, VariableValue };
-
-			Operand() = default;
-			Operand(ScriptVariable* var) : m_Type(VariableValue),
-				m_VariableValue(var), m_Text(var->Get().Name())
-			{ }
-			Operand(ScriptLabel* label) : m_Type(LabelValue),
-				m_LabelValue(label), m_Text(label->Get().Name())
-			{ }
-			Operand(Tokens::Number::Info<Numbers::IntegerType>* info) : m_Type(IntValue),
-				m_IntValue(*info->GetValue<Tokens::Number::NumberValue>()),
-				m_Text(info->GetValue<Tokens::Number::ScriptRange>().Format())
-			{ }
-			Operand(Tokens::Number::Info<Numbers::FloatType>* info) : m_Type(FloatValue),
-				m_FloatValue(*info->GetValue<Tokens::Number::NumberValue>()),
-				m_Text(info->GetValue<Tokens::Number::ScriptRange>().Format())
-			{ }
-			Operand(int64_t v, std::string str) : m_Type(IntValue),
-				m_IntValue(v), m_Text(str)
-			{ }
-			Operand(float v, std::string str) : m_Type(FloatValue),
-				m_FloatValue(v), m_Text(str)
-			{ }
-			Operand(std::string v) : m_Type(TextValue),
-				m_Text(v)
-			{ }
-
-			inline Type GetType() const { return m_Type; }
-			inline std::string Text() const { return m_Text; }
-
-		private:
-			Type m_Type = NullValue;
-			union {
-				int64_t m_IntValue = 0;
-				float m_FloatValue;
-				ScriptLabel* m_LabelValue;
-				ScriptVariable* m_VariableValue;
-			};
-			std::string m_Text;
-		};
 		// Parameter
 		struct Parameter {
 			Operand operand;
@@ -252,7 +209,7 @@ namespace SCRambl
 			struct CommandParseState {
 				VecRef<Command> command;
 				CommandArg::Iterator commandArgIt;
-				std::vector<Parameter> parameters;
+				std::vector<Tokens::CommandArgs::Arg> args;
 
 				CommandParseState() = default;
 				void Begin(VecRef<Command> cmd, CommandArg::Iterator argit) {
@@ -260,10 +217,11 @@ namespace SCRambl
 					command = cmd;
 					commandArgIt = argit;
 				}
-				Parameter* AddParameter(Operand op, Types::Value* value) {
-					parameters.emplace_back(op, value);
-					return &parameters.back();
+				Tokens::CommandArgs::Arg* AddParameter(Operand op, Types::Value* value) {
+					args.emplace_back(op, value);
+					return &args.back();
 				}
+				
 			} m_CommandParseState;
 			struct OperationParseState {
 				bool looksPrefixed = false;
@@ -375,7 +333,7 @@ namespace SCRambl
 			States Parse_Type_Varlist();
 			States Parse_Type_CommandDef();
 			States Parse_Command();
-			States Parse_Command_Args();
+			States Parse_Command_Arglist();
 			States Parse_Operator();
 			States Parse_Number();
 			States Parse_String();
@@ -510,6 +468,7 @@ namespace SCRambl
 			}
 
 			std::vector<IToken*> m_ParserTokens;
+			std::set<Tokens::CommandArgs::Info*> m_CommandArgsSet;
 			template<typename TTokenType, typename... TArgs>
 			TTokenType* CreateToken(TArgs&&... args) {
 				auto token = new TTokenType(args...);
