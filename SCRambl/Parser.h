@@ -390,8 +390,7 @@ namespace SCRambl
 				return Tokens::Identifier::GetScriptRange(*toke).Format();
 			}
 			static std::string GetTextString(IToken* toke) {
-				auto token = static_cast<Tokens::String::Info*>(toke);
-				return token->GetValue<Tokens::String::ScriptRange>().Format();
+				return Tokens::String::GetString(*toke);
 			}
 			static Scripts::Range GetOperatorRange(IToken* toke) {
 				auto tok = static_cast<Tokens::Operator::Info<Operators::OperatorRef>*>(toke);

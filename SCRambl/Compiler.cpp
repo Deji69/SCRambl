@@ -67,6 +67,7 @@ namespace SCRambl
 
 				for (size_t x = 0; x < data->GetNumFields(); !args ? ++x : x = x) {
 					auto field = data->GetField(x);
+					bool cval = field->GetDataSource() == Types::DataSourceID::None && field->GetDataAttribute() == Types::DataAttributeID::None;
 					auto value = xlate.GetAttribute(field->GetDataSource(), field->GetDataAttribute());
 					size_t size = field->HasSizeLimit() ? field->GetSizeLimit() : 0;
 
@@ -77,6 +78,9 @@ namespace SCRambl
 					case Types::DataType::Float:
 					case Types::DataType::Fixed:
 					case Types::DataType::Int:
+						if (cval) {
+							value = field->GetValue();
+						}
 						if (!field->HasSizeLimit()) {
 							size = CountBitOccupation(value.AsNumber<size_t>());
 							if (size > 32) size = 64;
@@ -86,9 +90,15 @@ namespace SCRambl
 						}
 						break;
 					case Types::DataType::Char:
+						if (cval) {
+							value = field->GetValue();
+						}
 						size = 8;
 						break;
 					case Types::DataType::String:
+						if (cval) {
+							str = field->GetValue();
+						}
 						size = field->HasSizeLimit() ? size : value.AsString().size();
 						isstr = true;
 						break;
@@ -99,12 +109,14 @@ namespace SCRambl
 					}
 
 					if (args) {
+						++m_TokenIt;
 						auto type = m_TokenIt->GetToken()->GetType<Tokens::Type>();
 						auto& vec = Tokens::CommandArgs::GetVector(*m_TokenIt->GetToken());
 						for (auto v : vec) {
 							CompileTranslation(v.second->GetTranslation(), FormArgumentXlate(xlate, v));
 						}
 						args = false;
+						continue;
 						BREAK();
 					}
 
@@ -126,14 +138,23 @@ namespace SCRambl
 						data_size = valsize;
 
 						if (data_size == size) {
-							if (data_size == 64)
-								Output<uint64_t>(value.AsNumber<uint64_t>());
-							else if (data_size == 32)
-								Output<uint32_t>(value.AsNumber<uint32_t>());
-							else if (data_size == 16)
-								Output<uint16_t>(value.AsNumber<uint16_t>());
-							else if (data_size == 8)
-								Output<uint8_t>(value.AsNumber<uint8_t>());
+							if (isstr) {
+								str = value.AsString();
+								Output(str.c_str(), str.size());
+								for (auto i = str.size(); i < data_size; ++i) {
+									Output<uint8_t>(0);
+								}
+							}
+							else {
+								if (data_size == 64)
+									Output<uint64_t>(value.AsNumber<uint64_t>());
+								else if (data_size == 32)
+									Output<uint32_t>(value.AsNumber<uint32_t>());
+								else if (data_size == 16)
+									Output<uint16_t>(value.AsNumber<uint16_t>());
+								else if (data_size == 8)
+									Output<uint8_t>(value.AsNumber<uint8_t>());
+							}
 							continue;
 						}
 
@@ -219,12 +240,12 @@ namespace SCRambl
 			return r;
 		}
 		void Compiler::Finish() {
-			Output<uint32_t>(m_CommandNameVec.size());
+			/*Output<uint32_t>(m_CommandNameVec.size());
 			for (auto name : m_CommandNameVec) {
 				Output<uint16_t>(name.second);
 				Output(name.first.c_str(), name.first.size());
 				Output<uint8_t>(0);
-			}
+			}*/
 
 			m_Task(Event::Finish);
 			m_State = finished;
