@@ -82,6 +82,9 @@
     <ClCompile Include="Parser.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Operands.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Builder.h">

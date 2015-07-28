@@ -68,7 +68,7 @@ namespace SCRambl
 			Type m_Type;
 		};
 
-		/* Types::VarType */
+		// Types::VarType
 		class VarType {
 			friend class Types;
 			Variable* m_VarType = nullptr;
@@ -85,7 +85,7 @@ namespace SCRambl
 			void SetType(Variable* type) { m_VarType = type; }
 		};
 
-		/* Types::Type */
+		// Types::Type
 		class Type {
 			void CopyValues(const Type&);
 			void MoveValues(Type&);
@@ -131,15 +131,13 @@ namespace SCRambl
 				}
 				return vec;
 			}
-			
 			template<typename TValue, typename... TArgs>
 			inline TValue* AddValue(TArgs&&... args) {
 				auto val = new TValue(std::forward<TArgs>(args)...);
 				m_Values.push_back(val);
 				return val;
 			}
-
-			/*\ Types::Types::Values - Calls the requested function for each matching Value this Type contains \*/
+			// Calls the requested function for each matching Value this Type contains
 			template<typename TValue, typename TFunc>
 			void Values(ValueSet type, TFunc func) const {
 				for (auto v : m_Values) {
@@ -147,8 +145,7 @@ namespace SCRambl
 						break;
 				}
 			}
-
-			/*\ Types::Types::AllValues - Calls the requested function for each Value this Type contains \*/
+			// Calls the requested function for each Value this Type contains
 			template<typename TValue, typename TFunc>
 			void AllValues(TFunc func) const {
 				for (auto v : m_Values) {
@@ -313,7 +310,9 @@ namespace SCRambl
 			// Command
 			ID, Name, NumArgs,
 			// Condition
-			IsNOT
+			IsNOT,
+			// Variable
+			Index, IsArray, IsGlobal
 		};
 		
 		class DataSource {
@@ -381,7 +380,7 @@ namespace SCRambl
 
 		class Xlation;
 
-		/*\ Translation \*/
+		// Translation
 		class Translation
 		{
 		public:
@@ -470,7 +469,7 @@ namespace SCRambl
 		using DataAttributesMap = std::map<DataSourceID, DataAttributes>;
 		using DataAttributesFunc = std::function<XMLValue(DataSourceID, DataAttributeID)>;
 
-		/*\ The Xlation's Will Convert You! \*/
+		// The Xlation's Will Convert You!
 		class Xlation
 		{
 		public:
@@ -487,6 +486,15 @@ namespace SCRambl
 			XMLValue GetAttribute(DataSourceID src, DataAttributeID attr) const {
 				auto it = m_AttributesMap.find(src);
 				return it != m_AttributesMap.end() ? it->second.GetAttribute(attr) : m_Func(src, attr);
+			}
+			void SetTranslation(Translation::Ref ref) { m_Translation = ref; }
+
+			Xlation MergeAttributes(const Xlation& v) const {
+				Xlation r = *this;
+				for (auto attr : v.m_AttributesMap) {
+					r.m_AttributesMap.emplace(attr.first, attr.second);
+				}
+				return r;
 			}
 
 		protected:

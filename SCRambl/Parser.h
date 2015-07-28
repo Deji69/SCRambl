@@ -468,12 +468,9 @@ namespace SCRambl
 			}
 
 			std::vector<IToken*> m_ParserTokens;
-			std::set<Tokens::CommandArgs::Info*> m_CommandArgsSet;
 			template<typename TTokenType, typename... TArgs>
 			TTokenType* CreateToken(TArgs&&... args) {
-				auto token = new TTokenType(args...);
-				m_ParserTokens.emplace_back(token);
-				return token;
+				return m_Build.ParseToken<TTokenType>(m_TokenIt->GetPosition(), args...).GetToken<TTokenType>();
 			}
 			
 		private:

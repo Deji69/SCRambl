@@ -7,10 +7,82 @@
 #pragma once
 #include "Numbers.h"
 #include "Tokens.h"
+#include "Types.h"
+#include "Builder.h"
 
 namespace SCRambl {
-	class Operand {
+	enum class NumberAttributeID {
+		None, Value, Size,
+	};
+	enum class LabelAttributeID {
+		None, Offset, Name,
+	};
+	enum class VariableAttributeID {
+		None, Index, Name, Size, IsArray, IsGlobal
+	};
+	enum class TextAttributeID {
+		None, Value, Size,
+	};
+
+	class NumberAttributeSet : public AttributeSet<NumberAttributeID> {
 	public:
+		NumberAttributeSet() : AttributeSet(NumberAttributeID::None) {
+			AddAttribute("Value", NumberAttributeID::Value);
+			AddAttribute("Size", NumberAttributeID::Size);
+		}
+	};
+	class TextAttributeSet : public AttributeSet<TextAttributeID> {
+	public:
+		TextAttributeSet() : AttributeSet(TextAttributeID::None) {
+			AddAttribute("Value", TextAttributeID::Value);
+			AddAttribute("Size", TextAttributeID::Size);
+		}
+	};
+	class LabelAttributeSet : public AttributeSet<LabelAttributeID> {
+	public:
+		LabelAttributeSet() : AttributeSet(LabelAttributeID::None) {
+			AddAttribute("Offset", LabelAttributeID::Offset);
+			AddAttribute("Name", LabelAttributeID::Name);
+		}
+	};
+	class VariableAttributeSet : public AttributeSet<VariableAttributeID> {
+	public:
+		VariableAttributeSet() : AttributeSet(VariableAttributeID::None) {
+			AddAttribute("Index", VariableAttributeID::Index);
+			AddAttribute("Name", VariableAttributeID::Name);
+			AddAttribute("Size", VariableAttributeID::Size);
+		}
+	};
+
+	class NumberAttributes : public Attributes<NumberAttributeID, NumberAttributeSet> {
+	public:
+		NumberAttributes()
+		{ }
+	};
+	class TextAttributes : public Attributes<TextAttributeID, TextAttributeSet> {
+	public:
+		TextAttributes()
+		{ }
+	};
+	class LabelAttributes : public Attributes<LabelAttributeID, LabelAttributeSet> {
+	public:
+		LabelAttributes()
+		{ }
+	};
+	class VariableAttributes : public Attributes<VariableAttributeID, VariableAttributeSet> {
+	public:
+		VariableAttributes()
+		{ }
+	};
+
+	class Operand {
+		friend class NumberAttributes;
+		friend class TextAttributes;
+		friend class LabelAttributes;
+		friend class VariableAttributes;
+
+	public:
+		using Attributes = Attributes<Types::DataAttributeID, Types::DataAttributeSet>;
 		enum Type { NullValue, IntValue, FloatValue, TextValue, LabelValue, VariableValue };
 
 		Operand() = default;
@@ -46,6 +118,11 @@ namespace SCRambl {
 		template<> inline ScriptVariable* Value() const { return m_VariableValue; }
 		inline Type GetType() const { return m_Type; }
 		inline std::string Text() const { return m_Text; }
+
+		Attributes GetNumberAttributes() const;
+		Attributes GetTextAttributes() const;
+		Attributes GetLabelAttributes() const;
+		Attributes GetVariableAttributes() const;
 
 	private:
 		Type m_Type = NullValue;

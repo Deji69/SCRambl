@@ -61,6 +61,8 @@ namespace SCRambl
 			}
 
 		private:
+			void CompileTranslation(Types::Translation::Ref, Types::Xlation);
+			Types::Xlation FormArgumentXlate(const Types::Xlation&, const Tokens::CommandArgs::Arg&) const;
 			inline void AddCommandName(std::string name, size_t id) {
 				m_CommandNames.emplace(name, id);
 				m_CommandNameVec.emplace_back(name, id);

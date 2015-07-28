@@ -54,12 +54,6 @@ void Parser::ParseOverloadedCommand() {
 	if (m_OverloadCommands.size() <= 1) {
 		m_CurrentCommand = m_OverloadCommands[0];
 		m_OverloadCommands.clear();
-
-		// replace overload token with single command token
-		auto& token = m_CommandTokenIt->GetToken()->Get<Tokens::Identifier::Info<>>();
-		auto range = token.GetValue<Tokens::Identifier::ScriptRange>();
-		// TODO: fix this weirdness
-		m_CommandTokenIt->SetToken(CreateToken<CommandInfo>(Tokens::Type::Command, range, m_CurrentCommand));
 				
 		m_State = parsing;
 		return;
@@ -143,7 +137,7 @@ States Parser::Parse_Neutral_CheckCharacter(IToken* tok) {
 		case state_parsing_command:
 		case state_parsing_command_args:
 			m_CommandTokenMap.emplace(m_CommandParseState.command->Name(), m_CommandTokenIt);
-			m_CommandArgsSet.emplace(CreateToken<Tokens::CommandArgs::Info>(Tokens::Type::ArgList, m_CommandParseState.args));
+			CreateToken<Tokens::CommandArgs::Info>(Tokens::Type::ArgList, m_CommandParseState.args);
 			break;
 		}
 		m_ActiveState = state_neutral;
@@ -524,6 +518,7 @@ void Parser::Parse() {
 
 			&Parser::Parse_Subscript,
 			&Parser::Parse_Type_Varlist, &Parser::Parse_Type_CommandDef,
+			&Parser::Parse_Command_Arglist
 		};
 		newstate = (this->*funcs[m_ParseState = newstate])();
 	} while (newstate != m_ParseState && newstate != state_neutral);

@@ -245,6 +245,11 @@ namespace SCRambl
 			Tokens::Token token = m_Script.GetTokens().Add<TTokenType>(pos, args...);
 			return token;
 		}
+		template<typename TTokenType, typename... TArgs>
+		Tokens::Token ParseToken(Scripts::Position pos, TArgs&&... args) {
+			Tokens::Token token = m_Script.GetParseTokens().Add<TTokenType>(pos, args...);
+			return token;
+		}
 		VecRef<Types::Xlation> AddSymbol(Types::Translation::Ref translation) {
 			m_Xlations.emplace_back(translation, [this](Types::DataSource src, Types::DataAttribute attr)->XMLValue{
 				switch (src.ID()) {

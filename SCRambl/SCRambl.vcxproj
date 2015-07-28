@@ -152,6 +152,7 @@
     <ClCompile Include="Labels.cpp" />
     <ClCompile Include="Linker.cpp" />
     <ClCompile Include="Macros.cpp" />
+    <ClCompile Include="Operands.cpp" />
     <ClCompile Include="Operators.cpp" />
     <ClCompile Include="Parser.cpp" />
     <ClCompile Include="Preprocessor.cpp" />

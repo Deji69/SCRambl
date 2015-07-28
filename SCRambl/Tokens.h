@@ -17,8 +17,11 @@ namespace SCRambl
 		// Tokens::Token - Types of token information
 		enum class Type : char {
 			None, Directive,
-			Command, CommandDecl, CommandCall, CommandOverload, Variable, ArgList,
-			Identifier, Label, LabelRef, Number, Operator, String, Character, Delimiter
+			Command, CommandDecl, CommandOverload, Variable,
+			Identifier, Label, LabelRef, Number, Operator, String, Character, Delimiter,
+
+			// parse tokens
+			ArgList, CommandCall,
 		};
 		
 		// Base for parsed token data

@@ -58,7 +58,6 @@ namespace SCRambl
 		bool m_IsReturn = false;
 		size_t m_Size = 0;					// 0 = 'auto'
 	};
-
 	// Command - At the heart of SCR
 	class Command
 	{

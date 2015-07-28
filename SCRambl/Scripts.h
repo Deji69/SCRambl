@@ -104,11 +104,16 @@ namespace SCRambl
 		Scripts::Labels& GetLabels() { return m_Labels ; }
 		// Get the tokens
 		Tokens::Storage& GetTokens() { return m_Tokens; }
+		// Get the parse tokens
+		Tokens::Storage& GetParseTokens() { return m_ParseTokens; }
+		const Tokens::Storage& GetParseTokens() const { return m_ParseTokens; }
 
 	private:
 		bool ProcessCodeLine(const std::string&, CodeLine&, bool = false);
 
 		Tokens::Storage m_Tokens;
+		Tokens::Storage m_ParseTokens;
+		//Parsing::
 		Scripts::Files m_Files;
 		Scripts::Labels m_Labels;
 		Scripts::FileRef m_File;

@@ -46,8 +46,10 @@ namespace SCRambl
 		void Compiler::Compile()
 		{
 			auto xlate = *m_XlationIt;
-			auto translation = xlate.GetTranslation();
-			
+			CompileTranslation(xlate.GetTranslation(), xlate);
+			++m_XlationIt;
+		}
+		void Compiler::CompileTranslation(Types::Translation::Ref translation, Types::Xlation xlate) {
 			for (size_t y = 0; y < translation->GetDataCount(); ++y) {
 				auto data = translation->GetData(y);
 
@@ -63,7 +65,7 @@ namespace SCRambl
 				std::string str;
 				bool init = true, args = false;
 
-				for (size_t x = 0; x < data->GetNumFields(); !args ? ++x : x=x) {
+				for (size_t x = 0; x < data->GetNumFields(); !args ? ++x : x = x) {
 					auto field = data->GetField(x);
 					auto value = xlate.GetAttribute(field->GetDataSource(), field->GetDataAttribute());
 					size_t size = field->HasSizeLimit() ? field->GetSizeLimit() : 0;
@@ -97,7 +99,13 @@ namespace SCRambl
 					}
 
 					if (args) {
-						m_TokenIt;
+						auto type = m_TokenIt->GetToken()->GetType<Tokens::Type>();
+						auto& vec = Tokens::CommandArgs::GetVector(*m_TokenIt->GetToken());
+						for (auto v : vec) {
+							CompileTranslation(v.second->GetTranslation(), FormArgumentXlate(xlate, v));
+						}
+						args = false;
+						BREAK();
 					}
 
 					size_t valsize = 0;
@@ -128,14 +136,14 @@ namespace SCRambl
 								Output<uint8_t>(value.AsNumber<uint8_t>());
 							continue;
 						}
-						
+
 						init = false;
 						uint64 = 0;
 						totes_size = 0;
 					}
 
 					size_t req_size = totes_size + size,
-						   left_size = data_size - totes_size;
+						left_size = data_size - totes_size;
 					if (left_size < size) {
 						if (data_size == 64)
 							Output<uint64_t>(uint64);
@@ -161,14 +169,6 @@ namespace SCRambl
 						else str = value.AsString().substr(0, size);
 						continue;
 					}
-					/*else {
-						if (data_size == 64)
-							uint64_t |= value.AsNu
-					}
-
-					if (totes_size < data_size) {
-						init = true;
-					}*/
 					else {
 						if (!isstr) {
 							if (!totes_size) {
@@ -192,7 +192,7 @@ namespace SCRambl
 								else if (valsize == 8)
 									uint64 |= value.AsNumber<uint8_t>() << totes_size;
 							}
-							
+
 							if (size != left_size)
 								totes_size += size;
 							else {
@@ -211,48 +211,12 @@ namespace SCRambl
 					}
 				}
 			}
-			
-			++m_XlationIt;
-			return;
-
-			/*Types::Type* type = nullptr;
-			switch (symbol->GetType()) {
-			case Tokens::Type::Command:
-			case Tokens::Type::CommandOverload:
-				BREAK();
-				break;
-			case Tokens::Type::CommandCall: {
-				auto cmd = symbol->Extend<Tokens::Command::Call>();
-				
-				
-				auto command = cmd.GetCommand();
-				
-				auto it = m_CommandNames.find(command->Name());
-				if (it != m_CommandNames.end())
-					Output<uint16_t>(it->second);
-				else
-					Output<uint16_t>(AddCommandName(command->Name()));
-				
-				Output<uint16_t>(cmd.GetNumArgs());
-
-				for (size_t n = 0; n < cmd.GetNumArgs(); ++n) {
-					auto& arg = command->GetArg(n);
-					
-				}
-				break;
-			}
-			case Tokens::Type::Identifier: {
-
-				break;
-			}
-			case Tokens::Type::LabelRef: {
-				break;
-			}
-			default:
-				break;
-			}
-
-			++m_SymbolIt;*/
+		}
+		Types::Xlation Compiler::FormArgumentXlate(const Types::Xlation& xlate, const Tokens::CommandArgs::Arg& arg) const {
+			Types::Xlation r = xlate;
+			r.SetAttributes(Types::DataSourceID::Number, arg.first.GetNumberAttributes());
+			r.SetAttributes(Types::DataSourceID::Text, arg.first.GetTextAttributes());
+			return r;
 		}
 		void Compiler::Finish() {
 			Output<uint32_t>(m_CommandNameVec.size());
@@ -268,8 +232,7 @@ namespace SCRambl
 		}
 
 		Compiler::Compiler(Task& task, Engine& engine, Build* build) :
-			m_State(init), m_Task(task), m_Engine(engine), m_Build(build), m_Tokens(build->GetScript().GetTokens())
-		{
-		}
+			m_State(init), m_Task(task), m_Engine(engine), m_Build(build), m_Tokens(build->GetScript().GetParseTokens())
+		{ }
 	}
 }
