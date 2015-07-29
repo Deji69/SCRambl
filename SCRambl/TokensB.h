@@ -119,7 +119,11 @@ namespace SCRambl
 			}
 			template<typename TNumberType>
 			static TNumberType GetNumberValue(const IToken& token) {
-				return token.Get<Info<TNumberType>>().GetValue<NumberValue>();
+				return token.GetValue<NumberValue>();
+			}
+			template<typename TNumberType>
+			static const TNumberType& GetNumberValue(const Info<TNumberType>& token) {
+				return *token.GetValue<NumberValue>();
 			}
 
 			// Tokens::Number::Value - Carries all symbolic data for a number value

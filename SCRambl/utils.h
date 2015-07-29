@@ -85,6 +85,7 @@ namespace SCRambl {
 		using Vec = std::vector<T>;
 		VecRef() = default;
 		VecRef(const VecRef&) = default;
+		VecRef(std::nullptr_t) : VecRef() { }
 		VecRef(Vec* vec) : VecRef(*vec)
 		{ }
 		VecRef(Vec& vec) : VecRef(vec, vec.size())
@@ -290,7 +291,7 @@ namespace SCRambl {
 	// can magically turn an arbitrary number into a number representing the amount of data in bytes the prior number used up
 	template<typename T>
 	inline size_t CountByteOccupation(T v) {
-		size_t n = CountBitOccupation<unsigned long>(v);
+		size_t n = CountBitOccupation<size_t>(v);
 		return (n / 8) + (n % 8 ? 1 : 0);
 	}
 

@@ -84,6 +84,7 @@ namespace SCRambl
 				expected_key_identifier,		// expected a key identifier (identifier/number/"string")
 				expected_colon_punctuator,		// expected a :
 				expected_integer_constant,
+				too_many_args,					// too many args, not enough params
 
 				// fatal errors
 				fatal_begin = 4000,
@@ -212,15 +213,22 @@ namespace SCRambl
 				std::vector<Tokens::CommandArgs::Arg> args;
 
 				CommandParseState() = default;
+				void Clear() {
+					command = nullptr;
+					args.clear();
+				}
 				void Begin(VecRef<Command> cmd, CommandArg::Iterator argit) {
-					CommandParseState();
+					Clear();
 					command = cmd;
 					commandArgIt = argit;
 				}
-				Tokens::CommandArgs::Arg* AddParameter(Operand op, Types::Value* value) {
+				Tokens::CommandArgs::Arg* AddArg(Operand op, Types::Value* value) {
 					args.emplace_back(op, value);
 					return &args.back();
 				}
+				inline size_t NumArgs() const { return args.size(); }
+				inline bool AreParamsSatisfied() const { return command->NumRequiredArgs() <= NumArgs(); }
+				inline bool AnyParamsLeft() const { return command->NumParams() > NumArgs(); }
 				
 			} m_CommandParseState;
 			struct OperationParseState {
@@ -454,6 +462,7 @@ namespace SCRambl
 				//return Tokens::Operator::GetOperator<Operators::OperatorRef>(*toke);
 			}
 
+			Tokens::CommandArgs::Arg* AddCommandArg(Operand, Types::Value*);
 			bool GetDelimitedArrayIntegerConstant(size_t&);
 
 			void EnterSubscript(IToken *token) {

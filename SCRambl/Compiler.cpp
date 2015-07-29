@@ -39,8 +39,7 @@ namespace SCRambl
 				return;
 			}
 		}
-		void Compiler::Compile()
-		{
+		void Compiler::Compile() {
 			auto xlate = *m_XlationIt;
 			CompileTranslation(xlate.GetTranslation(), xlate);
 			++m_XlationIt;
@@ -105,9 +104,9 @@ namespace SCRambl
 					}
 
 					if (args) {
-						++m_TokenIt;
 						auto type = m_TokenIt->GetToken()->GetType<Tokens::Type>();
 						auto& vec = Tokens::CommandArgs::GetVector(*m_TokenIt->GetToken());
+						++m_TokenIt;
 						for (auto v : vec) {
 							CompileTranslation(v.second->GetTranslation(), FormArgumentXlate(xlate, v));
 						}

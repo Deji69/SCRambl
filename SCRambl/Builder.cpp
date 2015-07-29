@@ -54,7 +54,7 @@ void Build::ParseCommands(const std::multimap<const std::string, Tokens::Iterato
 				++argit;
 				auto& cmdtok = it->second->GetToken()->Get<Tokens::Command::Info>();
 				auto cmd = cmdtok.GetValue<Tokens::Command::CommandType>();
-				for (unsigned long i = 0; i < cmd->NumArgs(); ++i, ++argit) {
+				for (unsigned long i = 0; i < cmd->NumParams(); ++i, ++argit) {
 					if (cmd->GetArg(i).GetType()->GetName() == type) {
 						found_type = true;
 						check_type = false;
@@ -150,7 +150,7 @@ void Build::Init() {
 	}
 }
 bool Build::IsCommandArgParsed(Command* command, unsigned long index) const {
-	if (index < command->NumArgs()) {
+	if (index < command->NumParams()) {
 		auto& arg = command->GetArg(index);
 	}
 	return true;

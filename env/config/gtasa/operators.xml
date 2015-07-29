@@ -32,7 +32,7 @@
 			<Operation ID="0x6D2" LHS="LVAR_STRING" RHS="VAR_STRING" />
 			<Operation ID="0x6D2" LHS="LVAR_STRING" RHS="LVAR_STRING" />
 		</Operator>
-		<Operator Name="+" Comp="+=">
+		<Operator Name="+" Comp="+=" Positive="true">
 			<Operation ID="0x8" LHS="VAR_INT" RHS="INT" />
 			<Operation ID="0x9" LHS="VAR_FLOAT" RHS="FLOAT" />
 			<Operation ID="0xA" LHS="LVAR_INT" RHS="INT" />
@@ -46,7 +46,7 @@
 			<Operation ID="0x5C" LHS="LVAR_INT" RHS="VAR_INT" />
 			<Operation ID="0x5D" LHS="LVAR_FLOAT" RHS="VAR_FLOAT" />
 		</Operator>
-		<Operator Name="-" Comp="-=">
+		<Operator Name="-" Comp="-=" Negative="true">
 			<Operation ID="0xC" LHS="VAR_INT" RHS="INT" />
 			<Operation ID="0xD" LHS="VAR_FLOAT" RHS="FLOAT" />
 			<Operation ID="0xE" LHS="LVAR_INT" RHS="INT" />

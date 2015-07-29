@@ -86,7 +86,8 @@ namespace SCRambl
 		inline ArgVec::iterator BeginArg() { return m_Args.begin(); }
 		inline ArgVec::const_iterator EndArg() const { return m_Args.end(); }
 		inline ArgVec::iterator EndArg() { return m_Args.end(); }
-		inline size_t NumArgs() const { return m_Args.size(); }
+		inline size_t NumParams() const { return m_Args.size(); }
+		inline size_t NumRequiredArgs() const { return m_Args.size(); }
 		inline XMLValue ID() const { return m_Index; }
 		inline std::string Name() const { return m_Name; }
 		inline Types::Type* Type() const { return m_Type; }

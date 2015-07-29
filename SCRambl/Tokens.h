@@ -66,7 +66,6 @@ namespace SCRambl
 
 			template<typename T>
 			inline void SetToken(T tok) {
-				if (m_Token) delete m_Token;
 				m_Token = tok;
 			}
 			

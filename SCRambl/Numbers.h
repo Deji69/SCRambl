@@ -15,6 +15,9 @@ namespace SCRambl
 		enum Type {
 			Integer, Float, Byte, Word, DWord
 		};
+		enum class ConvertResult {
+			success, not_a_number, is_a_float, is_an_int
+		};
 
 		class IntegerType
 		{
@@ -118,10 +121,6 @@ namespace SCRambl
 
 			inline operator float()	const { return GetValue<float>(); }
 			inline size_t Size() const { return sizeof(float); }
-		};
-
-		enum class ConvertResult {
-			success, not_a_number, is_a_float, is_an_int
 		};
 
 		// Handy converty functions
@@ -233,8 +232,8 @@ namespace SCRambl
 			bool m_Float;
 			bool m_Hex;
 
-			long long		m_IntVal;
-			float			m_FloatVal;
+			long long m_IntVal;
+			float m_FloatVal;
 
 			static inline bool IsHexPrefix(char c) {
 				return c == 'x' || c == 'X';

@@ -6,6 +6,16 @@
 //COMMAND SCRIPT_NAME:0x3A4(TEXT_LABEL[8])
 //VAR_INT var1
 //var1 = 0 + 1
+WaIT 0
+WAiT 500
+WAIt -1
+wAIT -9999
+waIT 0xFF
+WAit 0xFFFF
+WAIT 0xffffff
+WAIT 0xfFfFfFfF
+WAIT -0xFF
+WAIT 0x7F
 SCRIPT_NAME "tool"
 /*{
 	LVAR_INT lvar1[2] pVehicleStruct

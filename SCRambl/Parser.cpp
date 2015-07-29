@@ -97,7 +97,7 @@ void Parser::BeginCommandParsing() {
 	if (m_State == overloading) {
 		m_CurrentCommand = *m_OverloadCommandsIt;
 	}
-	if (m_CurrentCommand->NumArgs()) {
+	if (m_CurrentCommand->NumParams()) {
 		m_CommandArgIt = m_CurrentCommand->BeginArg();
 		m_ParsingCommandArgs = true;
 	}
@@ -124,6 +124,16 @@ bool Parser::GetDelimitedArrayIntegerConstant(size_t& i) {
 	}
 	return b;
 }
+Tokens::CommandArgs::Arg* Parser::AddCommandArg(Operand op, Types::Value* val) {
+	if (m_ActiveState == state_parsing_command_args) {
+		if (m_CommandParseState.AnyParamsLeft()) {
+			return m_CommandParseState.AddArg(op, val);
+		}
+		else SendError(Error::too_many_args);
+	}
+	BREAK();
+	return nullptr;
+}
 
 States Parser::Parse_Neutral_CheckCharacter(IToken* tok) {
 	if (IsCharacterEOL(tok)) {
@@ -136,6 +146,9 @@ States Parser::Parse_Neutral_CheckCharacter(IToken* tok) {
 			break;
 		case state_parsing_command:
 		case state_parsing_command_args:
+			if (!m_CommandParseState.AreParamsSatisfied()) {
+				BREAK();
+			}
 			m_CommandTokenMap.emplace(m_CommandParseState.command->Name(), m_CommandTokenIt);
 			CreateToken<Tokens::CommandArgs::Info>(Tokens::Type::ArgList, m_CommandParseState.args);
 			break;
@@ -157,17 +170,18 @@ States Parser::Parse_Neutral_CheckIdentifier(IToken* tok) {
 
 	else if (auto ptr = m_Build.GetScriptLabel(name)) {
 		// this is a label pointer!
-		auto tok = CreateToken<Tokens::Label::Info>(Tokens::Type::LabelRef, range, ptr->Ptr());
-		m_TokenIt->SetToken(tok);
+		//auto tok = CreateToken<Tokens::Label::Info>(Tokens::Type::LabelRef, range, ptr->Ptr());
+		//m_TokenIt->SetToken(tok);
+		BREAK();
 		AddLabelRef(ptr, m_TokenIt);
 		return state_parsing_label;
 	}
 	else if (m_ExtraCommands.FindCommands(name, vec) > 0 || m_Commands.FindCommands(name, vec) > 0) {
 		// make a token and store it
 		if (vec.size() == 1)
-			m_TokenIt->SetToken(CreateToken<Tokens::Command::Info>(Tokens::Type::Command, range, vec[0]));
+			m_TokenIt->SetToken(m_Build.CreateToken<Tokens::Command::Info>(range.Begin(), Tokens::Type::Command, range, vec[0]));
 		else
-			m_TokenIt->SetToken(CreateToken<Tokens::Command::OverloadInfo>(Tokens::Type::CommandOverload, range, vec));
+			m_TokenIt->SetToken(m_Build.CreateToken<Tokens::Command::OverloadInfo>(range.Begin(), Tokens::Type::CommandOverload, range, vec));
 
 		if (ParseCommandOverloads(vec)) {
 			BeginCommandParsing();
@@ -181,7 +195,7 @@ States Parser::Parse_Neutral_CheckIdentifier(IToken* tok) {
 		return state_parsing_variable;
 	}
 	else if (IsCommandParsing()/* && m_CommandArgIt->GetType().IsCompatible()*/) {
-
+		BREAK();
 	}
 	else {
 		SendError(Error::invalid_identifier, range);
@@ -207,6 +221,9 @@ States Parser::Parse_Neutral_CheckDelimiter(IToken* tok) {
 	return state_neutral;
 }
 States Parser::Parse_Neutral_CheckOperator(IToken* tok) {
+	if (PeekToken(Tokens::Type::Number)) {
+
+	}
 	if (m_CurrentOperator = GetOperator(tok)) {
 		m_OperatorTokenIt = m_TokenIt;
 		return state_parsing_operator;
@@ -273,21 +290,27 @@ States Parser::Parse_Number() {
 	Operand operand;
 	if (!m_NumberParseState.IsFloat()) {
 		auto info = m_NumberParseState.IntInfo;
-		auto val = info->GetValue<Tokens::Number::NumberValue>();
+		auto val = Tokens::Number::GetNumberValue(*info);
 		operand = info;
-		size = val->Size();
+		size = val.Size();
 	}
 	else {
 		auto info = m_NumberParseState.FloatInfo;
-		auto val = info->GetValue<Tokens::Number::NumberValue>();
+		auto val = Tokens::Number::GetNumberValue(*info);
 		operand = info;
-		size = val->Size();
+		size = val.Size();
 	}
 
 	auto value = GetBestValue(Types::ValueSet::Number, size);
+	if (!value) BREAK();
 	type = value->GetType();
-				
-	if (m_ActiveState == state_parsing_operator) {
+		
+	if (m_ActiveState == state_parsing_command_args) {
+		if (!AddCommandArg(operand, value)) BREAK();
+		++m_TokenIt;
+		return state_neutral;
+	}
+	else if (m_ActiveState == state_parsing_operator) {
 		if (m_OperationParseState.IsInChain()) {
 			// var = N + N
 			m_OperationParseState.Chain(m_CurrentOperator, {operand, value});
@@ -311,6 +334,7 @@ States Parser::Parse_Number() {
 		}
 		return state_neutral;
 	}
+	else BREAK();
 	return state_parsing_number;
 }
 States Parser::Parse_String() {
@@ -318,12 +342,12 @@ States Parser::Parse_String() {
 		auto str = GetTextString(m_TokenIt->GetToken());
 		auto value = GetBestValue(Types::ValueSet::Text, str.size());
 		if (!value) BREAK();
-		if (!m_CommandParseState.AddParameter(str, value)) BREAK();
+		if (!AddCommandArg(str, value)) BREAK();
 		++m_TokenIt;
 		return state_neutral;
 	}
 	else if (m_ActiveState == state_parsing_operator) {
-
+		BREAK();
 	}
 	else BREAK();
 	return state_parsing_string;
@@ -455,6 +479,10 @@ States Parser::Parse_Type_CommandDef() {
 	return state_parsing_type_command;
 }
 States Parser::Parse_Command() {
+	if (m_ActiveState == state_parsing_command_args) {
+		BREAK();
+	}
+
 	m_CommandParseState.Begin(m_CurrentCommand, m_CurrentCommand->BeginArg());
 	auto attributes = m_CurrentCommand->GetAttributes();
 	CommandValue* cmdval = nullptr;
@@ -468,7 +496,8 @@ States Parser::Parse_Command() {
 	if (cmdval) {
 		m_Xlation = m_Build.AddSymbol(cmdval->GetTranslation());
 		m_Xlation->SetAttributes(Types::DataSourceID::Command, attributes);
-		return m_CurrentCommand->NumArgs() > 0 ? state_parsing_command_args : state_neutral;
+		++m_TokenIt;
+		return m_CurrentCommand->NumParams() > 0 ? state_parsing_command_args : state_neutral;
 	}
 	else SendError(Error::invalid_command);
 	return state_neutral;
