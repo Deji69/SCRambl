@@ -22,10 +22,6 @@ namespace SCRambl
 				name = "main";
 			}
 			m_File.open(name + ".scrmbl", std::ios::out | std::ios::binary);
-			
-			Output<uint64_t>(GetTime());
-			Output<uint8_t>(name.size());
-			Output(name.c_str(), name.size());
 		}
 		void Compiler::Reset() {
 		}
@@ -240,13 +236,6 @@ namespace SCRambl
 			return r;
 		}
 		void Compiler::Finish() {
-			/*Output<uint32_t>(m_CommandNameVec.size());
-			for (auto name : m_CommandNameVec) {
-				Output<uint16_t>(name.second);
-				Output(name.first.c_str(), name.first.size());
-				Output<uint8_t>(0);
-			}*/
-
 			m_Task(Event::Finish);
 			m_State = finished;
 			m_File.close();
