@@ -221,11 +221,19 @@ States Parser::Parse_Neutral_CheckDelimiter(IToken* tok) {
 	return state_neutral;
 }
 States Parser::Parse_Neutral_CheckOperator(IToken* tok) {
-	if (PeekToken(Tokens::Type::Number)) {
-
-	}
 	if (m_CurrentOperator = GetOperator(tok)) {
 		m_OperatorTokenIt = m_TokenIt;
+		if (m_CurrentOperator->IsSign()) {
+			if (m_CurrentOperator->IsPositive() || m_CurrentOperator->IsNegative()) {
+				if (PeekToken(Tokens::Type::Number) && (m_ActiveState == state_neutral || m_ActiveState == state_parsing_command_args)) {
+					++m_TokenIt;
+					auto state = Parse_Neutral_CheckNumber(*m_TokenIt);
+					if (m_CurrentOperator->IsNegative())
+						m_NumberParseState.Negate();
+					return state;
+				}
+			}
+		}
 		return state_parsing_operator;
 	}
 	else SendError(Error::invalid_operator, GetOperatorRange(tok));
@@ -250,24 +258,26 @@ States Parser::Parse_Neutral_CheckString(IToken* tok) {
 }
 States Parser::Parse_Neutral() {
 	States new_state = state_neutral;
-	switch (m_TokenIt->GetToken()->GetType<Tokens::Type>()) {
+	auto type = m_TokenIt->GetToken()->GetType<Tokens::Type>();
+
+	switch (type) {
 	case Tokens::Type::Character:
-		new_state = Parse_Neutral_CheckCharacter(m_TokenIt->GetToken());
+		new_state = Parse_Neutral_CheckCharacter(*m_TokenIt);
 		break;
 	case Tokens::Type::Identifier:
-		new_state = Parse_Neutral_CheckIdentifier(m_TokenIt->GetToken());
+		new_state = Parse_Neutral_CheckIdentifier(*m_TokenIt);
 		break;
 	case Tokens::Type::Delimiter:
-		new_state = Parse_Neutral_CheckDelimiter(m_TokenIt->GetToken());
+		new_state = Parse_Neutral_CheckDelimiter(*m_TokenIt);
 		break;
 	case Tokens::Type::Operator:
-		new_state = Parse_Neutral_CheckOperator(m_TokenIt->GetToken());
+		new_state = Parse_Neutral_CheckOperator(*m_TokenIt);
 		break;
 	case Tokens::Type::Number:
-		new_state = Parse_Neutral_CheckNumber(m_TokenIt->GetToken());
+		new_state = Parse_Neutral_CheckNumber(*m_TokenIt);
 		break;
 	case Tokens::Type::String:
-		new_state = Parse_Neutral_CheckString(m_TokenIt->GetToken());
+		new_state = Parse_Neutral_CheckString(*m_TokenIt);
 		break;
 	}
 	if (new_state == state_neutral)
@@ -289,15 +299,13 @@ States Parser::Parse_Number() {
 	size_t size;
 	Operand operand;
 	if (!m_NumberParseState.IsFloat()) {
-		auto info = m_NumberParseState.IntInfo;
-		auto val = Tokens::Number::GetNumberValue(*info);
-		operand = info;
+		auto val = m_NumberParseState.GetInt();
+		operand = { val, m_Engine.Format(val) };
 		size = val.Size();
 	}
 	else {
-		auto info = m_NumberParseState.FloatInfo;
-		auto val = Tokens::Number::GetNumberValue(*info);
-		operand = info;
+		auto val = m_NumberParseState.GetFloat();
+		operand = { val, m_Engine.Format(val) };
 		size = val.Size();
 	}
 

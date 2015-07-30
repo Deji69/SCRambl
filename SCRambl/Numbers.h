@@ -32,7 +32,7 @@ namespace SCRambl
 		private:
 			Type m_Type = None;
 			union Value {
-				long long			tLong;
+				long long			tLong = 0;
 				long				tInt;
 				short				tShort;
 				char				tChar;
@@ -48,19 +48,19 @@ namespace SCRambl
 			IntegerType(long long val) : m_Type(Long), m_Size(sizeof(long long))
 			{ m_Value.tLong = val; }
 			IntegerType(int val) : m_Type(Int), m_Size(sizeof(int))
-			{ m_Value.tInt = val; }
+			{ m_Value.tLong = val; }
 			IntegerType(short val) : m_Type(Short), m_Size(sizeof(short))
-			{ m_Value.tShort = val; }
+			{ m_Value.tLong = val; }
 			IntegerType(char val) : m_Type(Char), m_Size(sizeof(char))
-			{ m_Value.tChar = val; }
+			{ m_Value.tLong = val; }
 			IntegerType(unsigned long long val) : m_Type(ULong), m_Size(sizeof(unsigned long long))
 			{ m_Value.tULong = val; }
 			IntegerType(unsigned int val) : m_Type(UInt), m_Size(sizeof(unsigned int))
-			{ m_Value.tUInt = val; }
+			{ m_Value.tULong = val; }
 			IntegerType(unsigned short val) : m_Type(UShort), m_Size(sizeof(unsigned short))
-			{ m_Value.tUShort = val; }
+			{ m_Value.tULong = val; }
 			IntegerType(unsigned char val) : m_Type(UChar), m_Size(sizeof(unsigned char))
-			{ m_Value.tUChar = val; }
+			{ m_Value.tULong = val; }
 			IntegerType(const char * str) : m_Type(None), m_Size(sizeof(const char*))
 			{
 				if (StringToInt<long long>(str, m_Value.tLong, true) == ConvertResult::success) {
@@ -83,7 +83,27 @@ namespace SCRambl
 				return (T)m_Value.tLong;
 			}
 
-			size_t Size() const { return m_Size; }
+			inline size_t Size() const { return m_Size; }
+			inline Type GetType() const { return m_Type; }
+			inline void Sign(bool negate = false) {
+				m_Type = GetSignedType(m_Type);
+				if (negate && m_Value.tLong > 0) {
+					switch (m_Type) {
+					case Long:
+						m_Value.tLong = -m_Value.tLong;
+						break;
+					case Int:
+						m_Value.tInt = -m_Value.tInt;
+						break;
+					case Short:
+						m_Value.tShort = -m_Value.tShort;
+						break;
+					case Char:
+						m_Value.tChar = -m_Value.tChar;
+						break;
+					}
+				}
+			}
 
 			inline operator long long() const { return GetValue<long long>(); }
 			inline operator long() const { return GetValue<long>(); }
@@ -94,6 +114,25 @@ namespace SCRambl
 			inline operator unsigned short() const { return GetValue<unsigned short>(); }
 			inline operator unsigned char() const { return GetValue<unsigned char>(); }
 			inline operator size_t() const { return GetValue<size_t>(); }
+
+			static Type GetSignedType(Type type) {
+				switch (type) {
+				case ULong: return Long;
+				case UInt: return Int;
+				case UShort: return Short;
+				case UChar: return Char;
+				}
+				return type;
+			}
+			static Type GetUnsignedType(Type type) {
+				switch (type) {
+				case Long: return ULong;
+				case Int: return UInt;
+				case Short: return UShort;
+				case Char: return UChar;
+				}
+				return type;
+			}
 		};
 		class FloatType
 		{
@@ -101,8 +140,8 @@ namespace SCRambl
 			enum Type { None, Float };
 
 		private:
-			Type			m_Type = None;
-			float			m_Value;
+			Type m_Type = None;
+			float m_Value;
 
 		public:
 			FloatType() = default;
@@ -121,6 +160,7 @@ namespace SCRambl
 
 			inline operator float()	const { return GetValue<float>(); }
 			inline size_t Size() const { return sizeof(float); }
+			inline void Negate() { m_Value = -m_Value; }
 		};
 
 		// Handy converty functions
@@ -231,6 +271,7 @@ namespace SCRambl
 		private:
 			bool m_Float;
 			bool m_Hex;
+			bool m_Neg;
 
 			long long m_IntVal;
 			float m_FloatVal;

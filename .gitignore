@@ -10,3 +10,5 @@ SCRambl.UI/debug/
 SCRambl/Debug/
 ipch/
 /env/definitions (old)/gtasa.xml
+/env/tool.cs
+/env/tool.txt

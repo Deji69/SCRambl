@@ -19,7 +19,7 @@ namespace SCRambl
 		using OperatorRef = VecRef<class Operator>;
 		using OperationRef = VecRef<class Operation>;
 		
-		/*\ Operators::Type - built-in operator types \*/
+		// Built-in operator types
 		class Type {
 		public:
 			enum ID {
@@ -91,8 +91,7 @@ namespace SCRambl
 		 - Uses the Symbols vector of CodeLine to assign new operators, and retrieve them later
 		\*/
 		template<typename T>
-		class Table
-		{
+		class Table {
 		public:
 			/*\
 			- Operator::Table::Cell - If it doesnt store an operator or another non-useless cell, it's useless (recursive)
@@ -184,7 +183,7 @@ namespace SCRambl
 			}
 		};
 
-		/* Operators::Scanner - Operator scanner for lexage */
+		// Operator scanner for lexage
 		template<typename T>
 		class Scanner : public Lexing::Scanner {
 			using OperatorCell = typename Table<T>::Cell;
@@ -239,7 +238,7 @@ namespace SCRambl
 			T GetOperator() const { ASSERT(m_Cell && "Can only get the operator after a succesful scan");  return m_Cell->GetOperator(); }
 		};
 
-		/*\ Operators::Operation \*/
+		// Operation
 		class Operation {
 			friend class Operator;
 
@@ -280,21 +279,19 @@ namespace SCRambl
 			void SetSwapped(bool v) { m_Swapped = v; }
 		};
 
-		/*\ Smooth Operator */
-		class Operator
-		{
-			friend class Operators;
+		// Smooth Operator
+		class Operator {
+			friend class Master;
 
-			std::string m_Op;
-			OperatorRef m_Ref;
-			std::vector<Operation> m_Operations;
-			bool m_IsConditional = false,
-				 m_IsAssignment = false;
+			enum class Sign {
+				none, negative, positive
+			};
 
 		public:
-			Operator(OperatorRef ref, std::string op, bool iscond, bool isass = false) : m_Ref(ref), m_Op(op), m_IsConditional(iscond), m_IsAssignment(isass)
+			Operator(OperatorRef ref, std::string op, bool iscond, bool isass = false, Sign sign = Sign::none) : m_Ref(ref), m_Op(op),
+				m_IsConditional(iscond), m_IsAssignment(isass), m_Sign(sign)
 			{ }
-			Operator(const Operator& v) : m_Op(v.m_Op), m_IsConditional(v.m_IsConditional), m_IsAssignment(v.m_IsAssignment), m_Ref(v.m_Ref) {
+			Operator(const Operator& v) : m_Op(v.m_Op), m_IsConditional(v.m_IsConditional), m_IsAssignment(v.m_IsAssignment), m_Sign(v.m_Sign), m_Ref(v.m_Ref) {
 				for (auto& pr : v.m_Operations) {
 					m_Operations.emplace_back(pr);
 					m_Operations.back().m_Operator = m_Ref;
@@ -305,6 +302,9 @@ namespace SCRambl
 
 			bool IsAssignment() const { return m_IsAssignment; }
 			bool IsConditional() const { return m_IsConditional; }
+			bool IsSign() const { return m_Sign != Sign::none; }
+			bool IsNegative() const { return m_Sign == Sign::negative; }
+			bool IsPositive() const { return m_Sign == Sign::positive; }
 
 			OperationRef AddOperation(size_t id, Types::Type* lhs, Types::Type* rhs) {
 				m_Operations.emplace_back(OperationRef(m_Operations), m_Ref, id, lhs, rhs);
@@ -319,6 +319,17 @@ namespace SCRambl
 		
 			OperationRef GetUnaryOperation(Variable*, bool rhs_var = false);
 			OperationRef GetOperation(Variable*, Types::Type*);
+
+		private:
+			static Sign GetSign(std::string);
+
+		private:
+			std::string m_Op;
+			OperatorRef m_Ref;
+			std::vector<Operation> m_Operations;
+			bool m_IsConditional = false,
+				m_IsAssignment = false;
+			Sign m_Sign = Sign::none;
 		};
 		
 		const Type max_operator = Type::max_operator;
@@ -328,23 +339,18 @@ namespace SCRambl
 			None, Inline, Compound, Not
 		};
 
-		/*\	Operators - storage, config & utility \*/
-		class Operators {
+		/*\	Master - storage, config & utility \*/
+		class Master {
 		public:
-			Operators();
+			Master();
 			void Init(Build&);
 			template<typename... TArgs>
 			OperatorRef Insert(TArgs&&... args) {
 				m_Storage.emplace_back(m_Storage, args...);
 				return m_Storage.back().GetRef();
 			}
-			OperatorRef Add(std::string op, bool is_conditional = false) {
-				auto ref = Insert(op, is_conditional);
-				if (ref) {
-					m_OpMap.emplace(op, std::make_pair(ref, OperatorType::Inline));
-					m_Table.AddOperator(op, ref);
-				}
-				return ref;
+			OperatorRef Add(std::string op, bool is_conditional = false, bool is_assignment = false) {
+				return Add(op, Operator::Sign::none, is_conditional, is_assignment);
 			}
 			void Add(std::string op, OperatorRef ref, OperatorType type) {
 				if (ref) m_OpMap.emplace(op, std::make_pair(ref, type));
@@ -357,6 +363,16 @@ namespace SCRambl
 			OperatorTable& GetTable() { return m_Table; }
 			const OperatorTable& GetTable() const { return m_Table; }
 			size_t Size() const { return m_Storage.size(); }
+
+		private:
+			OperatorRef Add(std::string op, Operator::Sign sign, bool is_conditional = false, bool is_assignment = false) {
+				auto ref = Insert(op, is_conditional, is_assignment, sign);
+				if (ref) {
+					m_OpMap.emplace(op, std::make_pair(ref, OperatorType::Inline));
+					m_Table.AddOperator(op, ref);
+				}
+				return ref;
+			}
 
 		private:
 			static const OperatorRef s_InvalidOperatorRef;

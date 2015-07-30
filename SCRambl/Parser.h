@@ -293,6 +293,7 @@ namespace SCRambl
 			} m_OperationParseState;
 			struct NumberParseState {
 				bool ItIsFloat = false;
+				bool ItIsNegated = false;
 				union {
 					Tokens::Number::Info<Numbers::IntegerType>* IntInfo = nullptr;
 					Tokens::Number::Info<Numbers::FloatType>* FloatInfo;
@@ -306,9 +307,19 @@ namespace SCRambl
 					FloatInfo = fltInfo;
 					ItIsFloat = true;
 				}
-				bool IsFloat() const {
-					return ItIsFloat;
+				void Negate() { ItIsNegated = true; }
+				inline Numbers::IntegerType GetInt() const {
+					auto v = Tokens::Number::GetNumberValue(*IntInfo);
+					if (IsNegated()) v.Sign(true);
+					return v;
 				}
+				inline Numbers::FloatType GetFloat() const {
+					auto v = Tokens::Number::GetNumberValue(*FloatInfo);
+					if (IsNegated()) v.Negate();
+					return v;
+				}
+				inline bool IsNegated() const { return ItIsNegated; }
+				inline bool IsFloat() const { return ItIsFloat; }
 			} m_NumberParseState;
 
 		public:

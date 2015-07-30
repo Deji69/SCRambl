@@ -211,8 +211,8 @@ namespace SCRambl
 		inline const Commands& GetCommands() const { return m_Commands; }
 
 		// Operators
-		inline Operators::Operators& GetOperators() { return m_Operators; }
-		inline const Operators::Operators& GetOperators() const { return m_Operators; }
+		inline Operators::Master& GetOperators() { return m_Operators; }
+		inline const Operators::Master& GetOperators() const { return m_Operators; }
 
 		// Types
 		inline Types::Types& GetTypes() { return m_Types; }
@@ -316,7 +316,7 @@ namespace SCRambl
 		Engine& m_Engine;
 		Constants m_Constants;
 		Commands m_Commands;
-		Operators::Operators m_Operators;
+		Operators::Master m_Operators;
 		Types::Types m_Types;
 		BuildEnvironment m_Env;
 		BuildConfig* m_Config;
