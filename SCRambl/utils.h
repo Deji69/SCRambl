@@ -282,16 +282,22 @@ namespace SCRambl {
 		return out;
 	}
 
+	template<typename T>
+	inline T BytesToBits(T v) {
+		return v * 8;
+	}
+
 	// I can't stress how often I've needed a program to be aware of the number of bits its data used...
 	template<typename T>
 	inline size_t CountBitOccupation(T N) {
-		auto v = (size_t)std::log2(N);
-		return v ? v : 1;
+		size_t r = 1;
+		while (N >>= 1) r++;
+		return r;
 	}
 	// can magically turn an arbitrary number into a number representing the amount of data in bytes the prior number used up
 	template<typename T>
 	inline size_t CountByteOccupation(T v) {
-		size_t n = CountBitOccupation<size_t>(v);
+		size_t n = CountBitOccupation<T>(v);
 		return (n / 8) + (n % 8 ? 1 : 0);
 	}
 

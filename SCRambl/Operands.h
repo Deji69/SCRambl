@@ -100,7 +100,7 @@ namespace SCRambl {
 			m_FloatValue(*info->GetValue<Tokens::Number::NumberValue>()),
 			m_Text(info->GetValue<Tokens::Number::ScriptRange>().Format())
 		{ }
-		Operand(int64_t v, std::string str) : m_Type(IntValue),
+		Operand(long long v, std::string str) : m_Type(IntValue),
 			m_IntValue(v), m_Text(str)
 		{ }
 		Operand(float v, std::string str) : m_Type(FloatValue),
@@ -111,8 +111,8 @@ namespace SCRambl {
 		{ }
 
 		template<typename T>
-		inline T Value() const;
-		template<> inline int64_t Value() const { return m_IntValue; }
+		inline T Value() const { return m_IntValue; }
+		template<> inline long long Value() const { return m_IntValue; }
 		template<> inline float Value() const { return m_FloatValue; }
 		template<> inline ScriptLabel* Value() const { return m_LabelValue; }
 		template<> inline ScriptVariable* Value() const { return m_VariableValue; }

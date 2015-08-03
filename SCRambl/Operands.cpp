@@ -5,8 +5,8 @@ using namespace SCRambl;
 
 Operand::Attributes Operand::GetNumberAttributes() const {
 	Attributes attrs;
-	attrs.SetAttribute(Types::DataAttributeID::Size, CountByteOccupation(Value<int64_t>()));
-	attrs.SetAttribute(Types::DataAttributeID::Value, Value<int64_t>());
+	attrs.SetAttribute(Types::DataAttributeID::Size, CountByteOccupation(Value<unsigned long long>()));
+	attrs.SetAttribute(Types::DataAttributeID::Value, Value<long long>());
 	return attrs;
 }
 Operand::Attributes Operand::GetTextAttributes() const {

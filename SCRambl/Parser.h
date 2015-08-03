@@ -298,6 +298,8 @@ namespace SCRambl
 					Tokens::Number::Info<Numbers::IntegerType>* IntInfo = nullptr;
 					Tokens::Number::Info<Numbers::FloatType>* FloatInfo;
 				};
+				NumberParseState() : IntInfo(nullptr), ItIsFloat(false), ItIsNegated(false)
+				{ }
 				void Start(Tokens::Number::Info<Numbers::IntegerType>* intInfo) {
 					NumberParseState();
 					IntInfo = intInfo;

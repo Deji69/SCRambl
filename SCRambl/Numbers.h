@@ -6,6 +6,7 @@
 /**********************************************************/
 #pragma once
 #include <string>
+#include "utils.h"
 #include "Lexer.h"
 
 namespace SCRambl
@@ -29,44 +30,22 @@ namespace SCRambl
 			typedef char MinType;
 			typedef unsigned char MinUType;
 
-		private:
-			Type m_Type = None;
-			union Value {
-				long long			tLong = 0;
-				long				tInt;
-				short				tShort;
-				char				tChar;
-				unsigned long long	tULong;
-				unsigned long		tUInt;
-				unsigned short		tUShort;
-				unsigned char		tUChar;
-			} m_Value;
-			size_t m_Size;
-
 		public:
 			IntegerType() = default;
-			IntegerType(long long val) : m_Type(Long), m_Size(sizeof(long long))
-			{ m_Value.tLong = val; }
-			IntegerType(int val) : m_Type(Int), m_Size(sizeof(int))
-			{ m_Value.tLong = val; }
-			IntegerType(short val) : m_Type(Short), m_Size(sizeof(short))
-			{ m_Value.tLong = val; }
-			IntegerType(char val) : m_Type(Char), m_Size(sizeof(char))
-			{ m_Value.tLong = val; }
-			IntegerType(unsigned long long val) : m_Type(ULong), m_Size(sizeof(unsigned long long))
-			{ m_Value.tULong = val; }
-			IntegerType(unsigned int val) : m_Type(UInt), m_Size(sizeof(unsigned int))
-			{ m_Value.tULong = val; }
-			IntegerType(unsigned short val) : m_Type(UShort), m_Size(sizeof(unsigned short))
-			{ m_Value.tULong = val; }
-			IntegerType(unsigned char val) : m_Type(UChar), m_Size(sizeof(unsigned char))
-			{ m_Value.tULong = val; }
+			IntegerType(long long val) {
+				m_Value.tLong = val;
+				TypeSetup(CountByteOccupation(val), true);
+			}
+			IntegerType(unsigned long long val) {
+				m_Value.tULong = val;
+				TypeSetup(CountByteOccupation(val), false);
+			}
 			IntegerType(const char * str) : m_Type(None), m_Size(sizeof(const char*))
 			{
 				if (StringToInt<long long>(str, m_Value.tLong, true) == ConvertResult::success) {
-					m_Size = sizeof(long long);
-					m_Type = Long;
+					SetType(Long);
 				}
+				else BREAK();
 			}
 
 			template<typename T>
@@ -133,6 +112,57 @@ namespace SCRambl
 				}
 				return type;
 			}
+
+		private:
+			inline void TypeSetup(size_t size, bool sign) {
+				if (size > 4) SetType(sign ? Long : ULong);
+				else if (size > 2) SetType(sign ? Int : UInt);
+				else if (size > 1) SetType(sign ? Short : UShort);
+				else SetType(sign ? Char : UChar);
+			}
+			void SetType(Type type) {
+				m_Type = type;
+				switch (type) {
+				case Type::Char:
+					m_Size = sizeof(char);
+					break;
+				case Type::UChar:
+					m_Size = sizeof(unsigned char);
+					break;
+				case Type::Short:
+					m_Size = sizeof(short);
+					break;
+				case Type::UShort:
+					m_Size = sizeof(unsigned short);
+					break;
+				case Type::Int:
+					m_Size = sizeof(int);
+					break;
+				case Type::UInt:
+					m_Size = sizeof(unsigned int);
+					break;
+				case Type::Long:
+					m_Size = sizeof(long long);
+					break;
+				case Type::ULong:
+					m_Size = sizeof(unsigned long long);
+					break;
+				}
+			}
+
+		private:
+			Type m_Type = None;
+			union Value {
+				long long			tLong = 0;
+				long				tInt;
+				short				tShort;
+				char				tChar;
+				unsigned long long	tULong;
+				unsigned long		tUInt;
+				unsigned short		tUShort;
+				unsigned char		tUChar;
+			} m_Value;
+			size_t m_Size;
 		};
 		class FloatType
 		{
