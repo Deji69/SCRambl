@@ -309,7 +309,7 @@ States Parser::Parse_Number() {
 		size = val.Size();
 	}
 
-	auto value = GetBestValue(Types::ValueSet::Number, BytesToBits(size));
+	auto value = GetBestValue(Types::ValueSet::Number, size);
 	if (!value) BREAK();
 	type = value->GetType();
 		

@@ -170,7 +170,7 @@ void Preprocessor::HandleToken() {
 	}
 	case TokenType::Number: {
 		if (m_NumericScanner.Is<int>())
-			m_Build.CreateToken<TokenNumber<Numbers::IntegerType, Numbers::Integer>>(pos, range, m_NumericScanner.Get<long long>());
+			m_Build.CreateToken<TokenNumber<Numbers::IntegerType, Numbers::Integer>>(pos, range, m_NumericScanner.Get<unsigned long long>());
 		else
 			m_Build.CreateToken<TokenNumber<Numbers::FloatType, Numbers::Float>>(pos, range, m_NumericScanner.Get<float>());
 		m_Task(Event::AddedToken, range);

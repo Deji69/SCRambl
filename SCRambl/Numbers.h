@@ -33,12 +33,12 @@ namespace SCRambl
 		public:
 			IntegerType() = default;
 			IntegerType(long long val) {
-				m_Value.tLong = val;
-				TypeSetup(CountByteOccupation(val), true);
+				TypeSetup(CountBitOccupation(val), true);
+				SetValue(val);
 			}
 			IntegerType(unsigned long long val) {
-				m_Value.tULong = val;
-				TypeSetup(CountByteOccupation(val), false);
+				TypeSetup(CountBitOccupation(val), false);
+				SetValue(val);
 			}
 			IntegerType(const char * str) : m_Type(None), m_Size(sizeof(const char*))
 			{
@@ -64,23 +64,15 @@ namespace SCRambl
 
 			inline size_t Size() const { return m_Size; }
 			inline Type GetType() const { return m_Type; }
+			inline bool IsSigned() const { return IsSignedType(GetType()); }
 			inline void Sign(bool negate = false) {
+				TypeSetup(CountBitOccupation(m_Value.tULong), false);
 				m_Type = GetSignedType(m_Type);
-				if (negate && m_Value.tLong > 0) {
-					switch (m_Type) {
-					case Long:
-						m_Value.tLong = -m_Value.tLong;
-						break;
-					case Int:
-						m_Value.tInt = -m_Value.tInt;
-						break;
-					case Short:
-						m_Value.tShort = -m_Value.tShort;
-						break;
-					case Char:
-						m_Value.tChar = -m_Value.tChar;
-						break;
-					}
+
+				// make the number negatively negative, assuming it's positively positive
+				if (negate && m_Value.tULong > 0) {
+					SetValue(-static_cast<long long>(m_Value.tULong));
+					m_Size = CountBitOccupation(m_Value.tULong);
 				}
 			}
 
@@ -115,39 +107,75 @@ namespace SCRambl
 
 		private:
 			inline void TypeSetup(size_t size, bool sign) {
-				if (size > 4) SetType(sign ? Long : ULong);
-				else if (size > 2) SetType(sign ? Int : UInt);
-				else if (size > 1) SetType(sign ? Short : UShort);
+				if (sign ? (size > 32) : (size > 31)) SetType(sign ? Long : ULong);
+				else if (sign ? (size > 16) : (size > 15)) SetType(sign ? Int : UInt);
+				else if (sign ? (size > 8) : (size > 7)) SetType(sign ? Short : UShort);
 				else SetType(sign ? Char : UChar);
+			}
+			void SetValue(long long val) {
+				if (val < 0) {
+					switch (m_Type) {
+					case Type::Char:
+						m_Value.tChar = val;
+						break;
+					case Type::Short:
+						m_Value.tShort = val;
+						break;
+					case Type::Int:
+						m_Value.tInt = val;
+						break;
+					case Type::Long:
+						m_Value.tLong = val;
+						break;
+					}
+				}
+				else m_Value.tULong = val;
 			}
 			void SetType(Type type) {
 				m_Type = type;
 				switch (type) {
 				case Type::Char:
-					m_Size = sizeof(char);
+					m_Size = BytesToBits(sizeof(char));
 					break;
 				case Type::UChar:
-					m_Size = sizeof(unsigned char);
+					m_Size = BytesToBits(sizeof(unsigned char));
 					break;
 				case Type::Short:
-					m_Size = sizeof(short);
+					m_Size = BytesToBits(sizeof(short));
 					break;
 				case Type::UShort:
-					m_Size = sizeof(unsigned short);
+					m_Size = BytesToBits(sizeof(unsigned short));
 					break;
 				case Type::Int:
-					m_Size = sizeof(int);
+					m_Size = BytesToBits(sizeof(int));
 					break;
 				case Type::UInt:
-					m_Size = sizeof(unsigned int);
+					m_Size = BytesToBits(sizeof(unsigned int));
 					break;
 				case Type::Long:
-					m_Size = sizeof(long long);
+					m_Size = BytesToBits(sizeof(long long));
 					break;
 				case Type::ULong:
-					m_Size = sizeof(unsigned long long);
+					m_Size = BytesToBits(sizeof(unsigned long long));
 					break;
 				}
+			}
+			
+			static bool IsSignedType(Type type) {
+				switch (type) {
+				case Char:
+				case Short:
+				case Int:
+				case Long:
+					return true;
+				case UChar:
+				case UShort:
+				case UInt:
+				case ULong:
+					break;
+				default: BREAK();
+				}
+				return false;
 			}
 
 		private:
