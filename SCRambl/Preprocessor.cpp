@@ -93,6 +93,8 @@ Preprocessor::Preprocessor(Task& task, Engine& engine, Build& build) :
 	m_Operators.AddOperator(":", Operators::Type::condel);
 
 	// formatters for messages - set defaults
+	m_Engine.SetFormatter<Numbers::IntegerType>(Numbers::IntegerType::Formatter);
+	m_Engine.SetFormatter<Numbers::FloatType>(Numbers::FloatType::Formatter);
 	m_Engine.SetFormatter<Scripts::Position>(Scripts::Position::Formatter);
 	m_Engine.SetFormatter<Scripts::Range>(Scripts::Range::Formatter);
 	m_Engine.SetFormatter<Directive>(Directive::Formatter);

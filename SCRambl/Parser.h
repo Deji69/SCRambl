@@ -298,16 +298,18 @@ namespace SCRambl
 					Tokens::Number::Info<Numbers::IntegerType>* IntInfo = nullptr;
 					Tokens::Number::Info<Numbers::FloatType>* FloatInfo;
 				};
-				NumberParseState() : IntInfo(nullptr), ItIsFloat(false), ItIsNegated(false)
-				{ }
+				NumberParseState() {
+					IntInfo = nullptr;
+				}
 				void Start(Tokens::Number::Info<Numbers::IntegerType>* intInfo) {
-					NumberParseState();
 					IntInfo = intInfo;
+					ItIsFloat = false;
+					ItIsNegated = false;
 				}
 				void Start(Tokens::Number::Info<Numbers::FloatType>* fltInfo) {
-					NumberParseState();
 					FloatInfo = fltInfo;
 					ItIsFloat = true;
+					ItIsNegated = false;
 				}
 				void Negate() { ItIsNegated = true; }
 				inline Numbers::IntegerType GetInt() const {
@@ -368,10 +370,16 @@ namespace SCRambl
 			inline Tokens::Type GetCurrentTokenType() const {
 				return m_TokenIt->GetToken()->GetType<Tokens::Type>();
 			}
+			static Types::NumberValueType GetNumberValueType(Types::Value* value) {
+				return value->Extend<Types::NumberValue>().GetNumberType();
+			}
+			static bool IsNumberValueType(Types::Value* value, Types::NumberValueType type) {
+				return GetNumberValueType(value) == type;
+			}
 			inline Types::Value* GetBestValue(Types::ValueSet type, size_t size) {
 				Types::Value* best_value = nullptr;
-				m_Build.GetTypes().AllValues(type, [size, &best_value](Types::Value* value){
-					if (value->CanFitSize(size)) {
+				m_Build.GetTypes().AllValues(type, [this, type, size, &best_value](Types::Value* value){
+					if (value->CanFitSize(size) && (type != Types::ValueSet::Number || IsNumberValueType(value, Types::NumberValueType::Float) == m_NumberParseState.IsFloat())) {
 						if (!best_value || best_value->GetSize() > value->GetSize())
 							best_value = value;
 					}

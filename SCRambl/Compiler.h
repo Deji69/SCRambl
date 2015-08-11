@@ -73,6 +73,16 @@ namespace SCRambl
 				m_CommandNameVec.emplace_back(name, i);
 				return i;
 			}
+			void OutputValue(XMLValue value, size_t size) {
+				if (size <= 8)
+					Output<uint8_t>(value.AsNumber<uint8_t>());
+				else if (size <= 16)
+					Output<uint16_t>(value.AsNumber<uint16_t>());
+				else if (size <= 32)
+					Output<uint32_t>(value.AsNumber<uint32_t>());
+				else
+					Output<uint64_t>(value.AsNumber<uint64_t>());
+			}
 
 		private:
 			State m_State;

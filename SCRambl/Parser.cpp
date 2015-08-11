@@ -240,6 +240,7 @@ States Parser::Parse_Neutral_CheckOperator(IToken* tok) {
 	return state_neutral;
 }
 States Parser::Parse_Neutral_CheckNumber(IToken* tok) {
+
 	if (auto info = GetIntInfo(tok)) {
 		m_NumberParseState.Start(info);
 		return state_parsing_number;

@@ -93,9 +93,15 @@ namespace SCRambl
 		template<> inline std::string Format(const unsigned long& param) const { return std::to_string(param); }
 		template<> inline std::string Format(const long long& param) const { return std::to_string(param); }
 		template<> inline std::string Format(const unsigned long long& param) const { return std::to_string(param); }
-		template<> inline std::string Format(const float& param) const { return std::to_string(param); }
-		template<> inline std::string Format(const double& param) const { return std::to_string(param); }
-		template<> inline std::string Format(const long double& param) const { return std::to_string(param); }
+		template<> inline std::string Format(const float& param) const {
+			return std::to_string(param);
+		}
+		template<> inline std::string Format(const double& param) const {
+			return std::to_string(param);
+		}
+		template<> inline std::string Format(const long double& param) const {
+			return std::to_string(param);
+		}
 
 		// String format multiple types (sprintf)
 		template<typename First, typename... Args>

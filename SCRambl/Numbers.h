@@ -20,8 +20,7 @@ namespace SCRambl
 			success, not_a_number, is_a_float, is_an_int
 		};
 
-		class IntegerType
-		{
+		class IntegerType {
 		public:
 			enum Type { None, Int, Long, Short, Char, UInt, ULong, UShort, UChar };
 			
@@ -104,6 +103,18 @@ namespace SCRambl
 				}
 				return type;
 			}
+			static std::string Formatter(const IntegerType& v) {
+				switch (v.GetType()) {
+				default: case Type::Long: return std::to_string(v.GetValue<long long>());
+				case Type::Int: return std::to_string(v.GetValue<int>());
+				case Type::Short: return std::to_string(v.GetValue<short>());
+				case Type::Char: return std::to_string(v.GetValue<char>());
+				case Type::ULong: return std::to_string(v.GetValue<unsigned long long>());
+				case Type::UInt: return std::to_string(v.GetValue<unsigned int>());
+				case Type::UShort: return std::to_string(v.GetValue<unsigned short>());
+				case Type::UChar: return std::to_string(v.GetValue<unsigned char>());
+				}
+			}
 
 		private:
 			inline void TypeSetup(size_t size, bool sign) {
@@ -116,16 +127,16 @@ namespace SCRambl
 				if (val < 0) {
 					switch (m_Type) {
 					case Type::Char:
-						m_Value.tChar = val;
+						m_Value.tChar = *reinterpret_cast<char*>(&val);
 						break;
 					case Type::Short:
-						m_Value.tShort = val;
+						m_Value.tShort = *reinterpret_cast<short*>(&val);
 						break;
 					case Type::Int:
-						m_Value.tInt = val;
+						m_Value.tInt = *reinterpret_cast<int*>(&val);
 						break;
 					case Type::Long:
-						m_Value.tLong = val;
+						m_Value.tLong = *reinterpret_cast<long long*>(&val);
 						break;
 					}
 				}
@@ -219,6 +230,10 @@ namespace SCRambl
 			inline operator float()	const { return GetValue<float>(); }
 			inline size_t Size() const { return sizeof(float); }
 			inline void Negate() { m_Value = -m_Value; }
+
+			static std::string Formatter(FloatType& v) {
+				return std::to_string(v.GetValue<float>());
+			}
 		};
 
 		// Handy converty functions
@@ -339,7 +354,7 @@ namespace SCRambl
 			}
 
 		public:
-			bool Scan(Lexing::State & state, Scripts::Position & pos) override {
+			bool Scan(Lexing::State& state, Scripts::Position& pos) override {
 				switch (state) {
 				case Lexing::State::before:
 					m_Hex = false;

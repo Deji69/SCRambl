@@ -100,12 +100,13 @@ namespace SCRambl {
 			m_FloatValue(*info->GetValue<Tokens::Number::NumberValue>()),
 			m_Text(info->GetValue<Tokens::Number::ScriptRange>().Format())
 		{ }
-		Operand(long long v, std::string str) : m_Type(IntValue),
+		Operand(int64_t v, std::string str) : m_Type(IntValue),
 			m_IntValue(v), m_Text(str)
 		{ }
 		Operand(float v, std::string str) : m_Type(FloatValue),
-			m_FloatValue(v), m_Text(str)
-		{ }
+			m_IntValue(0), m_FloatValue(v), m_Text(str)
+		{
+		}
 		Operand(std::string v) : m_Type(TextValue),
 			m_Text(v)
 		{ }

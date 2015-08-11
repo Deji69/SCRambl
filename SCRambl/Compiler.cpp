@@ -24,6 +24,7 @@ namespace SCRambl
 			m_File.open(name + ".scrmbl", std::ios::out | std::ios::binary);
 		}
 		void Compiler::Reset() {
+
 		}
 		void Compiler::Run()
 		{
@@ -141,14 +142,7 @@ namespace SCRambl
 								}
 							}
 							else {
-								if (data_size == 64)
-									Output<uint64_t>(value.AsNumber<uint64_t>());
-								else if (data_size == 32)
-									Output<uint32_t>(value.AsNumber<uint32_t>());
-								else if (data_size == 16)
-									Output<uint16_t>(value.AsNumber<uint16_t>());
-								else if (data_size == 8)
-									Output<uint8_t>(value.AsNumber<uint8_t>());
+								OutputValue(value, data_size);
 							}
 							continue;
 						}
