@@ -51,13 +51,8 @@ namespace SCRambl
 
 				size_t data_size = 0, totes_size = 0;
 				Types::DataType data_type = Types::DataType::INVALID;
-				union {
-					uint64_t	uint64;
-					uint32_t	uint32;
-					uint16_t	uint16;
-					uint8_t		uint8;
-				};
-				uint64 = 0;
+				DataVal dval;
+				dval.uint64 = 0;
 				std::string str;
 				bool init = true, args = false;
 
@@ -142,39 +137,25 @@ namespace SCRambl
 								}
 							}
 							else {
-								OutputValue(value, data_size);
+								OutputValue(RawifyValue(value, data_size, type), data_size);
 							}
 							continue;
 						}
 
 						init = false;
-						uint64 = 0;
+						dval.uint64 = 0;
 						totes_size = 0;
 					}
 
 					size_t req_size = totes_size + size,
 						left_size = data_size - totes_size;
 					if (left_size < size) {
-						if (data_size == 64)
-							Output<uint64_t>(uint64);
-						else if (data_size == 32)
-							Output<uint32_t>(uint32);
-						else if (data_size == 16)
-							Output<uint16_t>(uint16);
-						else if (data_size == 8)
-							Output<uint8_t>(uint8);
-
+						bool success = OutputValue(dval, data_size);
+						ASSERT(success);
 						ASSERT(!init);
 						totes_size = size;
 						if (!isstr) {
-							if (valsize == 64)
-								uint64 = value.AsNumber<uint64_t>();
-							else if (valsize == 32)
-								uint32 = value.AsNumber<uint32_t>();
-							else if (valsize == 16)
-								uint16 = value.AsNumber<uint16_t>();
-							else
-								uint8 = value.AsNumber<uint8_t>();
+							dval = RawifyValue(value, valsize, type);
 						}
 						else str = value.AsString().substr(0, size);
 						continue;
@@ -182,38 +163,17 @@ namespace SCRambl
 					else {
 						if (!isstr) {
 							if (!totes_size) {
-								if (valsize == 64)
-									uint64 = value.AsNumber<uint64_t>();
-								else if (valsize == 32)
-									uint32 = value.AsNumber<uint32_t>();
-								else if (valsize == 16)
-									uint16 = value.AsNumber<uint16_t>();
-								else if (valsize == 8)
-									uint8 = value.AsNumber<uint8_t>();
-
+								dval = RawifyValue(value, valsize, type);
 							}
 							else {
-								if (valsize == 64)
-									uint64 |= value.AsNumber<uint64_t>() << totes_size;
-								else if (valsize == 32)
-									uint64 |= value.AsNumber<uint32_t>() << totes_size;
-								else if (valsize == 16)
-									uint64 |= value.AsNumber<uint16_t>() << totes_size;
-								else if (valsize == 8)
-									uint64 |= value.AsNumber<uint8_t>() << totes_size;
+								dval.uint64 |= RawifyValue(value, valsize, type).uint64 << totes_size;
 							}
 
 							if (size != left_size)
 								totes_size += size;
-							else {
-								if (data_size == 64)
-									Output<uint64_t>(uint64);
-								else if (data_size == 32)
-									Output<uint32_t>(uint32);
-								else if (data_size == 16)
-									Output<uint16_t>(uint16);
-								else if (data_size == 8)
-									Output<uint8_t>(uint8);
+							else
+							{
+								OutputValue(dval, data_size);
 								init = true;
 							}
 						}

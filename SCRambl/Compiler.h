@@ -61,6 +61,14 @@ namespace SCRambl
 			}
 
 		private:
+			union DataVal {
+				uint64_t uint64;
+				uint32_t uint32;
+				uint16_t uint16;
+				uint8_t uint8;
+				float flt;
+			};
+
 			void CompileTranslation(Types::Translation::Ref, Types::Xlation);
 			Types::Xlation FormArgumentXlate(const Types::Xlation&, const Tokens::CommandArgs::Arg&) const;
 			inline void AddCommandName(std::string name, size_t id) {
@@ -73,15 +81,38 @@ namespace SCRambl
 				m_CommandNameVec.emplace_back(name, i);
 				return i;
 			}
-			void OutputValue(XMLValue value, size_t size) {
-				if (size <= 8)
-					Output<uint8_t>(value.AsNumber<uint8_t>());
-				else if (size <= 16)
-					Output<uint16_t>(value.AsNumber<uint16_t>());
-				else if (size <= 32)
-					Output<uint32_t>(value.AsNumber<uint32_t>());
-				else
-					Output<uint64_t>(value.AsNumber<uint64_t>());
+			DataVal RawifyValue(XMLValue value, size_t size, Types::DataType type) {
+				DataVal v;
+				v.uint64 = 0;
+				switch (type) {
+				case Types::DataType::Int:
+					if (size <= 8)
+						v.uint8 = value.AsNumber<uint8_t>();
+					else if (size <= 16)
+						v.uint16 = value.AsNumber<uint16_t>();
+					else if (size <= 32)
+						v.uint32 = value.AsNumber<uint32_t>();
+					else
+						v.uint64 = value.AsNumber<uint64_t>();
+					break;
+				case Types::DataType::Float:
+					v.flt = value.AsNumber<float>();
+					break;
+				default: BREAK();
+				}
+				return v;
+			}
+			bool OutputValue(DataVal value, size_t size) {
+				if (size == 8)
+					Output<uint8_t>(value.uint8);
+				else if (size == 16)
+					Output<uint16_t>(value.uint16);
+				else if (size == 32)
+					Output<uint32_t>(value.uint32);
+				else if (size == 64)
+					Output<uint64_t>(value.uint64);
+				else return false;
+				return true;
 			}
 
 		private:
