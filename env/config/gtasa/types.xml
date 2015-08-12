@@ -108,36 +108,36 @@
 			</Type> - End Type declaration
 		-->
 		<Type Name="VAR_INT">
-			<Variable Type="VAR" Value="INT" />
-			<Array Type="VAR_ARRAY" Value="INT" />
+			<Variable Type="VAR" Value="INT" Size="16" />
+			<Array Type="VAR_ARRAY" Value="INT" Size="16" />
 		</Type>
 		<Type Name="VAR_FLOAT">
-			<Variable Type="VAR" Value="FLOAT" />
-			<Array Type="VAR_ARRAY" Value="FLOAT" />
+			<Variable Type="VAR" Value="FLOAT" Size="16" />
+			<Array Type="VAR_ARRAY" Value="FLOAT" Size="16" />
 		</Type>
 		<Type Name="VAR_TEXT_LABEL">
-			<Variable Type="VAR" Value="TEXT_LABEL" />
-			<Array Type="VAR_ARRAY" Value="TEXT_LABEL" />
+			<Variable Type="VAR" Value="TEXT_LABEL" Size="16" />
+			<Array Type="VAR_ARRAY" Value="TEXT_LABEL" Size="16" />
 		</Type>
 		<Type Name="VAR_STRING">
-			<Variable Type="VAR" Value="STRING" />
-			<Array Type="VAR_ARRAY" Value="STRING" />
+			<Variable Type="VAR" Value="STRING" Size="16" />
+			<Array Type="VAR_ARRAY" Value="STRING" Size="16" />
 		</Type>
 		<Type Name="LVAR_INT">
-			<Variable Type="LVAR" Value="INT" />
-			<Array Type="LVAR_ARRAY" Value="INT" />
+			<Variable Type="LVAR" Value="INT" Size="16" />
+			<Array Type="LVAR_ARRAY" Value="INT" Size="16" />
 		</Type>
 		<Type Name="LVAR_FLOAT">
-			<Variable Type="LVAR" Value="FLOAT" />
-			<Array Type="LVAR_ARRAY" Value="FLOAT" />
+			<Variable Type="LVAR" Value="FLOAT" Size="16" />
+			<Array Type="LVAR_ARRAY" Value="FLOAT" Size="16" />
 		</Type>
 		<Type Name="LVAR_TEXT_LABEL">
-			<Variable Type="LVAR" Value="TEXT_LABEL" />
-			<Array Type="LVAR_ARRAY" Value="TEXT_LABEL" />
+			<Variable Type="LVAR" Value="TEXT_LABEL" Size="16" />
+			<Array Type="LVAR_ARRAY" Value="TEXT_LABEL" Size="16" />
 		</Type>
 		<Type Name="LVAR_STRING">
-			<Variable Type="LVAR" Value="STRING" />
-			<Array Type="LVAR_ARRAY" Value="STRING" />
+			<Variable Type="LVAR" Value="STRING" Size="16" />
+			<Array Type="LVAR_ARRAY" Value="STRING" Size="16" />
 		</Type>
 	</BasicTypes>
 	
@@ -309,56 +309,56 @@
 			</Data>
 		</Translate>
 		
-		<Translate Type="VAR_INT" Size="2">
+		<Translate Type="VAR_INT" Size="16">
 			<Data>
 				<Int8>2</Int8>
 				<Int16 Source="Variable" Attribute="Index" />
 			</Data>
 		</Translate>
 		
-		<Translate Type="VAR_FLOAT" Size="2">
+		<Translate Type="VAR_FLOAT" Size="16">
 			<Data>
 				<Int8>2</Int8>
 				<Int16 Source="Variable" Attribute="Index" />
 			</Data>
 		</Translate>
 		
-		<Translate Type="VAR_TEXT_LABEL" Size="2">
+		<Translate Type="VAR_TEXT_LABEL" Size="16">
 			<Data>
 				<Int8>10</Int8>
 				<Int16 Source="Variable" Attribute="Index" />
 			</Data>
 		</Translate>
 		
-		<Translate Type="VAR_STRING" Size="2">
+		<Translate Type="VAR_STRING" Size="16">
 			<Data>
 				<Int8>16</Int8>
 				<Int16 Source="Variable" Attribute="Index" />
 			</Data>
 		</Translate>
 		
-		<Translate Type="LVAR_INT" Size="2">
+		<Translate Type="LVAR_INT" Size="16">
 			<Data>
 				<Int8>3</Int8>
 				<Int16 Source="Variable" Attribute="Index" />
 			</Data>
 		</Translate>
 		
-		<Translate Type="LVAR_FLOAT" Size="2">
+		<Translate Type="LVAR_FLOAT" Size="16">
 			<Data>
 				<Int8>3</Int8>
 				<Int16 Source="Variable" Attribute="Index" />
 			</Data>
 		</Translate>
 		
-		<Translate Type="LVAR_TEXT_LABEL" Size="2">
+		<Translate Type="LVAR_TEXT_LABEL" Size="16">
 			<Data>
 				<Int8>11</Int8>
 				<Int16 Source="Variable" Attribute="Index" />
 			</Data>
 		</Translate>
 		
-		<Translate Type="LVAR_STRING" Size="2">
+		<Translate Type="LVAR_STRING" Size="16">
 			<Data>
 				<Int8>17</Int8>
 				<Int16 Source="Variable" Attribute="Index" />

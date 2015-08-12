@@ -51,6 +51,7 @@ namespace SCRambl
 		inline typename Map::iterator end() { return End(); }
 		inline typename Map::const_iterator begin() const { return Begin(); }
 		inline typename Map::const_iterator end() const { return End(); }
+		inline size_t Size() const { return m_Stuff.size(); }
 
 		TObj* Find(const TKey & key) const {
 			auto it = m_Stuff.find(key);
@@ -74,11 +75,12 @@ namespace SCRambl
 
 		template<typename... TArgs>
 		ScriptObject* Add(Types::Type* type, Key key, TArgs&&... args) {
-			// create object, add to scope
-			m_Objects.emplace_back(type->IsGlobal() ? Global() : Local(), type, key, args...);
+			auto& scope = type->IsGlobal() ? Global() : Local();
+			// create object
+			m_Objects.emplace_back(scope, scope.Size(), type, key, args...);
 			auto& obj = m_Objects.back();
 			// add to scope
-			(type->IsGlobal() ? Global() : Local()).Add(key, obj.Ptr());
+			scope.Add(key, obj.Ptr());
 			// add to position map
 			//m_PosMap.emplace(pos, &obj);
 			// add to global map
@@ -159,9 +161,11 @@ namespace SCRambl
 		using Scope = Scope<TObj, TKey>;
 
 		template<typename... TArgs>
-		ScriptObject(const Scope& scope, TArgs&&... args) : m_Object(args...), m_Scope(scope)
+		ScriptObject(const Scope& scope, size_t index, TArgs&&... args) : m_Object(args...), m_Scope(scope), m_Index(index)
 		{ }
 		virtual ~ScriptObject() = default;
+
+		inline size_t Index() const { return m_Index; }
 
 		inline TObj& Get() { return m_Object; }
 		inline const TObj& Get() const { return m_Object; }
@@ -173,6 +177,7 @@ namespace SCRambl
 		inline TObj* operator->() const { return Ptr(); }
 
 	private:
+		size_t m_Index;
 		TObj m_Object;
 		const Scope& m_Scope;
 	};

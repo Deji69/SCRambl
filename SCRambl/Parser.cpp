@@ -384,6 +384,13 @@ States Parser::Parse_Variable() {
 		}
 		return state_neutral;
 	}
+	else if (m_ActiveState == state_parsing_command_args) {
+		auto value = GetBestValue(Types::ValueSet::Variable, CountBitOccupation(m_Variable->Index()));
+		if (!value) BREAK();
+		AddCommandArg(m_Variable, value);
+		++m_TokenIt;
+		return state_neutral;
+	}
 	else if (m_ActiveState == state_neutral) {
 		// lhs of a var= operation?
 		++m_TokenIt;

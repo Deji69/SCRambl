@@ -186,6 +186,7 @@ namespace SCRambl
 			Types::Xlation r = xlate;
 			r.SetAttributes(Types::DataSourceID::Number, arg.first.GetNumberAttributes());
 			r.SetAttributes(Types::DataSourceID::Text, arg.first.GetTextAttributes());
+			r.SetAttributes(Types::DataSourceID::Variable, arg.first.GetVariableAttributes());
 			return r;
 		}
 		void Compiler::Finish() {
