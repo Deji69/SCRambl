@@ -173,7 +173,7 @@ States Parser::Parse_Neutral_CheckIdentifier(IToken* tok) {
 		//auto tok = CreateToken<Tokens::Label::Info>(Tokens::Type::LabelRef, range, ptr->Ptr());
 		//m_TokenIt->SetToken(tok);
 		BREAK();
-		AddLabelRef(ptr, m_TokenIt);
+		//AddLabelRef(ptr, m_TokenIt);
 		return state_parsing_label;
 	}
 	else if (m_ExtraCommands.FindCommands(name, vec) > 0 || m_Commands.FindCommands(name, vec) > 0) {
@@ -190,7 +190,8 @@ States Parser::Parse_Neutral_CheckIdentifier(IToken* tok) {
 		else BREAK();
 		return state_parsing_command;
 	}
-	else if (m_Variable = m_Build.GetScriptVariable(name)) {
+	else if (auto var = m_Build.GetScriptVariable(name)) {
+		m_Variable = var->Ptr();
 		m_VariableTokenIt = m_TokenIt;
 		return state_parsing_variable;
 	}
@@ -296,7 +297,7 @@ States Parser::Parse_Type() {
 	return state_parsing_type_varlist;
 }
 States Parser::Parse_Number() {
-	Types::Type* type = nullptr;
+	const Types::Type* type = nullptr;
 	size_t size;
 	Operand operand;
 	if (!m_NumberParseState.IsFloat()) {
@@ -328,7 +329,7 @@ States Parser::Parse_Number() {
 		else {
 			// var = N
 			if (m_OperationParseState.RequireRVal() || m_OperationParseState.CheckForRVal()) {
-				if (auto op = m_CurrentOperator->GetOperation(m_OperationParseState.lh_var->Ptr(), type))
+				if (auto op = m_CurrentOperator->GetOperation(m_OperationParseState.lh_var, type))
 					m_OperationParseState.FinishRHS(op, type);
 			}
 			if (PeekToken(Tokens::Type::Operator)) {
@@ -367,13 +368,13 @@ States Parser::Parse_Label() {
 States Parser::Parse_Variable() {
 	if (m_ActiveState == state_parsing_operator) {
 		if (m_OperationParseState.IsInChain()) {
-			m_OperationParseState.Chain(m_CurrentOperator, { m_Variable, m_Variable->Get().Value() });
+			m_OperationParseState.Chain(m_CurrentOperator, { m_Variable, m_Variable->Value() });
 		}
 		else {
 			m_ActiveState = state_neutral;
 			if (m_OperationParseState.looksPrefixed) {
 				// rhs of a =var unary operation
-				if (auto op = m_CurrentOperator->GetUnaryOperation(m_Variable->Ptr(), true)) {
+				if (auto op = m_CurrentOperator->GetUnaryOperation(m_Variable, true)) {
 					return state_neutral;
 				}
 				else BREAK();		// error?
@@ -385,7 +386,11 @@ States Parser::Parse_Variable() {
 		return state_neutral;
 	}
 	else if (m_ActiveState == state_parsing_command_args) {
-		auto value = GetBestValue(Types::ValueSet::Variable, CountBitOccupation(m_Variable->Index()));
+		auto size = CountBitOccupation(m_Variable->Index());
+		auto& var = *m_Variable;
+		auto value = AllFittingValues<Types::VariableValue>(Types::ValueSet::Variable, size, [&var](Types::VariableValue* value){
+			return value->IsGlobal() == var.IsGlobal();
+		});
 		if (!value) BREAK();
 		AddCommandArg(m_Variable, value);
 		++m_TokenIt;
@@ -527,7 +532,7 @@ States Parser::Parse_Operator() {
 		m_ActiveState = state_neutral;
 		++m_TokenIt;
 				
-		if (auto op = m_CurrentOperator->GetUnaryOperation(m_Variable->Ptr(), false)) {
+		if (auto op = m_CurrentOperator->GetUnaryOperation(m_Variable, false)) {
 			m_OperationParseState.HoldPostUnary(op, m_Variable);
 		}
 		else m_OperationParseState.HoldLHS(m_CurrentOperator, m_Variable);

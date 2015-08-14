@@ -68,46 +68,34 @@ namespace SCRambl
 		using Object = TObj;
 		using ScriptObject = ScriptObject<Object, Key>;
 		using ObjectScope = Scope<Object, Key>;
-		using Map = std::unordered_map<Key, ScriptObject*>;
+		using Map = std::unordered_map<Key, size_t>;
 
 		ScriptObjects() = default;
 		virtual ~ScriptObjects() = default;
 
 		template<typename... TArgs>
-		ScriptObject* Add(Types::Type* type, Key key, TArgs&&... args) {
-			auto& scope = type->IsGlobal() ? Global() : Local();
+		ScriptObject* Add(const Types::Type* type, Key key, TArgs&&... args) {
+			auto& scope = type->IsGlobalVar() ? Global() : Local();
 			// create object
-			m_Objects.emplace_back(scope, scope.Size(), type, key, args...);
-			auto& obj = m_Objects.back();
+			auto idx = m_Objects.size();
+			m_Objects.emplace_back(scope, type, scope.Size(), key, args...);
+			ASSERT(m_Objects.size() > idx);
+			auto ptr = m_Objects[idx].Ptr();
 			// add to scope
-			scope.Add(key, obj.Ptr());
-			// add to position map
-			//m_PosMap.emplace(pos, &obj);
+			scope.Add(key, ptr);
 			// add to global map
-			m_Map.emplace(key, &obj);
+			m_Map.emplace(key, idx);
 			// add to object map
-			m_ObjectMap.emplace(obj.Ptr(), &obj);
-			return &obj;
+			m_ObjectMap.emplace(ptr, idx);
+			return &m_Objects[idx];
 		}
-		/*std::pair<ScriptObject*, ScriptObject*> FindClosest(Scripts::Position pos) {
-			auto pair = std::make_pair(nullptr, nullptr);
-			auto it = m_PosMap.lower_bound(pos);
-			if (it != map.end()) {
-				pair.first = it->second;
-				if (it!= map.begin()) {
-					--it;
-					pair.second = it->second;
-				}
-			}
-			return pair;
-		}*/
-		ScriptObject* Find(Key key) const {
+		const ScriptObject* Find(Key key) const {
 			auto it = m_Map.find(key);
-			return it == m_Map.end() ? nullptr : it->second;
+			return it == m_Map.end() || m_Objects.size() <= it->second ? nullptr : &m_Objects[it->second];
 		}
-		ScriptObject* Find(const Object* obj) const {
+		const ScriptObject* Find(const Object* obj) const {
 			auto it = m_ObjectMap.find(obj);
-			return it == m_ObjectMap.end() ? nullptr : it->second;
+			return it == m_ObjectMap.end() || m_Objects.size() <= it->second ? nullptr : &m_Objects[it->second];
 		}
 
 		size_t LocalDepth() const { return m_Scopes.size(); }
@@ -130,7 +118,7 @@ namespace SCRambl
 		}
 		const ObjectScope& EndLocal() {
 			ASSERT(LocalDepth() > 0);
-			m_Scopes.erase(m_Scopes.end());
+			m_Scopes.erase(m_Scopes.end()-1);
 			return Scope();
 		}
 
@@ -144,16 +132,14 @@ namespace SCRambl
 		}
 
 		Map m_Map;
-		std::map<const Object*, ScriptObject*> m_ObjectMap;
+		std::map<const Object*, size_t> m_ObjectMap;
 		std::vector<ScriptObject> m_Objects;
 		
 		ObjectScope m_Global;
 		std::vector<ObjectScope> m_Scopes;
 	};
 
-	/*\
-	 * ScriptObj - A script object
-	\*/
+	/*\ ScriptObj - A script object \*/
 	template<typename TObj, typename TKey>
 	class ScriptObject
 	{
@@ -161,24 +147,20 @@ namespace SCRambl
 		using Scope = Scope<TObj, TKey>;
 
 		template<typename... TArgs>
-		ScriptObject(const Scope& scope, size_t index, TArgs&&... args) : m_Object(args...), m_Scope(scope), m_Index(index)
+		ScriptObject(const Scope& scope, TArgs&&... args) : m_Object(std::make_unique<TObj>(args...)), m_Scope(scope)
 		{ }
+		ScriptObject(ScriptObject&& v) : m_Object(std::move(v.m_Object)), m_Scope(v.m_Scope)
+		{ }
+		ScriptObject(const Scope&) = delete;
 		virtual ~ScriptObject() = default;
 
-		inline size_t Index() const { return m_Index; }
-
-		inline TObj& Get() { return m_Object; }
-		inline const TObj& Get() const { return m_Object; }
-
-		inline TObj* Ptr() { return &m_Object; }
-		inline const TObj* Ptr() const { return &m_Object; }
-
+		inline TObj& Get() const { return *m_Object; }
+		inline TObj* Ptr() const { return m_Object.get(); }
 		inline TObj& operator*() const { return Ptr(); }
 		inline TObj* operator->() const { return Ptr(); }
 
 	private:
-		size_t m_Index;
-		TObj m_Object;
+		std::unique_ptr<TObj> m_Object;
 		const Scope& m_Scope;
 	};
 }

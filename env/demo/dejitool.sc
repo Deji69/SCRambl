@@ -17,10 +17,13 @@ WAIT 0x7FfFfFfF
 WAIT -0x7FfFfFfF
 WAIT -0xFF
 WAIT 0x7F*/
-VAR_INT var1
-LINE 1.0 -2.0 3.14 4.444444445 55555.0 -666.666
-WAIT var1
-SCRIPT_NAME "tool"
+{
+	LVAR_INT var1 var2
+	LINE 1.0 -2.0 3.14 4.444444445 55555.0 -666.666
+	WAIT var1
+	WAIT var2
+	SCRIPT_NAME "tool"
+}
 /*{
 	LVAR_INT lvar1[2] pVehicleStruct
 	#define CEntity_wModelIndex 0x22

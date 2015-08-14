@@ -103,24 +103,28 @@ namespace SCRambl
 			ASSERT(IsArray());
 			return static_cast<const ArrayValue*>(this);
 		}
-		VariableValue::VariableValue(Type* type, size_t size, XMLValue var, XMLValue val, bool) : Value(type, ValueSet::Array, size)
+		VariableValue::VariableValue(const Type* type, size_t size, const Type* var, const Type* val, bool) : Value(type, ValueSet::Array, size),
+			m_IsScoped(!var->ToVariable()->IsGlobal())
 		{ }
-		VariableValue::VariableValue(Type* type, size_t size, XMLValue var, XMLValue val) : Value(type, ValueSet::Variable, size)
+		VariableValue::VariableValue(const Type* type, size_t size, const Type* var, const Type* val) : Value(type, ValueSet::Variable, size),
+			m_IsScoped(!var->ToVariable()->IsGlobal())
 		{ }
 
 		/* ArrayValue */
-		ArrayValue::ArrayValue(Type* type, size_t size, XMLValue var, XMLValue val) : VariableValue(type, size, var, val, true)
+		ArrayValue::ArrayValue(const Type* type, size_t size, const Type* var, const Type* val) : VariableValue(type, size, var, val, true)
 		{ }
 
 		/* Type */
-		MatchLevel Type::GetMatchLevel(Type* type) {
+		std::string Type::GetName() const { return m_Name; }
+		TypeSet Type::GetType() const { return m_Type; }
+		MatchLevel Type::GetMatchLevel(const Type* type) const {
 			if (type == this) return MatchLevel::Strict;
 			if (auto valtype = type->GetValueType()) {
 				if (type == valtype) return MatchLevel::Basic;
 			}
 			return MatchLevel::None;
 		}
-		Type* Type::GetValueType() {
+		const Type* Type::GetValueType() const {
 			if (IsVariableType()) {
 				if (auto vt = ToVariable()->GetVarValue()) {
 					return vt->GetType();
@@ -163,6 +167,8 @@ namespace SCRambl
 			}
 			return false;
 		}
+		bool Type::IsGlobalVar() const { return IsVariableType() && ToVariable()->IsGlobal(); }
+		bool Type::IsScopedVar() const { return IsVariableType() && !ToVariable()->IsGlobal(); }
 		bool Type::IsBasicType() const { return GetType() == TypeSet::Basic; }
 		bool Type::IsExtendedType() const { return GetType() == TypeSet::Extended; }
 		bool Type::IsVariableType() const { return GetType() == TypeSet::Variable; }
@@ -267,7 +273,12 @@ namespace SCRambl
 					BREAK();
 				}
 				else {
-					auto value = type->AddValue<VariableValue>(type, vec["Size"]->AsNumber<uint32_t>(), type_attr, value_attr);
+					auto vartype = GetType(type_attr);
+					auto valtype = GetType(value_attr);
+
+					ASSERT(vartype && valtype);
+
+					auto value = type->AddValue<VariableValue>(type, vec["Size"]->AsNumber<uint32_t>(), vartype, valtype);
 					//value->m_Types = this;
 
 					AddValue(ValueSet::Variable, value);
@@ -289,7 +300,12 @@ namespace SCRambl
 					BREAK();
 				}
 				else {
-					auto value = type->AddValue<ArrayValue>(type, vec["Size"]->AsNumber<uint32_t>(), type_attr, value_attr);
+					auto vartype = GetType(type_attr);
+					auto valtype = GetType(value_attr);
+
+					ASSERT(vartype && valtype);
+
+					auto value = type->AddValue<ArrayValue>(type, vec["Size"]->AsNumber<uint32_t>(), vartype, valtype);
 					//value->m_Types = this;
 
 					AddValue(ValueSet::Array, value);

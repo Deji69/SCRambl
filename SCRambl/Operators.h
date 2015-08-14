@@ -318,7 +318,7 @@ namespace SCRambl
 			}
 		
 			OperationRef GetUnaryOperation(Variable*, bool rhs_var = false);
-			OperationRef GetOperation(Variable*, Types::Type*);
+			OperationRef GetOperation(Variable*, const Types::Type*);
 
 		private:
 			static Sign GetSign(std::string);

@@ -25,19 +25,22 @@ Operand::Attributes Operand::GetTextAttributes() const {
 }
 Operand::Attributes Operand::GetLabelAttributes() const {
 	Attributes attrs;
-	attrs.SetAttribute(Types::DataAttributeID::Offset, 0);
-	attrs.SetAttribute(Types::DataAttributeID::Name, m_LabelValue->Get().Name());
-	BREAK();
+	if (GetType() == Type::LabelValue) {
+		attrs.SetAttribute(Types::DataAttributeID::Offset, 0);
+		attrs.SetAttribute(Types::DataAttributeID::Index, m_LabelValue->Index());
+		attrs.SetAttribute(Types::DataAttributeID::Name, m_LabelValue->Name());
+	}
 	return attrs;
 }
 Operand::Attributes Operand::GetVariableAttributes() const {
 	Attributes attrs;
 	if (GetType() == Type::VariableValue) {
+		attrs.SetAttribute(Types::DataAttributeID::ID, m_VariableValue->Index());
 		attrs.SetAttribute(Types::DataAttributeID::Index, m_VariableValue->Index());
-		attrs.SetAttribute(Types::DataAttributeID::Name, m_VariableValue->Get().Name());
-		attrs.SetAttribute(Types::DataAttributeID::Size, m_VariableValue->Get().Value()->GetSize());
-		attrs.SetAttribute(Types::DataAttributeID::IsArray, m_VariableValue->Get().IsArray());
-		attrs.SetAttribute(Types::DataAttributeID::IsGlobal, m_VariableValue->Get().IsGlobal());
+		attrs.SetAttribute(Types::DataAttributeID::Name, m_VariableValue->Name());
+		attrs.SetAttribute(Types::DataAttributeID::Size, m_VariableValue->Value()->GetSize());
+		attrs.SetAttribute(Types::DataAttributeID::IsArray, m_VariableValue->IsArray());
+		attrs.SetAttribute(Types::DataAttributeID::IsGlobal, m_VariableValue->IsGlobal());
 	}
 	return attrs;
 }

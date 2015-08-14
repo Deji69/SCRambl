@@ -127,12 +127,12 @@ namespace SCRambl
 		public:
 			enum Type { PrefixUnary, SuffixUnary, Inline, Compounded };
 			// PrefixUnary
-			Operation(Operators::OperationRef op, ScriptVariable* var) : //Symbol(Tokens::Type::Operator),
-				m_Operation(op), m_Type(PrefixUnary), m_ROperand(var)
+			Operation(Operators::OperationRef op, const ScriptVariable* var) : //Symbol(Tokens::Type::Operator),
+				m_Operation(op), m_Type(PrefixUnary), m_ROperand(var->Ptr())
 			{ }
 			// SuffixUnary
-			Operation(ScriptVariable* var, Operators::OperationRef op) : //Symbol(Tokens::Type::Operator),
-				m_Operation(op), m_Type(SuffixUnary), m_LOperand(var)
+			Operation(const ScriptVariable* var, Operators::OperationRef op) : //Symbol(Tokens::Type::Operator),
+				m_Operation(op), m_Type(SuffixUnary), m_LOperand(var->Ptr())
 			{ }
 			// Inline var + var
 			Operation(Operand lop, Operators::OperationRef op, Operand rop) : //Symbol(Tokens::Type::Operator),
@@ -236,8 +236,8 @@ namespace SCRambl
 				bool possiblePostUnary = false;
 				bool requireRVal = false;
 				bool inChain = false;
-				ScriptVariable* lh_var = nullptr;
-				Types::Type* rh_type = nullptr;
+				Variable* lh_var = nullptr;
+				const Types::Type* rh_type = nullptr;
 				Operators::OperatorRef baseOperator;
 				Operators::OperationRef operation;
 				std::vector<ChainOperation> chainedOps;
@@ -251,18 +251,18 @@ namespace SCRambl
 					OperationParseState();
 					looksPrefixed = false;
 				}
-				void HoldPostUnary(Operators::OperationRef op, ScriptVariable* var) {
+				void HoldPostUnary(Operators::OperationRef op, Variable* var) {
 					baseOperator = op->GetOperator();
 					operation = op;
 					lh_var = var;
 					possiblePostUnary = true;
 				}
-				void HoldLHS(Operators::OperatorRef op, ScriptVariable* var) {
+				void HoldLHS(Operators::OperatorRef op, Variable* var) {
 					baseOperator = op;
 					lh_var = var;
 					requireRVal = true;
 				}
-				void FinishRHS(Operators::OperationRef op, Types::Type* type) {
+				void FinishRHS(Operators::OperationRef op, const Types::Type* type) {
 					requireRVal = false;
 					possiblePostUnary = false;
 					looksPrefixed = false;
@@ -375,6 +375,20 @@ namespace SCRambl
 			}
 			static bool IsNumberValueType(Types::Value* value, Types::NumberValueType type) {
 				return GetNumberValueType(value) == type;
+			}
+			template<typename T = Types::Value, typename TFunc>
+			inline T* AllFittingValues(Types::ValueSet type, size_t size, TFunc func) {
+				T* best_value = nullptr;
+				m_Build.GetTypes().AllValues(type, [&](Types::Value* value){
+					if (value->CanFitSize(size) && (type != Types::ValueSet::Number || IsNumberValueType(value, Types::NumberValueType::Float) == m_NumberParseState.IsFloat())) {
+						if (!best_value || best_value->GetSize() > value->GetSize()) {
+							auto v = static_cast<T*>(value);
+							if (func(v)) best_value = v;
+						}
+					}
+					return false;
+				});
+				return best_value;
 			}
 			inline Types::Value* GetBestValue(Types::ValueSet type, size_t size) {
 				Types::Value* best_value = nullptr;
@@ -568,10 +582,10 @@ namespace SCRambl
 			size_t GetNumberOfOverloadFailures() const {
 				return m_NumOverloadFailures;
 			}
-			void AddLabel(ScriptLabel* label, Tokens::Iterator it) {
+			void AddLabel(const ScriptLabel* label, Tokens::Iterator it) {
 				m_LabelReferences.emplace(label, LabelRef(it, false));
 			}
-			void AddLabelRef(ScriptLabel* label, Tokens::Iterator it) {
+			void AddLabelRef(const ScriptLabel* label, Tokens::Iterator it) {
 				auto iter = m_LabelReferences.find(label);
 				if (iter == m_LabelReferences.end()) {
 					m_LabelReferences.emplace(label, LabelRef(it, true));
@@ -606,7 +620,7 @@ namespace SCRambl
 			Types::Types& m_Types;
 			size_t m_NumCommandArgs;
 			size_t m_NumOverloadFailures;
-			ScriptVariable* m_Variable = nullptr;
+			Variable* m_Variable = nullptr;
 			Commands& m_Commands;
 			Commands m_ExtraCommands;
 			VecRef<Command> m_CurrentCommand;
@@ -616,7 +630,7 @@ namespace SCRambl
 			Commands::Vector::iterator m_OverloadCommandsIt;
 			VecRef<Types::Xlation> m_Xlation;
 
-			std::map<ScriptLabel*, LabelRef> m_LabelReferences;
+			std::map<const ScriptLabel*, LabelRef> m_LabelReferences;
 			std::vector<VecRef<Command>> m_CommandVector;
 			std::unordered_map<std::string, size_t> m_CommandMap;
 			std::multimap<const std::string, Tokens::Iterator> m_CommandTokenMap;

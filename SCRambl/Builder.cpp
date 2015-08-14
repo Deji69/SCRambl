@@ -6,7 +6,7 @@
 using namespace SCRambl;
 
 /* Build */
-ScriptVariable* Build::AddScriptVariable(std::string name, Types::Type* type, size_t array_size) {
+const ScriptVariable* Build::AddScriptVariable(std::string name, Types::Type* type, size_t array_size) {
 	if (type->HasValueType(array_size ? Types::ValueSet::Array : Types::ValueSet::Variable)) {
 		auto var = m_Variables.Add(type, name, array_size);
 		return var;
@@ -14,11 +14,11 @@ ScriptVariable* Build::AddScriptVariable(std::string name, Types::Type* type, si
 	else BREAK();
 	return nullptr;
 }
-ScriptVariable* Build::GetScriptVariable(std::string name) {
+const ScriptVariable* Build::GetScriptVariable(std::string name) {
 	auto var = m_Variables.Find(name);
 	return var;
 }
-ScriptLabel* Build::AddScriptLabel(std::string name, Scripts::Position pos) {
+const ScriptLabel* Build::AddScriptLabel(std::string name, Scripts::Position pos) {
 	std::vector<Types::Value*> vals;
 	m_Types.GetValues(Types::ValueSet::Label, 0, vals);
 	if (vals.empty() || vals.size() > 1) BREAK();
@@ -26,10 +26,10 @@ ScriptLabel* Build::AddScriptLabel(std::string name, Scripts::Position pos) {
 	m_LabelPosMap.emplace(label->Get().Pos(), label);
 	return label;
 }
-ScriptLabel* Build::GetScriptLabel(std::string name) {
+const ScriptLabel* Build::GetScriptLabel(std::string name) {
 	return m_Labels.Find(name);
 }
-ScriptLabel* Build::GetScriptLabel(Label* label) {
+const ScriptLabel* Build::GetScriptLabel(Label* label) {
 	return m_Labels.Find(label);
 }
 void Build::DoParseActions(std::string val, const ParseObjectConfig::ActionVec& vec) {

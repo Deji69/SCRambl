@@ -100,11 +100,11 @@ namespace SCRambl
 			Type(Type&&);
 			inline virtual ~Type() { }
 
-			virtual bool IsGlobal() const { return true; }
-			inline bool IsScoped() const { return !IsGlobal(); }
+			bool IsGlobalVar() const;
+			bool IsScopedVar() const;
 
-			inline std::string GetName() const { return m_Name; }
-			inline TypeSet GetType() const { return m_Type; }
+			std::string GetName() const;
+			TypeSet GetType() const;
 			bool IsBasicType() const;
 			bool IsExtendedType() const;
 			bool IsVariableType() const;
@@ -116,10 +116,9 @@ namespace SCRambl
 			const Variable* ToVariable() const;
 			VariableValue* GetVarValue() const;
 			ArrayValue* GetArrayValue() const;
+			const Type* GetValueType() const;
 
-			Type* GetValueType();
-
-			MatchLevel GetMatchLevel(Type* type);
+			MatchLevel GetMatchLevel(const Type* type) const;
 
 			bool HasValueType(ValueSet type) const;
 			template<typename TValue = Value>
@@ -185,7 +184,7 @@ namespace SCRambl
 			{ }
 
 			XMLValue Scope() const { return m_Scope; }
-			bool IsGlobal() const { return lengthcompare(m_Scope.AsString("local"), "local") == 0; }
+			bool IsGlobal() const { return lengthcompare(m_Scope.AsString("global"), "local") == 0; }
 			XMLValue IsArray() const { return m_IsArray; }
 			XMLValue MinIndex() const { return m_MinIndex; }
 			XMLValue MaxIndex() const { return m_MinIndex; }
@@ -514,9 +513,9 @@ namespace SCRambl
 			friend Type;
 
 		public:
-			Value(Type* type, ValueSet valtype) : m_ValueType(valtype), m_Type(type), m_Size(0)
+			Value(const Type* type, ValueSet valtype) : m_ValueType(valtype), m_Type(type), m_Size(0)
 			{ }
-			Value(Type* type, ValueSet valtype, size_t size) : m_ValueType(valtype), m_Type(type), m_Size(size)
+			Value(const Type* type, ValueSet valtype, size_t size) : m_ValueType(valtype), m_Type(type), m_Size(size)
 			{ }
 			inline virtual ~Value() { }
 
@@ -525,7 +524,7 @@ namespace SCRambl
 			}
 			
 			inline size_t GetSize() const { return m_Size; }
-			inline Type* GetType() const { return m_Type; }
+			inline const Type* GetType() const { return m_Type; }
 			inline ValueSet GetValueType() const { return m_ValueType; }
 
 			inline Translation::Ref GetTranslation() const { return m_Translation; }
@@ -538,7 +537,7 @@ namespace SCRambl
 
 		private:
 			ValueSet m_ValueType;
-			Type* m_Type;
+			const Type* m_Type;
 			size_t m_Size;
 			Translation::Ref m_Translation = Translation::BadRef;
 		};
@@ -576,19 +575,25 @@ namespace SCRambl
 			{ }
 		};
 		class VariableValue : public Value {
+			friend Types;
 		public:
-			VariableValue(Type* type, size_t size, XMLValue var, XMLValue val);
+			VariableValue(const Type* type, size_t size, const Type* vartype, const Type* valtype);
 
+			inline bool IsScoped() const { return m_IsScoped; }
+			inline bool IsGlobal() const { return !IsScoped(); }
 			inline bool IsArray() const { return GetValueType() == ValueSet::Array; }
 			ArrayValue* ToArray();
 			const ArrayValue* ToArray() const;
 
 		protected:
-			VariableValue(Type* type, size_t size, XMLValue var, XMLValue val, bool);
+			VariableValue(const Type* type, size_t size, const Type* var, const Type* val, bool);
+
+		private:
+			bool m_IsScoped = false;
 		};
 		class ArrayValue : public VariableValue {
 		public:
-			ArrayValue(Type* type, size_t size, XMLValue var, XMLValue val);
+			ArrayValue(const Type* type, size_t size, const Type* var, const Type* val);
 			
 			inline bool IsArray() const { return true; }
 			ArrayValue* ToArray() = delete;

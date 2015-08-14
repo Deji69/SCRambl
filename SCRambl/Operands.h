@@ -86,11 +86,11 @@ namespace SCRambl {
 		enum Type { NullValue, IntValue, FloatValue, TextValue, LabelValue, VariableValue };
 
 		Operand() = default;
-		Operand(ScriptVariable* var) : m_Type(VariableValue),
-			m_VariableValue(var), m_Text(var->Get().Name())
+		Operand(Variable* var) : m_Type(VariableValue),
+			m_VariableValue(var), m_Text(var->Name())
 		{ }
-		Operand(ScriptLabel* label) : m_Type(LabelValue),
-			m_LabelValue(label), m_Text(label->Get().Name())
+		Operand(Label* label) : m_Type(LabelValue),
+			m_LabelValue(label), m_Text(label->Name())
 		{ }
 		Operand(Tokens::Number::Info<Numbers::IntegerType>* info) : m_Type(IntValue),
 			m_IntValue(*info->GetValue<Tokens::Number::NumberValue>()),
@@ -115,8 +115,8 @@ namespace SCRambl {
 		inline T Value() const { return m_IntValue; }
 		template<> inline long long Value() const { return m_IntValue; }
 		template<> inline float Value() const { return m_FloatValue; }
-		template<> inline ScriptLabel* Value() const { return m_LabelValue; }
-		template<> inline ScriptVariable* Value() const { return m_VariableValue; }
+		template<> inline Label* Value() const { return m_LabelValue; }
+		template<> inline Variable* Value() const { return m_VariableValue; }
 		inline Type GetType() const { return m_Type; }
 		inline std::string Text() const { return m_Text; }
 
@@ -130,8 +130,8 @@ namespace SCRambl {
 		union {
 			int64_t m_IntValue = 0;
 			float m_FloatValue;
-			ScriptLabel* m_LabelValue;
-			ScriptVariable* m_VariableValue;
+			Label* m_LabelValue;
+			Variable* m_VariableValue;
 		};
 		std::string m_Text;
 	};

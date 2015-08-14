@@ -17,7 +17,7 @@ Operator::Sign Operator::GetSign(std::string str) {
 }
 
 /* Operators::Operator */
-OperationRef Operator::GetOperation(Variable* var, Types::Type* type) {
+OperationRef Operator::GetOperation(Variable* var, const Types::Type* type) {
 	Operation* bestMatch = nullptr;
 	Types::MatchLevel bestMatchLevel = Types::MatchLevel::None;
 	std::vector<Operation*> basicMatches, looseMatches;
