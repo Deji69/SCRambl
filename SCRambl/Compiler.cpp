@@ -13,7 +13,7 @@ namespace SCRambl
 		void Compiler::Init() {
 			m_TokenIt = m_Tokens.Begin();
 			m_XlationIt = m_Build->GetXlationsBegin();
-			m_Task(Event::Begin);
+			m_Task.Event<event_begin>();
 			m_State = compiling;
 
 			auto name = m_Build->GetEnvVar("ScriptName").AsString();
@@ -190,7 +190,7 @@ namespace SCRambl
 			return r;
 		}
 		void Compiler::Finish() {
-			m_Task(Event::Finish);
+			m_Task.Event<event_finish>();
 			m_State = finished;
 			m_File.close();
 		}

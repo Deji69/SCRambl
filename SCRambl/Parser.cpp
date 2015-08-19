@@ -6,6 +6,7 @@
 #include "TokensB.h"
 #include "Tokens.h"
 #include "Engine.h"
+#include "Tasks.h"
 
 #include <cctype>
 
@@ -107,7 +108,6 @@ bool Parser::GetDelimitedArrayIntegerConstant(size_t& i) {
 	auto next = PeekToken(Tokens::Type::Delimiter);
 	if (next) {
 		if (!IsSubscriptDelimiter(next)) {
-			//SendError();
 			BREAK();
 		}
 		EnterSubscript(next);
@@ -129,7 +129,7 @@ Tokens::CommandArgs::Arg* Parser::AddCommandArg(Operand op, Types::Value* val) {
 		if (m_CommandParseState.AnyParamsLeft()) {
 			return m_CommandParseState.AddArg(op, val);
 		}
-		else SendError(Error::too_many_args);
+		else m_Task.Event<error_too_many_args>();
 	}
 	BREAK();
 	return nullptr;
@@ -179,9 +179,9 @@ States Parser::Parse_Neutral_CheckIdentifier(IToken* tok) {
 	else if (m_ExtraCommands.FindCommands(name, vec) > 0 || m_Commands.FindCommands(name, vec) > 0) {
 		// make a token and store it
 		if (vec.size() == 1)
-			m_TokenIt->SetToken(m_Build.CreateToken<Tokens::Command::Info>(range.Begin(), Tokens::Type::Command, range, vec[0]));
+			m_TokenIt->SetToken(m_Build.CreateToken<Tokens::Command::Info>(range, Tokens::Type::Command, range, vec[0]));
 		else
-			m_TokenIt->SetToken(m_Build.CreateToken<Tokens::Command::OverloadInfo>(range.Begin(), Tokens::Type::CommandOverload, range, vec));
+			m_TokenIt->SetToken(m_Build.CreateToken<Tokens::Command::OverloadInfo>(range, Tokens::Type::CommandOverload, range, vec));
 
 		if (ParseCommandOverloads(vec)) {
 			BeginCommandParsing();
@@ -199,7 +199,7 @@ States Parser::Parse_Neutral_CheckIdentifier(IToken* tok) {
 		BREAK();
 	}
 	else {
-		SendError(Error::invalid_identifier, range);
+		m_Task.Event<error_invalid_identifier>(range);
 	}
 	return state_neutral;
 }
@@ -237,7 +237,7 @@ States Parser::Parse_Neutral_CheckOperator(IToken* tok) {
 		}
 		return state_parsing_operator;
 	}
-	else SendError(Error::invalid_operator, GetOperatorRange(tok));
+	else m_Task.Event<error_invalid_operator>(GetOperatorRange(tok));
 	return state_neutral;
 }
 States Parser::Parse_Neutral_CheckNumber(IToken* tok) {
@@ -411,14 +411,14 @@ States Parser::Parse_Type_Varlist() {
 		return state_neutral;
 	}
 	else if (IsCharacter(m_TokenIt->GetToken())) {
-		SendError(Error::invalid_character, GetCharacterValue(m_TokenIt->GetToken()));
+		m_Task.Event<error_invalid_character>(GetCharacterValue(m_TokenIt->GetToken()));
 		return state_neutral;
 	}
 
 	// expect an identifier for a var name
 	auto type = GetCurrentTokenType();
 	if (type != Tokens::Type::Identifier) {
-		SendError(Error::expected_identifier);
+		m_Task.Event<error_expected_identifier>();
 		BREAK();
 	}
 	else {
@@ -429,7 +429,6 @@ States Parser::Parse_Type_Varlist() {
 
 		auto var = m_Build.AddScriptVariable(name, m_TypeParseState.type, array_size);
 		if (!var) {
-			//SendError();
 			BREAK();
 		}
 	}
@@ -441,12 +440,12 @@ States Parser::Parse_Type_CommandDef() {
 		return state_neutral;
 	}
 	else if (!IsTokenType(m_TokenIt->GetToken(), Tokens::Type::Identifier)) {
-		SendError(Error::expected_identifier);
+		m_Task.Event<error_expected_identifier>();
 		++m_TokenIt;
 	}
 	else {
 		auto name = GetIdentifierName(m_TokenIt->GetToken());
-		if (name.empty()) SendError(Error::expected_identifier);
+		if (name.empty()) m_Task.Event<error_expected_identifier>();
 		else {
 			bool cond = false;
 			auto chartok = PeekToken(Tokens::Type::Character);
@@ -456,7 +455,7 @@ States Parser::Parse_Type_CommandDef() {
 				chartok = PeekToken(Tokens::Type::Character);
 			}
 			if (!chartok || !IsColonPunctuator(chartok))
-				SendError(Error::expected_colon_punctuator);
+				m_Task.Event<error_expected_colon_punctuator>();
 			++m_TokenIt;
 					
 			auto id = GetTokenString(PeekToken());
@@ -494,7 +493,7 @@ States Parser::Parse_Type_CommandDef() {
 					command->AddArg(type, isret, size);
 				}
 			}
-			else SendError(Error::expected_key_identifier);
+			else m_Task.Event<error_expected_key_identifier>();
 		}
 	}
 	return state_parsing_type_command;
@@ -520,7 +519,7 @@ States Parser::Parse_Command() {
 		++m_TokenIt;
 		return m_CurrentCommand->NumParams() > 0 ? state_parsing_command_args : state_neutral;
 	}
-	else SendError(Error::invalid_command);
+	else m_Task.Event<error_invalid_command>();
 	return state_neutral;
 }
 States Parser::Parse_Command_Arglist() {
@@ -867,34 +866,6 @@ IToken* Parser::PeekToken(Tokens::Type type, size_t off) {
 		}
 	}
 	return nullptr;
-}
-
-// Send an error event
-inline void Parser::SendError(Error type) {
-	BREAK();
-	if (m_State == overloading) {
-		FailCommandOverload();
-	}
-	else {
-		// send
-		std::vector<std::string> params;
-		m_Task(Event::Error, Basic::Error(type), params);
-	}
-}
-// Send an error event (with args)
-template<typename First, typename... Args>
-inline void Parser::SendError(Error type, First&& first, Args&&... args) {
-	if (m_State == overloading) {
-		FailCommandOverload();
-	}
-	else {
-		// storage for error parameters
-		std::vector<std::string> params;
-		// format the error parameters to the vector
-		m_Engine.Format(params, first, args...);
-		// send
-		m_Task(Event::Error, Basic::Error(type), params);
-	}
 }
 
 // SCRambl::Parser::Task

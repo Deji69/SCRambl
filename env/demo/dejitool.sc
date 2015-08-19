@@ -18,11 +18,20 @@ WAIT -0x7FfFfFfF
 WAIT -0xFF
 WAIT 0x7F*/
 {
-	LVAR_INT var1 var2
-	LINE 1.0 -2.0 3.14 4.444444445 55555.0 -666.666
+	VAR_INT var1
 	WAIT var1
-	WAIT var2
+	LVAR_INT lvar1 lvar2
+	LINE 1.0 -2.0 3.14 4.444444445 55555.0 -666.666
+	WAIT lvar1
+	WAIT lvar2
 	SCRIPT_NAME "tool"
+}
+{
+	LVAR_INT var3 var4
+	WAIT lvar3
+	WAIT lvar4
+	WAIT lvar1
+	WAIT lvar2
 }
 /*{
 	LVAR_INT lvar1[2] pVehicleStruct

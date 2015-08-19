@@ -31,9 +31,6 @@
     <ClCompile Include="utils\pugixml\pugixml.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Reporting.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Scripts.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -155,9 +152,6 @@
     </ClInclude>
     <ClInclude Include="utils\key.h">
       <Filter>Header\utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Reporting.h">
-      <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="utils\function_traits.h">
       <Filter>Header\utils</Filter>

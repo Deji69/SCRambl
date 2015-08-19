@@ -78,7 +78,7 @@ namespace SCRambl
 			auto& scope = type->IsGlobalVar() ? Global() : Local();
 			// create object
 			auto idx = m_Objects.size();
-			m_Objects.emplace_back(scope, type, scope.Size(), key, args...);
+			m_Objects.emplace_back(scope, type, idx, key, args...);
 			ASSERT(m_Objects.size() > idx);
 			auto ptr = m_Objects[idx].Ptr();
 			// add to scope

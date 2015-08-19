@@ -102,6 +102,8 @@ namespace SCRambl
 
 			bool IsGlobalVar() const;
 			bool IsScopedVar() const;
+			size_t GetVarMinIndex() const;
+			size_t GetVarMaxIndex() const;
 
 			std::string GetName() const;
 			TypeSet GetType() const;
@@ -118,7 +120,7 @@ namespace SCRambl
 			ArrayValue* GetArrayValue() const;
 			const Type* GetValueType() const;
 
-			MatchLevel GetMatchLevel(const Type* type) const;
+			MatchLevel GetMatchLevel(const Type*) const;
 
 			bool HasValueType(ValueSet type) const;
 			template<typename TValue = Value>
@@ -188,6 +190,9 @@ namespace SCRambl
 			XMLValue IsArray() const { return m_IsArray; }
 			XMLValue MinIndex() const { return m_MinIndex; }
 			XMLValue MaxIndex() const { return m_MinIndex; }
+
+			void SetMinIndex(XMLValue v) { m_MinIndex = v; }
+			void SetMaxIndex(XMLValue v) { m_MaxIndex = v; }
 		};
 		class Extended : public Type
 		{
@@ -577,23 +582,26 @@ namespace SCRambl
 		class VariableValue : public Value {
 			friend Types;
 		public:
-			VariableValue(const Type* type, size_t size, const Type* vartype, const Type* valtype);
+			VariableValue(const Type* type, size_t size, const Variable* vartype, const Type* valtype);
 
-			inline bool IsScoped() const { return m_IsScoped; }
+			inline bool IsScoped() const { return m_VarType->IsScopedVar(); }
 			inline bool IsGlobal() const { return !IsScoped(); }
 			inline bool IsArray() const { return GetValueType() == ValueSet::Array; }
+			const Variable* GetVarType() const { return m_VarType; }
+			const Type* GetValType() const { return m_ValType; }
 			ArrayValue* ToArray();
 			const ArrayValue* ToArray() const;
 
 		protected:
-			VariableValue(const Type* type, size_t size, const Type* var, const Type* val, bool);
+			VariableValue(const Type* type, size_t size, const Variable* var, const Type* val, bool);
 
 		private:
-			bool m_IsScoped = false;
+			const Variable* m_VarType;
+			const Type* m_ValType;
 		};
 		class ArrayValue : public VariableValue {
 		public:
-			ArrayValue(const Type* type, size_t size, const Type* var, const Type* val);
+			ArrayValue(const Type* type, size_t size, const Variable* var, const Type* val);
 			
 			inline bool IsArray() const { return true; }
 			ArrayValue* ToArray() = delete;

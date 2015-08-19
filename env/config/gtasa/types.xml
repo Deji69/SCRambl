@@ -144,7 +144,7 @@
 	<!--
 	Extended Types:
 		These are internal extensions of the basic type set, which build upon the basic language
-		(X) Each Type needs a 'Basic' value representing an already declared type (X)
+		Extended types can have a 'Basic' type and inherit it's values, and be used interchangeably
 	-->
 	<ExtendedTypes>
 		<Type Name="CONST" Basic="INT">

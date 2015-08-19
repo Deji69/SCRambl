@@ -15,6 +15,27 @@ namespace SCRambl
 	{
 		class Task;
 
+		class Error {
+		public:
+			enum ID {
+				// involuntary errors (errors that should be impossible!!) (500+)
+
+				// normal errors (1000+)
+
+				// fatal errors (4000+)
+				fatal_begin = 4000,
+				//include_failed = 4000,
+				fatal_end,
+			};
+
+			Error(ID id) : m_ID(id)
+			{ }
+			inline operator ID() const			{ return m_ID; }
+
+		private:
+			ID			m_ID;
+		};
+
 		class Compiler
 		{
 		public:
@@ -139,18 +160,30 @@ namespace SCRambl
 			Warning,
 			Error,
 		};
+		struct event : public task_event { using task_event::task_event; };
+		struct event_begin : public event {
+			using event::event;
+		};
+		struct event_finish : public event {
+			using event::event;
+		};
+		struct event_warning : public event {
+			using event::event;
+		};
+		struct event_error : public event {
+			event_error(Error err) : ErrorCode(err)
+			{ }
+
+			Error ErrorCode;
+		};
 
 		/*\
 		 * Compiler::Task
 		\*/
-		class Task : public TaskSystem::Task<Event>, private Compiler
+		class Task : public TaskSystem::Task, private Compiler
 		{
 			friend Compiler;
 			Engine& m_Engine;
-
-			inline bool operator()(Event id) { return CallEventHandler(id); }
-			template<typename... Args>
-			inline bool operator()(Event id, Args&&... args) { return CallEventHandler(id, std::forward<Args>(args)...); }
 
 		public:
 			Task(Engine& engine, Build* build) : Compiler(*this, engine, build),
@@ -159,7 +192,6 @@ namespace SCRambl
 
 			inline size_t GetProgressCurrent() const { return GetCurrentToken(); }
 			inline size_t GetProgressTotal() const { return GetNumTokens(); }
-			//inline Scripts::Token GetToken() const { return Compiler::GetToken(); }
 
 			bool IsRunning() const { return Compiler::IsRunning(); }
 			bool IsTaskFinished() final override { return Compiler::IsFinished(); }

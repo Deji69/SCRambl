@@ -13,7 +13,6 @@
 #include "Builder.h"
 #include "Tasks.h"
 #include "Formatter.h"
-#include "Reporting.h"
 #include "Configuration.h"
 #include "Commands.h"
 #include "Types.h"
@@ -28,7 +27,7 @@ namespace SCRambl
 
 	class Engine
 	{
-		using TaskMap = std::map<int, std::unique_ptr<TaskSystem::ITask>>;
+		using TaskMap = std::map<int, std::unique_ptr<TaskSystem::Task>>;
 		using FormatMap = std::map<const std::type_info*, std::unique_ptr<IFormatter>>;
 		using ConfigMap = std::map<std::string, XMLConfiguration>;
 
@@ -105,18 +104,24 @@ namespace SCRambl
 
 		// String format multiple types (sprintf)
 		template<typename First, typename... Args>
-		inline void Format(std::vector<std::string>& out, First&& first, Args&&... args) {
+		inline void Format(std::vector<std::string>& out, First&& first, Args&&... args) const {
 			// do one
 			out.push_back(Format(first));
 			// continue
 			Format(out, args...);
-		}
-		
+		}		
 		// String format multiple types (sprintf) (pt2)
 		template<typename Last>
-		inline void Format(std::vector<std::string>& out, Last&& last) {
+		inline void Format(std::vector<std::string>& out, Last&& last) const {
 			// finale
 			out.emplace_back(Format(std::forward<Last>(last)));
+		}
+		// String format multiple types (sprintf)
+		template<typename... Args>
+		inline std::vector<std::string> FormatVec(Args&&... args) const {
+			std::vector<std::string> out;
+			Format(out, args...);
+			return out;
 		}
 	};
 }

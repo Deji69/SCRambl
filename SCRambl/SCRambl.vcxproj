@@ -116,7 +116,6 @@
     <ClInclude Include="Parser.h" />
     <ClInclude Include="Preprocessor.h" />
     <ClInclude Include="ProjectManager.h" />
-    <ClInclude Include="Reporting.h" />
     <ClInclude Include="Scripts.h" />
     <ClInclude Include="Tasks.h" />
     <ClInclude Include="stdafx.h" />
@@ -157,7 +156,6 @@
     <ClCompile Include="Parser.cpp" />
     <ClCompile Include="Preprocessor.cpp" />
     <ClCompile Include="ProjectManager.cpp" />
-    <ClCompile Include="Reporting.cpp" />
     <ClCompile Include="Scripts.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

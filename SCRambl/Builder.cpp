@@ -2,6 +2,7 @@
 #include "utils.h"
 #include "Builder.h"
 #include "Engine.h"
+#include "Parser.h"
 
 using namespace SCRambl;
 
@@ -9,6 +10,8 @@ using namespace SCRambl;
 const ScriptVariable* Build::AddScriptVariable(std::string name, Types::Type* type, size_t array_size) {
 	if (type->HasValueType(array_size ? Types::ValueSet::Array : Types::ValueSet::Variable)) {
 		auto var = m_Variables.Add(type, name, array_size);
+		//if (var->Get().ID() > var->Get().Value()->GetVarType()->GetVarMaxIndex())
+			
 		return var;
 	}
 	else BREAK();
@@ -173,7 +176,7 @@ XMLConfiguration* Build::AddConfig(const std::string& name) {
 XMLValue Build::GetEnvVar(std::string var) const {
 	return m_Env.Get(var).Value;
 }
-const TaskSystem::Task<BuildEvent>& Build::Run() {
+const TaskSystem::Task& Build::Run() {
 	if (m_CurrentTask == std::end(m_Tasks))
 		Init();
 

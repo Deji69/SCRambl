@@ -378,6 +378,7 @@ namespace SCRambl
 			std::pair<Position, Position>	m_Pair;
 
 		public:
+			Range() = default;
 			Range(const Position &a, const Position &b) : m_Pair(a < b ? std::make_pair(a, b) : std::make_pair(b, a))
 			{ }
 			/*Range(Position a, Position b) : m_Pair(a < b ? std::make_pair(a, b) : std::make_pair(b, a))
@@ -391,11 +392,11 @@ namespace SCRambl
 			}
 
 			inline operator const std::pair<Position, Position>() const	{ return Get(); }
-			inline const std::pair<Position, Position> & Get() const	{ return m_Pair; }
-			inline const Position & Begin() const { return m_Pair.first; }
-			inline const Position & begin() const { return Begin(); }
-			inline const Position & End() const { return m_Pair.second; }
-			inline const Position & end() const { return End(); }
+			inline const std::pair<Position, Position>& Get() const { return m_Pair; }
+			inline const Position& Begin() const { return m_Pair.first; }
+			inline const Position& begin() const { return Begin(); }
+			inline const Position& End() const { return m_Pair.second; }
+			inline const Position& end() const { return End(); }
 			inline std::string Format() const { return Formatter(*this); }
 		};
 	}

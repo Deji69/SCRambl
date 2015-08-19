@@ -8,20 +8,25 @@
 #include <memory>
 
 namespace SCRambl {
+	class Engine;
+
 	namespace Basic {
 		// Wrapper for varying error types
 		class Error {
 		public:
 			Error(const Error&) = delete;
-			Error(Error&& o) : m_Payload(std::move(o.m_Payload))
+			Error(Error&& o) : m_Engine(std::move(o.m_Engine)), m_Payload(std::move(o.m_Payload))
 			{ }
 			Error& operator=(Error&& o) {
-				if (this != &o) m_Payload = std::move(o.m_Payload);
+				if (this != &o) {
+					m_Payload = std::move(o.m_Payload);
+					m_Engine = std::move(o.m_Engine);
+				}
 				return *this;
 			}
 			Error& operator=(const Error&) = delete;
 			template<typename T>
-			Error(const T& err) : m_Payload(std::make_unique<Info<T>>(err))
+			Error(const Engine& engine, const T& err) : m_Engine(&engine), m_Payload(std::make_unique<Info<T>>(err))
 			{ }
 			
 			template<typename T>
@@ -33,6 +38,8 @@ namespace SCRambl {
 				return Get<T>();
 			}
 			
+			inline const Engine& GetEngine() const { return *m_Engine; }
+
 		private:
 			class Payload {
 			public:
@@ -50,6 +57,7 @@ namespace SCRambl {
 			};
 
 			std::unique_ptr<Payload> m_Payload;
+			const Engine* m_Engine;
 		};
 	}
 }

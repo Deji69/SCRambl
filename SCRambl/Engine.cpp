@@ -14,7 +14,7 @@ enum BuildTask {
 
 bool Engine::BuildScript(Build* build) {
 	auto state = build->Run().GetState();
-	return state != TaskSystem::Task<BuildEvent>::finished;
+	return state != TaskSystem::Task::finished;
 }
 Build* Engine::InitBuild(std::vector<std::string> files) {
 	auto config = m_Builder.GetConfig();

@@ -2,7 +2,6 @@
 #include "Standard.h"
 #include "Preprocessor.h"
 #include "Lexer.h"
-#include "Reporting.h"
 
 using namespace SCRambl;
 using namespace SCRambl::Preprocessing;
@@ -118,7 +117,7 @@ void Preprocessor::Run() {
 	try {
 		switch (m_State) {
 		case init:
-			m_Task(Event::Begin);
+			m_Task.Event<event_begin>();
 			m_CodePos = m_Build.GetScript().GetCode();
 			m_State = lexing;
 			break;
@@ -161,49 +160,41 @@ void Preprocessor::HandleToken() {
 
 	switch (m_Token) {
 	case TokenType::Eol: {
-		m_Build.CreateToken<Tokens::Character::Info<Character>>(pos, Tokens::Type::Character, pos, Character(Character::Type::EOL));
-		m_Task(Event::AddedToken, range);
+		m_Build.CreateToken<Tokens::Character::Info<Character>>(range, Tokens::Type::Character, pos, Character(Character::Type::EOL));
 		break;
 	}
 	case TokenType::Identifier: {
-		m_Build.CreateToken<Tokens::Identifier::Info<>>(pos, Tokens::Type::Identifier, m_Token.Range());
-		m_Task(Event::AddedToken, range);
+		m_Build.CreateToken<Tokens::Identifier::Info<>>(range, Tokens::Type::Identifier, m_Token.Range());
 		break;
 	}
 	case TokenType::Number: {
 		if (m_NumericScanner.Is<int>())
-			m_Build.CreateToken<TokenNumber<Numbers::IntegerType, Numbers::Integer>>(pos, range, m_NumericScanner.Get<unsigned long long>());
+			m_Build.CreateToken<TokenNumber<Numbers::IntegerType, Numbers::Integer>>(range, range, m_NumericScanner.Get<unsigned long long>());
 		else
-			m_Build.CreateToken<TokenNumber<Numbers::FloatType, Numbers::Float>>(pos, range, m_NumericScanner.Get<float>());
-		m_Task(Event::AddedToken, range);
+			m_Build.CreateToken<TokenNumber<Numbers::FloatType, Numbers::Float>>(range, range, m_NumericScanner.Get<float>());
 		break;
 	}
 	case TokenType::Label: {
 		auto name = range.Format();
 		// TODO: do
 		auto label = m_Build.AddScriptLabel(name, pos);
-		m_Build.CreateToken<Tokens::Label::Info>(pos, Tokens::Type::Label, range, label->Ptr());
-		m_Task(Event::AddedToken, range);
+		m_Build.CreateToken<Tokens::Label::Info>(range, Tokens::Type::Label, range, label->Ptr());
 		break;
 	}
 	case TokenType::Operator: {
-		m_Build.CreateToken<Tokens::Operator::Info<Operators::Type>>(pos, Tokens::Type::Operator, range, m_OperatorScanner.GetOperator());
-		m_Task(Event::AddedToken, range);
+		m_Build.CreateToken<Tokens::Operator::Info<Operators::Type>>(range, Tokens::Type::Operator, range, m_OperatorScanner.GetOperator());
 		break;
 	}
 	case TokenType::ParseOperator: {
-		m_Build.CreateToken<Tokens::Operator::Info<Operators::OperatorRef>>(pos, Tokens::Type::Operator, range, m_ParserOperatorScanner.GetOperator());
-		m_Task(Event::AddedToken, range);
+		m_Build.CreateToken<Tokens::Operator::Info<Operators::OperatorRef>>(range, Tokens::Type::Operator, range, m_ParserOperatorScanner.GetOperator());
 		break;
 	}
 	case TokenType::Directive: {
-		m_Build.CreateToken<Tokens::Directive::Info>(pos, Tokens::Type::Directive, range);
-		m_Task(Event::AddedToken, range);
+		m_Build.CreateToken<Tokens::Directive::Info>(range, Tokens::Type::Directive, range);
 		break;
 	}
 	case TokenType::String: {
-		m_Build.CreateToken<Tokens::String::Info>(pos, Tokens::Type::String, range, m_String);
-		m_Task(Event::AddedToken, range);
+		m_Build.CreateToken<Tokens::String::Info>(range, Tokens::Type::String, range, m_String);
 		break;
 	}
 	default: break;
@@ -212,7 +203,8 @@ void Preprocessor::HandleToken() {
 	m_State = lexing;
 }
 void Preprocessor::HandleDirective() {
-	switch (m_Directive) {
+	auto& task = m_Task;
+	switch (auto directive = m_Directive) {
 	case Directive::DEFINE:
 		if (Lex() == Lexing::Result::found_token && m_Token == TokenType::Identifier) {
 			Macro::Name name = m_Identifier;
@@ -309,15 +301,15 @@ void Preprocessor::HandleDirective() {
 				m_State = lexing;
 				return;
 			}
-			else SendError(Error::include_failed, m_String);
+			else m_Task.Event<error_include_failed>(m_String);
 		}
-		else SendError(Error::dir_expected_file_name, m_Directive);
+		else m_Task.Event<error_dir_expected_file_name>(m_Directive);
 		break;
 
 	case Directive::REGISTER_COMMAND:
 		if (Lex(
 			[this](const LexerToken& tok){ return tok == TokenType::Number && m_NumericScanner.Is<int>(); },
-			[this](const LexerToken& tok){ SendError(Error::dir_expected_command_id, m_Directive); }
+			[&task, &directive](const LexerToken& tok){ task.Event<error_dir_expected_command_id>(directive); }
 			)) {
 			auto opcode = m_NumericScanner.Get<size_t>();
 
@@ -440,10 +432,8 @@ void Preprocessor::LexerPhase() {
 
 	// ya, we're done here...
 	if (!m_CodePos) {
-		// (debug) output file
-		//m_Script.OutputFile();
 		m_State = finished;
-		m_Task(Event::Finish);
+		m_Task.Event<event_finish>();
 		return;
 	}
 
@@ -943,7 +933,7 @@ Lexing::Result Preprocessor::Lex() {
 					continue;
 
 			// tell brother
-			m_Task(Event::FoundToken, m_Token.Range());
+			m_Task.Event<event_found_token>(m_Token.Range());
 
 			switch (m_Token)
 			{
@@ -1064,7 +1054,8 @@ bool Preprocessor::GetSourceControl() const {
 }
 
 bool Preprocessor::OpenDelimiter(Scripts::Position pos, Delimiter type) {
-	auto token = m_Build.CreateToken<TokenDelimiter>(pos, pos, Scripts::Range(pos, pos), type);
+	auto range = Scripts::Range(pos, pos);
+	auto token = m_Build.CreateToken<TokenDelimiter>(range, pos, range, type);
 	m_Delimiters.push(token);
 	return true;
 }
@@ -1074,10 +1065,11 @@ bool Preprocessor::CloseDelimiter(Scripts::Position pos, Delimiter type) {
 	// ensure the delimiters are for the same purpose, otherwise there's error
 	if (Tokens::Delimiter::GetDelimiterType<Delimiter>(*tok) == type) {
 		auto begin = Tokens::Delimiter::GetScriptRange(*tok).Begin();
+		auto range = Scripts::Range(begin, pos);
 		// replace the token with an updated Scripts::Range
-		token.SetToken(new TokenDelimiter(begin, Scripts::Range(begin, pos), type));
+		token.SetToken(new TokenDelimiter(begin, range, type));
 		// mark the closing position
-		m_Build.CreateToken<TokenDelimiter>(pos, pos, Scripts::Range(begin, pos), type);
+		m_Build.CreateToken<TokenDelimiter>(range, pos, range, type);
 		m_Delimiters.pop();
 		return true;
 	}
@@ -1088,10 +1080,11 @@ Types::Type* Preprocessor::GetType(const std::string& name) {
 }
 
 // Printf-styled error reporting
-void Preprocessor::SendError(Error type) {
+template<typename... TArgs>
+void Preprocessor::SendError(Error type, TArgs&&... args) {
 	// send
 	std::vector<std::string> params;
-	m_Task(Event::Error, Basic::Error(type), params);
+	m_Task.Event<error_event>(Basic::Error(m_Engine, type), params);
 }
 template<typename First, typename... Args>
 void Preprocessor::SendError(Error type, First&& first, Args&&... args) {
@@ -1100,7 +1093,7 @@ void Preprocessor::SendError(Error type, First&& first, Args&&... args) {
 	// format the error parameters to the vector
 	m_Engine.Format(params, first, args...);
 	// send
-	m_Task(Event::Error, Basic::Error(type), params);
+	m_Task.Event<error_event>(Basic::Error(m_Engine, type), params);
 }
 
 // Scanners - BORING! ;)

@@ -11,104 +11,104 @@
 #include <set>
 #include <functional>
 #include <typeinfo>
+#include <typeindex>
 #include "utils\function_traits.h"
 
 namespace SCRambl
 {
 	class Engine;
 
-	// This was HELL to write...
+	struct task_exception : public std::exception {
+		using std::exception::exception;
+	};
+	struct task_bad_event : public task_exception {
+		using task_exception::task_exception;
+	};
+
 	namespace TaskSystem {
-		// Events & handlers
-		template<typename EventType>
-		class Event {
-			template<typename>
-			friend class Task;
+		class Task;
 
-		public:
-			Event() = default;
-			Event(EventType id) : m_ID(id)
-			{ }
-			virtual ~Event() {
-				// delete the function pointers
-				for (auto pair : m_Handlers) {
-					// looks really simple...
-					delete static_cast<std::function<bool(void)>*>(pair.second);
+		namespace {
+			// Events & handlers
+			class TaskEvent {
+				friend class Task;
+
+			public:
+				TaskEvent() = default;
+				virtual ~TaskEvent() {
+					// delete the function pointers
+					for (auto fun : m_Handlers) {
+						delete static_cast<std::function<bool(void)>*>(fun);
+					}
 				}
-			}
 
-			// Add event handler
-			template<typename Func>
-			void AddHandler(Func handler) {
-				// do some weird, but very necessary shit
-				auto function = new decltype(to_function(handler))(to_function(handler));
-
-				// add the function to the list and associate its type
-				m_Handlers.emplace(&typeid(function), static_cast<void*>(function));
-			}
-			// Call capable handlers, returns false if none were called
-			template<typename... Args>
-			bool CallHandler(Args&&... args) {
-				// this is surely impossible...?
-				if (m_Handlers.empty()) return false;
-
-				// try to find some handlers capable of accepting Args...
-				static auto s_p = &typeid(std::function<bool(Args...)>*);
-				auto it_pair = m_Handlers.equal_range(s_p);
-
-				// no? really?
-				if (it_pair.first == m_Handlers.end()) return false;
-
-				// call all handlers, or until the first one that returns 'false'
-				for (auto it = it_pair.first; it != it_pair.second; ++it) {
-					// cast it back to the function
-					auto func = static_cast<std::function<bool(Args...)>*>(it->second);
-					// if it returns false, abort in case it did something that could screw up future calls
-					if (!(*func)(std::forward<Args>(args)...)) break;
+				// Add event handler
+				template<typename Func>
+				void AddHandler(Func handler) {
+					// sum magic
+					auto function = new decltype(to_function(handler))(to_function(handler));
+					// add the handler
+					m_Handlers.emplace_back(static_cast<void*>(function));
 				}
-				return true;
-			}
-		
-		private:
-			EventType m_ID;
-			// imagine if there was a way to store functions by how they need to be called...
-			std::multimap<const std::type_info*, void*>	m_Handlers;
-		};
+				// Call handlers, returns false if none were called
+				template<typename TEvent>
+				bool CallHandler(const TEvent& event) const {
+					// this is surely impossible...?
+					if (m_Handlers.empty()) return false;
+					for (auto fun : m_Handlers) {
+						auto func = static_cast<std::function<bool(const TEvent&)>*>(fun);
+						if (!(*func)(event)) break;
+					}
+					return false;
+				}
 
-		// Task interface - Task placeholder
-		class ITask
-		{
-		public:
-			// task controllers
-			virtual void RunTask() = 0;
-			virtual bool IsTaskFinished() = 0;
-			virtual void ResetTask() = 0;
-		};
+			private:
+				std::vector<void*> m_Handlers;
+			};
 
-		// Task - Kinda the point of this whole file
-		template<typename EventType>
+			// Task interface - Task runner
+			class ITask
+			{
+			public:
+				// task controllers
+				virtual void RunTask() = 0;
+				virtual bool IsTaskFinished() = 0;
+				virtual void ResetTask() = 0;
+			};
+		}
+
+		// Task - tasks and events
 		class Task : public ITask {
-			friend class SCRambl::Engine;
-
 		public:
 			enum State { running, error, finished };
 
-			// Add an event handler, plus the event if it doesn't exist already
-			template<EventType id, typename Func>
-			inline void AddEventHandler(Func func) {
-				auto & ev = m_Events[id];
-				ev.AddHandler<Func>(std::forward<Func>(std::ref(func)));
+			virtual ~Task() { };
+
+			// Add an event
+			template<typename TEvent>
+			inline bool AddEvent(std::string name) {
+				if (std::is_base_of<task_event, TEvent>()) {
+					m_Events[typeid(TEvent)].first = name;
+					return true;
+				}
+				return false;
 			}
-			// Call all handlers for an event
-			// - Returns false if none were called
-			template<typename... Args>
-			inline bool CallEventHandler(EventType id, Args&&... args) {
-				// if no event is found, there must not be a handler for it anyway
+			// Add an event handler
+			template<typename TEvent, typename Func>
+			inline void AddEventHandler(Func func) {
+				m_Events.at(typeid(TEvent)).second.AddHandler<Func>(std::forward<Func>(std::ref(func)));
+			}
+			// Call all handlers for an event - returns false if none were called
+			template<typename TEvent>
+			inline bool CallEvent(const TEvent& event) const {
+				// validate as derived event class
+				auto b = std::is_base_of<task_event, TEvent>();
+				if (typeid(TEvent) == typeid(task_event)) throw(task_bad_event());
 				if (m_Events.empty()) return false;
-				auto it = m_Events.find(id);
+				auto it = m_Events.find(typeid(TEvent));
 				if (it != m_Events.end()) {
 					// pass the message
-					if(it->second.CallHandler(std::forward<Args>(args)...))
+					if(it->second.second.CallHandler(event))
 						return true;
 				}
 				// nothing called
@@ -117,12 +117,20 @@ namespace SCRambl
 			// Gets the current state
 			inline State GetState()	const { return m_State; }
 
+			// Convenience event functions
+			template<typename TEvent>
+			inline bool Event(const TEvent& event) const { return CallEvent<TEvent>(event); }
+			template<typename TEvent, typename... TArgs>
+			inline bool Event(TArgs&&... args) const {
+				return CallEvent<TEvent>(TEvent(std::forward<TArgs>(args)...));
+			}
+			template<typename TEvent>
+			inline bool operator()(const TEvent& event) const { return CallEvent<TEvent>(event); }
+
 		protected:
 			// a running start!
 			Task() : m_State(running)
 			{ }
-			virtual ~Task()
-			{ };
 
 			// When you say run, I say go fuck yourself...
 			inline const Task& Run() {
@@ -163,7 +171,17 @@ namespace SCRambl
 			State m_State;
 
 			// events can be handled by the implementor
-			std::map<EventType, Event<EventType>> m_Events;
+			std::unordered_map<std::type_index, std::pair<std::string, TaskEvent>> m_Events;
 		};
 	}
+
+
+	struct task_event {
+		friend TaskSystem::Task;
+		virtual ~task_event() { }
+
+		virtual bool Send(TaskSystem::Task& task) const {
+			return task.Event(*this);
+		}
+	};
 }

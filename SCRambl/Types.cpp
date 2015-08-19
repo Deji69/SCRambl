@@ -103,15 +103,15 @@ namespace SCRambl
 			ASSERT(IsArray());
 			return static_cast<const ArrayValue*>(this);
 		}
-		VariableValue::VariableValue(const Type* type, size_t size, const Type* var, const Type* val, bool) : Value(type, ValueSet::Array, size),
-			m_IsScoped(!var->ToVariable()->IsGlobal())
+		VariableValue::VariableValue(const Type* type, size_t size, const Variable* var, const Type* val, bool) : Value(type, ValueSet::Array, size),
+			m_VarType(var), m_ValType(val)
 		{ }
-		VariableValue::VariableValue(const Type* type, size_t size, const Type* var, const Type* val) : Value(type, ValueSet::Variable, size),
-			m_IsScoped(!var->ToVariable()->IsGlobal())
+		VariableValue::VariableValue(const Type* type, size_t size, const Variable* var, const Type* val) : Value(type, ValueSet::Variable, size),
+			m_VarType(var), m_ValType(val)
 		{ }
 
 		/* ArrayValue */
-		ArrayValue::ArrayValue(const Type* type, size_t size, const Type* var, const Type* val) : VariableValue(type, size, var, val, true)
+		ArrayValue::ArrayValue(const Type* type, size_t size, const Variable* var, const Type* val) : VariableValue(type, size, var, val, true)
 		{ }
 
 		/* Type */
@@ -140,7 +140,7 @@ namespace SCRambl
 		}
 		VariableValue* Type::GetVarValue() const {
 			VariableValue* value = nullptr;
-			AllValues<Value>([&value](Value* val){
+			AllValues<Value>([&value](Value* val) {
 				if (val->GetValueType() == ValueSet::Variable) {
 					value = &val->Extend<VariableValue>();
 					return true;
@@ -160,6 +160,8 @@ namespace SCRambl
 			});
 			return value ? value : nullptr;
 		}
+		size_t Type::GetVarMinIndex() const { return IsVariableType() ? ToVariable()->MinIndex() : 0; }
+		size_t Type::GetVarMaxIndex() const { return IsVariableType() ? ToVariable()->MaxIndex() : 0; }
 		bool Type::HasValueType(ValueSet type) const {
 			for (auto& val : m_Values) {
 				if (val->GetValueType() == type)
@@ -277,8 +279,9 @@ namespace SCRambl
 					auto valtype = GetType(value_attr);
 
 					ASSERT(vartype && valtype);
+					ASSERT(vartype->IsVariableType());
 
-					auto value = type->AddValue<VariableValue>(type, vec["Size"]->AsNumber<uint32_t>(), vartype, valtype);
+					auto value = type->AddValue<VariableValue>(type, vec["Size"]->AsNumber<uint32_t>(), vartype->ToVariable(), valtype);
 					//value->m_Types = this;
 
 					AddValue(ValueSet::Variable, value);
@@ -304,10 +307,9 @@ namespace SCRambl
 					auto valtype = GetType(value_attr);
 
 					ASSERT(vartype && valtype);
+					ASSERT(vartype->IsVariableType() && vartype->ToVariable()->IsArray());
 
-					auto value = type->AddValue<ArrayValue>(type, vec["Size"]->AsNumber<uint32_t>(), vartype, valtype);
-					//value->m_Types = this;
-
+					auto value = type->AddValue<ArrayValue>(type, vec["Size"]->AsNumber<uint32_t>(), vartype->ToVariable(), valtype);
 					AddValue(ValueSet::Array, value);
 					obj = value;
 				}

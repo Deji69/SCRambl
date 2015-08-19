@@ -16,6 +16,7 @@
 #include "Constants.h"
 #include "Types.h"
 #include "Tokens.h"
+#include "Standard.h"
 
 namespace SCRambl
 {
@@ -125,6 +126,51 @@ namespace SCRambl
 		}
 	};
 
+	/* build events */
+	struct build_event : task_event {
+		explicit build_event(const Engine& engine) : m_Engine(engine)
+		{ }
+
+	private:
+		const Engine& m_Engine;
+	};
+	struct token_event : build_event {
+	public:
+		explicit token_event(const Engine& engine, Scripts::Range rg) : build_event(engine), m_ScriptRange(rg)
+		{ };
+		inline Scripts::Range TokenRange() const { return m_ScriptRange; }
+
+	private:
+		Scripts::Range m_ScriptRange;
+	};
+	struct error_event : build_event {
+		explicit error_event(const Engine& engine, Basic::Error& error, std::string params) : build_event(engine), Error(error)
+		{ Params.emplace_back(params); }
+		explicit error_event(const Engine& engine, Basic::Error& error, std::vector<std::string> params) : build_event(engine), Error(error), Params(params)
+		{ }
+
+		Basic::Error& Error;
+		std::vector<std::string> Params;
+	};
+	template<typename... TArgs>
+	struct error_event_data : public error_event {
+	protected:
+		explicit error_event_data(Basic::Error error, TArgs&&... args) : error_event(error.GetEngine(), error, error.GetEngine().FormatVec(args...))
+		{ }
+
+		std::tuple<TArgs...> Data;
+	};
+	struct event_added_token : public token_event {
+	public:
+		explicit event_added_token(const Engine& engine, Scripts::Range rg) : token_event(engine, rg)
+		{ };
+	};
+	struct event_parsed_token : public token_event {
+	public:
+		explicit event_parsed_token(const Engine& engine, Scripts::Range rg) : token_event(engine, rg)
+		{ };
+	};
+
 	class BuildEnvironment
 	{
 		Engine& m_Engine;
@@ -164,7 +210,7 @@ namespace SCRambl
 	private:
 		BuildEnvironment& m_Env;
 	};
-	class Build : public TaskSystem::Task<BuildEvent>
+	class Build : public TaskSystem::Task
 	{
 		friend class Builder;
 		using ConfigMap = std::map<std::string, XMLConfiguration>;
@@ -241,13 +287,15 @@ namespace SCRambl
 		}
 
 		template<typename TTokenType, typename... TArgs>
-		Tokens::Token CreateToken(Scripts::Position pos, TArgs&&... args) {
-			Tokens::Token token = m_Script.GetTokens().Add<TTokenType>(pos, args...);
+		Tokens::Token CreateToken(Scripts::Range range, TArgs&&... args) {
+			Tokens::Token token = m_Script.GetTokens().Add<TTokenType>(range.Begin(), args...);
+			m_CurrentTask->second->CallEvent(event_added_token(m_Engine, range));
 			return token;
 		}
 		template<typename TTokenType, typename... TArgs>
-		Tokens::Token ParseToken(Scripts::Position pos, TArgs&&... args) {
-			Tokens::Token token = m_Script.GetParseTokens().Add<TTokenType>(pos, args...);
+		Tokens::Token ParseToken(Scripts::Range range, TArgs&&... args) {
+			Tokens::Token token = m_Script.GetParseTokens().Add<TTokenType>(range.Begin(), args...);
+			m_CurrentTask->second->CallEvent(event_parsed_token(m_Engine, range));
 			return token;
 		}
 		VecRef<Types::Xlation> AddSymbol(Types::Translation::Ref translation) {
@@ -301,7 +349,7 @@ namespace SCRambl
 		inline size_t GetNumTasks() const { return m_Tasks.size(); }
 		inline void ClearTasks() { m_Tasks.clear(); }
 
-		const TaskSystem::Task<BuildEvent>& Run();
+		const TaskSystem::Task& Run();
 
 	protected:
 		bool IsTaskFinished() override { return m_CurrentTask == std::end(m_Tasks); }
@@ -334,7 +382,7 @@ namespace SCRambl
 		std::map<Scripts::Position, ScriptLabel*> m_LabelPosMap;
 
 		// Tasks
-		using TaskMap = std::map<int, std::unique_ptr<TaskSystem::ITask>>;
+		using TaskMap = std::map<int, std::unique_ptr<TaskSystem::Task>>;
 		TaskMap m_Tasks;
 		TaskMap::iterator m_CurrentTask;
 		bool m_HaveTask;

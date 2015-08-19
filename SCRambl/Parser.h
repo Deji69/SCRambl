@@ -103,9 +103,9 @@ namespace SCRambl
 		// Parameter
 		struct Parameter {
 			Operand operand;
-			Types::Value* value;
+			const Types::Value* value;
 
-			Parameter(Operand op, Types::Value* val) : operand(op), value(val)
+			Parameter(Operand op, const Types::Value* val) : operand(op), value(val)
 			{ }
 		};
 		// Chain operation
@@ -170,6 +170,29 @@ namespace SCRambl
 			{ }
 		};
 		
+		// Events
+		struct event : public build_event {
+			explicit event(const Engine& engine) : build_event(engine)
+			{ }
+		};
+		using event_begin = event;
+		using event_finish = event;
+		using event_warning = event;
+		template<Error::ID TID, typename... TArgs>
+		struct event_error : public error_event_data<TArgs...> {
+			event_error(const Engine& engine, TArgs... args) : error_event_data(Basic::Error(engine, TID), std::forward<TArgs>(args)...)
+			{ }
+		};
+		using error_too_many_args				= event_error<Error::too_many_args>;
+		using error_expected_identifier			= event_error<Error::expected_identifier>;
+		using error_expected_key_identifier		= event_error<Error::expected_key_identifier>;
+		using error_expected_colon_punctuator	= event_error<Error::expected_colon_punctuator>;
+		using error_expected_integer_constant	= event_error<Error::expected_integer_constant>;
+		using error_invalid_identifier			= event_error<Error::invalid_identifier, Scripts::Range>;
+		using error_invalid_command				= event_error<Error::invalid_command>;
+		using error_invalid_operator			= event_error<Error::invalid_operator, Scripts::Range>;
+		using error_invalid_character			= event_error<Error::invalid_character, Character>;
+
 		// The parser
 		class Parser {
 			using DelimiterInfo = Tokens::Delimiter::Info<Delimiter>;
@@ -409,7 +432,7 @@ namespace SCRambl
 			T GetIntegerConstant(IToken* toke, T default_val = 0) {
 				auto intinfo = GetIntInfo(toke);
 				if (!intinfo) {
-					SendError(Error::expected_integer_constant);
+					m_Task.Event<error_expected_integer_constant>();
 				}
 				else
 					return static_cast<T>(*intinfo->GetValue<SCRambl::Tokens::Number::NumberValue>());
@@ -513,16 +536,10 @@ namespace SCRambl
 			std::vector<IToken*> m_ParserTokens;
 			template<typename TTokenType, typename... TArgs>
 			TTokenType* CreateToken(TArgs&&... args) {
-				return m_Build.ParseToken<TTokenType>(m_TokenIt->GetPosition(), args...).GetToken<TTokenType>();
+				return m_Build.ParseToken<TTokenType>(Scripts::Range(m_TokenIt->GetPosition(), m_TokenIt->GetPosition()), args...).GetToken<TTokenType>();
 			}
 			
 		private:
-			// Send an error event
-			inline void SendError(Error);
-			// Send an error event (with args)
-			template<typename First, typename... Args>
-			inline void SendError(Error, First&&, Args&&...);
-
 			bool ParseCommandOverloads(const Commands::Vector & vec);
 			void BeginCommandParsing();
 			inline bool IsCommandParsing() const {
@@ -644,7 +661,7 @@ namespace SCRambl
 			bool m_EndOfCommandArgs;
 		};
 		// The parser task
-		class Task : public TaskSystem::Task<Event>, private Parser {
+		class Task : public TaskSystem::Task, private Parser {
 			friend Parser;
 
 		public:
@@ -657,14 +674,14 @@ namespace SCRambl
 			bool IsRunning() const;
 			bool IsTaskFinished() final override;
 
+			template<typename TEvent, typename... TArgs>
+			inline bool Event(TArgs&&... args) {
+				return CallEvent(TEvent(m_Engine, std::forward<TArgs>(args)...));
+			}
+
 		protected:
 			void RunTask() final override;
 			void ResetTask() final override;
-			// Call event
-			inline bool operator()(Event id) { return CallEventHandler(id); }
-			// Call event with args
-			template<typename... Args>
-			inline bool operator()(Event id, Args&&... args) { return CallEventHandler(id, std::forward<Args>(args)...); }
 
 		private:
 			Engine&	m_Engine;

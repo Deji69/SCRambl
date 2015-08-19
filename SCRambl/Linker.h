@@ -75,7 +75,7 @@ namespace SCRambl
 		/*\
 		 * Linker::Task
 		\*/
-		class Task : public TaskSystem::Task<Event>, private Linker
+		class Task : public TaskSystem::Task, private Linker
 		{
 		public:
 			Task(Engine& engine, Build* build) :
@@ -92,10 +92,6 @@ namespace SCRambl
 
 		private:
 			friend Linker;
-
-			inline bool operator()(Event id)					{ return CallEventHandler(id); }
-			template<typename... Args>
-			inline bool operator()(Event id, Args&&... args)	{ return CallEventHandler(id, std::forward<Args>(args)...); }
 			
 			Engine& m_Engine;
 		};

@@ -24,16 +24,17 @@ namespace SCRambl
 	{
 		// Task is a class
 		class Task;
+		class Error;
 		
-		// Interesting stuff that the Preprocessor does
-		enum class Event {
+		// interesting stuff what the Preprocessor does
+		/*enum class Event {
 			Begin, Finish,
 			Warning,
 			Error,
 			AddedToken,
 			FoundToken,
-		};
-
+		};*/
+		
 		// Lexing::Scanner for nothingness (useless?)
 		class WhitespaceScanner : public Lexing::Scanner {
 		public:
@@ -259,6 +260,38 @@ namespace SCRambl
 			Delimiter m_Delimiter = Delimiter::None;
 		};
 
+		struct event : public build_event {
+			explicit event(const Engine& engine) : build_event(engine)
+			{ }
+		};
+		struct event_begin : public event {
+			explicit event_begin(const Engine& engine) : event(engine)
+			{ }
+		};
+		struct event_finish : public event {
+			explicit event_finish(const Engine& engine) : event(engine)
+			{ }
+		};
+		struct event_warning : public event {
+			explicit event_warning(const Engine& engine) : event(engine)
+			{ }
+		};
+		template<Error::ID TID, typename... TArgs>
+		struct event_error : public error_event_data<TArgs...> {
+			event_error(const Engine& engine, TArgs... args) : error_event_data(Basic::Error(engine, TID), std::forward<TArgs>(args)...)
+			{ }
+		};
+		using error_include_failed							= event_error<Error::include_failed, std::string>;
+		using error_dir_expected_file_name					= event_error<Error::dir_expected_file_name, Directive>;
+		using error_dir_expected_command_id					= event_error<Error::dir_expected_command_id, Directive>;
+
+		struct event_found_token : public token_event {
+			using token_event::token_event;
+
+			event_found_token(const Engine& engine, Scripts::Range rg) : token_event(engine, rg)
+			{ }
+		};
+
 		// Main Preprocessor task routine
 		class Preprocessor {
 			friend class Information;
@@ -296,8 +329,10 @@ namespace SCRambl
 
 		private:
 			// Send an error event
-			void SendError(Error);
-			template<typename First, typename... Args> void SendError(Error, First&&, Args&&...);
+			template<typename... TArgs>
+			void SendError(Error, TArgs&&... args);
+			template<typename First, typename... Args>
+			void SendError(Error, First&&, Args&&...);
 
 			// Enter conditional source compilation
 			void PushSourceControl(bool);
@@ -426,7 +461,7 @@ namespace SCRambl
 		};
 
 		// The Preprocessor and Task become one
-		class Task : public TaskSystem::Task<Event>, private Preprocessor {
+		class Task : public TaskSystem::Task, private Preprocessor {
 			friend Preprocessor;
 
 		public:
@@ -437,15 +472,16 @@ namespace SCRambl
 			bool IsRunning() const;
 			bool IsTaskFinished() final override;
 
+			template<typename TEvent, typename... TArgs>
+			inline bool Event(TArgs&&... args) {
+				return CallEvent(TEvent(m_Engine, std::forward<TArgs>(args)...));
+			}
+
 		protected:
 			void RunTask() final override;
 			void ResetTask() final override;
 
 		private:
-			inline bool operator()(Event id) { return CallEventHandler(id); }
-			template<typename... Args>
-			inline bool operator()(Event id, Args&&... args) { return CallEventHandler(id, std::forward<Args>(args)...); }
-
 			Engine& m_Engine;
 			const Information& m_Info;
 		};
