@@ -7,7 +7,6 @@
 #include "Tokens.h"
 #include "Engine.h"
 #include "Tasks.h"
-
 #include <cctype>
 
 using namespace SCRambl;

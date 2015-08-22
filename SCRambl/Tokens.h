@@ -49,12 +49,13 @@ namespace SCRambl
 			IToken*	m_Token = nullptr;
 
 		public:
-			Token() = default;
 			Token(Scripts::Position pos, IToken* tok) :
 				m_Position(pos),
 				m_Token(tok)
 			{ }
 			Token(const Token* ptr) : Token(*ptr)
+			{ }
+			Token(Token&& v) : m_Token(std::move(v.m_Token)), m_Position(v.m_Position)
 			{ }
 
 			inline Scripts::Position& GetPosition() { return m_Position; }
@@ -67,7 +68,7 @@ namespace SCRambl
 
 			template<typename T>
 			inline void SetToken(T tok) {
-				m_Token = tok;
+				m_Token = tok;		// TODO: delete? but then what about copies?
 			}
 			
 			inline IToken* GetToken() { return m_Token; }
