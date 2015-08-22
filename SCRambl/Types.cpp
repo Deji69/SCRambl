@@ -103,18 +103,19 @@ namespace SCRambl
 			ASSERT(IsArray());
 			return static_cast<const ArrayValue*>(this);
 		}
-		VariableValue::VariableValue(const Type* type, size_t size, const Variable* var, const Type* val, bool) : Value(type, ValueSet::Array, size),
+		VariableValue::VariableValue(VecRef<Type> type, size_t size, VecRef<Variable> var, VecRef<Type> val, bool) : Value(type, ValueSet::Array, size),
 			m_VarType(var), m_ValType(val)
 		{ }
-		VariableValue::VariableValue(const Type* type, size_t size, const Variable* var, const Type* val) : Value(type, ValueSet::Variable, size),
+		VariableValue::VariableValue(VecRef<Type> type, size_t size, VecRef<Variable> var, VecRef<Type> val) : Value(type, ValueSet::Variable, size),
 			m_VarType(var), m_ValType(val)
 		{ }
 
 		/* ArrayValue */
-		ArrayValue::ArrayValue(const Type* type, size_t size, const Variable* var, const Type* val) : VariableValue(type, size, var, val, true)
+		ArrayValue::ArrayValue(VecRef<Type> type, size_t size, VecRef<Variable> var, VecRef<Type> val) : VariableValue(type, size, var, val, true)
 		{ }
 
 		/* Type */
+		size_t Type::GetID() const { return m_ID; }
 		std::string Type::GetName() const { return m_Name; }
 		TypeSet Type::GetType() const { return m_Type; }
 		MatchLevel Type::GetMatchLevel(const Type* type) const {
@@ -183,18 +184,16 @@ namespace SCRambl
 		void Type::CopyValues(const Type& other) {
 			for (auto val : other.m_Values) {
 				m_Values.emplace_back(val);
-				m_Values.back()->m_Type = this;
 			}
 		}
-		void Type::MoveValues(Type& other) {
+		void Type::MoveValues(Type&& other) {
 			for (auto val : other.m_Values) {
-				val->m_Type = this;
 				m_Values.emplace_back(val);
 			}
 			other.m_Values.clear();
 		}
-		Type::Type(Type&& type) : m_Name(type.m_Name), m_Type(type.m_Type) {
-			MoveValues(type);
+		Type::Type(Type&& type) : m_ID(type.m_ID), m_Name(type.m_Name), m_Type(type.m_Type) {
+			MoveValues(std::forward<Type>(type));
 		}
 
 		/* DataType */
@@ -225,9 +224,9 @@ namespace SCRambl
 		}
 
 		/* Types */
-		Translation::Ref Types::AddTranslation(Type* type, ValueSet valuetype, size_t size) {
+		Translation::Ref Types::AddTranslation(TypeRef<Type> type, ValueSet valuetype, size_t size) {
 			auto idx = m_Translations.size();
-			m_Translations.emplace_back(type, valuetype, size);
+			m_Translations.emplace_back(type.Ref(), valuetype, size);
 			return m_Translations.size() != idx ? Translation::Ref(m_Translations, idx) : Translation::BadRef;
 		}
 		void Types::AddValueAttributes(XMLConfig* type) {
@@ -235,13 +234,13 @@ namespace SCRambl
 				auto type = static_cast<Type*>(obj);
 				NumberValueType numtype = vec["Type"]->AsString() == "float" ? numtype = NumberValueType::Float : NumberValueType::Integer;
 
-				auto value = type->AddValue<NumberValue>(type, numtype, vec["Size"]->AsNumber<uint32_t>(0));
+				auto value = type->AddValue<NumberValue>(m_Types.Get(type->GetID()).Ref(), numtype, vec["Size"]->AsNumber<uint32_t>(0));
 				AddValue(ValueSet::Number, value);
 				obj = value;
 			});
 			auto text = type->AddClass("Text", [this](const XMLNode vec, void*& obj){
 				auto type = static_cast<Type*>(obj);
-				auto value = type->AddValue<TextValue>(type, vec["Size"]->AsNumber<uint32_t>(), *vec["Mode"]);
+				auto value = type->AddValue<TextValue>(m_Types.Get(type->GetID()).Ref(), vec["Size"]->AsNumber<uint32_t>(), *vec["Mode"]);
 				AddValue(ValueSet::Text, value);
 				obj = value;
 			});
@@ -250,13 +249,13 @@ namespace SCRambl
 				auto datatype = DataType::GetByName(vec["Type"]->AsString());
 				if (datatype == DataType::INVALID)
 					BREAK();
-				auto value = type->AddValue<CommandValue>(type, vec["Size"]->AsNumber<uint32_t>(), vec["Value"]->AsString(), datatype);
+				auto value = type->AddValue<CommandValue>(m_Types.Get(type->GetID()).Ref(), vec["Size"]->AsNumber<uint32_t>(), vec["Value"]->AsString(), datatype);
 				AddValue(ValueSet::Command, value);
 				obj = value;
 			});
 			auto label = type->AddClass("Label", [this](const XMLNode vec, void*& obj) {
 				auto type = static_cast<Type*>(obj);
-				auto value = type->AddValue<LabelValue>(type, vec["Size"]->AsNumber<uint32_t>());
+				auto value = type->AddValue<LabelValue>(m_Types.Get(type->GetID()).Ref(), vec["Size"]->AsNumber<uint32_t>());
 				AddValue(ValueSet::Label, value);
 				obj = value;
 			});
@@ -275,15 +274,12 @@ namespace SCRambl
 					BREAK();
 				}
 				else {
-					auto vartype = GetType(type_attr);
+					auto vartype = GetType<Variable>(type_attr);
 					auto valtype = GetType(value_attr);
-
 					ASSERT(vartype && valtype);
-					ASSERT(vartype->IsVariableType());
+					ASSERT(vartype.IsVariable());
 
-					auto value = type->AddValue<VariableValue>(type, vec["Size"]->AsNumber<uint32_t>(), vartype->ToVariable(), valtype);
-					//value->m_Types = this;
-
+					auto value = type->AddValue<VariableValue>(m_Types.Get(type->GetID()).Ref(), vec["Size"]->AsNumber<uint32_t>(), vartype.Ref(), valtype.Ref());
 					AddValue(ValueSet::Variable, value);
 					obj = value;
 				}
@@ -303,13 +299,13 @@ namespace SCRambl
 					BREAK();
 				}
 				else {
-					auto vartype = GetType(type_attr);
+					auto vartype = GetType<Variable>(type_attr);
 					auto valtype = GetType(value_attr);
 
 					ASSERT(vartype && valtype);
-					ASSERT(vartype->IsVariableType() && vartype->ToVariable()->IsArray());
+					ASSERT(vartype.IsVariable() && vartype.AsVariable().IsArray());
 
-					auto value = type->AddValue<ArrayValue>(type, vec["Size"]->AsNumber<uint32_t>(), vartype->ToVariable(), valtype);
+					auto value = type->AddValue<ArrayValue>(m_Types.Get(type->GetID()).Ref(), vec["Size"]->AsNumber<uint32_t>(), vartype.Ref(), valtype.Ref());
 					AddValue(ValueSet::Array, value);
 					obj = value;
 				}
@@ -405,9 +401,8 @@ namespace SCRambl
 						auto size = vec["Size"]->AsNumber<size_t>(-1);
 						auto translation = AddTranslation(type, valtype, size);
 
-						type->AllValues<Value>([valtype, size, translation](Value* value){
-							if (size == -1 || value->GetSize() == size)
-							{
+						type.Get().AllValues<Value>([valtype, size, translation](Value* value){
+							if (size == -1 || value->GetSize() == size) {
 								if (valtype == ValueSet::INVALID || valtype == value->GetValueType())
 									value->SetTranslation(translation);
 							}

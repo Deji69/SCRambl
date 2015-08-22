@@ -11,5 +11,9 @@ namespace SCRambl
 	}
 	Variable::Variable(const Types::Type* type, size_t index, std::string name, size_t arrsize) : m_Name(name),
 		m_Index(index), m_Type(type), m_ArraySize(arrsize)
-	{ Init(); }
+	{
+		if (IsArray()) m_ArrayValue = type->GetArrayValue();
+		else m_VarValue = type->GetVarValue();
+		Init();
+	}
 }

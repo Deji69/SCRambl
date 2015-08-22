@@ -7,9 +7,9 @@
 using namespace SCRambl;
 
 /* Build */
-const ScriptVariable* Build::AddScriptVariable(std::string name, Types::Type* type, size_t array_size) {
+const ScriptVariable* Build::AddScriptVariable(std::string name, VecRef<Types::Type> type, size_t array_size) {
 	if (type->HasValueType(array_size ? Types::ValueSet::Array : Types::ValueSet::Variable)) {
-		auto var = m_Variables.Add(type, name, array_size);
+		auto var = m_Variables.Add(type.Ptr(), name, array_size);
 		//if (var->Get().ID() > var->Get().Value()->GetVarType()->GetVarMaxIndex())
 			
 		return var;

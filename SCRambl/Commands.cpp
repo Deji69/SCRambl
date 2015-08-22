@@ -17,7 +17,7 @@ namespace SCRambl
 	const CommandAttributeSet Attributes<CommandAttributeID, CommandAttributeSet>::s_AttributeSet;
 
 	// CommandArg
-	CommandArg::CommandArg(Type* type, size_t index, bool isRet, size_t size) : m_Type(type), m_Index(index), m_IsReturn(isRet), m_Size(size)
+	CommandArg::CommandArg(VecRef<Type> type, size_t index, bool isRet, size_t size) : m_Type(type), m_Index(index), m_IsReturn(isRet), m_Size(size)
 	{ }
 	
 	// CommandValue
@@ -47,10 +47,10 @@ namespace SCRambl
 	CommandArg& Command::GetArg(size_t i) { return m_Args[i]; }
 	const CommandArg& Command::GetArg(size_t i) const { return m_Args[i]; }
 
-	void Command::AddArg(Arg::Type* type, bool isRet, size_t size) {
+	void Command::AddArg(VecRef<Arg::Type> type, bool isRet, size_t size) {
 		m_Args.emplace_back(type, m_Args.size(), isRet, size);
 	}
-	Command::Command(std::string name, XMLValue index, Types::Type* type) : m_Name(name), m_Index(index), m_Type(type)
+	Command::Command(std::string name, XMLValue index, VecRef<Types::Type> type) : m_Name(name), m_Index(index), m_Type(type)
 	{
 		if (!m_Type) BREAK();
 	}
@@ -68,7 +68,7 @@ namespace SCRambl
 		auto& usecc = m_UseCaseConversion;
 		auto& ccdest = m_DestCasing;
 		auto& ccsrc = m_SourceCasing;
-		Types::Type* type = nullptr;
+		VecRef<Types::Type> type;
 
 		m_Config = build.AddConfig("Commands");
 
@@ -78,14 +78,14 @@ namespace SCRambl
 			ccsrc = GetCasingByName(xml.GetAttribute("From").GetValue().AsString());
 		});
 		m_Config->AddClass("CommandType", [this, &type, &types](const XMLNode xml, void*& obj){
-			type = types.GetType(xml["Type"]->AsString());
+			type = types.GetType(xml["Type"]->AsString()).Ref();
 			if (!type) BREAK();
 		});
 		auto args = m_Config->AddClass("Command", [this, &type, &types](const XMLNode xml, void*& obj){
 			// store the command to the object pointer so we can access it again
 			auto stype = type;
 			if (auto type_attr = xml.GetAttribute("Type")) {
-				stype = types.GetType(type_attr->AsString());
+				stype = types.GetType(type_attr->AsString()).Ref();
 			}
 			auto command = AddCommand(CaseConvert(xml["Name"]->AsString()), *xml["ID"], stype);
 			obj = command.Ptr();
@@ -94,7 +94,7 @@ namespace SCRambl
 			// retrieve the object poiter as a SCR command we know it to be
 			auto& command = *static_cast<SCRambl::Command*>(obj);
 			if (auto type = types.GetType(xml.GetAttribute("Type").GetValue().AsString())) {
-				command.AddArg(static_cast<Types::Type*>(type), xml.GetAttribute("Out").GetValue().AsBool());
+				command.AddArg(type.Ref(), xml.GetAttribute("Out").GetValue().AsBool());
 			}
 			else {
 				auto name = xml.GetAttribute("Type").GetValue().AsString();
@@ -105,7 +105,7 @@ namespace SCRambl
 	Command::Ref Commands::GetCommand(size_t index) {
 		return Command::Ref(m_Commands, index);
 	}
-	Command::Ref Commands::AddCommand(std::string name, XMLValue id, Types::Type* type) {
+	Command::Ref Commands::AddCommand(std::string name, XMLValue id, VecRef<Types::Type> type) {
 		if (name.empty()) return nullptr;
 
 		if (m_SourceCasing != m_DestCasing) {

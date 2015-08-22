@@ -27,7 +27,7 @@ WAIT 0x7F*/
 	SCRIPT_NAME "tool"
 }
 {
-	LVAR_INT var3 var4
+	LVAR_INT lvar3 lvar4
 	WAIT lvar3
 	WAIT lvar4
 	WAIT lvar1

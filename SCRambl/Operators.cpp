@@ -24,7 +24,7 @@ OperationRef Operator::GetOperation(Variable* var, const Types::Type* type) {
 	for (auto& op : m_Operations) {
 		if (!op.HasLHS() || !op.HasRHS()) continue;
 				
-		auto lhs = op.GetLHS(), rhs = op.GetRHS();
+		auto lhs = op.LHS(), rhs = op.RHS();
 		auto lhs_lvl = lhs->GetMatchLevel(var->Type());
 		auto rhs_lvl = rhs->GetMatchLevel(type);
 		if (lhs_lvl != rhs_lvl) {
@@ -59,7 +59,7 @@ OperationRef Operator::GetUnaryOperation(Variable* var, bool rhs_var) {
 		if (op.HasLHS() == op.HasRHS()) continue;
 		if (rhs_var ? (!op.HasLHV() || !op.HasRHS()) : (!op.HasRHV() || !op.HasLHS())) continue;
 
-		auto lhs = op.GetLHS(), rhs = op.GetRHS();
+		auto lhs = op.LHS(), rhs = op.RHS();
 
 		if (!lhs && !rhs) continue; // derp?
 
@@ -109,11 +109,11 @@ void Master::Init(Build& build) {
 		obj = nullptr;
 
 		if (auto id = xml.GetAttribute("ID").GetValue()) {
-			Types::Type * lhs_type = nullptr, * rhs_type = nullptr;
+			VecRef<Types::Type> lhs_type, rhs_type;
 			if (auto lhs = xml.GetAttribute("LHS").GetValue())
-				lhs_type = types.GetType(lhs.AsString());
+				lhs_type = types.GetType(lhs.AsString()).Ref();
 			if (auto rhs = xml.GetAttribute("RHS").GetValue())
-				rhs_type = types.GetType(rhs.AsString());
+				rhs_type = types.GetType(rhs.AsString()).Ref();
 					
 			if (lhs_type || rhs_type) {
 				auto operation = operater.AddOperation(id.AsNumber<size_t>(), lhs_type, rhs_type);

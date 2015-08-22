@@ -269,7 +269,7 @@ namespace SCRambl
 		inline const ScriptObjects<Variable>& GetVariables() const { return m_Variables; }
 		inline const ScriptVariable::Scope& OpenVarScope() { return m_Variables.BeginLocal(); }
 		inline const ScriptVariable::Scope& CloseVarScope() { return m_Variables.EndLocal(); }
-		const ScriptVariable* AddScriptVariable(std::string name, Types::Type*, size_t array_size);
+		const ScriptVariable* AddScriptVariable(std::string name, VecRef<Types::Type>, size_t array_size);
 		const ScriptVariable* GetScriptVariable(std::string);
 
 		// Labels

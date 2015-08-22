@@ -490,7 +490,7 @@ States Parser::Parse_Type_CommandDef() {
 					GetDelimitedArrayIntegerConstant(size);
 
 					// add to command
-					command->AddArg(type, isret, size);
+					command->AddArg(type.Ref(), isret, size);
 				}
 			}
 			else m_Task.Event<error_expected_key_identifier>();

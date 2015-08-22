@@ -360,7 +360,7 @@ namespace SCRambl
 			// Strips comments
 			void HandleComment();
 			// Get type (including added script types)
-			Types::Type* GetType(const std::string&);
+			VecRef<Types::Type> GetType(const std::string&);
 			// Lex main code
 			Lexing::Result Lex();
 			// Lex with error callback

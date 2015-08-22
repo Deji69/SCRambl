@@ -220,14 +220,14 @@ namespace SCRambl
 					{ }
 				};
 
-				Types::Type* type;
+				VecRef<Types::Type> type;
 				Tokens::Iterator type_iterator;
 				IToken* token;
 				std::vector<TypeVarDeclaration> var_declarations;
 
 				TypeParseState()
 				{ }
-				TypeParseState(Types::Type* type_, IToken* token_) : type(type_), token(token_)
+				TypeParseState(VecRef<Types::Type> type_, IToken* token_) : type(type_), token(token_)
 				{ }
 			} m_TypeParseState;
 			struct CommandParseState {
@@ -612,9 +612,9 @@ namespace SCRambl
 				}
 			}
 
-			inline Types::Type* GetType(const std::string& name) {
+			inline VecRef<Types::Type> GetType(const std::string& name) {
 				auto ptr = m_Types.GetType(name);
-				return ptr ? ptr : m_Build.GetTypes().GetType(name);
+				return (ptr ? ptr : m_Build.GetTypes().GetType(name)).Ref();
 			}
 
 			void Init();

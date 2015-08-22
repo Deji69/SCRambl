@@ -245,29 +245,29 @@ namespace SCRambl
 			OperatorRef m_Operator;
 			OperationRef m_Ref;
 			size_t m_Index;
-			Types::Type* m_RHS = nullptr, * m_LHS = nullptr;
+			VecRef<Types::Type> m_RHS, m_LHS;
 			bool m_HasLHV = false, m_HasRHV = false, m_Swapped = false;
 			int m_LHV = 0, m_RHV = 0;
 
 		public:
 			Operation() = delete;
-			Operation(OperationRef ref, OperatorRef op, size_t id, Types::Type* lhs, Types::Type* rhs = nullptr) : m_Ref(ref), m_Operator(op),
+			Operation(OperationRef ref, OperatorRef op, size_t id, VecRef<Types::Type> lhs, VecRef<Types::Type> rhs = {}) : m_Ref(ref), m_Operator(op),
 				m_Index(id), m_LHS(lhs), m_RHS(rhs), m_HasLHV(false), m_HasRHV(false), m_Swapped(false)
 			{ }
 
 			OperationRef GetRef() const { return m_Ref; }
 			OperatorRef GetOperator() const { return m_Operator; }
 			size_t GetIndex() const { return m_Index; }
-			Types::Type* GetLHS() const { return m_LHS; }
-			Types::Type* GetRHS() const { return m_RHS; }
-			bool HasLHS() const { return m_LHS != nullptr; }
-			bool HasRHS() const { return m_RHS != nullptr; }
+			Types::Type* LHS() const { return m_LHS.Ptr(); }
+			Types::Type* RHS() const { return m_RHS.Ptr(); }
+			bool HasLHS() const { return LHS() != nullptr; }
+			bool HasRHS() const { return RHS() != nullptr; }
 			bool HasLHV() const { return m_HasLHV; }
 			bool HasRHV() const { return m_HasRHV; }
 			int GetLHV() const { return m_LHV; }
 			int GetRHV() const { return m_RHV; }
-			void SetLHS(Types::Type* type) { m_LHS = type; }
-			void SetRHS(Types::Type* type) { m_RHS = type; }
+			void SetLHS(VecRef<Types::Type> type) { m_LHS = type; }
+			void SetRHS(VecRef<Types::Type> type) { m_RHS = type; }
 			void SetLHV(int v) {
 				m_LHV = v;
 				m_HasLHV = true;
@@ -306,7 +306,7 @@ namespace SCRambl
 			bool IsNegative() const { return m_Sign == Sign::negative; }
 			bool IsPositive() const { return m_Sign == Sign::positive; }
 
-			OperationRef AddOperation(size_t id, Types::Type* lhs, Types::Type* rhs) {
+			OperationRef AddOperation(size_t id, VecRef<Types::Type> lhs, VecRef<Types::Type> rhs) {
 				m_Operations.emplace_back(OperationRef(m_Operations), m_Ref, id, lhs, rhs);
 				return m_Operations.back().GetRef();
 			}

@@ -1075,8 +1075,8 @@ bool Preprocessor::CloseDelimiter(Scripts::Position pos, Delimiter type) {
 	}
 	return false;
 }
-Types::Type* Preprocessor::GetType(const std::string& name) {
-	return m_Build.GetTypes().GetType(name);
+VecRef<Types::Type> Preprocessor::GetType(const std::string& name) {
+	return m_Build.GetTypes().GetType(name).Ref();
 }
 
 // Printf-styled error reporting

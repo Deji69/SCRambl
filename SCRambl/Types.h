@@ -88,13 +88,13 @@ namespace SCRambl
 		// Types::Type
 		class Type {
 			void CopyValues(const Type&);
-			void MoveValues(Type&);
+			void MoveValues(Type&&);
 
 		public:
 			// TODO: meh
-			Type(std::string name, TypeSet type) : m_Name(name), m_Type(type)
+			Type(size_t id, std::string name, TypeSet type) : m_ID(id), m_Name(name), m_Type(type)
 			{ }
-			Type(const Type& type) : m_Name(type.m_Name), m_Type(type.m_Type) {
+			Type(const Type& type) : m_ID(type.m_ID), m_Name(type.m_Name), m_Type(type.m_Type) {
 				CopyValues(type);
 			}
 			Type(Type&&);
@@ -105,6 +105,7 @@ namespace SCRambl
 			size_t GetVarMinIndex() const;
 			size_t GetVarMaxIndex() const;
 
+			size_t GetID() const;
 			std::string GetName() const;
 			TypeSet GetType() const;
 			bool IsBasicType() const;
@@ -155,23 +156,22 @@ namespace SCRambl
 			}
 
 		private:
+			size_t m_ID;
 			std::string m_Name;
 			TypeSet m_Type;
 			std::vector<Value*> m_Values;
 		};
 
-		class Basic : public Type
-		{
+		class Basic : public Type {
 		public:
-			Basic(std::string name) : Type(name, TypeSet::Basic)
+			Basic(size_t id, std::string name) : Type(id, name, TypeSet::Basic)
 			{ }
 		
 		protected:
-			Basic(std::string name, bool) : Type(name, TypeSet::Extended)
+			Basic(size_t id, std::string name, bool) : Type(id, name, TypeSet::Extended)
 			{ }
 		};
-		class Variable : public Type
-		{
+		class Variable : public Type {
 			XMLValue m_Scope;
 			XMLValue m_IsArray;
 
@@ -181,7 +181,7 @@ namespace SCRambl
 			XMLValue m_MaxIndex = LONG_MAX;
 
 		public:
-			Variable(std::string name, XMLValue scope, XMLValue isarray) : Type(name, TypeSet::Variable),
+			Variable(size_t id, std::string name, XMLValue scope, XMLValue isarray) : Type(id, name, TypeSet::Variable),
 				m_Scope(scope), m_IsArray(isarray)
 			{ }
 
@@ -194,69 +194,101 @@ namespace SCRambl
 			void SetMinIndex(XMLValue v) { m_MinIndex = v; }
 			void SetMaxIndex(XMLValue v) { m_MaxIndex = v; }
 		};
-		class Extended : public Type
-		{
+		class Extended : public Type {
 			Type* m_BasicType;
 
 		public:
-			Extended(std::string name, Type* basic = nullptr) : Type(name, TypeSet::Extended),
+			Extended(size_t id, std::string name, Type* basic = nullptr) : Type(id, name, TypeSet::Extended),
 				m_BasicType(basic)
 			{ }
 
 			Type* GetBasicType() const { return m_BasicType; }
 		};
 
+		class ITypeRef {
+		public:
+			virtual ~ITypeRef() = default;
+			virtual TypeSet GetType() const = 0;
+			virtual Type& Get() const = 0;
+			virtual bool OK() const = 0;
+			inline operator bool() const { return OK(); }
+			inline bool IsBasic() const { return GetType() == TypeSet::Basic; }
+			inline bool IsVariable() const { return GetType() == TypeSet::Variable; }
+			inline bool IsExtended() const { return GetType() == TypeSet::Extended; }
+			inline Basic& AsBasic() { return static_cast<Basic&>(Get()); }
+			inline const Basic& AsBasic() const { return static_cast<const Basic&>(Get()); }
+			inline Extended& AsExtended() { return static_cast<Extended&>(Get()); }
+			inline const Extended& AsExtended() const { return static_cast<const Extended&>(Get()); }
+			inline Variable& AsVariable() { return static_cast<Variable&>(Get()); }
+			inline const Variable& AsVariable() const { return static_cast<const Variable&>(Get()); }
+		};
+
+		template<typename T>
+		class TypeRef : public ITypeRef {
+		public:
+			TypeRef() = default;
+			TypeRef(std::nullptr_t) : TypeRef() { }
+			TypeRef(TypeRef<T>&& v) : m_Type(std::move(v.m_Type))
+			{ }
+			TypeRef(VecRef<T> v) : m_Type(v)
+			{ }
+			virtual TypeSet GetType() const override { return Get().GetType(); }
+			virtual Type& Get() const override { return *m_Type; }
+			virtual bool OK() const override { return m_Type.OK(); }
+			VecRef<T> Ref() const { return m_Type; }
+
+		private:
+			VecRef<T> m_Type;
+		};
+
+		using BasicRef = TypeRef<Basic>;
+		using ExtendedRef = TypeRef<Extended>;
+		using VariableRef = TypeRef<Variable>;
+
 		class Storage {
 		public:
-			struct Info {
-				TypeSet type;
-				size_t index;
-
-				Info(TypeSet ty, size_t id) : type(ty), index(id)
-				{ }
-			};
-
-			using Map = std::unordered_map<std::string, Info>;
-			using Vector = std::vector<Info>;
+			using Vector = std::vector<std::unique_ptr<ITypeRef>>;
+			using Map = std::unordered_map<std::string, size_t>;
 
 			Storage() { }
 
-			template<typename T>
-			void Add(std::string name, Info info) {
-				m_Vector.emplace_back(info);
-				m_Map.emplace(name, info);
+			inline BasicRef& AddBasic(std::string name) {
+				auto& ref = Add<Basic>(name, { m_Basics });
+				m_Basics.emplace_back(ref.Ref().Index(), name);
+				return ref;
 			}
-			inline Basic* AddBasic(std::string name) {
-				Add<Basic>(name, Info(TypeSet::Basic, m_Basics.size()));
-				m_Basics.emplace_back(name);
-				return &m_Basics.back();
+			inline ExtendedRef& AddExtended(std::string name, Basic* basic = nullptr) {
+				auto& ref = Add<Extended>(name, { m_Extendeds });
+				m_Extendeds.emplace_back(ref.Ref().Index(), name, basic);
+				return ref;
 			}
-			inline Extended* AddExtended(std::string name, Basic* basic = nullptr) {
-				Add<Extended>(name, Info(TypeSet::Extended, m_Extendeds.size()));
-				m_Extendeds.emplace_back(name, basic);
-				return &m_Extendeds.back();
+			inline VariableRef& AddVariable(std::string name, XMLValue scope, bool is_array = false) {
+				auto& ref = Add<Variable>(name, { m_Variables });
+				m_Variables.emplace_back(ref.Ref().Index(), name, scope, is_array);
+				return ref;
 			}
-			inline Variable* AddVariable(std::string name, XMLValue scope, bool is_array = false) {
-				Add<Variable>(name, Info(TypeSet::Variable, m_Variables.size()));
-				m_Variables.emplace_back(name, scope, is_array);
-				return &m_Variables.back();
+			size_t GetTypeID(TypeSet type, size_t id) {
+				if (type == TypeSet::Extended && id < m_Extendeds.size())
+					return m_Extendeds[id].GetID();
+				else if (type == TypeSet::Variable && id < m_Variables.size())
+					return m_Variables[id].GetID();
+				else if (type == TypeSet::Basic && id < m_Basics.size())
+					return m_Basics[id].GetID();
+				else BREAK();
+				return -1;
 			}
-			Type* GetType(TypeSet type, size_t id) {
-				if (type == TypeSet::Extended)
-					return &m_Extendeds[id];
-				else if (type == TypeSet::Variable)
-					return &m_Variables[id];
-				return &m_Basics[id];
-			}
-			Type* Get(Info info) {
-				return GetType(info.type, info.index);
-			}
-			Type* Get(std::string name) {
+			template<typename T = Type>
+			inline TypeRef<T> Get(size_t id) { return static_cast<TypeRef<T>&>(*m_Vector[id]); }
+			template<typename T = Type>
+			inline TypeRef<const T> Get(size_t id) const { return static_cast<TypeRef<const T>&>(*m_Vector[id]); }
+			template<typename T = Type>
+			inline T* Get(TypeSet type, size_t id) { return Get(GetTypeID(type)); }
+			template<typename T = Type>
+			inline TypeRef<const T> Get(TypeSet type, size_t id) const { return Get(GetTypeID(type)); }
+			template<typename T = Type>
+			inline TypeRef<T> Get(std::string name) {
 				auto it = m_Map.find(name);
-				return it != m_Map.end() ? Get(it->second) : nullptr;
-			}
-			Type* Get(size_t id) {
-				return id < m_Vector.size() ? Get(m_Vector[id]) : nullptr;
+				return it != m_Map.end() ? Get<T>(it->second) : nullptr;
 			}
 			size_t GetSize() const {
 				return m_Vector.size();
@@ -269,9 +301,17 @@ namespace SCRambl
 			size_t Walk(TFunc func) {
 				size_t n = 0;
 				for (; n < GetSize(); ++n) {
-					if (func(Get(n))) break;
+					if (func(Get(n).Ref().Ptr())) break;
 				}
 				return n;
+			}
+
+		protected:
+			template<typename T>
+			TypeRef<T>& Add(std::string name, TypeRef<T> ref) {
+				m_Vector.emplace_back(std::make_unique<TypeRef<T>>(ref));
+				m_Map.emplace(name, m_Vector.size() - 1);
+				return static_cast<TypeRef<T>&>(*m_Vector.back());
 			}
 
 		private:
@@ -452,7 +492,7 @@ namespace SCRambl
 			using FieldRef = VecRef<Data::Field>;
 			static const Ref BadRef;
 
-			Translation(Type* type, ValueSet valuetype, size_t size) : m_Type(type), m_ValueType(valuetype), m_Size(size)
+			Translation(VecRef<Type> type, ValueSet valuetype, size_t size) : m_Type(type), m_ValueType(valuetype), m_Size(size)
 			{ }
 
 			Data& AddData() {
@@ -463,7 +503,7 @@ namespace SCRambl
 			size_t GetDataCount() const { return m_Data.size(); }
 
 		private:
-			Type* m_Type = nullptr;
+			VecRef<Type> m_Type = nullptr;
 			ValueSet m_ValueType = ValueSet::INVALID;
 			size_t m_Size = 0;
 			std::vector<Data> m_Data;
@@ -518,9 +558,9 @@ namespace SCRambl
 			friend Type;
 
 		public:
-			Value(const Type* type, ValueSet valtype) : m_ValueType(valtype), m_Type(type), m_Size(0)
+			Value(VecRef<Type> type, ValueSet valtype) : m_ValueType(valtype), m_Type(type), m_Size(0)
 			{ }
-			Value(const Type* type, ValueSet valtype, size_t size) : m_ValueType(valtype), m_Type(type), m_Size(size)
+			Value(VecRef<Type> type, ValueSet valtype, size_t size) : m_ValueType(valtype), m_Type(type), m_Size(size)
 			{ }
 			inline virtual ~Value() { }
 
@@ -529,7 +569,7 @@ namespace SCRambl
 			}
 			
 			inline size_t GetSize() const { return m_Size; }
-			inline const Type* GetType() const { return m_Type; }
+			inline const Type* GetType() const { return m_Type.Ptr(); }
 			inline ValueSet GetValueType() const { return m_ValueType; }
 
 			inline Translation::Ref GetTranslation() const { return m_Translation; }
@@ -542,7 +582,7 @@ namespace SCRambl
 
 		private:
 			ValueSet m_ValueType;
-			const Type* m_Type;
+			VecRef<Type> m_Type;
 			size_t m_Size;
 			Translation::Ref m_Translation = Translation::BadRef;
 		};
@@ -555,7 +595,7 @@ namespace SCRambl
 		class NumberValue : public Value
 		{
 		public:
-			NumberValue(Type* type, NumberValueType numtype, size_t size) : Value(type, ValueSet::Number, size), m_Type(numtype)
+			NumberValue(VecRef<Type> type, NumberValueType numtype, size_t size) : Value(type, ValueSet::Number, size), m_Type(numtype)
 			{ }
 
 			inline NumberValueType	GetNumberType() const { return m_Type; }
@@ -565,7 +605,7 @@ namespace SCRambl
 		};
 		class TextValue : public Value {
 		public:
-			TextValue(Type* type, size_t size, XMLValue mode = "", XMLValue terminate = "") : Value(type, ValueSet::Text, size),
+			TextValue(VecRef<Type> type, size_t size, XMLValue mode = "", XMLValue terminate = "") : Value(type, ValueSet::Text, size),
 				m_Mode(mode), m_Terminate(terminate)
 			{ }
 
@@ -576,32 +616,32 @@ namespace SCRambl
 		class LabelValue : public Value
 		{
 		public:
-			LabelValue(Type* type, size_t size) : Value(type, ValueSet::Label, size)
+			LabelValue(VecRef<Type> type, size_t size) : Value(type, ValueSet::Label, size)
 			{ }
 		};
 		class VariableValue : public Value {
 			friend Types;
 		public:
-			VariableValue(const Type* type, size_t size, const Variable* vartype, const Type* valtype);
+			VariableValue(VecRef<Type> type, size_t size, VecRef<Variable> vartype, VecRef<Type> valtype);
 
 			inline bool IsScoped() const { return m_VarType->IsScopedVar(); }
 			inline bool IsGlobal() const { return !IsScoped(); }
 			inline bool IsArray() const { return GetValueType() == ValueSet::Array; }
-			const Variable* GetVarType() const { return m_VarType; }
-			const Type* GetValType() const { return m_ValType; }
+			const Variable* GetVarType() const { return m_VarType.Ptr(); }
+			const Type* GetValType() const { return m_ValType.Ptr(); }
 			ArrayValue* ToArray();
 			const ArrayValue* ToArray() const;
 
 		protected:
-			VariableValue(const Type* type, size_t size, const Variable* var, const Type* val, bool);
+			VariableValue(VecRef<Type> type, size_t size, VecRef<Variable> var, VecRef<Type> val, bool);
 
 		private:
-			const Variable* m_VarType;
-			const Type* m_ValType;
+			VecRef<Variable> m_VarType;
+			VecRef<Type> m_ValType;
 		};
 		class ArrayValue : public VariableValue {
 		public:
-			ArrayValue(const Type* type, size_t size, const Variable* var, const Type* val);
+			ArrayValue(VecRef<Type> type, size_t size, VecRef<Variable> var, VecRef<Type> val);
 			
 			inline bool IsArray() const { return true; }
 			ArrayValue* ToArray() = delete;
@@ -670,35 +710,34 @@ namespace SCRambl
 				return s_set.GetAttribute(name);
 			}
 
-			inline Type* AddType(std::string name) {
+			inline Basic* AddType(std::string name) {
 				auto old = GetAllTypesVector();
 				size_t cap = m_TypePointers.empty() ? 0 : m_Types.GetCapacity();
-				auto shared = m_Types.AddBasic(name);
+				auto ref = m_Types.AddBasic(name);
 				if (!m_TypePointers.empty() && cap != m_Types.GetCapacity()) UpdatePointers(old);
-				return shared;
+				return &ref.AsBasic();
 			}
 			inline Extended* AddExtendedType(std::string name, Basic* basic = nullptr) {
 				auto old = GetAllTypesVector();
 				size_t cap = m_TypePointers.empty() ? 0 : m_Types.GetCapacity();
 				auto type = m_Types.AddExtended(name, basic);
 				if (!m_TypePointers.empty() && cap != m_Types.GetCapacity()) UpdatePointers(old);
-				return type;
+				return &type.AsExtended();
 			}
 			inline Variable* AddVariableType(std::string name, XMLValue scope, bool is_array = false) {
 				auto old = GetAllTypesVector();
 				size_t cap = m_TypePointers.empty() ? 0 : m_Types.GetCapacity();
 				auto type = m_Types.AddVariable(name, scope, is_array);
 				if (!m_TypePointers.empty() && cap != m_Types.GetCapacity()) UpdatePointers(old);
-				return type;
+				return &type.AsVariable();
 			}
-			inline Type* GetType(std::string name) {
-				return m_Types.Get(name);
-			}
+			template<typename T = Type>
+			inline TypeRef<T> GetType(std::string name) { return m_Types.Get<T>(name); }
 			inline void AddValue(ValueSet valtype, Value* value) {
 				m_Values.emplace(valtype, value);
 			}
 			
-			Translation::Ref AddTranslation(Type* type, ValueSet valuetype, size_t size);
+			Translation::Ref AddTranslation(TypeRef<Type> type, ValueSet valuetype, size_t size);
 
 			/*\
 			 * Types::Types::AllValues - Calls the requested function for each value of 'valtype'

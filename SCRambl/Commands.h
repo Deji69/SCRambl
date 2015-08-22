@@ -45,15 +45,15 @@ namespace SCRambl
 		using Vector = std::vector<CommandArg>;
 		using Iterator = Vector::iterator;
 
-		CommandArg(Type* type, size_t index, bool isRet = false, size_t size = 0);
+		CommandArg(VecRef<Type> type, size_t index, bool isRet = false, size_t size = 0);
 
 		inline bool IsReturn() const { return m_IsReturn; }
 		inline size_t GetIndex() const { return m_Index; }
 		inline size_t GetSize() const { return m_Size; }
-		inline Type* GetType() const { return m_Type; }
+		inline Type* GetType() const { return m_Type.Ptr(); }
 
 	private:
-		Type* m_Type;
+		VecRef<Type> m_Type;
 		size_t m_Index;						// nth arg
 		bool m_IsReturn = false;
 		size_t m_Size = 0;					// 0 = 'auto'
@@ -68,17 +68,17 @@ namespace SCRambl
 		using Ref = VecRef<Command>;
 
 	private:
-		XMLValue m_Index;			// index, which could be name/id/hash, depends on translation
-		std::string m_Name;			// command name identifier
-		ArgVec m_Args;				// arg vector me matey!
-		Types::Type* m_Type;		// command type
+		XMLValue m_Index;				// index, which could be name/id/hash, depends on translation
+		std::string m_Name;				// command name identifier
+		ArgVec m_Args;					// arg vector me matey!
+		VecRef<Types::Type> m_Type;		// command type
 
 	public:
-		Command(std::string name, XMLValue index, Types::Type* type);
+		Command(std::string name, XMLValue index, VecRef<Types::Type> type);
 
 		Attributes GetAttributes() const;
 
-		void AddArg(Arg::Type* type, bool isRet = false, size_t valueSize = 0);
+		void AddArg(VecRef<Arg::Type> type, bool isRet = false, size_t valueSize = 0);
 		Arg& GetArg(size_t i);
 		const Arg& Command::GetArg(size_t i) const;
 
@@ -90,7 +90,7 @@ namespace SCRambl
 		inline size_t NumRequiredArgs() const { return m_Args.size(); }
 		inline XMLValue ID() const { return m_Index; }
 		inline std::string Name() const { return m_Name; }
-		inline Types::Type* Type() const { return m_Type; }
+		inline Types::Type* Type() const { return m_Type.Ptr(); }
 	};
 	
 	// CommandValue 
@@ -99,7 +99,7 @@ namespace SCRambl
 		Types::DataType::Type m_ValueType;
 
 	public:
-		CommandValue(Types::Type* type, size_t size, std::string valueid, Types::DataType datatype) : Value(type, Types::ValueSet::Command, size),
+		CommandValue(VecRef<Types::Type> type, size_t size, std::string valueid, Types::DataType datatype) : Value(type, Types::ValueSet::Command, size),
 			m_ValueID(Types::DataAttributeID::None),
 			m_ValueType(datatype)
 		{ }
@@ -130,7 +130,7 @@ namespace SCRambl
 
 		void Init(Build& build);
 		std::string CaseConvert(std::string) const;
-		Command::Ref AddCommand(std::string name, XMLValue id, Types::Type*);
+		Command::Ref AddCommand(std::string name, XMLValue id, VecRef<Types::Type>);
 		Command::Ref GetCommand(size_t index);
 		
 		// Finds all commands matching the name and stores them in a passed vector of command handles
