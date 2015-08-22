@@ -387,7 +387,7 @@ namespace SCRambl
 			bool LexNumber();
 			// Add a preprocessing token
 			template<typename T, typename... TArgs>
-			inline Tokens::Token AddToken(Scripts::Position pos, TArgs&&... args) {
+			inline VecRef<Tokens::Token> AddToken(Scripts::Position pos, TArgs&&... args) {
 				m_WasLastTokenEOL = false;
 				return m_Tokens.Add<T>(pos, std::forward<TArgs&&>(args)...);
 			}
@@ -438,7 +438,7 @@ namespace SCRambl
 			LexerMachine m_Lexer;
 			MacroMap m_Macros;
 			DirectiveMap m_Directives;
-			std::stack<Tokens::Token> m_Delimiters;
+			std::stack<VecRef<Tokens::Token>> m_Delimiters;
 			//
 			bool m_DisableMacroExpansion = false;
 			bool m_DisableMacroExpansionOnce = false;

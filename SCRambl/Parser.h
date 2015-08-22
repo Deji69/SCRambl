@@ -536,7 +536,7 @@ namespace SCRambl
 			std::vector<IToken*> m_ParserTokens;
 			template<typename TTokenType, typename... TArgs>
 			TTokenType* CreateToken(TArgs&&... args) {
-				return m_Build.ParseToken<TTokenType>(Scripts::Range(m_TokenIt->GetPosition(), m_TokenIt->GetPosition()), args...).GetToken<TTokenType>();
+				return m_Build.ParseToken<TTokenType>(Scripts::Range(m_TokenIt->GetPosition(), m_TokenIt->GetPosition()), args...)->GetToken<TTokenType>();
 			}
 			
 		private:

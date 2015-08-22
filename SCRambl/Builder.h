@@ -287,14 +287,14 @@ namespace SCRambl
 		}
 
 		template<typename TTokenType, typename... TArgs>
-		Tokens::Token CreateToken(Scripts::Range range, TArgs&&... args) {
-			Tokens::Token token = m_Script.GetTokens().Add<TTokenType>(range.Begin(), args...);
+		VecRef<Tokens::Token> CreateToken(Scripts::Range range, TArgs&&... args) {
+			auto token = m_Script.GetTokens().Add<TTokenType>(range.Begin(), args...);
 			m_CurrentTask->second->CallEvent(event_added_token(m_Engine, range));
 			return token;
 		}
 		template<typename TTokenType, typename... TArgs>
-		Tokens::Token ParseToken(Scripts::Range range, TArgs&&... args) {
-			Tokens::Token token = m_Script.GetParseTokens().Add<TTokenType>(range.Begin(), args...);
+		VecRef<Tokens::Token> ParseToken(Scripts::Range range, TArgs&&... args) {
+			auto token = m_Script.GetParseTokens().Add<TTokenType>(range.Begin(), args...);
 			m_CurrentTask->second->CallEvent(event_parsed_token(m_Engine, range));
 			return token;
 		}

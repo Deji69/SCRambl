@@ -49,6 +49,7 @@ namespace SCRambl
 			IToken*	m_Token = nullptr;
 
 		public:
+			Token() = default;
 			Token(Scripts::Position pos, IToken* tok) :
 				m_Position(pos),
 				m_Token(tok)
@@ -97,9 +98,9 @@ namespace SCRambl
 
 			// Manipulation //
 			template<typename TToken, typename... TArgs>
-			inline Token Add(Scripts::Position pos, TArgs&&... args) {
+			inline VecRef<Token> Add(Scripts::Position pos, TArgs&&... args) {
 				m_Tokens.emplace_back(pos, new TToken(args...));
-				return m_Tokens.back();
+				return{ m_Tokens, m_Tokens.size() - 1 };
 			}
 			// Navigation //
 			inline Iterator Begin() { return{ m_Tokens, m_Tokens.begin() }; }

@@ -205,14 +205,14 @@ namespace SCRambl
 				return GetLine().GetLine() < pos.GetLine().GetLine();
 			}
 
-			/*\ Returns ture if the position is earlier \*/
+			/*\ Returns true if the position is earlier \*/
 			inline bool IsEarlier(const Position& pos) const {
-				return IsOnEarlierLine(pos) || (IsOnSameLine(pos) && GetColumn() < pos.GetColumn());
+				return IsOnEarlierLine(pos) || (IsOnSameLine(pos) && GetColumn() > pos.GetColumn());
 			}
 
-			/*\ Returns ture if the position is later \*/
+			/*\ Returns true if the position is later \*/
 			inline bool IsLater(const Position& pos) const {
-				return IsOnLaterLine(pos) || (IsOnSameLine(pos) && GetColumn() > pos.GetColumn());
+				return IsOnLaterLine(pos) || (IsOnSameLine(pos) && GetColumn() < pos.GetColumn());
 			}
 
 			/*\ Returns true if the Position points to the same character \*/
@@ -330,22 +330,22 @@ namespace SCRambl
 				return !(*this == pos);
 			}
 
-			// IsEarlier()
-			inline bool operator<(const Position& pos) const {
-				return IsEarlier(pos);
-			}
 			// IsLater()
-			inline bool operator>(const Position& pos) const {
+			inline bool operator<(const Position& pos) const {
 				return IsLater(pos);
 			}
-
-			// Compare() || IsEarlier()
-			inline bool operator<=(const Position& pos) const {
-				return Compare(pos) || IsEarlier(pos);
+			// IsEarlier()
+			inline bool operator>(const Position& pos) const {
+				return IsEarlier(pos);
 			}
+
 			// Compare() || IsLater()
+			inline bool operator<=(const Position& pos) const {
+				return *this == pos || *this < pos;
+			}
+			// Compare() || IsEarlier()
 			inline bool operator>=(const Position& pos) const {
-				return Compare(pos) || IsLater(pos);
+				return *this == pos || *this > pos;
 			}
 
 			// CompareChar()
@@ -379,15 +379,15 @@ namespace SCRambl
 
 		public:
 			Range() = default;
-			Range(const Position &a, const Position &b) : m_Pair(a < b ? std::make_pair(a, b) : std::make_pair(b, a))
+			Range(const Position &a, const Position &b) : m_Pair(a <= b ? std::make_pair(a, b) : std::make_pair(b, a))
 			{ }
 			/*Range(Position a, Position b) : m_Pair(a < b ? std::make_pair(a, b) : std::make_pair(b, a))
 			{ }*/
-			Range(std::pair<Position, Position> pair) : m_Pair(pair.first < pair.second ? std::make_pair(pair.first, pair.second) : std::make_pair(pair.second, pair.first))
+			Range(std::pair<Position, Position> pair) : m_Pair(pair.first <= pair.second ? std::make_pair(pair.first, pair.second) : std::make_pair(pair.second, pair.first))
 			{ }
 
 			// String formatter
-			static inline std::string Formatter(const Range & range) {
+			static inline std::string Formatter(const Range& range) {
 				return range.Begin().Select(range.End());
 			}
 

@@ -1056,18 +1056,18 @@ bool Preprocessor::GetSourceControl() const {
 bool Preprocessor::OpenDelimiter(Scripts::Position pos, Delimiter type) {
 	auto range = Scripts::Range(pos, pos);
 	auto token = m_Build.CreateToken<TokenDelimiter>(range, pos, range, type);
-	m_Delimiters.push(token);
+	m_Delimiters.emplace(token);
 	return true;
 }
 bool Preprocessor::CloseDelimiter(Scripts::Position pos, Delimiter type) {
-	auto& token = m_Delimiters.top();
-	auto tok = token.GetToken();
+	auto token = m_Delimiters.top();
+	auto tok = token->GetToken();
 	// ensure the delimiters are for the same purpose, otherwise there's error
 	if (Tokens::Delimiter::GetDelimiterType<Delimiter>(*tok) == type) {
 		auto begin = Tokens::Delimiter::GetScriptRange(*tok).Begin();
 		auto range = Scripts::Range(begin, pos);
 		// replace the token with an updated Scripts::Range
-		token.SetToken(new TokenDelimiter(begin, range, type));
+		token->SetToken(new TokenDelimiter(begin, range, type));
 		// mark the closing position
 		m_Build.CreateToken<TokenDelimiter>(range, pos, range, type);
 		m_Delimiters.pop();

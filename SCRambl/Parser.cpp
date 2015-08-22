@@ -179,9 +179,9 @@ States Parser::Parse_Neutral_CheckIdentifier(IToken* tok) {
 	else if (m_ExtraCommands.FindCommands(name, vec) > 0 || m_Commands.FindCommands(name, vec) > 0) {
 		// make a token and store it
 		if (vec.size() == 1)
-			m_TokenIt->SetToken(m_Build.CreateToken<Tokens::Command::Info>(range, Tokens::Type::Command, range, vec[0]));
+			m_TokenIt->SetToken(new Tokens::Command::Info(Tokens::Type::Command, range, vec[0]));
 		else
-			m_TokenIt->SetToken(m_Build.CreateToken<Tokens::Command::OverloadInfo>(range, Tokens::Type::CommandOverload, range, vec));
+			m_TokenIt->SetToken(new Tokens::Command::OverloadInfo(Tokens::Type::CommandOverload, range, vec));
 
 		if (ParseCommandOverloads(vec)) {
 			BeginCommandParsing();
@@ -212,10 +212,10 @@ States Parser::Parse_Neutral_CheckDelimiter(IToken* tok) {
 	}
 	else {
 		if (IsScopeDelimiterClosing(tok)) {
-			m_Build.OpenVarScope();
+			m_Build.CloseVarScope();
 		}
 		else if (IsScopeDelimiter(tok)) {
-			m_Build.CloseVarScope();
+			m_Build.OpenVarScope();
 		}
 		else BREAK();
 	}
