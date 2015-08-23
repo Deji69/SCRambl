@@ -6,18 +6,19 @@
 
 <SCRambl Version="1.0" FileVersion="0.0.0.0">
 	<VariableTypes>
-		<Type Name="LVAR" Scope="local">
+		<Type Name="LVAR" Scope="local" Size="32">
+			<MinIndex>0</MinIndex>
 			<MaxIndex>31</MaxIndex>
 		</Type>
-		<Type Name="VAR" Scope="global">
+		<Type Name="VAR" Scope="global" Size="32">
 			<MinIndex>2</MinIndex>
 			<MaxIndex>9216</MaxIndex>
 		</Type>
-		<Type Name="LVAR_ARRAY" Type="LVAR" Array="true">
+		<Type Name="LVAR_ARRAY" Array="true" Type="LVAR">
 			<MinIndex>1</MinIndex>
 			<MaxIndex>255</MaxIndex>
 		</Type>
-		<Type Name="VAR_ARRAY" Type="VAR" Array="true">
+		<Type Name="VAR_ARRAY" Array="true" Type="VAR">
 			<MinIndex>1</MinIndex>
 			<MaxIndex>255</MaxIndex>
 		</Type>
@@ -309,59 +310,65 @@
 			</Data>
 		</Translate>
 		
+		<!--
+			You have several choices in translating variable ID's, including:
+				- Index: 0-based count of order of the variable
+				- ID: Index with MinIndex and MaxIndex taken into account
+				- Offset: ID multiplied by the size of the Variable Type
+		-->
 		<Translate Type="VAR_INT" Size="16">
 			<Data>
 				<Int8>2</Int8>
-				<Int16 Source="Variable" Attribute="Index" />
+				<Int16 Source="Variable" Attribute="Offset" />
 			</Data>
 		</Translate>
 		
 		<Translate Type="VAR_FLOAT" Size="16">
 			<Data>
 				<Int8>2</Int8>
-				<Int16 Source="Variable" Attribute="Index" />
+				<Int16 Source="Variable" Attribute="Offset" />
 			</Data>
 		</Translate>
 		
 		<Translate Type="VAR_TEXT_LABEL" Size="16">
 			<Data>
 				<Int8>10</Int8>
-				<Int16 Source="Variable" Attribute="Index" />
+				<Int16 Source="Variable" Attribute="Offset" />
 			</Data>
 		</Translate>
 		
 		<Translate Type="VAR_STRING" Size="16">
 			<Data>
 				<Int8>16</Int8>
-				<Int16 Source="Variable" Attribute="Index" />
+				<Int16 Source="Variable" Attribute="Offset" />
 			</Data>
 		</Translate>
 		
 		<Translate Type="LVAR_INT" Size="16">
 			<Data>
 				<Int8>3</Int8>
-				<Int16 Source="Variable" Attribute="Index" />
+				<Int16 Source="Variable" Attribute="ID" />
 			</Data>
 		</Translate>
 		
 		<Translate Type="LVAR_FLOAT" Size="16">
 			<Data>
 				<Int8>3</Int8>
-				<Int16 Source="Variable" Attribute="Index" />
+				<Int16 Source="Variable" Attribute="ID" />
 			</Data>
 		</Translate>
 		
 		<Translate Type="LVAR_TEXT_LABEL" Size="16">
 			<Data>
 				<Int8>11</Int8>
-				<Int16 Source="Variable" Attribute="Index" />
+				<Int16 Source="Variable" Attribute="ID" />
 			</Data>
 		</Translate>
 		
 		<Translate Type="LVAR_STRING" Size="16">
 			<Data>
 				<Int8>17</Int8>
-				<Int16 Source="Variable" Attribute="Index" />
+				<Int16 Source="Variable" Attribute="ID" />
 			</Data>
 		</Translate>
 	</Translations>

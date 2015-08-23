@@ -35,8 +35,9 @@ Operand::Attributes Operand::GetLabelAttributes() const {
 Operand::Attributes Operand::GetVariableAttributes() const {
 	Attributes attrs;
 	if (GetType() == Type::VariableValue) {
-		attrs.SetAttribute(Types::DataAttributeID::ID, m_VariableValue->Index());
+		attrs.SetAttribute(Types::DataAttributeID::ID, m_VariableValue->ID());
 		attrs.SetAttribute(Types::DataAttributeID::Index, m_VariableValue->Index());
+		attrs.SetAttribute(Types::DataAttributeID::Offset, m_VariableValue->Offset());
 		attrs.SetAttribute(Types::DataAttributeID::Name, m_VariableValue->Name());
 		attrs.SetAttribute(Types::DataAttributeID::Size, m_VariableValue->Value()->GetSize());
 		attrs.SetAttribute(Types::DataAttributeID::IsArray, m_VariableValue->IsArray());

@@ -58,6 +58,8 @@ namespace SCRambl
 				return "Offset";
 			case DataAttributeID::ID:
 				return "ID";
+			case DataAttributeID::Index:
+				return "Index";
 			case DataAttributeID::Name:
 				return "Name";
 			case DataAttributeID::NumArgs:
@@ -73,6 +75,7 @@ namespace SCRambl
 				{ "Size", DataAttributeID::Size },
 				{ "Offset", DataAttributeID::Offset },
 				{ "ID", DataAttributeID::ID },
+				{ "Index", DataAttributeID::Index },
 				{ "Name", DataAttributeID::Name },
 				{ "NumArgs", DataAttributeID::NumArgs },
 				{ "IsNOT", DataAttributeID::IsNOT },
@@ -161,8 +164,8 @@ namespace SCRambl
 			});
 			return value ? value : nullptr;
 		}
-		size_t Type::GetVarMinIndex() const { return IsVariableType() ? ToVariable()->MinIndex() : 0; }
-		size_t Type::GetVarMaxIndex() const { return IsVariableType() ? ToVariable()->MaxIndex() : 0; }
+		size_t Type::GetVarMinIndex() const { return IsVariableType() ? ToVariable()->MinIndex().AsNumber<size_t>() : 0; }
+		size_t Type::GetVarMaxIndex() const { return IsVariableType() ? ToVariable()->MaxIndex().AsNumber<size_t>() : 0; }
 		bool Type::HasValueType(ValueSet type) const {
 			for (auto& val : m_Values) {
 				if (val->GetValueType() == type)
@@ -319,7 +322,8 @@ namespace SCRambl
 					auto scope = *vec["Scope"];
 					auto isarray = *vec["IsArray"];
 					auto name = vec["Name"]->AsString();
-					auto type = AddVariableType(name, scope, isarray.AsBool(false));
+					auto size = vec["Size"]->AsNumber<size_t>(32);
+					auto type = AddVariableType(name, scope, isarray.AsBool(false), size);
 
 					auto rg = m_ValsToUpdate.equal_range(name);
 					if (rg.first != rg.second) {
@@ -334,6 +338,14 @@ namespace SCRambl
 					}
 
 					obj = type;
+				});
+				vartype->AddClass("MinIndex", [this](const XMLNode vec, void*& obj) {
+					auto type = static_cast<Variable*>(obj);
+					type->SetMinIndex(vec->AsNumber<size_t>());
+				});
+				vartype->AddClass("MinIndex", [this](const XMLNode vec, void*& obj) {
+					auto type = static_cast<Variable*>(obj);
+					type->SetMaxIndex(vec->AsNumber<size_t>());
 				});
 			}
 

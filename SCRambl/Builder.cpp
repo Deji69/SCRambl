@@ -8,10 +8,9 @@ using namespace SCRambl;
 
 /* Build */
 const ScriptVariable* Build::AddScriptVariable(std::string name, VecRef<Types::Type> type, size_t array_size) {
-	if (type->HasValueType(array_size ? Types::ValueSet::Array : Types::ValueSet::Variable)) {
+	if (auto val = array_size ? type->GetArrayValue() : type->GetVarValue()) {
 		auto var = m_Variables.Add(type.Ptr(), name, array_size);
 		//if (var->Get().ID() > var->Get().Value()->GetVarType()->GetVarMaxIndex())
-			
 		return var;
 	}
 	else BREAK();

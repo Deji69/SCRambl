@@ -16,6 +16,7 @@ namespace SCRambl
 		const Types::Type* m_Type;
 		size_t m_Index;					// actual position within vector
 		size_t m_ID = 0;				// ID takes into account min-max index
+		size_t m_Offset = 0;			// ID * size
 		size_t m_ArraySize = 0;
 		bool m_IsGlobal = false;
 		union {
@@ -30,6 +31,7 @@ namespace SCRambl
 
 		inline size_t ID() const { return m_ID; }
 		inline size_t Index() const { return m_Index; }
+		inline size_t Offset() const { return m_Offset; }
 		inline std::string Name() const { return m_Name; }
 		inline const Types::Type* Type() const { return m_Type; }
 		inline const Types::VariableValue* Value() const { return IsArray() ? m_ArrayValue : m_VarValue; }

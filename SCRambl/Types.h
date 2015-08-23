@@ -174,6 +174,7 @@ namespace SCRambl
 		class Variable : public Type {
 			XMLValue m_Scope;
 			XMLValue m_IsArray;
+			XMLValue m_Size;
 
 			// <MinIndex>
 			XMLValue m_MinIndex = 1;
@@ -181,8 +182,8 @@ namespace SCRambl
 			XMLValue m_MaxIndex = LONG_MAX;
 
 		public:
-			Variable(size_t id, std::string name, XMLValue scope, XMLValue isarray) : Type(id, name, TypeSet::Variable),
-				m_Scope(scope), m_IsArray(isarray)
+			Variable(size_t id, std::string name, XMLValue scope, XMLValue isarray, size_t size) : Type(id, name, TypeSet::Variable),
+				m_Scope(scope), m_IsArray(isarray), m_Size(size)
 			{ }
 
 			XMLValue Scope() const { return m_Scope; }
@@ -190,6 +191,7 @@ namespace SCRambl
 			XMLValue IsArray() const { return m_IsArray; }
 			XMLValue MinIndex() const { return m_MinIndex; }
 			XMLValue MaxIndex() const { return m_MinIndex; }
+			XMLValue Size() const { return m_Size; }
 
 			void SetMinIndex(XMLValue v) { m_MinIndex = v; }
 			void SetMaxIndex(XMLValue v) { m_MaxIndex = v; }
@@ -262,9 +264,9 @@ namespace SCRambl
 				m_Extendeds.emplace_back(ref.Ref().Index(), name, basic);
 				return ref;
 			}
-			inline VariableRef& AddVariable(std::string name, XMLValue scope, bool is_array = false) {
+			inline VariableRef& AddVariable(std::string name, XMLValue scope, bool is_array = false, size_t size = 32) {
 				auto& ref = Add<Variable>(name, { m_Variables });
-				m_Variables.emplace_back(ref.Ref().Index(), name, scope, is_array);
+				m_Variables.emplace_back(ref.Ref().Index(), name, scope, is_array, size);
 				return ref;
 			}
 			size_t GetTypeID(TypeSet type, size_t id) {
@@ -413,7 +415,7 @@ namespace SCRambl
 		public:
 			DataAttributeSet() : AttributeSet(DataAttributeID::None) {
 				AddAttribute("ID", DataAttributeID::ID);
-				AddAttribute("Index", DataAttributeID::ID);
+				AddAttribute("Index", DataAttributeID::Index);
 				AddAttribute("Value", DataAttributeID::Value);
 				AddAttribute("Size", DataAttributeID::Size);
 				AddAttribute("Offset", DataAttributeID::Offset);
@@ -724,10 +726,10 @@ namespace SCRambl
 				if (!m_TypePointers.empty() && cap != m_Types.GetCapacity()) UpdatePointers(old);
 				return &type.AsExtended();
 			}
-			inline Variable* AddVariableType(std::string name, XMLValue scope, bool is_array = false) {
+			inline Variable* AddVariableType(std::string name, XMLValue scope, bool is_array = false, size_t size = 32) {
 				auto old = GetAllTypesVector();
 				size_t cap = m_TypePointers.empty() ? 0 : m_Types.GetCapacity();
-				auto type = m_Types.AddVariable(name, scope, is_array);
+				auto type = m_Types.AddVariable(name, scope, is_array, size);
 				if (!m_TypePointers.empty() && cap != m_Types.GetCapacity()) UpdatePointers(old);
 				return &type.AsVariable();
 			}
