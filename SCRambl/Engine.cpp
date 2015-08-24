@@ -28,10 +28,32 @@ Build* Engine::InitBuild(std::vector<std::string> files) {
 		}
 	}
 
+	auto add_task_events = [](BuildTask id, TaskSystem::Task* task) {
+		
+	};
 	auto preprocessor_task = build->AddTask<Preprocessing::Task>(preprocessor, build);
 	auto parser_task = build->AddTask<Parsing::Task>(parser, build);
 	auto compiler_task = build->AddTask<Compiling::Task>(compiler, build);
 	auto linker_task = build->AddTask<Linking::Task>(linker, build);
+	add_task_events(preprocessor, preprocessor_task);
+	add_task_events(parser, parser_task);
+	add_task_events(compiler, compiler_task);
+	add_task_events(linker, linker_task);
+	build->AddEventHandler<task_event>([](const task_event& event){
+		std::cout << "Event `" << event.Name() << "`\n";
+		return true;
+	});
+	build->AddEventHandler<build_event>([](const build_event& event){
+		std::cout << "Event `" << event.Name() << "`\n";
+		return true;
+	});
+	build->AddEventHandler<error_event>([](const error_event& event){
+		std::cerr << "ERROR:";
+		for (auto& str : event.Params)
+			std::cerr << " " << str;
+		std::cerr << "\n";
+		return true;
+	});
 	return build;
 }
 void Engine::FreeBuild(Build* build) {

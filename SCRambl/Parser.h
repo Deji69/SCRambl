@@ -25,11 +25,11 @@ namespace SCRambl
 		using Delimiter = Preprocessing::Delimiter;
 
 		// Interesting stuff that the parser does
-		enum class Event {
+		/*enum class Event {
 			Begin, Finish,
 			Warning, Error,
 			FoundToken,
-		};
+		};*/
 		// Parser states
 		enum States {
 			state_neutral, state_parsing_type, state_parsing_command, state_parsing_operator,
@@ -675,7 +675,7 @@ namespace SCRambl
 			bool IsTaskFinished() final override;
 
 			template<typename TEvent, typename... TArgs>
-			inline bool Event(TArgs&&... args) {
+			inline size_t Event(TArgs&&... args) {
 				return CallEvent(TEvent(m_Engine, std::forward<TArgs>(args)...));
 			}
 

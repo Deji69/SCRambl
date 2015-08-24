@@ -473,7 +473,7 @@ namespace SCRambl
 			bool IsTaskFinished() final override;
 
 			template<typename TEvent, typename... TArgs>
-			inline bool Event(TArgs&&... args) {
+			inline size_t Event(TArgs&&... args) {
 				return CallEvent(TEvent(m_Engine, std::forward<TArgs>(args)...));
 			}
 

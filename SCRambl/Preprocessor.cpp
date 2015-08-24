@@ -1312,6 +1312,7 @@ bool Task::IsTaskFinished() { return Preprocessor::IsFinished(); }
 void Task::RunTask() { Preprocessor::Run(); }
 void Task::ResetTask() { Preprocessor::Reset(); }
 const Information& Task::Info() const { return m_Info; }
-Task::Task(Engine& engine, Build* build) : Preprocessor(*this, engine, *build),
+Task::Task(Engine& engine, Build* build) : TaskSystem::Task(build),
+	Preprocessor(*this, engine, *build),
 	m_Engine(engine), m_Info(GetInfo())
 { }

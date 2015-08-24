@@ -160,21 +160,28 @@ namespace SCRambl
 			Warning,
 			Error,
 		};
-		struct event : public task_event { using task_event::task_event; };
-		struct event_begin : public event {
-			using event::event;
+		template<typename T>
+		struct event : public build_event {
+			explicit event(const Engine& engine) : build_event(engine) {
+				LinkEvent<T>;
+			}
 		};
-		struct event_finish : public event {
-			using event::event;
-		};
-		struct event_warning : public event {
-			using event::event;
-		};
-		struct event_error : public event {
-			event_error(Error err) : ErrorCode(err)
+		struct event_begin : public event<event_begin> {
+			event_begin(const Engine& engine) : event(engine)
 			{ }
-
-			Error ErrorCode;
+		};
+		struct event_finish : public event<event_finish> {
+			event_finish(const Engine& engine) : event(engine)
+			{ }
+		};
+		struct event_warning : public event<event_warning> {
+			event_warning(const Engine& engine) : event(engine)
+			{ }
+		};
+		template<Error::ID TID, typename... TArgs>
+		struct event_error : public error_event_data<TArgs...> {
+			event_error(const Engine& engine, TArgs... args) : error_event_data(Basic::Error(engine, TID), std::forward<TArgs>(args)...)
+			{ }
 		};
 
 		/*\
@@ -186,7 +193,8 @@ namespace SCRambl
 			Engine& m_Engine;
 
 		public:
-			Task(Engine& engine, Build* build) : Compiler(*this, engine, build),
+			Task(Engine& engine, Build* build) : TaskSystem::Task(build),
+				Compiler(*this, engine, build),
 				m_Engine(engine)
 			{ }
 
@@ -195,6 +203,11 @@ namespace SCRambl
 
 			bool IsRunning() const { return Compiler::IsRunning(); }
 			bool IsTaskFinished() final override { return Compiler::IsFinished(); }
+
+			template<typename TEvent, typename... TArgs>
+			inline size_t Event(TArgs&&... args) {
+				return CallEvent(TEvent(m_Engine, std::forward<TArgs>(args)...));
+			}
 
 		protected:
 			void RunTask() final override { Compiler::Run(); }

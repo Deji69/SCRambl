@@ -80,6 +80,7 @@ public:
 
 int main(int argc, char* argv[])
 {
+	int rc = EXIT_SUCCESS;
 	try {
 		std::string cmd;
 		CCLP CmdParser({ argv + 1, &argv[argc] });
@@ -112,17 +113,23 @@ int main(int argc, char* argv[])
 		}
 		else
 		{
-			SCRambl_Build(scrambl);
+			bool init = true;
+			while (SCRambl_Build(scrambl)) {
+				if (init) {
+					
+					init = false;
+				}
+			}
 		}
 	}
 	catch (return_exception& ex) {
-		return ex.RC;
+		rc = ex.RC;
 	}
 	catch (std::exception& ex) {
 		std::cerr << "unhandled exception: " << ex.what();
-		return EXIT_FAILURE;
+		rc = EXIT_FAILURE;
 	}
-	return EXIT_SUCCESS;
+	return rc;
 
 #if 0
 	bool error_status = false;

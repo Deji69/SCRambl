@@ -28,6 +28,11 @@ namespace SCRambl
 	namespace TaskSystem {
 		class Task;
 
+		template<typename TEvent>
+		struct event_id {
+			static std::vector<std::type_index> vec;
+		};
+
 		namespace {
 			// Events & handlers
 			class TaskEvent {
@@ -42,6 +47,8 @@ namespace SCRambl
 					}
 				}
 
+				inline void SetName(std::string v) { m_Name = v; }
+
 				// Add event handler
 				template<typename Func>
 				void AddHandler(Func handler) {
@@ -50,20 +57,24 @@ namespace SCRambl
 					// add the handler
 					m_Handlers.emplace_back(static_cast<void*>(function));
 				}
-				// Call handlers, returns false if none were called
+				// Call handlers, returns number of successful calls
 				template<typename TEvent>
-				bool CallHandler(const TEvent& event) const {
+				size_t CallHandler(TEvent& event) {
 					// this is surely impossible...?
 					if (m_Handlers.empty()) return false;
+					size_t calls = 0;
+					event.SetName(m_Name);
 					for (auto fun : m_Handlers) {
-						auto func = static_cast<std::function<bool(const TEvent&)>*>(fun);
+						auto func = static_cast<std::function<bool(TEvent&)>*>(fun);
 						if (!(*func)(event)) break;
+						++calls;
 					}
-					return false;
+					return calls;
 				}
 
 			private:
 				std::vector<void*> m_Handlers;
+				std::string m_Name;
 			};
 
 			// Task interface - Task runner
@@ -80,15 +91,18 @@ namespace SCRambl
 		// Task - tasks and events
 		class Task : public ITask {
 		public:
-			enum State { running, error, finished };
+			enum State { init, running, error, finished };
 
 			virtual ~Task() { };
 
 			// Add an event
 			template<typename TEvent>
 			inline bool AddEvent(std::string name) {
+				static std::type_index event_id = typeid(TEvent);
 				if (std::is_base_of<task_event, TEvent>()) {
-					m_Events[typeid(TEvent)].first = name;
+					auto& v = m_Events[event_id];
+					v.first = name;
+					v.second.SetName(name);
 					return true;
 				}
 				return false;
@@ -96,45 +110,52 @@ namespace SCRambl
 			// Add an event handler
 			template<typename TEvent, typename Func>
 			inline void AddEventHandler(Func func) {
-				m_Events.at(typeid(TEvent)).second.AddHandler<Func>(std::forward<Func>(std::ref(func)));
+				static std::type_index event_id = typeid(TEvent);
+				m_Events[event_id].second.AddHandler<Func>(std::forward<Func>(std::ref(func)));
 			}
-			// Call all handlers for an event - returns false if none were called
+			// Call all handlers for an event - returns number of successful calls
 			template<typename TEvent>
-			inline bool CallEvent(const TEvent& event) const {
+			inline size_t CallEvent(TEvent& event) {
 				// validate as derived event class
+				static std::type_index event_id = typeid(TEvent);
 				auto b = std::is_base_of<task_event, TEvent>();
-				if (typeid(TEvent) == typeid(task_event)) throw(task_bad_event());
-				if (m_Events.empty()) return false;
-				auto it = m_Events.find(typeid(TEvent));
-				if (it != m_Events.end()) {
-					// pass the message
-					if(it->second.second.CallHandler(event))
-						return true;
+				if (event_id == typeid(task_event)) throw(task_bad_event());
+				if (!m_Events.empty()) {
+					for (auto id : event) {
+						auto it = m_Events.find(id);
+						if (it != m_Events.end()) {
+							// pass the message
+							return it->second.second.CallHandler(event);
+						}
+					}
 				}
-				// nothing called
-				return false;
+				// nothing called, try a higher-up
+				return m_Parent ? m_Parent->CallEvent<TEvent>(event) : false;
 			}
 			// Gets the current state
 			inline State GetState()	const { return m_State; }
 
 			// Convenience event functions
 			template<typename TEvent>
-			inline bool Event(const TEvent& event) const { return CallEvent<TEvent>(event); }
+			inline size_t Event(TEvent& event) { return CallEvent<TEvent>(event); }
 			template<typename TEvent, typename... TArgs>
-			inline bool Event(TArgs&&... args) const {
+			inline size_t Event(TArgs&&... args) {
 				return CallEvent<TEvent>(TEvent(std::forward<TArgs>(args)...));
 			}
 			template<typename TEvent>
-			inline bool operator()(const TEvent& event) const { return CallEvent<TEvent>(event); }
+			inline size_t operator()(TEvent& event) const { return CallEvent<TEvent>(event); }
 
 		protected:
 			// a running start!
 			Task() : m_State(running)
 			{ }
+			Task(Task* parent) : m_State(running), m_Parent(parent)
+			{ }
 
 			// When you say run, I say go fuck yourself...
 			inline const Task& Run() {
 				do {
+					if (m_State == init) m_State = running;
 					// continue from where we left off...
 					switch (m_State) {
 					case error:
@@ -168,20 +189,59 @@ namespace SCRambl
 			inline State& TaskState() { return m_State; }
 
 		private:
-			State m_State;
+			State m_State = State::init;
+			Task* m_Parent = nullptr;
 
 			// events can be handled by the implementor
 			std::unordered_map<std::type_index, std::pair<std::string, TaskEvent>> m_Events;
 		};
 	}
 
-
 	struct task_event {
-		friend TaskSystem::Task;
+		using LinkEventDeque = std::deque<const std::type_index>;
+		friend TaskSystem::TaskEvent;
+		task_event() {
+			LinkEvent<task_event>();
+		}
 		virtual ~task_event() { }
 
-		virtual bool Send(TaskSystem::Task& task) const {
+		virtual size_t Send(TaskSystem::Task& task) {
 			return task.Event(*this);
 		}
+
+		inline const std::string& Name() const { return m_Name; }
+		LinkEventDeque::const_iterator begin() const { return GetLinkEventDeque().begin(); }
+		LinkEventDeque::const_iterator end() const { return GetLinkEventDeque().end(); }
+
+	protected:
+		template<typename TEvent>
+		static void LinkEvent() {
+			if (LinkLock() != 'O')
+				GetLinkEventDeque().emplace_front(typeid(TEvent));
+		}
+
+		template<> static void LinkEvent<task_event>() {
+			if (LinkLock() != 'O') {
+				if (LinkLock() != 'I') LinkLock() = 'I';
+				else LinkLock() = 'O';
+				GetLinkEventDeque().emplace_front(typeid(task_event));
+			}
+		}
+
+	private:
+		static char& LinkLock() {
+			static char b = '\0';
+			return b;
+		}
+
+		static LinkEventDeque& GetLinkEventDeque() {
+			static LinkEventDeque deque;
+			return deque;
+		}
+
+		inline void SetName(std::string name) { m_Name = name; }
+
+	private:
+		std::string m_Name;
 	};
 }

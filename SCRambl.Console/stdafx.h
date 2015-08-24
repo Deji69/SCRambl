@@ -1,6 +1,7 @@
 #pragma once
 
 //#include "targetver.h"
+#include "resource.h"
 
 //#include <Windows.h>
 #include <stdio.h>

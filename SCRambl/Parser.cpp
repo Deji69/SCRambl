@@ -22,10 +22,8 @@ Parser::Parser(Task& task, Engine& engine, Build& build) :
 { }
 void Parser::Init() {
 	m_TokenIt = m_Tokens.Begin();
-
-	m_Task(Event::Begin);
+	m_Task.Event<event_begin>();
 	m_State = parsing;
-
 	m_OnNewLine = true;
 }
 void Parser::Finish() {
@@ -41,7 +39,7 @@ void Parser::Run() {
 			Parse();
 		else {
 			Finish();
-			m_Task(Event::Finish);
+			m_Task.Event<event_finish>();
 			m_State = finished;
 		}
 		return;
@@ -875,5 +873,6 @@ bool Task::IsRunning() const { return Parser::IsRunning(); }
 bool Task::IsTaskFinished() { return Parser::IsFinished(); }
 void Task::RunTask() { Parser::Run(); }
 void Task::ResetTask() { Parser::Reset(); }
-Task::Task(Engine& engine, Build* build) : Parser(*this, engine, *build), m_Engine(engine)
+Task::Task(Engine& engine, Build* build) : TaskSystem::Task(build),
+	Parser(*this, engine, *build), m_Engine(engine)
 { }

@@ -128,26 +128,31 @@ namespace SCRambl
 
 	/* build events */
 	struct build_event : task_event {
-		explicit build_event(const Engine& engine) : m_Engine(engine)
-		{ }
+		explicit build_event(const Engine& engine) : m_Engine(engine) {
+			LinkEvent<build_event>();
+		}
 
 	private:
 		const Engine& m_Engine;
 	};
 	struct token_event : build_event {
 	public:
-		explicit token_event(const Engine& engine, Scripts::Range rg) : build_event(engine), m_ScriptRange(rg)
-		{ };
+		explicit token_event(const Engine& engine, Scripts::Range rg) : build_event(engine), m_ScriptRange(rg) {
+			LinkEvent<token_event>();
+		};
 		inline Scripts::Range TokenRange() const { return m_ScriptRange; }
 
 	private:
 		Scripts::Range m_ScriptRange;
 	};
 	struct error_event : build_event {
-		explicit error_event(const Engine& engine, Basic::Error& error, std::string params) : build_event(engine), Error(error)
-		{ Params.emplace_back(params); }
-		explicit error_event(const Engine& engine, Basic::Error& error, std::vector<std::string> params) : build_event(engine), Error(error), Params(params)
-		{ }
+		explicit error_event(const Engine& engine, Basic::Error& error, std::string params) : build_event(engine), Error(error) {
+			LinkEvent<error_event>();
+			Params.emplace_back(params);
+		}
+		explicit error_event(const Engine& engine, Basic::Error& error, std::vector<std::string> params) : build_event(engine), Error(error), Params(params) {
+			LinkEvent<error_event>();
+		}
 
 		Basic::Error& Error;
 		std::vector<std::string> Params;
@@ -163,12 +168,15 @@ namespace SCRambl
 	struct event_added_token : public token_event {
 	public:
 		explicit event_added_token(const Engine& engine, Scripts::Range rg) : token_event(engine, rg)
-		{ };
+		{
+			LinkEvent<event_added_token>();
+		};
 	};
 	struct event_parsed_token : public token_event {
 	public:
-		explicit event_parsed_token(const Engine& engine, Scripts::Range rg) : token_event(engine, rg)
-		{ };
+		explicit event_parsed_token(const Engine& engine, Scripts::Range rg) : token_event(engine, rg) {
+			LinkEvent<event_parsed_token>();
+		}
 	};
 
 	class BuildEnvironment
@@ -313,7 +321,7 @@ namespace SCRambl
 		void ParseCommands(const std::multimap<const std::string, Tokens::Iterator>& map);
 
 		template<typename T, typename ID, typename... Params>
-		const T* AddTask(ID id, Params&&... prms) {
+		T* AddTask(ID id, Params&&... prms) {
 			auto pr = m_Tasks.emplace(id, std::make_unique<T>(m_Engine, std::forward<Params>(prms)...));
 			if (pr.second) {
 				auto task = pr.first->second.get();

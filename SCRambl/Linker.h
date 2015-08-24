@@ -78,7 +78,7 @@ namespace SCRambl
 		class Task : public TaskSystem::Task, private Linker
 		{
 		public:
-			Task(Engine& engine, Build* build) :
+			Task(Engine& engine, Build* build) : TaskSystem::Task(build),
 				Linker(*this, engine, build),
 				m_Engine(engine)
 			{ }

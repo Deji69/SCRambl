@@ -141,6 +141,10 @@ void Build::Setup() {
 	m_Constants.Init(*this);
 	m_Commands.Init(*this);
 	m_Operators.Init(*this);
+	AddEvent<task_event>("task event");
+	AddEvent<build_event>("build event");
+	AddEvent<token_event>("token event");
+	AddEvent<error_event>("error event");
 }
 void Build::Init() {
 	m_CurrentTask = std::begin(m_Tasks);
