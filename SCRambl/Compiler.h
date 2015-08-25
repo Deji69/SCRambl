@@ -14,7 +14,6 @@ namespace SCRambl
 	namespace Compiling
 	{
 		class Task;
-
 		class Error {
 		public:
 			enum ID {
@@ -35,9 +34,7 @@ namespace SCRambl
 		private:
 			ID			m_ID;
 		};
-
-		class Compiler
-		{
+		class Compiler {
 		public:
 			enum State {
 				init, compiling, finished,
@@ -151,9 +148,7 @@ namespace SCRambl
 			std::vector<std::pair<std::string, int32_t>> m_CommandNameVec;
 		};
 
-		/*\
-		 * Compiler::Event
-		\*/
+		/*\ Compiler::Event \*/
 		enum class Event
 		{
 			Begin, Finish,
@@ -162,20 +157,20 @@ namespace SCRambl
 		};
 		template<typename T>
 		struct event : public build_event {
-			explicit event(const Engine& engine) : build_event(engine) {
-				LinkEvent<T>;
+			explicit event(std::string name, const Engine& engine) : build_event(engine) {
+				LinkEvent<T>(name);
 			}
 		};
 		struct event_begin : public event<event_begin> {
-			event_begin(const Engine& engine) : event(engine)
+			event_begin(const Engine& engine) : event("begin", engine)
 			{ }
 		};
 		struct event_finish : public event<event_finish> {
-			event_finish(const Engine& engine) : event(engine)
+			event_finish(const Engine& engine) : event("finish", engine)
 			{ }
 		};
 		struct event_warning : public event<event_warning> {
-			event_warning(const Engine& engine) : event(engine)
+			event_warning(const Engine& engine) : event("warning", engine)
 			{ }
 		};
 		template<Error::ID TID, typename... TArgs>
@@ -184,17 +179,13 @@ namespace SCRambl
 			{ }
 		};
 
-		/*\
-		 * Compiler::Task
-		\*/
-		class Task : public TaskSystem::Task, private Compiler
-		{
+		/*\ Compiler::Task \*/
+		class Task : public TaskSystem::Task, Compiler {
 			friend Compiler;
 			Engine& m_Engine;
 
 		public:
-			Task(Engine& engine, Build* build) : TaskSystem::Task(build),
-				Compiler(*this, engine, build),
+			Task(Engine& engine, Build* build) : TaskSystem::Task(build), Compiler(*this, engine, build),
 				m_Engine(engine)
 			{ }
 

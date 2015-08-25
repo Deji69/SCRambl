@@ -47,7 +47,7 @@ namespace SCRambl
 					}
 				}
 
-				inline void SetName(std::string v) { m_Name = v; }
+				inline void SetName(std::string v) { if (m_Name.empty()) m_Name = v; }
 
 				// Add event handler
 				template<typename Func>
@@ -198,10 +198,10 @@ namespace SCRambl
 	}
 
 	struct task_event {
-		using LinkEventDeque = std::deque<const std::type_index>;
+		using LinkEventDeque = std::set<const std::type_index>;
 		friend TaskSystem::TaskEvent;
 		task_event() {
-			LinkEvent<task_event>();
+			LinkEvent<task_event>("task event");
 		}
 		virtual ~task_event() { }
 
@@ -215,20 +215,23 @@ namespace SCRambl
 
 	protected:
 		template<typename TEvent>
-		static void LinkEvent() {
-			if (LinkLock() != 'O')
-				GetLinkEventDeque().emplace_front(typeid(TEvent));
+		void LinkEvent(std::string name) {
+			m_Name = name;
+			if (LinkLock<TEvent>() != 'O')
+				GetLinkEventDeque().emplace(typeid(TEvent));
 		}
 
-		template<> static void LinkEvent<task_event>() {
-			if (LinkLock() != 'O') {
-				if (LinkLock() != 'I') LinkLock() = 'I';
-				else LinkLock() = 'O';
-				GetLinkEventDeque().emplace_front(typeid(task_event));
+		template<> void LinkEvent<task_event>(std::string name) {
+			m_Name = name;
+			if (LinkLock<task_event>() != 'O') {
+				if (LinkLock<task_event>() != 'I') LinkLock<task_event>() = 'I';
+				else LinkLock<task_event>() = 'O';
+				GetLinkEventDeque().emplace(typeid(task_event));
 			}
 		}
 
 	private:
+		template<typename TEvent>
 		static char& LinkLock() {
 			static char b = '\0';
 			return b;
@@ -239,7 +242,7 @@ namespace SCRambl
 			return deque;
 		}
 
-		inline void SetName(std::string name) { m_Name = name; }
+		inline void SetName(std::string name) { if (m_Name.empty()) m_Name = name; }
 
 	private:
 		std::string m_Name;

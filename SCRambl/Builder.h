@@ -129,7 +129,7 @@ namespace SCRambl
 	/* build events */
 	struct build_event : task_event {
 		explicit build_event(const Engine& engine) : m_Engine(engine) {
-			LinkEvent<build_event>();
+			LinkEvent<build_event>("build event");
 		}
 
 	private:
@@ -138,7 +138,7 @@ namespace SCRambl
 	struct token_event : build_event {
 	public:
 		explicit token_event(const Engine& engine, Scripts::Range rg) : build_event(engine), m_ScriptRange(rg) {
-			LinkEvent<token_event>();
+			LinkEvent<token_event>("token event");
 		};
 		inline Scripts::Range TokenRange() const { return m_ScriptRange; }
 
@@ -147,11 +147,11 @@ namespace SCRambl
 	};
 	struct error_event : build_event {
 		explicit error_event(const Engine& engine, Basic::Error& error, std::string params) : build_event(engine), Error(error) {
-			LinkEvent<error_event>();
+			LinkEvent<error_event>("error event");
 			Params.emplace_back(params);
 		}
 		explicit error_event(const Engine& engine, Basic::Error& error, std::vector<std::string> params) : build_event(engine), Error(error), Params(params) {
-			LinkEvent<error_event>();
+			LinkEvent<error_event>("error event");
 		}
 
 		Basic::Error& Error;
@@ -167,20 +167,18 @@ namespace SCRambl
 	};
 	struct event_added_token : public token_event {
 	public:
-		explicit event_added_token(const Engine& engine, Scripts::Range rg) : token_event(engine, rg)
-		{
-			LinkEvent<event_added_token>();
+		explicit event_added_token(const Engine& engine, Scripts::Range rg) : token_event(engine, rg) {
+			LinkEvent<event_added_token>("added token");
 		};
 	};
 	struct event_parsed_token : public token_event {
 	public:
 		explicit event_parsed_token(const Engine& engine, Scripts::Range rg) : token_event(engine, rg) {
-			LinkEvent<event_parsed_token>();
+			LinkEvent<event_parsed_token>("parsed token");
 		}
 	};
 
-	class BuildEnvironment
-	{
+	class BuildEnvironment {
 		Engine& m_Engine;
 		mutable std::map<std::string, BuildVariable> m_Variables;
 
@@ -195,8 +193,7 @@ namespace SCRambl
 	
 		void DoAction(const ParseObjectConfig::Action& action, XMLValue v);
 	};
-	class BuildCommand
-	{
+	class BuildCommand {
 	public:
 		BuildCommand(BuildEnvironment& env, VecRef<ParseObjectConfig::Action> act, XMLValue val) : m_Environment(env), m_Action(act), m_Value(val)
 		{ }
@@ -206,8 +203,7 @@ namespace SCRambl
 		VecRef<ParseObjectConfig::Action> m_Action;
 		XMLValue m_Value;
 	};
-	class BuildSymbol
-	{
+	class BuildSymbol {
 	public:
 		BuildSymbol(BuildEnvironment& env) : m_Env(env)
 		{ }
@@ -218,8 +214,7 @@ namespace SCRambl
 	private:
 		BuildEnvironment& m_Env;
 	};
-	class Build : public TaskSystem::Task
-	{
+	class Build : public TaskSystem::Task {
 		friend class Builder;
 		using ConfigMap = std::map<std::string, XMLConfiguration>;
 
