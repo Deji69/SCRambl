@@ -25,18 +25,20 @@ SCRAMBLAPI bool SCRambl_Init(SCRamblInst** out) {
 	return false;
 }
 SCRAMBLAPI bool SCRambl_Free(SCRamblInst** inst) {
-	if (inst) {
-		if (*inst) {
-			if ((*inst)->Inst) {
-				delete (*inst)->Inst;
-				(*inst)->Inst = nullptr;
+	if (!inst) return false;
+	if (*inst) {
+		if ((*inst)->Inst) {
+			if ((*inst)->Inst->Build) {
+				(*inst)->Inst->Engine.FreeBuild((*inst)->Inst->Build);
+				(*inst)->Inst->Build = nullptr;
 			}
-			delete *inst;
+			delete (*inst)->Inst;
+			(*inst)->Inst = nullptr;
 		}
+		delete *inst;
 		*inst = nullptr;
-		return true;
 	}
-	return false;
+	return true;
 }
 SCRAMBLAPI bool SCRambl_AddInputFile(SCRamblInst* instance, const char* path) {
 	instance->Inst->InputFiles.emplace_back(path);
@@ -61,10 +63,5 @@ SCRAMBLAPI bool SCRambl_Build(SCRamblInst* inst) {
 		return true;
 	}
 	build = inst->Inst->Build;
-	if (engine.BuildScript(build)) {
-		return true;
-	}
-	engine.FreeBuild(build);
-	inst->Inst->Build = nullptr;
-	return false;
+	return engine.BuildScript(build);
 }

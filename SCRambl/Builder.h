@@ -348,14 +348,14 @@ namespace SCRambl
 
 		template<typename T>
 		inline T& GetCurrentTask() { return *std::static_pointer_cast<T>(CurrentTask->second); }
-		inline int GetCurrentTaskID() const { return m_CurrentTask->first; }
+		inline int GetCurrentTaskID() const { return !IsTaskFinished() ? m_CurrentTask->first : -1; }
 		inline size_t GetNumTasks() const { return m_Tasks.size(); }
 		inline void ClearTasks() { m_Tasks.clear(); }
 
 		const TaskSystem::Task& Run();
 
 	protected:
-		bool IsTaskFinished() override { return m_CurrentTask == std::end(m_Tasks); }
+		bool IsTaskFinished() const override { return m_CurrentTask == std::end(m_Tasks); }
 		void ResetTask() override { Init(); }
 		void RunTask() override { Run(); }
 

@@ -870,9 +870,9 @@ size_t Task::GetProgressCurrent() const { return GetCurrentToken(); }
 size_t Task::GetProgressTotal() const { return GetNumTokens(); }
 Token Task::GetToken() const { return Parser::GetToken(); }
 bool Task::IsRunning() const { return Parser::IsRunning(); }
-bool Task::IsTaskFinished() { return Parser::IsFinished(); }
+bool Task::IsTaskFinished() const { return Parser::IsFinished(); }
 void Task::RunTask() { Parser::Run(); }
 void Task::ResetTask() { Parser::Reset(); }
 Task::Task(Engine& engine, Build* build) : TaskSystem::Task(build),
-	Parser(*this, engine, *build), m_Engine(engine)
+Parser(*this, engine, *build), m_Engine(engine)
 { }

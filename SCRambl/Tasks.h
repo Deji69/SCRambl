@@ -83,7 +83,7 @@ namespace SCRambl
 			public:
 				// task controllers
 				virtual void RunTask() = 0;
-				virtual bool IsTaskFinished() = 0;
+				virtual bool IsTaskFinished() const = 0;
 				virtual void ResetTask() = 0;
 			};
 		}

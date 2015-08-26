@@ -39,16 +39,29 @@ Build* Engine::InitBuild(std::vector<std::string> files) {
 	add_task_events(parser, parser_task);
 	add_task_events(compiler, compiler_task);
 	add_task_events(linker, linker_task);
-	build->AddEventHandler<task_event>([](const task_event& event){
-		std::cout << "Event `" << event.Name() << "`\n";
+	auto get_task_name = [](const Build* build){
+		switch (build->GetCurrentTaskID()) {
+		case preprocessor:
+			return "Preprocessor";
+		case parser:
+			return "Parser";
+		case compiler:
+			return "Compiler";
+		case linker:
+			return "Linker:";
+		}
+		return "";
+	};
+	build->AddEventHandler<task_event>([&get_task_name, build](const task_event& event){
+		std::cout << get_task_name(build) << ": event `" << event.Name() << "`\n";
 		return true;
 	});
-	build->AddEventHandler<build_event>([](const build_event& event){
-		std::cout << "Event `" << event.Name() << "`\n";
+	build->AddEventHandler<build_event>([&get_task_name, build](const build_event& event){
+		std::cout << get_task_name(build) << ": event `" << event.Name() << "`\n";
 		return true;
 	});
-	build->AddEventHandler<error_event>([](const error_event& event){
-		std::cerr << "ERROR:";
+	build->AddEventHandler<error_event>([&get_task_name, build](const error_event& event){
+		std::cerr << get_task_name(build) << ": ERROR:";
 		for (auto& str : event.Params)
 			std::cerr << " " << str;
 		std::cerr << "\n";

@@ -29,7 +29,18 @@ namespace SCRambl
 
 	public:
 		Scope() = default;
+		Scope(const Scope& v) = delete;
+		Scope(Scope&& v) : m_Stuff(std::move(v.m_Stuff))
+		{ }
 		virtual ~Scope() { }
+
+		Scope& operator=(const Scope& v) = delete;
+		Scope& operator=(Scope&& v) {
+			if (this != &v) {
+				std::swap(m_Stuff, v.m_Stuff);
+			}
+			return *this;
+		}
 
 		inline void Add(const TKey& key, TObj* obj) {
 			m_Stuff.emplace(key, obj);
@@ -68,7 +79,8 @@ namespace SCRambl
 		using Object = TObj;
 		using ScriptObject = ScriptObject<Object, Key>;
 		using ObjectScope = Scope<Object, Key>;
-		using Map = std::unordered_map<Key, size_t>;
+		using List = std::list<ScriptObject>;
+		using Map = std::unordered_map<Key, typename List::iterator>;
 
 		ScriptObjects() = default;
 		virtual ~ScriptObjects() = default;
@@ -81,22 +93,15 @@ namespace SCRambl
 			auto idx = m_Objects.size();
 			m_Objects.emplace_back(scope, type, scope.Size(), key, args...);
 			ASSERT(m_Objects.size() > idx);
-			auto ptr = m_Objects[idx].Ptr();
 			// add to scope
-			scope.Add(key, ptr);
+			scope.Add(key, m_Objects.back().Ptr());
 			// add to global map
-			m_Map.emplace(key, idx);
-			// add to object map
-			m_ObjectMap.emplace(ptr, idx);
-			return &m_Objects[idx];
+			m_Map.emplace(key, std::prev(m_Objects.end()));
+			return &m_Objects.back();
 		}
 		const ScriptObject* Find(Key key) const {
 			auto it = m_Map.find(key);
-			return it == m_Map.end() || m_Objects.size() <= it->second ? nullptr : &m_Objects[it->second];
-		}
-		const ScriptObject* Find(const Object* obj) const {
-			auto it = m_ObjectMap.find(obj);
-			return it == m_ObjectMap.end() || m_Objects.size() <= it->second ? nullptr : &m_Objects[it->second];
+			return it == m_Map.end() ? nullptr : &*it->second;
 		}
 
 		size_t LocalDepth() const { return m_Scopes.size(); }
@@ -119,6 +124,14 @@ namespace SCRambl
 		}
 		const ObjectScope& EndLocal() {
 			ASSERT(LocalDepth() > 0);
+			for (auto it : m_Scopes.back()) {
+				// destroy all in it's name
+				auto rg = m_Map.equal_range(it.first);
+				for (auto it = rg.first; it != rg.second; ++it) {
+					m_Objects.erase(it->second);
+				}
+				m_Map.erase(rg.first, rg.second);
+			}
 			m_Scopes.erase(m_Scopes.end()-1);
 			return Scope();
 		}
@@ -133,8 +146,7 @@ namespace SCRambl
 		}
 
 		Map m_Map;
-		std::map<const Object*, size_t> m_ObjectMap;
-		std::vector<ScriptObject> m_Objects;
+		List m_Objects;
 		
 		ObjectScope m_Global;
 		std::vector<ObjectScope> m_Scopes;
@@ -148,12 +160,21 @@ namespace SCRambl
 		using Scope = Scope<TObj, TKey>;
 
 		template<typename... TArgs>
-		ScriptObject(const Scope& scope, TArgs&&... args) : m_Object(std::make_unique<TObj>(args...)), m_Scope(scope)
+		ScriptObject(Scope& scope, TArgs&&... args) : m_Object(std::make_unique<TObj>(args...)), m_Scope(scope)
 		{ }
-		ScriptObject(ScriptObject&& v) : m_Object(std::move(v.m_Object)), m_Scope(v.m_Scope)
+		ScriptObject(ScriptObject&& v) : m_Object(std::move(v.m_Object)), m_Scope(std::move(v.m_Scope))
 		{ }
-		ScriptObject(const Scope&) = delete;
+		ScriptObject(const ScriptObject&) = delete;
 		virtual ~ScriptObject() = default;
+
+		ScriptObject& operator=(const ScriptObject&) = delete;
+		ScriptObject& operator=(ScriptObject&& v) {
+			if (this != &v) {
+				m_Object = std::move(v.m_Object);
+				m_Scope = std::move(v.m_Scope);
+			}
+			return *this;
+		}
 
 		inline TObj& Get() const { return *m_Object; }
 		inline TObj* Ptr() const { return m_Object.get(); }
@@ -162,6 +183,6 @@ namespace SCRambl
 
 	private:
 		std::unique_ptr<TObj> m_Object;
-		const Scope& m_Scope;
+		Scope& m_Scope;
 	};
 }

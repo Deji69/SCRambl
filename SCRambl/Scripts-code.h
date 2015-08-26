@@ -16,23 +16,20 @@
 
 namespace SCRambl
 {
-	namespace Scripts
-	{
+	namespace Scripts {
 		class Code;
 		class File;
 		class Line;
 		class Column;
 		class Range;
 		class Position;
-		class Label;
 
 		using CodeList = std::list<Line>;
 		using Files = std::vector<File>;
 		using FileRef = VecRef<File>;
 
 		/*\ Scripts::Line - this is one \*/
-		class Line
-		{
+		class Line {
 		public:
 			Line() = default;
 			Line(unsigned long, CodeLine, const FileRef);
@@ -53,8 +50,7 @@ namespace SCRambl
 		};
 
 		/*\ Scripts::Code - where symbolic data lives in peaceful bliss \*/
-		class Code
-		{
+		class Code {
 			friend class Position;
 
 		public:
@@ -123,8 +119,7 @@ namespace SCRambl
 		};
 
 		/*\ Scripts::Position(tm) - iterating through all that matters since '14 \*/
-		class Position
-		{
+		class Position {
 			friend class Code;
 
 		public:
@@ -132,16 +127,16 @@ namespace SCRambl
 			Position();
 
 			// beginning of code
-			Position(Code &);
-			Position(Code *);
+			Position(Code&);
+			Position(Code*);
 			// specified line of code
-			Position(Code *, unsigned long, unsigned long = 0);
-			Position(Code *, CodeList::iterator &);
+			Position(Code*, unsigned long, unsigned long = 0);
+			Position(Code*, CodeList::iterator&);
 
 			/*\
 			 - Attempt to set this position at the next line
 			\*/
-			Position & NextLine();
+			Position& NextLine();
 
 			/*\
 			 - Attempt to set this position at the next symbol

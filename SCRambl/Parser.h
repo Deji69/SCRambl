@@ -672,7 +672,7 @@ namespace SCRambl
 			Tokens::Token GetToken() const;
 
 			bool IsRunning() const;
-			bool IsTaskFinished() final override;
+			bool IsTaskFinished() const final override;
 
 			template<typename TEvent, typename... TArgs>
 			inline size_t Event(TArgs&&... args) {

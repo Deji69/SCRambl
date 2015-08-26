@@ -31,9 +31,9 @@ const ScriptLabel* Build::AddScriptLabel(std::string name, Scripts::Position pos
 const ScriptLabel* Build::GetScriptLabel(std::string name) {
 	return m_Labels.Find(name);
 }
-const ScriptLabel* Build::GetScriptLabel(Label* label) {
+/*const ScriptLabel* Build::GetScriptLabel(Label* label) {
 	return m_Labels.Find(label);
-}
+}*/
 void Build::DoParseActions(std::string val, const ParseObjectConfig::ActionVec& vec) {
 	for (auto& action : vec) {
 		m_Env.DoAction(action, val);

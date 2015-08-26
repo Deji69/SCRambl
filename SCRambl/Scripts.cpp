@@ -1,6 +1,6 @@
 #include "stdafx.h"
-#include "Parser.h"
 #include "Scripts.h"
+#include "Parser.h"
 #include "Literals.h"
 #include "Symbols.h"
 #include "Tokens.h"
@@ -455,10 +455,10 @@ const CodeLine& Line::GetCode() const {
 unsigned long Line::GetLine() const {
 	return m_Line;
 }
-Line::operator const CodeLine &() const {
+Line::operator const CodeLine&() const {
 	return GetCode();
 }
-Line::operator CodeLine &() {
+Line::operator CodeLine&() {
 	return GetCode();
 }
 Line::operator unsigned long() const {

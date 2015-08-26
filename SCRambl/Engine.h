@@ -10,6 +10,7 @@
 #include <map>
 #include <iostream>
 #include "utils.h"
+#include "Labels.h"
 #include "Builder.h"
 #include "Tasks.h"
 #include "Formatter.h"

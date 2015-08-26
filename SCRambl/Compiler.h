@@ -193,7 +193,7 @@ namespace SCRambl
 			inline size_t GetProgressTotal() const { return GetNumTokens(); }
 
 			bool IsRunning() const { return Compiler::IsRunning(); }
-			bool IsTaskFinished() final override { return Compiler::IsFinished(); }
+			bool IsTaskFinished() const final override { return Compiler::IsFinished(); }
 
 			template<typename TEvent, typename... TArgs>
 			inline size_t Event(TArgs&&... args) {

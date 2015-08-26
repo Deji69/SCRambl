@@ -60,9 +60,7 @@ public:
 			m_inst = nullptr;
 	}
 	SCRamblProc(const SCRamblProc& v) = delete;
-	SCRamblProc(SCRamblProc&& v) : m_inst(v.m_inst) {
-		v.m_inst = nullptr;
-	}
+	SCRamblProc(SCRamblProc&& v) : m_inst(std::move(v.m_inst)) { }
 
 	SCRamblProc& operator=(const SCRamblProc& v) = delete;
 	SCRamblProc& operator=(SCRamblProc&& v) {
@@ -76,6 +74,7 @@ public:
 
 	inline int RC() const { return m_inst->Status.RC; }
 	inline operator SCRamblInst*() const { return m_inst; }
+	inline operator SCRamblInst*&() { return m_inst; }
 };
 
 int main(int argc, char* argv[])

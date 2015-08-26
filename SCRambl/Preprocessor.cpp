@@ -1308,7 +1308,7 @@ bool BlockCommentScanner::Scan(Lexing::State& state, Scripts::Position& pos) {
 }
 
 bool Task::IsRunning() const { return Preprocessor::IsRunning(); }
-bool Task::IsTaskFinished() { return Preprocessor::IsFinished(); }
+bool Task::IsTaskFinished() const { return Preprocessor::IsFinished(); }
 void Task::RunTask() { Preprocessor::Run(); }
 void Task::ResetTask() { Preprocessor::Reset(); }
 const Information& Task::Info() const { return m_Info; }

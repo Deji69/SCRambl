@@ -62,33 +62,27 @@ namespace SCRambl
 			std::ofstream m_File;
 		};
 
-		/*\
-		 * Linker::Event
-		\*/
-		enum class Event
-		{
+		/*\ Linker::Event \*/
+		enum class Event {
 			Begin, Finish,
 			Warning,
 			Error,
 		};
 
-		/*\
-		 * Linker::Task
-		\*/
+		/*\ Linker::Task \*/
 		class Task : public TaskSystem::Task, private Linker
 		{
 		public:
-			Task(Engine& engine, Build* build) : TaskSystem::Task(build),
-				Linker(*this, engine, build),
+			Task(Engine& engine, Build* build) : TaskSystem::Task(build), Linker(*this, engine, build),
 				m_Engine(engine)
 			{ }
 
 			bool IsRunning() const { return Linker::IsRunning(); }
-			bool IsTaskFinished() final override { return Linker::IsFinished(); }
+			bool IsTaskFinished() const final override { return Linker::IsFinished(); }
 
 		protected:
-			void RunTask() final override			{ Linker::Run(); }
-			void ResetTask() final override			{ Linker::Reset(); }
+			void RunTask() final override { Linker::Run(); }
+			void ResetTask() final override { Linker::Reset(); }
 
 		private:
 			friend Linker;

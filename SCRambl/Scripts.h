@@ -18,22 +18,20 @@
 #include "Labels.h"
 #include "Types.h"
 #include "ScriptObjects.h"
+#include "Labels.h"
 
 namespace SCRambl
 {
 	using TokenPtrVec = std::vector<IToken*>;
 
-	namespace Scripts
-	{
+	namespace Scripts {
 		using CodeList = std::list<Line>;
 		using CodeListRef = CodeList::iterator;
 		using Files = std::vector<File>;
 		using FileRef = VecRef<File>;
 
-		/*\ Scripts::File - Script files and includes
-		\*/
-		class File
-		{
+		/*\ Scripts::File - Script files and includes \*/
+		class File {
 		public:
 			File();
 			File(const File&);
@@ -71,8 +69,7 @@ namespace SCRambl
 		using Labels = Scope<Label>;
 	}
 
-	class Script
-	{
+	class Script {
 	public:
 		Script();
 
