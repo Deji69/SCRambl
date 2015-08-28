@@ -94,10 +94,14 @@ namespace SCRambl
 
 			Error(ID id) : m_ID(id)
 			{ }
-			inline operator ID() const			{ return m_ID; }
+			inline operator ID() const { return m_ID; }
+
+			static inline std::string Formatter(Error type) { return s_map[type]; }
 
 		private:
-			ID			m_ID;
+			static std::map<ID, std::string> s_map;
+
+			ID m_ID;
 		};
 
 		// Parameter
@@ -181,7 +185,7 @@ namespace SCRambl
 		template<Error::ID TID, typename... TArgs>
 		struct event_error : public error_event_data<TArgs...> {
 			event_error(const Engine& engine, TArgs... args) : error_event_data(Basic::Error(engine, TID), std::forward<TArgs>(args)...)
-			{ }
+			{ LinkEvent<event_error>("event_error"); }
 		};
 		using error_too_many_args				= event_error<Error::too_many_args>;
 		using error_expected_identifier			= event_error<Error::expected_identifier>;

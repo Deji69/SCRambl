@@ -47,7 +47,7 @@ namespace SCRambl
 					}
 				}
 
-				inline void SetName(std::string v) { if (m_Name.empty()) m_Name = v; }
+				inline void SetName(std::string v, bool b = false) { if (m_Name.empty() || b) m_Name = v; }
 
 				// Add event handler
 				template<typename Func>
@@ -90,6 +90,9 @@ namespace SCRambl
 
 		// Task - tasks and events
 		class Task : public ITask {
+			using EventPair = std::pair<std::string, TaskEvent>;
+			using Events = std::deque<EventPair>;
+
 		public:
 			enum State { init, running, error, finished };
 
@@ -97,12 +100,18 @@ namespace SCRambl
 
 			// Add an event
 			template<typename TEvent>
-			inline bool AddEvent(std::string name) {
+			inline bool AddEvent(std::string name = "") {
 				static std::type_index event_id = typeid(TEvent);
+				ASSERT((std::is_base_of<task_event, TEvent>()) == true);
 				if (std::is_base_of<task_event, TEvent>()) {
-					auto& v = m_Events[event_id];
-					v.first = name;
-					v.second.SetName(name);
+					auto it = m_EventMap.find(event_id);
+					if (it != std::end(m_EventMap))
+						it->second->second.SetName(!name.empty() ? name : event_id.name(), true);
+					else {
+						auto& v = MyAddEvent<TEvent>();
+						v.second.SetName(!name.empty() ? name : event_id.name());
+						m_EventMap[event_id] = &v;
+					}
 					return true;
 				}
 				return false;
@@ -111,7 +120,15 @@ namespace SCRambl
 			template<typename TEvent, typename Func>
 			inline void AddEventHandler(Func func) {
 				static std::type_index event_id = typeid(TEvent);
-				m_Events[event_id].second.AddHandler<Func>(std::forward<Func>(std::ref(func)));
+				auto it = m_EventMap.find(event_id);
+				if (it != std::end(m_EventMap)) {
+					it->second->second.AddHandler<Func>(std::forward<Func>(std::ref(func)));
+				}
+				else {
+					auto& ev = MyAddEvent<TEvent>();
+					ev.second.AddHandler<Func>(std::forward<Func>(std::ref(func)));
+					m_EventMap[event_id] = &ev;
+				}
 			}
 			// Call all handlers for an event - returns number of successful calls
 			template<typename TEvent>
@@ -120,12 +137,12 @@ namespace SCRambl
 				static std::type_index event_id = typeid(TEvent);
 				auto b = std::is_base_of<task_event, TEvent>();
 				if (event_id == typeid(task_event)) throw(task_bad_event());
-				if (!m_Events.empty()) {
+				if (!m_EventMap.empty()) {
 					for (auto id : event) {
-						auto it = m_Events.find(id);
-						if (it != m_Events.end()) {
+						auto iter = m_EventMap.find(id);
+						if (iter != std::end(m_EventMap)) {
 							// pass the message
-							return it->second.second.CallHandler(event);
+							return iter->second->second.CallHandler(event);
 						}
 					}
 				}
@@ -189,19 +206,30 @@ namespace SCRambl
 			inline State& TaskState() { return m_State; }
 
 		private:
+			template<typename TEvent>
+			EventPair& MyAddEvent() {
+				static std::type_index event_id = typeid(TEvent);
+				m_Events.emplace_front();
+				auto& ref = m_Events.front();
+				ref.first = event_id.name();
+				return ref;
+			}
+
+		private:
 			State m_State = State::init;
 			Task* m_Parent = nullptr;
 
 			// events can be handled by the implementor
-			std::unordered_map<std::type_index, std::pair<std::string, TaskEvent>> m_Events;
+			Events m_Events;
+			std::unordered_map<std::type_index, EventPair*> m_EventMap;
 		};
 	}
 
 	struct task_event {
-		using LinkEventDeque = std::set<const std::type_index>;
+		using LinkEventDeque = std::deque<const std::type_index>;
 		friend TaskSystem::TaskEvent;
 		task_event() {
-			LinkEvent<task_event>("task event");
+			LinkEvent<task_event>("task_event");
 		}
 		virtual ~task_event() { }
 
@@ -210,41 +238,21 @@ namespace SCRambl
 		}
 
 		inline const std::string& Name() const { return m_Name; }
-		LinkEventDeque::const_iterator begin() const { return GetLinkEventDeque().begin(); }
-		LinkEventDeque::const_iterator end() const { return GetLinkEventDeque().end(); }
+		LinkEventDeque::const_iterator begin() const { return m_LinkEvents.begin(); }
+		LinkEventDeque::const_iterator end() const { return m_LinkEvents.end(); }
 
 	protected:
 		template<typename TEvent>
 		void LinkEvent(std::string name) {
 			m_Name = name;
-			if (LinkLock<TEvent>() != 'O')
-				GetLinkEventDeque().emplace(typeid(TEvent));
-		}
-
-		template<> void LinkEvent<task_event>(std::string name) {
-			m_Name = name;
-			if (LinkLock<task_event>() != 'O') {
-				if (LinkLock<task_event>() != 'I') LinkLock<task_event>() = 'I';
-				else LinkLock<task_event>() = 'O';
-				GetLinkEventDeque().emplace(typeid(task_event));
-			}
+			m_LinkEvents.emplace_front(typeid(TEvent));
 		}
 
 	private:
-		template<typename TEvent>
-		static char& LinkLock() {
-			static char b = '\0';
-			return b;
-		}
-
-		static LinkEventDeque& GetLinkEventDeque() {
-			static LinkEventDeque deque;
-			return deque;
-		}
-
-		inline void SetName(std::string name) { if (m_Name.empty()) m_Name = name; }
+		inline void SetName(std::string name, bool b = false) { if (m_Name.empty() || b) m_Name = name; }
 
 	private:
 		std::string m_Name;
+		LinkEventDeque m_LinkEvents;
 	};
 }

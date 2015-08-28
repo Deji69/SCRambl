@@ -193,7 +193,7 @@ States Parser::Parse_Neutral_CheckIdentifier(IToken* tok) {
 		return state_parsing_variable;
 	}
 	else if (IsCommandParsing()/* && m_CommandArgIt->GetType().IsCompatible()*/) {
-		BREAK();
+		m_Task.Event<error_invalid_identifier>(range);
 	}
 	else {
 		m_Task.Event<error_invalid_identifier>(range);
@@ -876,3 +876,17 @@ void Task::ResetTask() { Parser::Reset(); }
 Task::Task(Engine& engine, Build* build) : TaskSystem::Task(build),
 Parser(*this, engine, *build), m_Engine(engine)
 { }
+
+std::map<Error::ID, std::string> Error::s_map = {
+	{ Error::expected_colon_punctuator, "expected colon punctuator" },
+	{ Error::expected_identifier, "expected identifier" },
+	{ Error::expected_integer_constant, "expected integer constant" },
+	{ Error::expected_key_identifier, "expected key identifier" },
+	{ Error::invalid_character, "invalid character" },
+	{ Error::invalid_command, "invalid command" },
+	{ Error::invalid_identifier, "invalid identifier" },
+	{ Error::invalid_operator, "invalid operator" },
+	{ Error::label_on_line, "label on line" },
+	{ Error::too_many_args, "too many args" },
+	{ Error::unsupported_value_type, "unsupported value type" },
+};

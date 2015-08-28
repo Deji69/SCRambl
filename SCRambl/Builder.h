@@ -127,15 +127,15 @@ namespace SCRambl
 	};
 
 	/* build events */
-	struct build_event : task_event {
+	struct build_event : public task_event {
 		explicit build_event(const Engine& engine) : m_Engine(engine) {
-			LinkEvent<build_event>("build event");
+			LinkEvent<build_event>("build_event");
 		}
 
 	private:
 		const Engine& m_Engine;
 	};
-	struct token_event : build_event {
+	struct token_event : public build_event {
 	public:
 		explicit token_event(const Engine& engine, Scripts::Range rg) : build_event(engine), m_ScriptRange(rg) {
 			LinkEvent<token_event>("token event");
@@ -145,7 +145,7 @@ namespace SCRambl
 	private:
 		Scripts::Range m_ScriptRange;
 	};
-	struct error_event : build_event {
+	struct error_event : public build_event {
 		explicit error_event(const Engine& engine, Basic::Error& error, std::string params) : build_event(engine), Error(error) {
 			LinkEvent<error_event>("error event");
 			Params.emplace_back(params);

@@ -62,8 +62,16 @@ Build* Engine::InitBuild(std::vector<std::string> files) {
 	});
 	build->AddEventHandler<error_event>([&get_task_name, build](const error_event& event){
 		std::cerr << get_task_name(build) << ": ERROR:";
-		for (auto& str : event.Params)
-			std::cerr << " " << str;
+		auto error = event.Error.Get<Parsing::Error>();
+		using Parsing::Error;
+		switch (error) {
+		case Error::invalid_identifier:
+			break;
+		default:
+			for (auto& str : event.Params)
+				std::cerr << " " << str;
+			break;
+		}
 		std::cerr << "\n";
 		return true;
 	});
