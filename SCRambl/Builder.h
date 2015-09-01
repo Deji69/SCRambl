@@ -146,21 +146,21 @@ namespace SCRambl
 		Scripts::Range m_ScriptRange;
 	};
 	struct error_event : public build_event {
-		explicit error_event(const Engine& engine, Basic::Error& error, std::string params) : build_event(engine), Error(error) {
+		explicit error_event(const Engine& engine, Basic::Error&& error, std::string params) : build_event(engine), Error(std::move(error)) {
 			LinkEvent<error_event>("error_event");
 			Params.emplace_back(params);
 		}
-		explicit error_event(const Engine& engine, Basic::Error& error, std::vector<std::string> params) : build_event(engine), Error(error), Params(params) {
+		explicit error_event(const Engine& engine, Basic::Error&& error, std::vector<std::string> params) : build_event(engine), Error(std::move(error)), Params(params) {
 			LinkEvent<error_event>("error_event");
 		}
 
-		Basic::Error& Error;
+		Basic::Error Error;
 		std::vector<std::string> Params;
 	};
 	template<typename... TArgs>
 	struct error_event_data : public error_event {
 	protected:
-		explicit error_event_data(Basic::Error& error, TArgs&&... args) : error_event(error.GetEngine(), error, error.GetEngine().FormatVec(args...))
+		explicit error_event_data(Basic::Error&& error, TArgs&&... args) : error_event(error.GetEngine(), std::forward<Basic::Error>(error), error.GetEngine().FormatVec(args...))
 		{ }
 
 		std::tuple<TArgs...> Data;

@@ -35,7 +35,7 @@ namespace SCRambl {
 			}
 			template<typename T>
 			inline const T& Get() const {
-				return Get<T>();
+				return static_cast<Info<T>&>(*m_Payload).Get();
 			}
 			
 			inline const Engine& GetEngine() const { return *m_Engine; }
