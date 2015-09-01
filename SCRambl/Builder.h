@@ -138,7 +138,7 @@ namespace SCRambl
 	struct token_event : public build_event {
 	public:
 		explicit token_event(const Engine& engine, Scripts::Range rg) : build_event(engine), m_ScriptRange(rg) {
-			LinkEvent<token_event>("token event");
+			LinkEvent<token_event>("token_event");
 		};
 		inline Scripts::Range TokenRange() const { return m_ScriptRange; }
 
@@ -147,11 +147,11 @@ namespace SCRambl
 	};
 	struct error_event : public build_event {
 		explicit error_event(const Engine& engine, Basic::Error& error, std::string params) : build_event(engine), Error(error) {
-			LinkEvent<error_event>("error event");
+			LinkEvent<error_event>("error_event");
 			Params.emplace_back(params);
 		}
 		explicit error_event(const Engine& engine, Basic::Error& error, std::vector<std::string> params) : build_event(engine), Error(error), Params(params) {
-			LinkEvent<error_event>("error event");
+			LinkEvent<error_event>("error_event");
 		}
 
 		Basic::Error& Error;
@@ -160,7 +160,7 @@ namespace SCRambl
 	template<typename... TArgs>
 	struct error_event_data : public error_event {
 	protected:
-		explicit error_event_data(Basic::Error error, TArgs&&... args) : error_event(error.GetEngine(), error, error.GetEngine().FormatVec(args...))
+		explicit error_event_data(Basic::Error& error, TArgs&&... args) : error_event(error.GetEngine(), error, error.GetEngine().FormatVec(args...))
 		{ }
 
 		std::tuple<TArgs...> Data;
@@ -168,13 +168,13 @@ namespace SCRambl
 	struct event_added_token : public token_event {
 	public:
 		explicit event_added_token(const Engine& engine, Scripts::Range rg) : token_event(engine, rg) {
-			LinkEvent<event_added_token>("added token");
+			LinkEvent<event_added_token>("added_token");
 		};
 	};
 	struct event_parsed_token : public token_event {
 	public:
 		explicit event_parsed_token(const Engine& engine, Scripts::Range rg) : token_event(engine, rg) {
-			LinkEvent<event_parsed_token>("parsed token");
+			LinkEvent<event_parsed_token>("parsed_token");
 		}
 	};
 

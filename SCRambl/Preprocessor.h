@@ -266,20 +266,20 @@ namespace SCRambl
 		};
 		struct event_begin : public event {
 			explicit event_begin(const Engine& engine) : event(engine)
-			{ }
+			{ LinkEvent<event_begin>("event_begin"); }
 		};
 		struct event_finish : public event {
 			explicit event_finish(const Engine& engine) : event(engine)
-			{ }
+			{ LinkEvent<event_finish>("event_finish"); }
 		};
 		struct event_warning : public event {
 			explicit event_warning(const Engine& engine) : event(engine)
-			{ }
+			{ LinkEvent<event_warning>("event_warning"); }
 		};
 		template<Error::ID TID, typename... TArgs>
 		struct event_error : public error_event_data<TArgs...> {
 			event_error(const Engine& engine, TArgs... args) : error_event_data(Basic::Error(engine, TID), std::forward<TArgs>(args)...)
-			{ }
+			{ LinkEvent<event_warning>("event_warning"); }
 		};
 		using error_include_failed							= event_error<Error::include_failed, std::string>;
 		using error_dir_expected_file_name					= event_error<Error::dir_expected_file_name, Directive>;
