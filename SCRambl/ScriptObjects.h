@@ -87,8 +87,15 @@ namespace SCRambl
 
 		template<typename... TArgs>
 		ScriptObject* Add(const Types::Type* type, Key key, TArgs&&... args) {
-			auto vartype = type->GetVarValue()->GetVarType();
-			auto& scope = vartype->IsGlobalVar() ? Global() : Local();
+			bool global = true;
+			if (auto varval = type->GetVarValue()) {
+				auto vartype = varval->GetVarType();
+				global = vartype->IsGlobalVar();
+			}
+			else if (auto labelval = type->GetLabelValue()) {
+				global = labelval->IsGlobal();
+			}
+			auto& scope = global ? Global() : Local();
 			// create object
 			auto idx = m_Objects.size();
 			m_Objects.emplace_back(scope, type, scope.Size(), key, args...);

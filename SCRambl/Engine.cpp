@@ -67,7 +67,7 @@ Build* Engine::InitBuild(std::vector<std::string> files) {
 		std::string s;
 		switch (error) {
 		case Error::invalid_identifier:
-			s = "invalid identifier '%1'";
+			s = "invalid identifier: %1";
 			break;
 		default:
 			s = "NAME ME!";

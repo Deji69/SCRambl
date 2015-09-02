@@ -85,7 +85,8 @@
 		</Type>
 		
 		<Type Name="LABEL">
-			<!-- Label pointer with 32 bit range -->
+			<!-- Label pointer with 32 bit range 
+				'Scope' can be set to 'local' for scoped labels -->
 			<Label Size="32" />
 			
 			<!-- 32 bit integer number (loose matching) -->
@@ -201,7 +202,6 @@
 		<!-- (Just a suggestion...) -->
 		<!-- <Translate Type="COMMAND_EXT">
 			<Data>
-				<!--<Int16>0x7FFF</Int16>--/
 				<Int8>0x7F</Int8>
 				<Int32 Source="Command" Attribute="Hash" />
 				<Args />

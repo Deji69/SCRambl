@@ -379,6 +379,7 @@ namespace SCRambl
 			States Parse_Neutral_CheckOperator(IToken*);
 			States Parse_Neutral_CheckNumber(IToken*);
 			States Parse_Neutral_CheckString(IToken*);
+			States Parse_Neutral_CheckLabel(IToken*);
 			States Parse_Type();
 			States Parse_Type_Varlist();
 			States Parse_Type_CommandDef();
@@ -625,6 +626,7 @@ namespace SCRambl
 			void Finish();
 			void Parse();
 
+		private:
 			State m_State = init;
 			States m_ActiveState = state_neutral;
 			States m_ParseState = state_neutral;

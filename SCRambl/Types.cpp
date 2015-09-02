@@ -142,6 +142,17 @@ namespace SCRambl
 			}
 			return nullptr;
 		}
+		LabelValue* Type::GetLabelValue() const {
+			LabelValue* value = nullptr;
+			AllValues<Value>([&value](Value* val) {
+				if (val->GetValueType() == ValueSet::Label) {
+					value = &val->Extend<LabelValue>();
+					return true;
+				}
+				return false;
+			});
+			return value;
+		}
 		VariableValue* Type::GetVarValue() const {
 			VariableValue* value = nullptr;
 			AllValues<Value>([&value](Value* val) {
@@ -258,7 +269,8 @@ namespace SCRambl
 			});
 			auto label = type->AddClass("Label", [this](const XMLNode vec, void*& obj) {
 				auto type = static_cast<Type*>(obj);
-				auto value = type->AddValue<LabelValue>(m_Types.Get(type->GetID()).Ref(), vec["Size"]->AsNumber<uint32_t>());
+				auto scope_attr = *vec["Scope"];
+				auto value = type->AddValue<LabelValue>(m_Types.Get(type->GetID()).Ref(), vec["Size"]->AsNumber<uint32_t>(), scope_attr);
 				AddValue(ValueSet::Label, value);
 				obj = value;
 			});

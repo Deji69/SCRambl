@@ -27,6 +27,7 @@ namespace SCRambl
 		class Variable;
 		class VariableValue;
 		class ArrayValue;
+		class LabelValue;
 
 		enum class TypeSet {
 			Basic, Extended, Variable
@@ -119,6 +120,7 @@ namespace SCRambl
 			const Variable* ToVariable() const;
 			VariableValue* GetVarValue() const;
 			ArrayValue* GetArrayValue() const;
+			LabelValue* GetLabelValue() const;
 			const Type* GetValueType() const;
 
 			MatchLevel GetMatchLevel(const Type*) const;
@@ -618,8 +620,13 @@ namespace SCRambl
 		class LabelValue : public Value
 		{
 		public:
-			LabelValue(VecRef<Type> type, size_t size) : Value(type, ValueSet::Label, size)
+			LabelValue(VecRef<Type> type, size_t size, XMLValue scope = "") : Value(type, ValueSet::Label, size), m_Scope(scope)
 			{ }
+
+			bool IsGlobal() const { return lengthcompare(m_Scope.AsString("global"), "local") == 0; }
+
+		private:
+			XMLValue m_Scope;
 		};
 		class VariableValue : public Value {
 			friend Types;

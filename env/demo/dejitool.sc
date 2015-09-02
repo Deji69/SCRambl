@@ -17,6 +17,7 @@ WAIT 0x7FfFfFfF
 WAIT -0x7FfFfFfF
 WAIT -0xFF
 WAIT 0x7F*/
+start:
 {
 	VAR_INT var1
 	WAIT var1

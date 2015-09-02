@@ -200,6 +200,9 @@ States Parser::Parse_Neutral_CheckIdentifier(IToken* tok) {
 	}
 	return state_neutral;
 }
+States Parser::Parse_Neutral_CheckLabel(IToken* tok) {
+	return state_neutral;
+}
 States Parser::Parse_Neutral_CheckDelimiter(IToken* tok) {
 	if (m_ActiveState == state_parsing_variable) {
 		if (IsSubscriptDelimiter(tok))
@@ -265,6 +268,9 @@ States Parser::Parse_Neutral() {
 		break;
 	case Tokens::Type::Identifier:
 		new_state = Parse_Neutral_CheckIdentifier(*m_TokenIt);
+		break;
+	case Tokens::Type::Label:
+		new_state = Parse_Neutral_CheckLabel(*m_TokenIt);
 		break;
 	case Tokens::Type::Delimiter:
 		new_state = Parse_Neutral_CheckDelimiter(*m_TokenIt);
