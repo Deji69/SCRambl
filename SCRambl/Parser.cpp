@@ -25,6 +25,7 @@ void Parser::Init() {
 	m_Task.Event<event_begin>();
 	m_State = parsing;
 	m_OnNewLine = true;
+	m_SizeCount = 0;
 }
 void Parser::Finish() {
 	m_Build.ParseCommands(m_CommandTokenMap);
@@ -146,8 +147,20 @@ States Parser::Parse_Neutral_CheckCharacter(IToken* tok) {
 			if (!m_CommandParseState.AreParamsSatisfied()) {
 				BREAK();
 			}
+			// figure out the translation data size of the arg list
+			{
+				size_t size = m_Xlation->GetTranslation()->GetSize(*m_Xlation);
+				for (auto arg : m_CommandParseState.args) {
+					auto val = arg.second;
+					auto n = val->GetTranslation()->GetSize(FormArgumentXlate(*m_Xlation, arg));
+					size += n;
+					arg.first.SetSize(size);
+				}
+
+				m_SizeCount += BitsToBytes(size);
+			}
 			m_CommandTokenMap.emplace(m_CommandParseState.command->Name(), m_CommandTokenIt);
-			CreateToken<Tokens::CommandArgs::Info>(Tokens::Type::ArgList, m_CommandParseState.args);
+			auto token = CreateToken<Tokens::CommandArgs::Info>(Tokens::Type::ArgList, m_CommandParseState.args);
 			break;
 		}
 		m_ActiveState = state_neutral;
@@ -165,12 +178,10 @@ States Parser::Parse_Neutral_CheckIdentifier(IToken* tok) {
 		return state_parsing_type;
 	}
 
-	else if (auto ptr = m_Build.GetScriptLabel(name)) {
-		// this is a label pointer!
-		//auto tok = CreateToken<Tokens::Label::Info>(Tokens::Type::LabelRef, range, ptr->Ptr());
-		//m_TokenIt->SetToken(tok);
-		BREAK();
-		//AddLabelRef(ptr, m_TokenIt);
+	else if (auto label = m_Build.GetScriptLabel(name)) {
+		m_Label = label;
+		m_LabelTokenIt = m_TokenIt;
+		AddLabelRef(label, m_TokenIt);
 		return state_parsing_label;
 	}
 	else if (m_ExtraCommands.FindCommands(name, vec) > 0 || m_Commands.FindCommands(name, vec) > 0) {
@@ -188,12 +199,19 @@ States Parser::Parse_Neutral_CheckIdentifier(IToken* tok) {
 		return state_parsing_command;
 	}
 	else if (auto var = m_Build.GetScriptVariable(name)) {
-		m_Variable = var->Ptr();
+		m_Variable = var;
 		m_VariableTokenIt = m_TokenIt;
 		return state_parsing_variable;
 	}
 	else if (IsCommandParsing()/* && m_CommandArgIt->GetType().IsCompatible()*/) {
-		m_Task.Event<error_invalid_identifier>(range);
+		auto type = m_CommandParseState.commandArgIt->GetType();
+		if (type->HasValueType(Types::ValueSet::Label)) {
+			m_Label = m_Build.AddScriptLabel(name, m_SizeCount);
+			m_LabelTokenIt = m_TokenIt;
+			AddLabelRef(label, m_TokenIt);
+			return state_parsing_label;
+		}
+		else m_Task.Event<error_invalid_identifier>(range);
 	}
 	else {
 		m_Task.Event<error_invalid_identifier>(range);
@@ -201,6 +219,12 @@ States Parser::Parse_Neutral_CheckIdentifier(IToken* tok) {
 	return state_neutral;
 }
 States Parser::Parse_Neutral_CheckLabel(IToken* tok) {
+	auto& token = tok->Get<Tokens::Label::Info>();
+	auto range = token.GetValue<Tokens::Label::ScriptRange>();
+	auto name = range.Format();
+	ScriptLabel* label = nullptr;
+	if (label = m_Build.GetScriptLabel(name)) (*label)->SetOffset(m_SizeCount);
+	else label = m_Build.AddScriptLabel(name, m_SizeCount);
 	return state_neutral;
 }
 States Parser::Parse_Neutral_CheckDelimiter(IToken* tok) {
@@ -213,8 +237,10 @@ States Parser::Parse_Neutral_CheckDelimiter(IToken* tok) {
 	else {
 		if (IsScopeDelimiterClosing(tok)) {
 			m_Build.CloseVarScope();
+			m_Build.CloseLabelScope();
 		}
 		else if (IsScopeDelimiter(tok)) {
+			m_Build.OpenLabelScope();
 			m_Build.OpenVarScope();
 		}
 		else BREAK();
@@ -366,18 +392,29 @@ States Parser::Parse_String() {
 	return state_parsing_string;
 }
 States Parser::Parse_Label() {
+	if (m_ActiveState == state_parsing_command_args) {
+		auto size = CountBitOccupation(m_Label->Get().Offset());
+		auto& label = *m_Label;
+		auto value = AllFittingValues<Types::LabelValue>(Types::ValueSet::Label, size, [&label](Types::LabelValue* value){
+			return value->IsGlobal() == label->IsGlobal();
+		});
+		if (!value) BREAK();
+		AddCommandArg(&*m_Label, value);
+		++m_TokenIt;
+		return state_neutral;
+	}
 	return state_parsing_label;
 }
 States Parser::Parse_Variable() {
 	if (m_ActiveState == state_parsing_operator) {
 		if (m_OperationParseState.IsInChain()) {
-			m_OperationParseState.Chain(m_CurrentOperator, { m_Variable, m_Variable->Value() });
+			m_OperationParseState.Chain(m_CurrentOperator, { m_Variable, (*m_Variable)->Value() });
 		}
 		else {
 			m_ActiveState = state_neutral;
 			if (m_OperationParseState.looksPrefixed) {
 				// rhs of a =var unary operation
-				if (auto op = m_CurrentOperator->GetUnaryOperation(m_Variable, true)) {
+				if (auto op = m_CurrentOperator->GetUnaryOperation(&**m_Variable, true)) {
 					return state_neutral;
 				}
 				else BREAK();		// error?
@@ -389,10 +426,10 @@ States Parser::Parse_Variable() {
 		return state_neutral;
 	}
 	else if (m_ActiveState == state_parsing_command_args) {
-		auto size = CountBitOccupation(m_Variable->Index());
+		auto size = CountBitOccupation((*m_Variable)->Index());
 		auto& var = *m_Variable;
 		auto value = AllFittingValues<Types::VariableValue>(Types::ValueSet::Variable, size, [&var](Types::VariableValue* value){
-			return value->IsGlobal() == var.IsGlobal();
+			return value->IsGlobal() == var->IsGlobal();
 		});
 		if (!value) BREAK();
 		AddCommandArg(m_Variable, value);
@@ -534,10 +571,10 @@ States Parser::Parse_Operator() {
 		m_ActiveState = state_neutral;
 		++m_TokenIt;
 				
-		if (auto op = m_CurrentOperator->GetUnaryOperation(m_Variable, false)) {
-			m_OperationParseState.HoldPostUnary(op, m_Variable);
+		if (auto op = m_CurrentOperator->GetUnaryOperation(&**m_Variable, false)) {
+			m_OperationParseState.HoldPostUnary(op, &**m_Variable);
 		}
-		else m_OperationParseState.HoldLHS(m_CurrentOperator, m_Variable);
+		else m_OperationParseState.HoldLHS(m_CurrentOperator, &**m_Variable);
  		m_ActiveState = state_parsing_operator;
 		return state_neutral;
 	}
@@ -882,6 +919,15 @@ void Task::ResetTask() { Parser::Reset(); }
 Task::Task(Engine& engine, Build* build) : TaskSystem::Task(build),
 Parser(*this, engine, *build), m_Engine(engine)
 { }
+
+Types::Xlation Parsing::FormArgumentXlate(const Types::Xlation& xlate, const Tokens::CommandArgs::Arg& arg) {
+	Types::Xlation r = xlate;
+	r.SetAttributes(Types::DataSourceID::Number, arg.first.GetNumberAttributes());
+	r.SetAttributes(Types::DataSourceID::Text, arg.first.GetTextAttributes());
+	r.SetAttributes(Types::DataSourceID::Variable, arg.first.GetVariableAttributes());
+	r.SetAttributes(Types::DataSourceID::Label, arg.first.GetLabelAttributes());
+	return r;
+}
 
 std::map<Error::ID, std::string> Error::s_map = {
 	{ Error::expected_colon_punctuator, "expected colon punctuator" },

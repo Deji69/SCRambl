@@ -131,12 +131,12 @@ namespace SCRambl
 		public:
 			enum Type { PrefixUnary, SuffixUnary, Inline, Compounded };
 			// PrefixUnary
-			Operation(Operators::OperationRef op, const ScriptVariable* var) : //Symbol(Tokens::Type::Operator),
-				m_Operation(op), m_Type(PrefixUnary), m_ROperand(var->Ptr())
+			Operation(Operators::OperationRef op, ScriptVariable* var) : //Symbol(Tokens::Type::Operator),
+				m_Operation(op), m_Type(PrefixUnary), m_ROperand(var)
 			{ }
 			// SuffixUnary
-			Operation(const ScriptVariable* var, Operators::OperationRef op) : //Symbol(Tokens::Type::Operator),
-				m_Operation(op), m_Type(SuffixUnary), m_LOperand(var->Ptr())
+			Operation(ScriptVariable* var, Operators::OperationRef op) : //Symbol(Tokens::Type::Operator),
+				m_Operation(op), m_Type(SuffixUnary), m_LOperand(var)
 			{ }
 			// Inline var + var
 			Operation(Operand lop, Operators::OperationRef op, Operand rop) : //Symbol(Tokens::Type::Operator),
@@ -196,6 +196,8 @@ namespace SCRambl
 		using error_invalid_command				= event_error<Error::invalid_command>;
 		using error_invalid_operator			= event_error<Error::invalid_operator, Scripts::Range>;
 		using error_invalid_character			= event_error<Error::invalid_character, Character>;
+
+		Types::Xlation FormArgumentXlate(const Types::Xlation&, const Tokens::CommandArgs::Arg&);
 
 		// The parser
 		class Parser {
@@ -635,15 +637,18 @@ namespace SCRambl
 			Build& m_Build;
 			Tokens::Storage& m_Tokens;
 			Tokens::Iterator m_TokenIt;
+			Tokens::Iterator m_LabelTokenIt;
 			Tokens::Iterator m_VariableTokenIt;
 			Tokens::Iterator m_CommandTokenIt;
 			Tokens::Iterator m_OperatorTokenIt;
 			std::vector<const Tokens::Iterator> m_CommandTokens;			// positions of all parsed command tokens
 			std::vector<const Tokens::Iterator> m_LabelTokens;
 			Types::Types& m_Types;
+			size_t m_SizeCount;
 			size_t m_NumCommandArgs;
 			size_t m_NumOverloadFailures;
-			Variable* m_Variable = nullptr;
+			ScriptVariable* m_Variable = nullptr;
+			ScriptLabel* m_Label = nullptr;
 			Commands& m_Commands;
 			Commands m_ExtraCommands;
 			VecRef<Command> m_CurrentCommand;

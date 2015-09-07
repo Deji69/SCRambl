@@ -175,10 +175,8 @@ void Preprocessor::HandleToken() {
 		break;
 	}
 	case TokenType::Label: {
-		auto name = range.Format();
 		// TODO: do
-		auto label = m_Build.AddScriptLabel(name, pos);
-		m_Build.CreateToken<Tokens::Label::Info>(range, Tokens::Type::Label, range, label->Ptr());
+		m_Build.CreateToken<Tokens::Label::Info>(range, Tokens::Type::Label, range);
 		break;
 	}
 	case TokenType::Operator: {

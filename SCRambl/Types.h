@@ -429,8 +429,7 @@ namespace SCRambl
 		class Xlation;
 
 		// Translation
-		class Translation
-		{
+		class Translation {
 		public:
 			class Data {
 				static const size_t c_invalid_size;
@@ -440,7 +439,7 @@ namespace SCRambl
 				{
 				public:
 					Field(DataType type, DataSourceID src, DataAttributeID attr) :
-						m_Type(type), m_Source(src), m_Attribute(attr), m_Size(0), m_SizeLimit(false)
+						m_Type(type), m_Source(src), m_Attribute(attr), m_Size(type == DataType::Char ? 8 : 0), m_SizeLimit(false)
 					{ }
 					Field(DataType type, DataSourceID src, DataAttributeID attr, size_t size) :
 						m_Type(type), m_Source(src), m_Attribute(attr), m_Size(size), m_SizeLimit(true)
@@ -506,6 +505,8 @@ namespace SCRambl
 			DataRef GetData(size_t i) { return {m_Data, i}; }
 			size_t GetDataCount() const { return m_Data.size(); }
 
+			size_t GetSize(Xlation);
+
 		private:
 			VecRef<Type> m_Type = nullptr;
 			ValueSet m_ValueType = ValueSet::INVALID;
@@ -518,8 +519,7 @@ namespace SCRambl
 		using DataAttributesFunc = std::function<XMLValue(DataSourceID, DataAttributeID)>;
 
 		// The Xlation's Will Convert You!
-		class Xlation
-		{
+		class Xlation {
 		public:
 			Xlation() = default;
 			Xlation(Translation::Ref translation, DataAttributesFunc&& func) : m_Func(func), m_Translation(translation)
@@ -557,12 +557,11 @@ namespace SCRambl
 		};
 
 		/*\ Value of Type for translation \*/
-		class Value
-		{
+		class Value {
 			friend Type;
 
 		public:
-			Value(VecRef<Type> type, ValueSet valtype) : m_ValueType(valtype), m_Type(type), m_Size(0)
+			Value(VecRef<Type> type, ValueSet valtype) : m_ValueType(valtype), m_Type(type), m_Size(-1)
 			{ }
 			Value(VecRef<Type> type, ValueSet valtype, size_t size) : m_ValueType(valtype), m_Type(type), m_Size(size)
 			{ }
@@ -572,7 +571,7 @@ namespace SCRambl
 				return GetSize() >= size;
 			}
 			
-			inline size_t GetSize() const { return m_Size; }
+			inline size_t GetSize() const { return m_Size != -1 ? m_Size : 0; }
 			inline const Type* GetType() const { return m_Type.Ptr(); }
 			inline ValueSet GetValueType() const { return m_ValueType; }
 

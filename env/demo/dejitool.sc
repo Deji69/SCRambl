@@ -17,10 +17,13 @@ WAIT 0x7FfFfFfF
 WAIT -0x7FfFfFfF
 WAIT -0xFF
 WAIT 0x7F*/
+GOTO start
+LINE 1 -2.0 "yay" "daamn" 0 -666.666
 start:
 {
 	VAR_INT var1
 	WAIT var1
+	GOTO start
 	LVAR_INT lvar1 lvar2
 	LINE 1.0 -2.0 3.14159 4.444444445 55555.0 -666.666
 	WAIT lvar1
@@ -30,8 +33,8 @@ start:
 {
 	//LVAR_INT lvar3 lvar4
 	LVAR_INT lvar1 lvar2
-	WAIT lvar3
-	WAIT lvar4
+	//WAIT lvar3
+	//WAIT lvar4
 	WAIT lvar1
 	WAIT lvar2
 }

@@ -3,6 +3,7 @@
 #include "Engine.h"
 #include "Numbers.h"
 #include "Text.h"
+#include "Operands.h"
 
 namespace SCRambl
 {
@@ -116,6 +117,44 @@ namespace SCRambl
 		/* ArrayValue */
 		ArrayValue::ArrayValue(VecRef<Type> type, size_t size, VecRef<Variable> var, VecRef<Type> val) : VariableValue(type, size, var, val, true)
 		{ }
+
+		/* Translation */
+		size_t Translation::GetSize(Xlation xlate) {
+			size_t size = 0;
+			for (auto& data : m_Data) {
+				for (size_t x = 0; x < data.GetNumFields(); ++x) {
+					auto field = data.GetField(x);
+					if (field->GetDataType() == DataType::Args)
+						continue;
+					if (field->HasSizeLimit())
+						size += field->GetDataType() != DataType::String && field->GetDataType() != DataType::Char ? field->GetSizeLimit() : field->GetSizeLimit() * 8;
+					else if (field->GetDataSource() == DataSourceID::None && field->GetDataAttribute() == DataAttributeID::None) {
+						auto n = BitsToByteBits(CountBitOccupation(field->GetValue().AsNumber<size_t>()));
+						size += n > 64 ? 64 : n;
+					}
+					else {
+						auto value = xlate.GetAttribute(field->GetDataSource(), field->GetDataAttribute());
+						size_t n = 0;
+						switch (field->GetDataType()) {
+						case DataType::Float:
+						case DataType::Fixed:
+						case DataType::Int:
+							n = BitsToByteBits(CountBitOccupation(value.AsNumber<size_t>()));
+							break;
+						case DataType::Char:
+							n = 8;
+							break;
+						case DataType::String:
+							n = value.AsString().size() * 8;
+							break;
+						}
+
+						size += n > 64 ? 64 : n;
+					}
+				}
+			}
+			return size;
+		}
 
 		/* Type */
 		size_t Type::GetID() const { return m_ID; }

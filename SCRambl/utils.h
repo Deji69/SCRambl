@@ -290,7 +290,10 @@ namespace SCRambl {
 	inline T BitsToBytes(T v) {
 		return (v / 8) + (v % 8 ? 1 : 0);
 	}
-
+	template<typename T>
+	inline T BitsToByteBits(T v) {
+		return BytesToBits(BitsToBytes(v));
+	}
 	// I can't stress how often I've needed a program to be aware of the number of bits its data used...
 	template<typename T>
 	inline size_t CountBitOccupation(T N) {

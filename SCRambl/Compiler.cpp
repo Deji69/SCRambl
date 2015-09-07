@@ -73,11 +73,8 @@ namespace SCRambl
 							value = field->GetValue();
 						}
 						if (!field->HasSizeLimit()) {
-							size = CountBitOccupation(value.AsNumber<size_t>());
-							if (size > 32) size = 64;
-							else if (size > 16) size = 32;
-							else if (size > 8) size = 16;
-							else size = 8;
+							size = BitsToByteBits(CountBitOccupation(value.AsNumber<size_t>()));
+							if (size > 64) size = 64;
 						}
 						break;
 					case Types::DataType::Char:
@@ -183,11 +180,7 @@ namespace SCRambl
 			}
 		}
 		Types::Xlation Compiler::FormArgumentXlate(const Types::Xlation& xlate, const Tokens::CommandArgs::Arg& arg) const {
-			Types::Xlation r = xlate;
-			r.SetAttributes(Types::DataSourceID::Number, arg.first.GetNumberAttributes());
-			r.SetAttributes(Types::DataSourceID::Text, arg.first.GetTextAttributes());
-			r.SetAttributes(Types::DataSourceID::Variable, arg.first.GetVariableAttributes());
-			return r;
+			return Parsing::FormArgumentXlate(xlate, arg);
 		}
 		void Compiler::Finish() {
 			m_Task.Event<event_finish>();

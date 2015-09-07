@@ -86,11 +86,11 @@ namespace SCRambl {
 		enum Type { NullValue, IntValue, FloatValue, TextValue, LabelValue, VariableValue };
 
 		Operand() = default;
-		Operand(Variable* var) : m_Type(VariableValue),
-			m_VariableValue(var), m_Text(var->Name())
+		Operand(ScriptVariable* var) : m_Type(VariableValue),
+			m_VariableValue(var), m_Text((*var)->Name())
 		{ }
-		Operand(Label* label) : m_Type(LabelValue),
-			m_LabelValue(label), m_Text(label->Name())
+		Operand(ScriptLabel* label) : m_Type(LabelValue),
+			m_LabelValue(label), m_Text((*label)->Name())
 		{ }
 		Operand(Tokens::Number::Info<Numbers::IntegerType>* info) : m_Type(IntValue),
 			m_IntValue(*info->GetValue<Tokens::Number::NumberValue>()),
@@ -105,8 +105,7 @@ namespace SCRambl {
 		{ }
 		Operand(float v, std::string str) : m_Type(FloatValue),
 			m_IntValue(0), m_FloatValue(v), m_Text(str)
-		{
-		}
+		{ }
 		Operand(std::string v) : m_Type(TextValue),
 			m_Text(v)
 		{ }
@@ -115,10 +114,13 @@ namespace SCRambl {
 		inline T Value() const { return m_IntValue; }
 		template<> inline long long Value() const { return m_IntValue; }
 		template<> inline float Value() const { return m_FloatValue; }
-		template<> inline Label* Value() const { return m_LabelValue; }
-		template<> inline Variable* Value() const { return m_VariableValue; }
+		template<> inline ScriptLabel* Value() const { return m_LabelValue; }
+		template<> inline ScriptVariable* Value() const { return m_VariableValue; }
 		inline Type GetType() const { return m_Type; }
 		inline std::string Text() const { return m_Text; }
+		inline bool HasSize() const { return m_Size != -1; }
+		inline size_t Size() const { return m_Size; }
+		inline void SetSize(size_t v) { m_Size = v; }
 
 		Attributes GetNumberAttributes() const;
 		Attributes GetTextAttributes() const;
@@ -130,9 +132,11 @@ namespace SCRambl {
 		union {
 			int64_t m_IntValue = 0;
 			float m_FloatValue;
-			Label* m_LabelValue;
-			Variable* m_VariableValue;
 		};
+		ScriptLabel* m_LabelValue = nullptr;
+		ScriptVariable* m_VariableValue = nullptr;
 		std::string m_Text;
+
+		size_t m_Size = -1;
 	};
 }

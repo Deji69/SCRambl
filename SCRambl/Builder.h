@@ -272,15 +272,17 @@ namespace SCRambl
 		inline const ScriptObjects<Variable>& GetVariables() const { return m_Variables; }
 		inline const ScriptVariable::Scope& OpenVarScope() { return m_Variables.BeginLocal(); }
 		inline const ScriptVariable::Scope& CloseVarScope() { return m_Variables.EndLocal(); }
-		const ScriptVariable* AddScriptVariable(std::string name, VecRef<Types::Type>, size_t array_size);
-		const ScriptVariable* GetScriptVariable(std::string);
+		inline const ScriptLabel::Scope& OpenLabelScope() { return m_Labels.BeginLocal(); }
+		inline const ScriptLabel::Scope& CloseLabelScope() { return m_Labels.EndLocal(); }
+		ScriptVariable* AddScriptVariable(std::string name, VecRef<Types::Type>, size_t array_size);
+		ScriptVariable* GetScriptVariable(std::string);
 
 		// Labels
 		inline ScriptObjects<Label>& GetLabels() { return m_Labels; }
 		inline const ScriptObjects<Label>& GetLabels() const { return m_Labels; }
-		const ScriptLabel* AddScriptLabel(std::string name, Scripts::Position);
-		const ScriptLabel* GetScriptLabel(std::string);
-		const ScriptLabel* GetScriptLabel(Label*);
+		ScriptLabel* AddScriptLabel(std::string name, size_t offset = -1);
+		ScriptLabel* GetScriptLabel(std::string);
+		ScriptLabel* GetScriptLabel(Label*);
 
 		Xlations::const_iterator GetXlationsBegin() const {
 			return m_Xlations.begin();

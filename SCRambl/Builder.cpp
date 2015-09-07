@@ -7,7 +7,7 @@
 using namespace SCRambl;
 
 /* Build */
-const ScriptVariable* Build::AddScriptVariable(std::string name, VecRef<Types::Type> type, size_t array_size) {
+ScriptVariable* Build::AddScriptVariable(std::string name, VecRef<Types::Type> type, size_t array_size) {
 	if (auto val = array_size ? type->GetArrayValue() : type->GetVarValue()) {
 		auto var = m_Variables.Add(type.Ptr(), name, array_size);
 		//if (var->Get().ID() > var->Get().Value()->GetVarType()->GetVarMaxIndex())
@@ -16,19 +16,19 @@ const ScriptVariable* Build::AddScriptVariable(std::string name, VecRef<Types::T
 	else BREAK();
 	return nullptr;
 }
-const ScriptVariable* Build::GetScriptVariable(std::string name) {
+ScriptVariable* Build::GetScriptVariable(std::string name) {
 	auto var = m_Variables.Find(name);
 	return var;
 }
-const ScriptLabel* Build::AddScriptLabel(std::string name, Scripts::Position pos) {
+ScriptLabel* Build::AddScriptLabel(std::string name, size_t offset) {
 	std::vector<Types::Value*> vals;
 	m_Types.GetValues(Types::ValueSet::Label, 0, vals);
 	if (vals.empty() || vals.size() > 1) BREAK();
-	auto label = m_Labels.Add(vals[0]->GetType(), name, pos);
-	m_LabelPosMap.emplace(label->Get().Pos(), label);
+	auto label = m_Labels.Add(vals[0]->GetType(), name, offset, vals[0]->Extend<Types::LabelValue>().IsGlobal());
+	//m_LabelPosMap.emplace(label->Get().Pos(), label);
 	return label;
 }
-const ScriptLabel* Build::GetScriptLabel(std::string name) {
+ScriptLabel* Build::GetScriptLabel(std::string name) {
 	return m_Labels.Find(name);
 }
 /*const ScriptLabel* Build::GetScriptLabel(Label* label) {
@@ -82,7 +82,7 @@ void Build::ParseCommands(const std::multimap<const std::string, Tokens::Iterato
 							val = toke->Get<Tokens::Command::Info>().GetValue<Tokens::Command::CommandType>()->Name();
 							break;
 						case Tokens::Type::Label:
-							val = toke->Get<Tokens::Label::Info>().GetValue<Tokens::Label::LabelValue>()->Name();
+							val = toke->Get<Tokens::Label::Info>().GetValue<Tokens::Label::ScriptRange>().Format();
 							break;
 						default: BREAK();
 						}

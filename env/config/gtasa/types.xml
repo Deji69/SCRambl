@@ -86,7 +86,7 @@
 		
 		<Type Name="LABEL">
 			<!-- Label pointer with 32 bit range 
-				'Scope' can be set to 'local' for scoped labels -->
+				'Scope' can be set to 'local' for label scoping -->
 			<Label Size="32" />
 			
 			<!-- 32 bit integer number (loose matching) -->

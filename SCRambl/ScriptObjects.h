@@ -106,7 +106,7 @@ namespace SCRambl
 			m_Map.emplace(key, std::prev(m_Objects.end()));
 			return &m_Objects.back();
 		}
-		const ScriptObject* Find(Key key) const {
+		ScriptObject* Find(Key key) const {
 			auto it = m_Map.find(key);
 			return it == m_Map.end() ? nullptr : &*it->second;
 		}
@@ -134,9 +134,10 @@ namespace SCRambl
 			for (auto it : m_Scopes.back()) {
 				// destroy all in it's name
 				auto rg = m_Map.equal_range(it.first);
-				for (auto it = rg.first; it != rg.second; ++it) {
+				// duh, don't do this, the object still has to exist for compilation
+				/*for (auto it = rg.first; it != rg.second; ++it) {
 					m_Objects.erase(it->second);
-				}
+				}*/
 				m_Map.erase(rg.first, rg.second);
 			}
 			m_Scopes.erase(m_Scopes.end()-1);
@@ -185,7 +186,7 @@ namespace SCRambl
 
 		inline TObj& Get() const { return *m_Object; }
 		inline TObj* Ptr() const { return m_Object.get(); }
-		inline TObj& operator*() const { return Ptr(); }
+		inline TObj& operator*() const { return Get(); }
 		inline TObj* operator->() const { return Ptr(); }
 
 	private:

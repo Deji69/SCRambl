@@ -68,14 +68,11 @@ namespace SCRambl
 		};
 		class Label {
 		public:
-			static const enum Parameter { ScriptRange, LabelValue };
-			using Info = TokenInfo<Type, Scripts::Range, SCRambl::Label*>;
+			static const enum Parameter { ScriptRange };
+			using Info = TokenInfo<Type, Scripts::Range>;
 
 			static Scripts::Range GetScriptRange(const IToken& token) {
 				return token.Get<Info>().GetValue<ScriptRange>();
-			}
-			static SCRambl::Label* GetLabel(const IToken& token) {
-				return token.Get<Info>().GetValue<LabelValue>();
 			}
 
 			/* Tokens::Command::Call - Carries symbolic data for a command call */
@@ -86,7 +83,7 @@ namespace SCRambl
 
 			public:
 				Jump(const Info* info, size_t off = 0) : Symbol(Type::CommandCall),
-					m_Label(info->GetValue<LabelValue>()),
+					//m_Label(info->GetValue<LabelValue>()),
 					m_Offset(off)
 				{ }
 			};
