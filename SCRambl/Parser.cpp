@@ -25,6 +25,9 @@ void Parser::Init() {
 	m_Task.Event<event_begin>();
 	m_State = parsing;
 	m_OnNewLine = true;
+	m_ParsingCommandArgs = false;
+	m_EndOfCommandArgs = false;
+	m_Conditional = false;
 	m_SizeCount = 0;
 }
 void Parser::Finish() {
@@ -248,22 +251,26 @@ States Parser::Parse_Neutral_CheckDelimiter(IToken* tok) {
 	return state_neutral;
 }
 States Parser::Parse_Neutral_CheckOperator(IToken* tok) {
-	if (m_CurrentOperator = GetOperator(tok)) {
-		m_OperatorTokenIt = m_TokenIt;
-		if (m_CurrentOperator->IsSign()) {
-			if (m_CurrentOperator->IsPositive() || m_CurrentOperator->IsNegative()) {
-				if (PeekToken(Tokens::Type::Number) && (m_ActiveState == state_neutral || m_ActiveState == state_parsing_command_args)) {
-					++m_TokenIt;
-					auto state = Parse_Neutral_CheckNumber(*m_TokenIt);
-					if (m_CurrentOperator->IsNegative())
-						m_NumberParseState.Negate();
-					return state;
+	if (auto op = GetOperator(tok)) {
+		auto pr = m_Build.GetOperators().Get(op->Name(), m_Conditional);
+		m_OperatorType = pr.second;
+		if (m_CurrentOperator = pr.first) {
+			m_OperatorTokenIt = m_TokenIt;
+			if (m_CurrentOperator->IsSign()) {
+				if (m_CurrentOperator->IsPositive() || m_CurrentOperator->IsNegative()) {
+					if (PeekToken(Tokens::Type::Number) && (m_ActiveState == state_neutral || m_ActiveState == state_parsing_command_args)) {
+						++m_TokenIt;
+						auto state = Parse_Neutral_CheckNumber(*m_TokenIt);
+						if (m_CurrentOperator->IsNegative())
+							m_NumberParseState.Negate();
+						return state;
+					}
 				}
 			}
+			return state_parsing_operator;
 		}
-		return state_parsing_operator;
 	}
-	else m_Task.Event<error_invalid_operator>(GetOperatorRange(tok));
+	m_Task.Event<error_invalid_operator>(GetOperatorRange(tok));
 	return state_neutral;
 }
 States Parser::Parse_Neutral_CheckNumber(IToken* tok) {
@@ -359,7 +366,7 @@ States Parser::Parse_Number() {
 			if (m_OperationParseState.RequireRVal() || m_OperationParseState.CheckForRVal()) {
 				if (auto op = m_CurrentOperator->GetOperation(m_OperationParseState.lh_var->Ptr(), type.Ptr())) {
 					m_OperationParseState.FinishRHS(op, type.Ptr());
-					FinishOperatorParsing();
+					FinishOperatorParsing(operand, value);
 				}
 			}
 			if (PeekToken(Tokens::Type::Operator)) {
@@ -448,7 +455,7 @@ States Parser::Parse_Variable() {
 		// lhs of a var= operation?
 		++m_TokenIt;
 		m_ActiveState = state_parsing_variable;
-		m_OperationParseState.StartWithVariable();
+		m_OperationParseState.StartWithVariable(m_Variable);
 		return state_neutral;
 	}
 	return state_parsing_variable;

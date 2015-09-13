@@ -382,10 +382,16 @@ namespace SCRambl
 			void Add(std::string op, OperatorRef ref, OperatorType type) {
 				if (ref) m_OpMap.emplace(op, std::make_pair(ref, type));
 			}
-			std::pair<OperatorRef, OperatorType> Get(std::string op) {
-				static const std::pair<OperatorRef, OperatorType> def;
-				auto it = m_OpMap.find(op);
-				return it != m_OpMap.end() ? it->second : def;
+			std::pair<OperatorRef, OperatorType> Get(std::string op, bool cond = false) {
+				//static const std::pair<OperatorRef, OperatorType> def;
+				auto rg = m_OpMap.equal_range(op);
+				std::pair<OperatorRef, OperatorType> pr;
+				for (auto it = rg.first; it != rg.second; ++it) {
+					if (it->second.first->IsConditional() != cond)
+						continue;
+					pr = it->second;
+				}
+				return pr;
 			}
 			OperatorTable& GetTable() { return m_Table; }
 			const OperatorTable& GetTable() const { return m_Table; }
@@ -406,7 +412,7 @@ namespace SCRambl
 
 			XMLConfiguration* m_Config;
 			std::vector<Operator> m_Storage;
-			std::unordered_map<std::string, std::pair<OperatorRef, OperatorType>> m_OpMap;
+			std::unordered_multimap<std::string, std::pair<OperatorRef, OperatorType>> m_OpMap;
 			OperatorTable m_Table;
 		};
 	}

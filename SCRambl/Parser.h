@@ -277,8 +277,9 @@ namespace SCRambl
 					looksPrefixed = true;
 					baseOperator = op;
 				}
-				void StartWithVariable() {
+				void StartWithVariable(ScriptVariable* var) {
 					OperationParseState();
+					lh_var = var;
 					looksPrefixed = false;
 				}
 				void HoldPostUnary(Operators::OperationRef op, ScriptVariable* var) {
@@ -574,7 +575,7 @@ namespace SCRambl
 			inline void NextCommandOverload() {
 				++m_OverloadCommandsIt;
 			}
-			void FinishOperatorParsing() {
+			void FinishOperatorParsing(Operand operand = Operand(), Types::Value* rvalue = nullptr) {
 				if (!m_OperationParseState.operation)
 					BREAK();
 				if (m_OperationParseState.RequireRVal())
@@ -620,13 +621,17 @@ namespace SCRambl
 					else BREAK();
 				}
 				if (op->HasRHS()) {
-					if (op->HasLHV()) {
+					if (op->HasRHV()) {
 						Numbers::IntegerType v = static_cast<long long>(op->GetRHV());
 						auto value = GetBestValue(Types::ValueSet::Number, v.Size());
 						if (!value)
 							BREAK();
 						args.emplace_back(Operand(v, m_Engine.Format(v)), value);
 						size += value->GetTranslation()->GetSize(FormArgumentXlate(*m_Xlation, args.back()));
+					}
+					else if (m_ParseState == state_parsing_number) {
+						args.emplace_back(operand, rvalue);
+						size += rvalue->GetTranslation()->GetSize(FormArgumentXlate(*m_Xlation, args.back()));
 					}
 					else if (m_Variable) {
 						auto var = m_Variable->Ptr();
@@ -723,6 +728,7 @@ namespace SCRambl
 			Commands m_ExtraCommands;
 			VecRef<Command> m_CurrentCommand;
 			Operators::OperatorRef m_CurrentOperator;
+			Operators::OperatorType m_OperatorType;
 			Command::Arg::Iterator m_CommandArgIt;
 			Commands::Vector m_OverloadCommands;
 			Commands::Vector::iterator m_OverloadCommandsIt;
@@ -740,6 +746,7 @@ namespace SCRambl
 			bool m_OnNewLine;
 			bool m_ParsingCommandArgs;
 			bool m_EndOfCommandArgs;
+			bool m_Conditional;
 		};
 		// The parser task
 		class Task : public TaskSystem::Task, private Parser {
