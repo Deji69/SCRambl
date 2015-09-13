@@ -23,6 +23,7 @@ start:
 	var1 = 0
 	WAIT var1
 	LVAR_INT lvar1 lvar2
+	var1 += lvar2
 	LINE 1.0 -2.0 3.14159 4.444444445 55555.0 -666.666
 	WAIT lvar1
 	WAIT lvar2

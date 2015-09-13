@@ -376,7 +376,6 @@ States Parser::Parse_Number() {
 			}
 			else {
 				//FinishOperatorParsing();
-				m_ActiveState = state_neutral;
 				++m_TokenIt;
 			}
 		}
@@ -430,12 +429,15 @@ States Parser::Parse_Variable() {
 			}
 			else {
 				// rhs of a var=var operation
-				BREAK();
-				if (auto op = m_CurrentOperator->GetOperation(&**m_Variable, nullptr)) {
-
+				auto size = CountBitOccupation((*m_Variable)->Index());
+				auto& var = *m_Variable;
+				auto value = AllFittingValues<Types::VariableValue>(Types::ValueSet::Variable, size, [&var](Types::VariableValue* value){
+					return value->IsGlobal() == var->IsGlobal();
+				});
+				if (auto op = m_CurrentOperator->GetOperation(m_OperationParseState.lh_var->Ptr(), value->GetType().Ptr())) {
+					m_OperationParseState.FinishRHS(op, value->GetType().Ptr());
+					FinishOperatorParsing(m_Variable, value);
 				}
-				m_ActiveState = state_parsing_operator;
-				//m_OperationParseState.FinishRHS()
 			}
 		}
 		return state_neutral;

@@ -633,7 +633,7 @@ namespace SCRambl
 						args.emplace_back(operand, rvalue);
 						size += rvalue->GetTranslation()->GetSize(FormArgumentXlate(*m_Xlation, args.back()));
 					}
-					else if (m_Variable) {
+					else if (m_ParseState == state_parsing_variable) {
 						auto var = m_Variable->Ptr();
 						auto value = AllFittingValues<Types::VariableValue>(Types::ValueSet::Variable, var->Value()->GetSize(), [&var](Types::VariableValue* value){
 							return value->IsGlobal() == var->IsGlobal();

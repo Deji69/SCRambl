@@ -380,7 +380,10 @@ namespace SCRambl
 				return Add(op, type, Operator::Sign::none, is_conditional, is_assignment);
 			}
 			void Add(std::string op, OperatorRef ref, OperatorType type) {
-				if (ref) m_OpMap.emplace(op, std::make_pair(ref, type));
+				if (ref) {
+					m_OpMap.emplace(op, std::make_pair(ref, type));
+					m_Table.AddOperator(op, ref);
+				}
 			}
 			std::pair<OperatorRef, OperatorType> Get(std::string op, bool cond = false) {
 				//static const std::pair<OperatorRef, OperatorType> def;
