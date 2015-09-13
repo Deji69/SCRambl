@@ -247,13 +247,17 @@ namespace SCRambl
 			size_t m_Index;
 			VecRef<Types::Type> m_RHS, m_LHS;
 			bool m_HasLHV = false, m_HasRHV = false, m_Swapped = false;
-			int m_LHV = 0, m_RHV = 0;
+			long m_LHV = 0, m_RHV = 0;
 
 		public:
+			using Attributes = Attributes<Types::DataAttributeID, Types::DataAttributeSet>;
+
 			Operation() = delete;
 			Operation(OperationRef ref, OperatorRef op, size_t id, VecRef<Types::Type> lhs, VecRef<Types::Type> rhs = {}) : m_Ref(ref), m_Operator(op),
 				m_Index(id), m_LHS(lhs), m_RHS(rhs), m_HasLHV(false), m_HasRHV(false), m_Swapped(false)
 			{ }
+
+			Attributes GetAttributes() const;
 
 			OperationRef GetRef() const { return m_Ref; }
 			OperatorRef GetOperator() const { return m_Operator; }
@@ -264,15 +268,15 @@ namespace SCRambl
 			bool HasRHS() const { return RHS() != nullptr; }
 			bool HasLHV() const { return m_HasLHV; }
 			bool HasRHV() const { return m_HasRHV; }
-			int GetLHV() const { return m_LHV; }
-			int GetRHV() const { return m_RHV; }
+			long GetLHV() const { return m_LHV; }
+			long GetRHV() const { return m_RHV; }
 			void SetLHS(VecRef<Types::Type> type) { m_LHS = type; }
 			void SetRHS(VecRef<Types::Type> type) { m_RHS = type; }
-			void SetLHV(int v) {
+			void SetLHV(long v) {
 				m_LHV = v;
 				m_HasLHV = true;
 			}
-			void SetRHV(int v) {
+			void SetRHV(long v) {
 				m_RHV = v;
 				m_HasRHV = true;
 			}
@@ -288,18 +292,29 @@ namespace SCRambl
 			};
 
 		public:
-			Operator(OperatorRef ref, std::string op, bool iscond, bool isass = false, Sign sign = Sign::none) : m_Ref(ref), m_Op(op),
-				m_IsConditional(iscond), m_IsAssignment(isass), m_Sign(sign)
+			Operator(OperatorRef ref, std::string op, VecRef<Types::Type> type, bool iscond, bool isass = false, Sign sign = Sign::none) : m_Ref(ref), m_Op(op),
+				m_Type(type), m_IsConditional(iscond), m_IsAssignment(isass), m_Sign(sign)
 			{ }
-			Operator(const Operator& v) : m_Op(v.m_Op), m_IsConditional(v.m_IsConditional), m_IsAssignment(v.m_IsAssignment), m_Sign(v.m_Sign), m_Ref(v.m_Ref) {
+			Operator(const Operator& v) : m_Op(v.m_Op), m_Type(v.m_Type), m_IsConditional(v.m_IsConditional), m_IsAssignment(v.m_IsAssignment), m_Sign(v.m_Sign), m_Ref(v.m_Ref) {
 				for (auto& pr : v.m_Operations) {
 					m_Operations.emplace_back(pr);
 					m_Operations.back().m_Operator = m_Ref;
+					m_Operations.back().m_Ref = { m_Operations, m_Operations.size() - 1 };
 				}
+			}
+			Operator(Operator&& v) : m_Op(v.m_Op), m_Type(std::move(v.m_Type)), m_IsConditional(v.m_IsConditional), m_IsAssignment(v.m_IsAssignment), m_Sign(v.m_Sign), m_Ref(std::move(v.m_Ref)) {
+				for (auto& pr : v.m_Operations) {
+					m_Operations.emplace_back(pr);
+					m_Operations.back().m_Operator = m_Ref;
+					m_Operations.back().m_Ref = { m_Operations, m_Operations.size() - 1 };
+				}
+				v.m_Operations.clear();
 			}
 
 			OperatorRef GetRef() { return m_Ref; }
 
+			const std::string& Name() const { return m_Op; }
+			VecRef<Types::Type> Type() const { return m_Type; }
 			bool IsAssignment() const { return m_IsAssignment; }
 			bool IsConditional() const { return m_IsConditional; }
 			bool IsSign() const { return m_Sign != Sign::none; }
@@ -326,6 +341,7 @@ namespace SCRambl
 		private:
 			std::string m_Op;
 			OperatorRef m_Ref;
+			VecRef<Types::Type> m_Type;
 			std::vector<Operation> m_Operations;
 			bool m_IsConditional = false,
 				m_IsAssignment = false;
@@ -339,6 +355,17 @@ namespace SCRambl
 			None, Inline, Compound, Not
 		};
 
+		/*\ OperationValue \*/
+		class OperationValue : public CommandValue {
+
+		public:
+			OperationValue(Types::Storage& types, size_t type_idx, size_t size, std::string valueid, Types::DataType datatype) : CommandValue(types, type_idx, size, valueid, datatype, Types::ValueSet::Operation)
+			{ }
+			virtual ~OperationValue() = default;
+
+			size_t GetValueSize(const Operation::Attributes&) const;
+		};
+
 		/*\	Master - storage, config & utility \*/
 		class Master {
 		public:
@@ -347,10 +374,10 @@ namespace SCRambl
 			template<typename... TArgs>
 			OperatorRef Insert(TArgs&&... args) {
 				m_Storage.emplace_back(m_Storage, args...);
-				return m_Storage.back().GetRef();
+				return OperatorRef(m_Storage, m_Storage.size() - 1);
 			}
-			OperatorRef Add(std::string op, bool is_conditional = false, bool is_assignment = false) {
-				return Add(op, Operator::Sign::none, is_conditional, is_assignment);
+			OperatorRef Add(std::string op, VecRef<Types::Type> type, bool is_conditional = false, bool is_assignment = false) {
+				return Add(op, type, Operator::Sign::none, is_conditional, is_assignment);
 			}
 			void Add(std::string op, OperatorRef ref, OperatorType type) {
 				if (ref) m_OpMap.emplace(op, std::make_pair(ref, type));
@@ -365,8 +392,8 @@ namespace SCRambl
 			size_t Size() const { return m_Storage.size(); }
 
 		private:
-			OperatorRef Add(std::string op, Operator::Sign sign, bool is_conditional = false, bool is_assignment = false) {
-				auto ref = Insert(op, is_conditional, is_assignment, sign);
+			OperatorRef Add(std::string op, VecRef<Types::Type> type, Operator::Sign sign, bool is_conditional = false, bool is_assignment = false) {
+				auto ref = Insert(op, type, is_conditional, is_assignment, sign);
 				if (ref) {
 					m_OpMap.emplace(op, std::make_pair(ref, OperatorType::Inline));
 					m_Table.AddOperator(op, ref);

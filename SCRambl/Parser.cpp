@@ -326,7 +326,6 @@ States Parser::Parse_Type() {
 	return state_parsing_type_varlist;
 }
 States Parser::Parse_Number() {
-	const Types::Type* type = nullptr;
 	size_t size;
 	Operand operand;
 	if (!m_NumberParseState.IsFloat()) {
@@ -342,7 +341,7 @@ States Parser::Parse_Number() {
 
 	auto value = GetBestValue(Types::ValueSet::Number, size);
 	if (!value) BREAK();
-	type = value->GetType();
+	auto& type = value->GetType();
 		
 	if (m_ActiveState == state_parsing_command_args) {
 		if (!AddCommandArg(operand, value)) BREAK();
@@ -358,8 +357,10 @@ States Parser::Parse_Number() {
 		else {
 			// var = N
 			if (m_OperationParseState.RequireRVal() || m_OperationParseState.CheckForRVal()) {
-				if (auto op = m_CurrentOperator->GetOperation(m_OperationParseState.lh_var, type))
-					m_OperationParseState.FinishRHS(op, type);
+				if (auto op = m_CurrentOperator->GetOperation(m_OperationParseState.lh_var->Ptr(), type.Ptr())) {
+					m_OperationParseState.FinishRHS(op, type.Ptr());
+					FinishOperatorParsing();
+				}
 			}
 			if (PeekToken(Tokens::Type::Operator)) {
 				m_OperationParseState.PrepareChain();
@@ -367,6 +368,7 @@ States Parser::Parse_Number() {
 				++m_TokenIt;
 			}
 			else {
+				//FinishOperatorParsing();
 				m_ActiveState = state_neutral;
 				++m_TokenIt;
 			}
@@ -421,6 +423,12 @@ States Parser::Parse_Variable() {
 			}
 			else {
 				// rhs of a var=var operation
+				BREAK();
+				if (auto op = m_CurrentOperator->GetOperation(&**m_Variable, nullptr)) {
+
+				}
+				m_ActiveState = state_parsing_operator;
+				//m_OperationParseState.FinishRHS()
 			}
 		}
 		return state_neutral;
@@ -572,9 +580,9 @@ States Parser::Parse_Operator() {
 		++m_TokenIt;
 				
 		if (auto op = m_CurrentOperator->GetUnaryOperation(&**m_Variable, false)) {
-			m_OperationParseState.HoldPostUnary(op, &**m_Variable);
+			m_OperationParseState.HoldPostUnary(op, m_Variable);
 		}
-		else m_OperationParseState.HoldLHS(m_CurrentOperator, &**m_Variable);
+		else m_OperationParseState.HoldLHS(m_CurrentOperator, m_Variable);
  		m_ActiveState = state_parsing_operator;
 		return state_neutral;
 	}

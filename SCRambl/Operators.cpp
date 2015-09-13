@@ -7,6 +7,32 @@
 using namespace SCRambl;
 using namespace SCRambl::Operators;
 
+/* Operators::Operation */
+Operation::Attributes Operation::GetAttributes() const {
+	Attributes attr;
+	attr.SetAttribute(Types::DataAttributeID::ID, m_Index);
+	attr.SetAttribute(Types::DataAttributeID::Name, m_Operator->Name());
+	attr.SetAttribute(Types::DataAttributeID::NumArgs, (m_HasLHV ? 1 : 0) + (m_HasRHV ? 1 : 0));
+	return attr;
+}
+
+/* Operators::OperationValue */
+size_t OperationValue::GetValueSize(const Operation::Attributes& op) const {
+	switch (GetDataType()) {
+	case Types::DataType::Int:
+		return CountBitOccupation(op.GetAttribute(GetAttributeID()).AsNumber<long long>());
+	case Types::DataType::String:
+		return op.GetAttribute(GetAttributeID()).AsString().size() * 8;
+	case Types::DataType::Float:
+		return sizeof(float);
+	case Types::DataType::Char:
+		return sizeof(char);
+	default: BREAK();
+	}
+	return 0;
+}
+
+/* Operators::Operator */
 Operator::Sign Operator::GetSign(std::string str) {
 	static const std::map<std::string, Sign, i_less> map = {
 		{ "negative", Sign::negative },
@@ -15,8 +41,6 @@ Operator::Sign Operator::GetSign(std::string str) {
 	auto it = map.find(str);
 	return it != map.end() ? it->second : Sign::none;
 }
-
-/* Operators::Operator */
 OperationRef Operator::GetOperation(Variable* var, const Types::Type* type) {
 	Operation* bestMatch = nullptr;
 	Types::MatchLevel bestMatchLevel = Types::MatchLevel::None;
@@ -51,7 +75,7 @@ OperationRef Operator::GetOperation(Variable* var, const Types::Type* type) {
 		bestMatch = &op;
 		bestMatchLevel = lhs_lvl;
 	}
-	return bestMatch ? OperationRef() : bestMatch->GetRef();
+	return bestMatch ? bestMatch->GetRef() : OperationRef();
 }
 OperationRef Operator::GetUnaryOperation(Variable* var, bool rhs_var) {
 	std::vector<Operation*> basicMatches, looseMatches;
@@ -82,17 +106,22 @@ OperationRef Operator::GetUnaryOperation(Variable* var, bool rhs_var) {
 /* Operators::Master */
 void Master::Init(Build& build) {
 	auto& types = build.GetTypes();
+	VecRef<Types::Type> type;
 
 	m_Config = build.AddConfig("Operators");
 
-	auto operater = m_Config->AddClass("Operator", [this](const XMLNode xml, void*& obj){
+	m_Config->AddClass("OperatorType", [this, &type, &types](const XMLNode xml, void*& obj){
+		type = types.GetType(xml["Type"]->AsString()).Ref();
+		if (!type) BREAK();
+	});
+	auto operater = m_Config->AddClass("Operator", [this, &type](const XMLNode xml, void*& obj){
 		// add operator
 		auto name = xml["Name"];
 		if (name) {
 			auto ass_attr = xml["Assign"];	// teeheehee
 			auto sign_attr = xml["Sign"];
 			auto cond_attr = xml["Cond"];
-			auto op = Add(name->AsString(), Operator::GetSign(sign_attr->AsString()), cond_attr->AsBool(), ass_attr->AsBool());
+			auto op = Add(name->AsString(), type, Operator::GetSign(sign_attr->AsString()), cond_attr->AsBool(), ass_attr->AsBool());
 			if (op) {
 				// map pseudonyms
 				auto comp_attr = xml["Comp"];

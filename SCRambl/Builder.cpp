@@ -24,7 +24,7 @@ ScriptLabel* Build::AddScriptLabel(std::string name, size_t offset) {
 	std::vector<Types::Value*> vals;
 	m_Types.GetValues(Types::ValueSet::Label, 0, vals);
 	if (vals.empty() || vals.size() > 1) BREAK();
-	auto label = m_Labels.Add(vals[0]->GetType(), name, offset, vals[0]->Extend<Types::LabelValue>().IsGlobal());
+	auto label = m_Labels.Add(vals[0]->GetType().Ptr(), name, offset, vals[0]->Extend<Types::LabelValue>().IsGlobal());
 	//m_LabelPosMap.emplace(label->Get().Pos(), label);
 	return label;
 }

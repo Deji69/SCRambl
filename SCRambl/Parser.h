@@ -16,6 +16,7 @@
 #include "TokensB.h"
 #include "TokenInfo.h"
 #include "Operands.h"
+#include "Operators.h"
 
 namespace SCRambl
 {
@@ -265,7 +266,7 @@ namespace SCRambl
 				bool possiblePostUnary = false;
 				bool requireRVal = false;
 				bool inChain = false;
-				Variable* lh_var = nullptr;
+				ScriptVariable* lh_var = nullptr;
 				const Types::Type* rh_type = nullptr;
 				Operators::OperatorRef baseOperator;
 				Operators::OperationRef operation;
@@ -280,13 +281,13 @@ namespace SCRambl
 					OperationParseState();
 					looksPrefixed = false;
 				}
-				void HoldPostUnary(Operators::OperationRef op, Variable* var) {
+				void HoldPostUnary(Operators::OperationRef op, ScriptVariable* var) {
 					baseOperator = op->GetOperator();
 					operation = op;
 					lh_var = var;
 					possiblePostUnary = true;
 				}
-				void HoldLHS(Operators::OperatorRef op, Variable* var) {
+				void HoldLHS(Operators::OperatorRef op, ScriptVariable* var) {
 					baseOperator = op;
 					lh_var = var;
 					requireRVal = true;
@@ -572,6 +573,75 @@ namespace SCRambl
 			}
 			inline void NextCommandOverload() {
 				++m_OverloadCommandsIt;
+			}
+			void FinishOperatorParsing() {
+				if (!m_OperationParseState.operation)
+					BREAK();
+				if (m_OperationParseState.RequireRVal())
+					BREAK();
+
+				auto op = m_OperationParseState.operation;
+				auto attributes = op->GetAttributes();
+				Operators::OperationValue* opval = nullptr;
+				m_CurrentOperator->Type()->Values<Operators::OperationValue>(Types::ValueSet::Operation, [&attributes, &opval](Operators::OperationValue* value){
+					if (value->CanFitSize(value->GetValueSize(attributes))) {
+						opval = value;
+						return true;
+					}
+					return false;
+				});
+
+				if (!opval) BREAK();
+				m_Xlation = m_Build.AddSymbol(opval->GetTranslation());
+				m_Xlation->SetAttributes(Types::DataSourceID::Command, attributes);
+
+				size_t size = m_Xlation->GetTranslation()->GetSize(*m_Xlation);
+				std::vector<Tokens::CommandArgs::Arg> args;
+
+				// sort out lhs
+				if (op->HasLHS()) {
+					if (op->HasLHV()) {
+						Numbers::IntegerType v = static_cast<long long>(op->GetLHV());
+						auto value = GetBestValue(Types::ValueSet::Number, v.Size());
+						if (!value)
+							BREAK();
+						args.emplace_back(Operand(v, m_Engine.Format(v)), value);
+						size += value->GetTranslation()->GetSize(FormArgumentXlate(*m_Xlation, args.back()));
+					}
+					else if (m_OperationParseState.lh_var) {
+						auto var = m_OperationParseState.lh_var->Ptr();
+						auto value = AllFittingValues<Types::VariableValue>(Types::ValueSet::Variable, var->Value()->GetSize(), [&var](Types::VariableValue* value){
+							return value->IsGlobal() == var->IsGlobal();
+						});
+						if (!value) BREAK();
+						args.emplace_back(m_OperationParseState.lh_var, value);
+						size += value->GetTranslation()->GetSize(FormArgumentXlate(*m_Xlation, args.back()));
+					}
+					else BREAK();
+				}
+				if (op->HasRHS()) {
+					if (op->HasLHV()) {
+						Numbers::IntegerType v = static_cast<long long>(op->GetRHV());
+						auto value = GetBestValue(Types::ValueSet::Number, v.Size());
+						if (!value)
+							BREAK();
+						args.emplace_back(Operand(v, m_Engine.Format(v)), value);
+						size += value->GetTranslation()->GetSize(FormArgumentXlate(*m_Xlation, args.back()));
+					}
+					else if (m_Variable) {
+						auto var = m_Variable->Ptr();
+						auto value = AllFittingValues<Types::VariableValue>(Types::ValueSet::Variable, var->Value()->GetSize(), [&var](Types::VariableValue* value){
+							return value->IsGlobal() == var->IsGlobal();
+						});
+						if (!value) BREAK();
+						args.emplace_back(m_Variable, value);
+						size += value->GetTranslation()->GetSize(FormArgumentXlate(*m_Xlation, args.back()));
+					}
+					else BREAK();
+				}
+
+				auto token = CreateToken<Tokens::CommandArgs::Info>(Tokens::Type::ArgList, args);
+				m_SizeCount += BitsToBytes(size);
 			}
 			void FinishCommandParsing() {
 				auto tok = m_CommandTokenIt.Get().GetToken<Tokens::Command::Info>();

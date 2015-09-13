@@ -2,6 +2,8 @@
 
 <SCRambl Version="1.0" FileVersion="0.0.0.0">
     <Operators>
+		<OperatorType Type="COMMAND" />
+		
 		<Operator Name="=" Assign="true">
 			<!--- Val to var -->
 			<Operation ID="0x4" LHS="VAR_INT" RHS="INT" />

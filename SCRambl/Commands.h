@@ -99,11 +99,14 @@ namespace SCRambl
 		Types::DataType::Type m_ValueType;
 
 	public:
-		CommandValue(VecRef<Types::Type> type, size_t size, std::string valueid, Types::DataType datatype) : Value(type, Types::ValueSet::Command, size),
+		CommandValue(Types::Storage& types, size_t type_idx, size_t size, std::string valueid, Types::DataType datatype, Types::ValueSet valtype = Types::ValueSet::Command) : Value(types, type_idx, valtype, size),
 			m_ValueID(Types::DataAttributeID::None),
 			m_ValueType(datatype)
 		{ }
+		virtual ~CommandValue() = default;
 
+		inline Types::DataAttributeID GetAttributeID() const { return m_ValueID; }
+		inline Types::DataType::Type GetDataType() const { return m_ValueType; }
 		size_t GetValueSize(const Command::Attributes&) const;
 	};
 

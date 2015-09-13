@@ -33,7 +33,7 @@ namespace SCRambl
 			Basic, Extended, Variable
 		};
 		enum class ValueSet {
-			Null, Number, Variable, Array, Text, Label, Command,
+			Null, Number, Variable, Array, Text, Label, Command, Operation,
 			INVALID
 		};
 		enum class MatchLevel {
@@ -215,6 +215,7 @@ namespace SCRambl
 			virtual TypeSet GetType() const = 0;
 			virtual Type& Get() const = 0;
 			virtual bool OK() const = 0;
+			inline Type* Ptr() const { return &Get(); }
 			inline operator bool() const { return OK(); }
 			inline bool IsBasic() const { return GetType() == TypeSet::Basic; }
 			inline bool IsVariable() const { return GetType() == TypeSet::Variable; }
@@ -225,6 +226,9 @@ namespace SCRambl
 			inline const Extended& AsExtended() const { return static_cast<const Extended&>(Get()); }
 			inline Variable& AsVariable() { return static_cast<Variable&>(Get()); }
 			inline const Variable& AsVariable() const { return static_cast<const Variable&>(Get()); }
+
+		protected:
+			ITypeRef() = default;
 		};
 
 		template<typename T>
@@ -233,6 +237,8 @@ namespace SCRambl
 			TypeRef() = default;
 			TypeRef(std::nullptr_t) : TypeRef() { }
 			TypeRef(TypeRef<T>&& v) : m_Type(std::move(v.m_Type))
+			{ }
+			TypeRef(const TypeRef<T>&& v) : m_Type(v.m_Type)
 			{ }
 			TypeRef(VecRef<T> v) : m_Type(v)
 			{ }
@@ -257,18 +263,18 @@ namespace SCRambl
 			Storage() { }
 
 			inline BasicRef& AddBasic(std::string name) {
-				auto& ref = Add<Basic>(name, { m_Basics });
-				m_Basics.emplace_back(ref.Ref().Index(), name);
+				auto& ref = Add<Basic>(name, m_Basics);
+				m_Basics.emplace_back(m_Vector.size() - 1, name);
 				return ref;
 			}
 			inline ExtendedRef& AddExtended(std::string name, Basic* basic = nullptr) {
-				auto& ref = Add<Extended>(name, { m_Extendeds });
-				m_Extendeds.emplace_back(ref.Ref().Index(), name, basic);
+				auto& ref = Add<Extended>(name, m_Extendeds);
+				m_Extendeds.emplace_back(m_Vector.size() - 1, name, basic);
 				return ref;
 			}
 			inline VariableRef& AddVariable(std::string name, XMLValue scope, bool is_array = false, size_t size = 32) {
-				auto& ref = Add<Variable>(name, { m_Variables });
-				m_Variables.emplace_back(ref.Ref().Index(), name, scope, is_array, size);
+				auto& ref = Add<Variable>(name, m_Variables);
+				m_Variables.emplace_back(m_Vector.size() - 1, name, scope, is_array, size);
 				return ref;
 			}
 			size_t GetTypeID(TypeSet type, size_t id) {
@@ -282,9 +288,9 @@ namespace SCRambl
 				return -1;
 			}
 			template<typename T = Type>
-			inline TypeRef<T> Get(size_t id) { return static_cast<TypeRef<T>&>(*m_Vector[id]); }
+			inline const TypeRef<T>& Get(size_t id) { return *static_cast<TypeRef<T>*>(m_Vector[id].get()); }
 			template<typename T = Type>
-			inline TypeRef<const T> Get(size_t id) const { return static_cast<TypeRef<const T>&>(*m_Vector[id]); }
+			inline const TypeRef<T>& Get(size_t id) const { return *static_cast<TypeRef<T>*>(m_Vector[id].get()); }
 			template<typename T = Type>
 			inline T* Get(TypeSet type, size_t id) { return Get(GetTypeID(type)); }
 			template<typename T = Type>
@@ -305,15 +311,15 @@ namespace SCRambl
 			size_t Walk(TFunc func) {
 				size_t n = 0;
 				for (; n < GetSize(); ++n) {
-					if (func(Get(n).Ref().Ptr())) break;
+					if (func(Get(n).Ptr())) break;
 				}
 				return n;
 			}
 
 		protected:
 			template<typename T>
-			TypeRef<T>& Add(std::string name, TypeRef<T> ref) {
-				m_Vector.emplace_back(std::make_unique<TypeRef<T>>(ref));
+			TypeRef<T>& Add(std::string name, std::vector<T>& ref) {
+				m_Vector.emplace_back(std::make_unique<TypeRef<T>>(VecRef<T>(ref)));
 				m_Map.emplace(name, m_Vector.size() - 1);
 				return static_cast<TypeRef<T>&>(*m_Vector.back());
 			}
@@ -561,9 +567,9 @@ namespace SCRambl
 			friend Type;
 
 		public:
-			Value(VecRef<Type> type, ValueSet valtype) : m_ValueType(valtype), m_Type(type), m_Size(-1)
+			Value(Storage& types, size_t type_idx, ValueSet valtype) : m_Types(types), m_TypeIndex(type_idx), m_ValueType(valtype), m_Size(-1)
 			{ }
-			Value(VecRef<Type> type, ValueSet valtype, size_t size) : m_ValueType(valtype), m_Type(type), m_Size(size)
+			Value(Storage& types, size_t type_idx, ValueSet valtype, size_t size) : m_Types(types), m_ValueType(valtype), m_TypeIndex(type_idx), m_Size(size)
 			{ }
 			inline virtual ~Value() { }
 
@@ -572,7 +578,9 @@ namespace SCRambl
 			}
 			
 			inline size_t GetSize() const { return m_Size != -1 ? m_Size : 0; }
-			inline const Type* GetType() const { return m_Type.Ptr(); }
+			inline const ITypeRef& GetType() const {
+				return m_Types.Get(m_TypeIndex);
+			}
 			inline ValueSet GetValueType() const { return m_ValueType; }
 
 			inline Translation::Ref GetTranslation() const { return m_Translation; }
@@ -584,8 +592,10 @@ namespace SCRambl
 			inline const T& Extend() const { return *static_cast<T*>(this); }
 
 		private:
+			Storage& m_Types;
 			ValueSet m_ValueType;
-			VecRef<Type> m_Type;
+			TypeRef<Type> m_Type;
+			size_t m_TypeIndex;
 			size_t m_Size;
 			Translation::Ref m_Translation = Translation::BadRef;
 		};
@@ -598,7 +608,7 @@ namespace SCRambl
 		class NumberValue : public Value
 		{
 		public:
-			NumberValue(VecRef<Type> type, NumberValueType numtype, size_t size) : Value(type, ValueSet::Number, size), m_Type(numtype)
+			NumberValue(Storage& types, size_t type_idx, NumberValueType numtype, size_t size) : Value(types, type_idx, ValueSet::Number, size), m_Type(numtype)
 			{ }
 
 			inline NumberValueType	GetNumberType() const { return m_Type; }
@@ -608,7 +618,7 @@ namespace SCRambl
 		};
 		class TextValue : public Value {
 		public:
-			TextValue(VecRef<Type> type, size_t size, XMLValue mode = "", XMLValue terminate = "") : Value(type, ValueSet::Text, size),
+			TextValue(Storage& types, size_t type_idx, size_t size, XMLValue mode = "", XMLValue terminate = "") : Value(types, type_idx, ValueSet::Text, size),
 				m_Mode(mode), m_Terminate(terminate)
 			{ }
 
@@ -619,7 +629,7 @@ namespace SCRambl
 		class LabelValue : public Value
 		{
 		public:
-			LabelValue(VecRef<Type> type, size_t size, XMLValue scope = "") : Value(type, ValueSet::Label, size), m_Scope(scope)
+			LabelValue(Storage& types, size_t type_idx, size_t size, XMLValue scope = "") : Value(types, type_idx, ValueSet::Label, size), m_Scope(scope)
 			{ }
 
 			bool IsGlobal() const { return lengthcompare(m_Scope.AsString("global"), "local") == 0; }
@@ -630,7 +640,7 @@ namespace SCRambl
 		class VariableValue : public Value {
 			friend Types;
 		public:
-			VariableValue(VecRef<Type> type, size_t size, VecRef<Variable> vartype, VecRef<Type> valtype);
+			VariableValue(Storage& types, size_t type_idx, size_t size, VecRef<Variable> vartype, VecRef<Type> valtype);
 
 			inline bool IsScoped() const { return m_VarType->IsScopedVar(); }
 			inline bool IsGlobal() const { return !IsScoped(); }
@@ -641,7 +651,7 @@ namespace SCRambl
 			const ArrayValue* ToArray() const;
 
 		protected:
-			VariableValue(VecRef<Type> type, size_t size, VecRef<Variable> var, VecRef<Type> val, bool);
+			VariableValue(Storage& types, size_t type_idx, size_t size, VecRef<Variable> var, VecRef<Type> val, bool);
 
 		private:
 			VecRef<Variable> m_VarType;
@@ -649,7 +659,7 @@ namespace SCRambl
 		};
 		class ArrayValue : public VariableValue {
 		public:
-			ArrayValue(VecRef<Type> type, size_t size, VecRef<Variable> var, VecRef<Type> val);
+			ArrayValue(Storage& types, size_t type_idx, size_t size, VecRef<Variable> var, VecRef<Type> val);
 			
 			inline bool IsArray() const { return true; }
 			ArrayValue* ToArray() = delete;
@@ -706,6 +716,7 @@ namespace SCRambl
 			
 		public:
 			Types();
+			Types(const Types&) = delete;
 			
 			void Init(Build&);
 
