@@ -261,67 +261,226 @@ namespace SCRambl
 				inline bool AnyParamsLeft() const { return command->NumParams() > NumArgs(); }
 				
 			} m_CommandParseState;
-			struct OperationParseState {
-				bool looksPrefixed = false;
-				bool possiblePostUnary = false;
-				bool requireRVal = false;
-				bool inChain = false;
-				ScriptVariable* lh_var = nullptr;
-				const Types::Type* rh_type = nullptr;
-				Operators::OperatorRef baseOperator;
-				Operators::OperationRef operation;
-				std::vector<ChainOperation> chainedOps;
+			struct OperationParseState_ {
+				struct ParseResult {
+					VecRef<Types::Xlation> xlate;
+					size_t size;
+				};
+				enum State {
+					init, startOperator, startVariable,
+					waitRHS, finishedRHS, finishedUnary,
+				} m_State = init;
 
-				void StartWithOperator(Operators::OperatorRef op) {
-					OperationParseState();
-					looksPrefixed = true;
-					baseOperator = op;
-				}
-				void StartWithVariable(ScriptVariable* var) {
-					OperationParseState();
-					lh_var = var;
-					looksPrefixed = false;
-				}
-				void HoldPostUnary(Operators::OperationRef op, ScriptVariable* var) {
-					baseOperator = op->GetOperator();
-					operation = op;
-					lh_var = var;
-					possiblePostUnary = true;
-				}
-				void HoldLHS(Operators::OperatorRef op, ScriptVariable* var) {
-					baseOperator = op;
-					lh_var = var;
-					requireRVal = true;
-				}
-				void FinishRHS(Operators::OperationRef op, const Types::Type* type) {
-					requireRVal = false;
-					possiblePostUnary = false;
-					looksPrefixed = false;
-					operation = op;
-					rh_type = type;
-				}
-				void PrepareChain() {
-					inChain = true;
-					requireRVal = false;
-				}
-				ChainOperation& Chain(Operators::OperatorRef op, Parameter param) {
-					chainedOps.emplace_back(op, param);
-					return chainedOps.back();
-				}
-				ChainOperation& LastInChain() {
-					return chainedOps.back();
-				}
+				Parser& m_Parser;
+				bool m_Chaining = false;
+				bool m_Negate = false;
+				std::vector<Operand> m_OperandChain;
+				std::vector<Operators::OperationRef> m_OperationChain;
+				Operators::OperatorRef m_Operator;
+
+				OperationParseState_(Parser& parser) : m_Parser(parser),
+					m_Chaining(false), m_Negate(false), m_Operator(nullptr)
+				{ }
 				
-				bool CheckForRVal() {
-					return possiblePostUnary;
+				void Reset() {
+					m_State = init;
+					m_Chaining = false;
+					m_Negate = false;
+					m_Operator = nullptr;
+					m_OperandChain.clear();
+					m_OperationChain.clear();
 				}
-				bool RequireRVal() {
-					return requireRVal;
+				// return true if valid
+				bool MeetOperator(Operators::OperatorRef oper) {
+					if (m_State == init) {
+						// await prefix op
+						m_State = startOperator;
+						m_Operator = oper;
+						return true;
+					}
+					else if (m_State == startVariable) {
+						// wait for RHS or complete postfix op
+						m_State = waitRHS;
+						m_Operator = oper;
+						return true;
+					}
+					else if (m_State == startOperator);
+					else if (m_State == waitRHS) {
+						if (oper->IsNegative()) {
+							m_Negate = !m_Negate;
+							m_State = waitRHS;
+							return true;
+						}
+						else {
+							// try to complete postfix unary
+							if (auto op = m_Operator->GetUnaryOperation(m_OperandChain.front().Value<ScriptVariable>().Ptr(), false)) {
+								m_OperationChain.emplace_back(op);
+							}
+							else {
+								BREAK();		// expected RHS / invalid postfix unary
+								return false;
+							}
+							// proceed with chaining
+							m_Operator = oper;
+							m_Chaining = true;
+							m_State = waitRHS;
+						}
+						return true;
+					}
+					return false;
 				}
-				bool IsInChain() {
-					return inChain;
+				// return true if valid
+				bool MeetVariable(ScriptVariable* var) {
+					if (m_State == init) {
+						// await postfix op or full op
+						m_OperandChain.emplace_back(m_Negate ? Operand(var).Negate() : var);
+						m_State = startVariable;
+						return true;
+					}
+					else if (m_State == startOperator) {
+						// complete prefix op
+						auto op = m_Operator->GetOperation(m_OperandChain.front().Value<ScriptVariable>().Ptr(), var->Get().Type());
+						if (op) {
+							m_OperationChain.emplace_back(op);
+							m_OperandChain.emplace_back(m_Negate ? Operand(var).Negate() : var);
+							m_State = finishedUnary;
+							return true;
+						}
+					}
+					else if (m_State == waitRHS) {
+						// complete op
+						auto op = m_Operator->GetOperation(m_OperandChain.front().Value<ScriptVariable>().Ptr(), var->Get().Type());
+						if (op) {
+							m_OperationChain.emplace_back(op);
+							m_OperandChain.emplace_back(m_Negate ? Operand(var).Negate() : var);
+							m_State = finishedRHS;
+							return true;
+						}
+					}
+					return false;
 				}
-			} m_OperationParseState;
+				// return true if valid
+				bool MeetValue(Operand operand, const Types::ITypeRef& type) {
+					if (operand.GetType() == Operand::VariableValue)
+						return MeetVariable(&operand.Value<ScriptVariable>());
+					if (m_State == waitRHS) {
+						auto op = m_Operator->GetOperation(m_OperandChain.front().Value<ScriptVariable>().Ptr(), type.Ptr());
+						if (op) {
+							if (m_Negate) operand.Negate();
+							m_OperationChain.emplace_back(op);
+							m_OperandChain.emplace_back(operand);
+							m_State = finishedRHS;
+							return true;
+						}
+					}
+					return false;
+				}
+				// return true if successful
+				bool Finish() {
+					if (m_OperandChain.empty() || m_OperationChain.empty()) return false;
+					if (m_State != finishedRHS && m_State != finishedUnary) return false;
+					auto operand_it = m_OperandChain.begin();
+					for (auto& oper : m_OperationChain) {
+						Operators::OperationValue* opval = nullptr;
+						auto& op = oper->GetOperator();
+						auto attributes = oper->GetAttributes();
+
+						op->Type()->Values<Operators::OperationValue>(Types::ValueSet::Operation, [&attributes, &opval](Operators::OperationValue* value){
+							if (value->CanFitSize(value->GetValueSize(attributes))) {
+								opval = value;
+								return true;
+							}
+							return false;
+						});
+						
+						if (!opval) BREAK();
+
+						auto& xlation = m_Parser.m_Xlation;
+						xlation = m_Parser.m_Build.AddSymbol(opval->GetTranslation());
+						xlation->SetAttributes(Types::DataSourceID::Command, attributes);
+
+						size_t size = xlation->GetTranslation()->GetSize(*xlation);
+						std::vector<Tokens::CommandArgs::Arg> args;
+
+						// sort lhs
+						if (oper->HasLHS()) {
+							if (oper->HasLHV()) {
+								Numbers::IntegerType v = static_cast<long long>(oper->GetLHV());
+								auto value = m_Parser.GetBestValue(Types::ValueSet::Number, v.Size());
+								if (!value) BREAK();
+								args.emplace_back(Operand(v, m_Parser.m_Engine.Format(v)), value);
+								size += value->GetTranslation()->GetSize(FormArgumentXlate(*xlation, args.back()));
+							}
+							else if (operand_it != m_OperandChain.end()) {
+								auto& svar = operand_it->Value<ScriptVariable>();
+								auto var = svar.Ptr();
+								auto value = m_Parser.AllFittingValues<Types::VariableValue>(Types::ValueSet::Variable, var->Value()->GetSize(), [&var](Types::VariableValue* value){
+									return value->IsGlobal() == var->IsGlobal();
+								});
+								if (!value) BREAK();
+								args.emplace_back(Operand(&svar), value);
+								size += value->GetTranslation()->GetSize(FormArgumentXlate(*xlation, args.back()));
+								++operand_it;
+							}
+							else BREAK();
+						}
+						if (oper->HasRHS()) {
+							if (oper->HasRHV()) {
+								Numbers::IntegerType v = static_cast<long long>(oper->GetRHV());
+								auto value = m_Parser.GetBestValue(Types::ValueSet::Number, v.Size());
+								if (!value) BREAK();
+
+								args.emplace_back(Operand(v, m_Parser.m_Engine.Format(v)), value);
+								size += value->GetTranslation()->GetSize(FormArgumentXlate(*xlation, args.back()));
+							}
+							else if (operand_it != m_OperandChain.end()) {
+								auto& operand = *operand_it;
+								if (operand.GetType() == Operand::VariableValue) {
+									auto& svar = operand.Value<ScriptVariable>();
+									auto var = svar.Ptr();
+									auto value = m_Parser.AllFittingValues<Types::VariableValue>(Types::ValueSet::Variable, var->Value()->GetSize(), [&var](Types::VariableValue* value){
+										return value->IsGlobal() == var->IsGlobal();
+									});
+									ASSERT(value);
+									if (value) {
+										args.emplace_back(operand, value);
+										size += value->GetTranslation()->GetSize(FormArgumentXlate(*xlation, args.back()));
+									}
+									else {
+										return false;
+									}
+								}
+								else {
+									Types::ValueSet valtype;
+									if (operand.GetType() == Operand::Type::TextValue) {
+										valtype = Types::ValueSet::Text;
+									}
+									else {
+										valtype = Types::ValueSet::Number;
+									}
+
+									auto value = m_Parser.GetBestValue(valtype, operand.Size());
+									ASSERT(value);
+									if (value) {
+										args.emplace_back(operand, value);
+										size += value->GetTranslation()->GetSize(FormArgumentXlate(*xlation, args.back()));
+									}
+									else {
+										return false;
+									}
+								}
+
+								++operand_it;
+							}
+							else BREAK();
+						}
+
+						auto token = m_Parser.CreateToken<Tokens::CommandArgs::Info>(Tokens::Type::ArgList, args);
+						m_Parser.m_SizeCount += BitsToBytes(size);
+					}
+					return true;
+				}
+			} m_OperationParseState_;
 			struct NumberParseState {
 				bool ItIsFloat = false;
 				bool ItIsNegated = false;
@@ -432,6 +591,14 @@ namespace SCRambl
 					return false;
 				});
 				return best_value;
+			}
+			inline Types::Value* GetBestVarValue(ScriptVariable* variable) {
+				auto size = CountBitOccupation((*m_Variable)->Index());
+				auto& var = *variable;
+				auto value = AllFittingValues<Types::VariableValue>(Types::ValueSet::Variable, size, [&var](Types::VariableValue* value){
+					return value->IsGlobal() == var->IsGlobal();
+				});
+				return value;
 			}
 
 			IToken* PeekToken(Tokens::Type type = Tokens::Type::None, size_t off = 1);
@@ -574,79 +741,6 @@ namespace SCRambl
 			}
 			inline void NextCommandOverload() {
 				++m_OverloadCommandsIt;
-			}
-			void FinishOperatorParsing(Operand operand = Operand(), Types::Value* rvalue = nullptr) {
-				if (!m_OperationParseState.operation)
-					BREAK();
-				if (m_OperationParseState.RequireRVal())
-					BREAK();
-
-				auto op = m_OperationParseState.operation;
-				auto attributes = op->GetAttributes();
-				Operators::OperationValue* opval = nullptr;
-				m_CurrentOperator->Type()->Values<Operators::OperationValue>(Types::ValueSet::Operation, [&attributes, &opval](Operators::OperationValue* value){
-					if (value->CanFitSize(value->GetValueSize(attributes))) {
-						opval = value;
-						return true;
-					}
-					return false;
-				});
-
-				if (!opval) BREAK();
-				m_Xlation = m_Build.AddSymbol(opval->GetTranslation());
-				m_Xlation->SetAttributes(Types::DataSourceID::Command, attributes);
-
-				size_t size = m_Xlation->GetTranslation()->GetSize(*m_Xlation);
-				std::vector<Tokens::CommandArgs::Arg> args;
-
-				// sort out lhs
-				if (op->HasLHS()) {
-					if (op->HasLHV()) {
-						Numbers::IntegerType v = static_cast<long long>(op->GetLHV());
-						auto value = GetBestValue(Types::ValueSet::Number, v.Size());
-						if (!value)
-							BREAK();
-						args.emplace_back(Operand(v, m_Engine.Format(v)), value);
-						size += value->GetTranslation()->GetSize(FormArgumentXlate(*m_Xlation, args.back()));
-					}
-					else if (m_OperationParseState.lh_var) {
-						auto var = m_OperationParseState.lh_var->Ptr();
-						auto value = AllFittingValues<Types::VariableValue>(Types::ValueSet::Variable, var->Value()->GetSize(), [&var](Types::VariableValue* value){
-							return value->IsGlobal() == var->IsGlobal();
-						});
-						if (!value) BREAK();
-						args.emplace_back(m_OperationParseState.lh_var, value);
-						size += value->GetTranslation()->GetSize(FormArgumentXlate(*m_Xlation, args.back()));
-					}
-					else BREAK();
-				}
-				if (op->HasRHS()) {
-					if (op->HasRHV()) {
-						Numbers::IntegerType v = static_cast<long long>(op->GetRHV());
-						auto value = GetBestValue(Types::ValueSet::Number, v.Size());
-						if (!value)
-							BREAK();
-						args.emplace_back(Operand(v, m_Engine.Format(v)), value);
-						size += value->GetTranslation()->GetSize(FormArgumentXlate(*m_Xlation, args.back()));
-					}
-					else if (m_ParseState == state_parsing_number) {
-						args.emplace_back(operand, rvalue);
-						size += rvalue->GetTranslation()->GetSize(FormArgumentXlate(*m_Xlation, args.back()));
-					}
-					else if (m_ParseState == state_parsing_variable) {
-						auto var = m_Variable->Ptr();
-						auto value = AllFittingValues<Types::VariableValue>(Types::ValueSet::Variable, var->Value()->GetSize(), [&var](Types::VariableValue* value){
-							return value->IsGlobal() == var->IsGlobal();
-						});
-						if (!value) BREAK();
-						args.emplace_back(m_Variable, value);
-						size += value->GetTranslation()->GetSize(FormArgumentXlate(*m_Xlation, args.back()));
-					}
-					else BREAK();
-				}
-
-				auto token = CreateToken<Tokens::CommandArgs::Info>(Tokens::Type::ArgList, args);
-				m_SizeCount += BitsToBytes(size);
 			}
 			void FinishCommandParsing() {
 				auto tok = m_CommandTokenIt.Get().GetToken<Tokens::Command::Info>();

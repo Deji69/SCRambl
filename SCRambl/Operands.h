@@ -92,30 +92,34 @@ namespace SCRambl {
 		Operand(ScriptLabel* label) : m_Type(LabelValue),
 			m_LabelValue(label), m_Text((*label)->Name())
 		{ }
-		Operand(Tokens::Number::Info<Numbers::IntegerType>* info) : m_Type(IntValue),
-			m_IntValue(*info->GetValue<Tokens::Number::NumberValue>()),
-			m_Text(info->GetValue<Tokens::Number::ScriptRange>().Format())
-		{ }
-		Operand(Tokens::Number::Info<Numbers::FloatType>* info) : m_Type(FloatValue),
-			m_FloatValue(*info->GetValue<Tokens::Number::NumberValue>()),
-			m_Text(info->GetValue<Tokens::Number::ScriptRange>().Format())
-		{ }
 		Operand(int64_t v, std::string str) : m_Type(IntValue),
-			m_IntValue(v), m_Text(str)
+			m_UIntValue(v), m_Text(str), m_Size(CountBitOccupation(v))
 		{ }
 		Operand(float v, std::string str) : m_Type(FloatValue),
-			m_IntValue(0), m_FloatValue(v), m_Text(str)
+			m_UIntValue(0), m_FloatValue(v), m_Text(str), m_Size(BytesToBits(sizeof(float)))
 		{ }
 		Operand(std::string v) : m_Type(TextValue),
-			m_Text(v)
+			m_Text(v), m_Size(v.size())
+		{ }
+		Operand(Tokens::Number::Info<Numbers::IntegerType>* info) : Operand(*info->GetValue<Tokens::Number::NumberValue>(), info->GetValue<Tokens::Number::ScriptRange>().Format())
+		{ }
+		Operand(Tokens::Number::Info<Numbers::FloatType>* info) : Operand(*info->GetValue<Tokens::Number::NumberValue>(), info->GetValue<Tokens::Number::ScriptRange>().Format())
 		{ }
 
-		template<typename T>
-		inline T Value() const { return m_IntValue; }
-		template<> inline long long Value() const { return m_IntValue; }
-		template<> inline float Value() const { return m_FloatValue; }
-		template<> inline ScriptLabel* Value() const { return m_LabelValue; }
-		template<> inline ScriptVariable* Value() const { return m_VariableValue; }
+		template<typename T = int64_t>
+		inline T& Value();
+		template<typename T = int64_t>
+		inline const T& Value() const;
+		template<> inline int64_t& Value() { return m_IntValue; }
+		template<> inline const int64_t& Value() const { return m_IntValue; }
+		template<> inline uint64_t& Value() { return m_UIntValue; }
+		template<> inline const uint64_t& Value() const { return m_UIntValue; }
+		template<> inline float& Value() { return m_FloatValue; }
+		template<> inline const float& Value() const { return m_FloatValue; }
+		template<> inline ScriptLabel& Value() { return *m_LabelValue; }
+		template<> inline const ScriptLabel& Value() const { return *m_LabelValue; }
+		template<> inline ScriptVariable& Value() { return *m_VariableValue; }
+		template<> inline const ScriptVariable& Value() const { return *m_VariableValue; }
 		inline Type GetType() const { return m_Type; }
 		inline std::string Text() const { return m_Text; }
 		inline bool HasSize() const { return m_Size != -1; }
@@ -127,10 +131,19 @@ namespace SCRambl {
 		Attributes GetLabelAttributes() const;
 		Attributes GetVariableAttributes() const;
 
+		Operand& Negate() {
+			if (m_Type == Type::IntValue)
+				m_IntValue = -m_IntValue;
+			else if (m_Type == Type::FloatValue)
+				m_FloatValue = -m_FloatValue;
+			return *this;
+		}
+
 	private:
 		Type m_Type = NullValue;
 		union {
-			int64_t m_IntValue = 0;
+			uint64_t m_UIntValue = 0;
+			int64_t m_IntValue;
 			float m_FloatValue;
 		};
 		ScriptLabel* m_LabelValue = nullptr;

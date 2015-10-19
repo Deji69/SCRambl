@@ -6,7 +6,7 @@ using namespace SCRambl;
 Operand::Attributes Operand::GetNumberAttributes() const {
 	Attributes attrs;
 	if (GetType() == Type::FloatValue || GetType() == Type::IntValue) {
-		auto size = CountByteOccupation(Value<unsigned long long>());
+		auto size = CountByteOccupation(Value<uint64_t>());
 		attrs.SetAttribute(Types::DataAttributeID::Size, size);
 		if (GetType() == Type::FloatValue)
 			attrs.SetAttribute(Types::DataAttributeID::Value, Value<float>());
