@@ -43,7 +43,61 @@ namespace SCRambl
 		XMLValue Ext;
 		std::vector<InputConfig> Inputs;
 	};
-	
+	struct OptimisationConfig {
+		enum Level {
+			NONE = 0,
+			LOW,
+			CHAIN_CONST_OPS,
+			MEDIUM = CHAIN_CONST_OPS,
+			HIGH,
+			ALL = LOW | MEDIUM | HIGH
+		};
+
+		static Level GetOptimisationLevelByName(const std::string name) {
+			static const std::unordered_map<const char*, Level> map = {
+				{ "NONE", NONE }, { "ALL", ALL },
+				{ "LOW", LOW }, { "MEDIUM", MEDIUM }, { "HIGH", HIGH },
+				{ "CHAIN_CONST_OPS", CHAIN_CONST_OPS }
+			};
+			uint32_t level = NONE;
+			enum { op_nop, op_and, op_or } op = op_nop;
+			for (int i = 0; i != name.npos; ++i) {
+				int j = i;
+				while (std::isalpha(name[i]) || name[i] == '_') ++i;
+				if (j == i) {
+					if (name[i] == '|')
+						op = op_or;
+					else if (name[i] == '&')
+						op = op_and;
+				}
+				else {
+					auto str = toupper(name.substr(j, i));
+					auto it = map.find(str.c_str());
+					if (it != map.end()) {
+						if (op == op_and)
+							level &= it->second;
+						else if (op == op_or)
+							level |= it->second;
+						else
+							level = it->second;
+					}
+					op = op_nop;
+				}
+			}
+			return static_cast<Level>(level);
+		}
+
+		inline OptimisationConfig& SetOptimisationLevel(Level level) {
+			m_Level = level;
+			return *this;
+		}
+		inline OptimisationConfig& SetOptimisationLevel(const std::string name) {
+			return SetOptimisationLevel(GetOptimisationLevelByName(name));
+		}
+		inline bool CheckLevel(Level level) { return (m_Level & level) != 0; }
+
+		Level m_Level = ALL;
+	};
 	struct ParseObjectConfig {
 		enum class ActionType {
 			Clear, Set, Inc, Dec, Add, Sub, Mul, Div, Mod, And, Or, Xor, Shl, Shr, Not
@@ -97,6 +151,8 @@ namespace SCRambl
 		inline const std::vector<std::string>& GetDefinitions() const { return m_Definitions; }
 		inline const std::vector<BuildDefinitionPath>& GetDefinitionPaths() const { return m_DefinitionPaths; }
 
+		inline OptimisationConfig& Optimisation() { return m_OptimisationConfig; }
+
 	protected:
 		const ParseNameVec& GetParseCommands() const { return m_ParseCommandNames; }
 		const ParseNameVec& GetParseVariables() const { return m_ParseVariableNames; }
@@ -125,5 +181,6 @@ namespace SCRambl
 		ParseNameVec m_ParseVariableNames;
 		ParseNameVec m_ParseLabelNames;
 		ParseConfigVec m_ObjectConfigs;
+		OptimisationConfig m_OptimisationConfig;
 	};
 }

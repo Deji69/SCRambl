@@ -4,7 +4,7 @@
 <SCRambl Version="1.0" FileVersion="0.0.0.0">
 	<!-- Configuration for builds (specified through -b) -->
 	<BuildConfig>
-		<!-- -b:cleo_sa configuration for GTASA: CLEO Scripts -->
+		<!-- -b:cleo_sa configuration for GTA:SA CLEO Scripts -->
 		<Build ID="cleo_sa" Name="GTA:SA CLEO Script" Default="true">
 			<!-- Definition paths to include - DefinitionPath can be used without a nest to not load default definition files -->
 			<DefinitionPath Path="config/gtasa/">
@@ -21,6 +21,21 @@
 			<IncludePaths>
 				<Path>gtasa/lib/</Path>
 			</IncludePaths>
+			
+			<Optimisation>
+				<!-- Optimisation Level
+					Bit mask operators | and & allowed, e.g. MEDIUM & CHAIN_CONST_OPS
+					NONE - No optimisations (default)
+					LOW - Low level optimisations:
+						
+					MEDIUM - Medium level optimisations:
+						CHAIN_CONST_OPS - Chained constant operations (e.g. 1+2 is replaced with 3)
+					HIGH - High level optimisations:
+						
+					ALL - All level optimisations
+				-->
+				<Level>ALL</Level>
+			</Optimisation>
 			
 			<Parse>
 				<!-- Declare script info pseudo-VARs -->

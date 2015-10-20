@@ -327,6 +327,13 @@ namespace SCRambl
 						}
 						return true;
 					}
+					else if (m_State == finishedRHS) {
+						// chain!
+						m_Operator = oper;
+						m_Chaining = true;
+						m_State = waitRHS;
+						return true;
+					}
 					return false;
 				}
 				// return true if valid
@@ -364,6 +371,15 @@ namespace SCRambl
 					if (operand.GetType() == Operand::VariableValue)
 						return MeetVariable(&operand.Value<ScriptVariable>());
 					if (m_State == waitRHS) {
+						// if we're chaining, check the chained operations for extra opportunities...
+						if (m_Chaining) {
+							if (m_Parser.m_BuildConfig->Optimisation().CheckLevel(OptimisationConfig::CHAIN_CONST_OPS)) {
+								if (m_Operator->HasAuto()) {
+
+								}
+							}
+						}
+
 						auto op = m_Operator->GetOperation(m_OperandChain.front().Value<ScriptVariable>().Ptr(), type.Ptr());
 						if (op) {
 							if (m_Negate) operand.Negate();
@@ -804,6 +820,7 @@ namespace SCRambl
 			Engine& m_Engine;
 			Task& m_Task;
 			Build& m_Build;
+			BuildConfig* m_BuildConfig;
 			Tokens::Storage& m_Tokens;
 			Tokens::Iterator m_TokenIt;
 			Tokens::Iterator m_LabelTokenIt;

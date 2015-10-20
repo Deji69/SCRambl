@@ -115,6 +115,17 @@ BuildConfig::BuildConfig(std::string id, std::string name, XMLConfig* config) : 
 		// </Label>
 	} // </Parse>
 
+	// <Optimisation>
+	if (auto optimisation = config->AddClass("Optimisation")) {
+		// <Level>
+		auto level = optimisation->AddClass("Level", [](const XMLNode base, void*& obj){
+			auto ptr = static_cast<BuildConfig*>(obj);
+			auto val = base.GetValue().AsString("NONE");
+			ptr->Optimisation().SetOptimisationLevel(val);
+		});
+		// </Level>
+	} // </Optimisation>
+
 	// <Script>
 	if (auto script = config->AddClass("Script", [](const XMLNode base, void*& obj){
 		auto ptr = static_cast<BuildConfig*>(obj);

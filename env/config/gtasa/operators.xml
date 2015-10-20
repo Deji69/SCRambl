@@ -35,6 +35,8 @@
 			<Operation ID="0x6D2" LHS="LVAR_STRING" RHS="LVAR_STRING" />
 		</Operator>
 		<Operator Name="+" Comp="+=" Sign="positive">
+			<Auto LHS="INT" RHS="INT" Operation="ADD" />
+			
 			<Operation ID="0x8" LHS="VAR_INT" RHS="INT" />
 			<Operation ID="0x9" LHS="VAR_FLOAT" RHS="FLOAT" />
 			<Operation ID="0xA" LHS="LVAR_INT" RHS="INT" />
@@ -49,6 +51,8 @@
 			<Operation ID="0x5D" LHS="LVAR_FLOAT" RHS="VAR_FLOAT" />
 		</Operator>
 		<Operator Name="-" Comp="-=" Sign="negative">
+			<Auto LHS="INT" RHS="INT" Operation="SUB" />
+			
 			<Operation ID="0xC" LHS="VAR_INT" RHS="INT" />
 			<Operation ID="0xD" LHS="VAR_FLOAT" RHS="FLOAT" />
 			<Operation ID="0xE" LHS="LVAR_INT" RHS="INT" />
@@ -63,6 +67,8 @@
 			<Operation ID="0x67" LHS="VAR_FLOAT" RHS="LVAR_FLOAT" />
 		</Operator>
 		<Operator Name="*" Comp="*=">
+			<Auto LHS="INT" RHS="INT" Operation="MULT" />
+			
 			<Operation ID="0x10" LHS="VAR_INT" RHS="INT" />
 			<Operation ID="0x11" LHS="VAR_FLOAT" RHS="FLOAT" />
 			<Operation ID="0x12" LHS="LVAR_INT" RHS="INT" />
@@ -77,6 +83,8 @@
 			<Operation ID="0x6F" LHS="LVAR_FLOAT" RHS="VAR_FLOAT" />
 		</Operator>
 		<Operator Name="/" Comp="/=">
+			<Auto LHS="INT" RHS="INT" Operation="DIV" />
+			
 			<Operation ID="0x14" LHS="VAR_INT" RHS="INT" />
 			<Operation ID="0x15" LHS="VAR_FLOAT" RHS="FLOAT" />
 			<Operation ID="0x16" LHS="LVAR_INT" RHS="INT" />
@@ -107,6 +115,12 @@
 			<Operation ID="0x83" LHS="VAR_FLOAT" RHS="LVAR_FLOAT" />
 		</Operator>
 		<Operator Name="=#">
+			<!-- Automatically cast constants and use assignment -->
+			<Auto ID="0x4" LHS="VAR_INT" RHS="FLOAT" Operation="FTOI" />
+			<Auto ID="0x5" LHS="VAR_FLOAT" RHS="INT" Operation="ITOF" />
+			<Auto ID="0x6" LHS="LVAR_INT" RHS="FLOAT" Operation="FTOI" />
+			<Auto ID="0x7" LHS="LVAR_FLOAT" RHS="INT" Operation="ITOF" />
+			
 			<Operation ID="0x8C" LHS="VAR_INT" RHS="VAR_FLOAT" />
 			<Operation ID="0x8D" LHS="VAR_FLOAT" RHS="VAR_INT" />
 			<Operation ID="0x8E" LHS="LVAR_INT" RHS="VAR_FLOAT" />
@@ -119,6 +133,9 @@
 		
 		<!-- Conditional-->
 		<Operator Name="=" Comp="==" Not="!=" Cond="true">
+			<Auto LHS="INT" RHS="INT" Operation="CMPEQ" />
+			<Auto LHS="FLOAT" RHS="FLOAT" Operation="CMPEQ" />
+			
 			<!-- INT comparison -->
 			<Operation ID="0x38" LHS="VAR_INT" RHS="INT" />
 			<Operation ID="0x39" LHS="LVAR_INT" RHS="INT" />
@@ -149,6 +166,9 @@
 			<Operation ID="0x8FA" LHS="LVAR_STRING" RHS="VAR_STRING" />
 		</Operator>
 		<Operator Name=">" Not="<=" Cond="true">
+			<Auto LHS="INT" RHS="INT" Operation="CMPGT" />
+			<Auto LHS="FLOAT" RHS="FLOAT" Operation="CMPGT" />
+			
 			<Operation ID="0x18" LHS="VAR_INT" RHS="INT" />
 			<Operation ID="0x19" LHS="LVAR_INT" RHS="INT" />
 			<Operation ID="0x1A" LHS="INT" RHS="VAR_INT" />
@@ -167,6 +187,9 @@
 			<Operation ID="0x27" LHS="LVAR_FLOAT" RHS="VAR_FLOAT" />
 		</Operator>
 		<Operator Name=">=" Not="<" Cond="true">
+			<Auto LHS="INT" RHS="INT" Operation="CMPLT" />
+			<Auto LHS="FLOAT" RHS="FLOAT" Operation="CMPLT" />
+			
 			<Operation ID="0x28" LHS="VAR_INT" RHS="INT" />
 			<Operation ID="0x29" LHS="LVAR_INT" RHS="INT" />
 			<Operation ID="0x2A" LHS="INT" RHS="VAR_INT" />
@@ -201,30 +224,44 @@
 		
 		<!-- CLEO 4.3 IntOperations -->
 		<Operator Name="&" Comp="&=">
+			<Auto LHS="INT" RHS="INT" Operation="BITAND" />
+			
 			<Operation ID="0xB17" LHS="VAR_INT" RHS="INT" />
 			<Operation ID="0xB17" LHS="LVAR_INT" RHS="INT" />
 		</Operator>
 		<Operator Name="|" Comp="|=">
+			<Auto LHS="INT" RHS="INT" Operation="BITOR" />
+		
 			<Operation ID="0xB18" LHS="VAR_INT" RHS="INT" />
 			<Operation ID="0xB18" LHS="LVAR_INT" RHS="INT" />
 		</Operator>
 		<Operator Name="^" Comp="^=">
+			<Auto LHS="INT" RHS="INT" Operation="BITXOR" />
+			
 			<Operation ID="0xB19" LHS="VAR_INT" RHS="INT" />
 			<Operation ID="0xB19" LHS="LVAR_INT" RHS="INT" />
 		</Operator>
 		<Operator Name="~">
+			<Auto LHS="INT" RHS="INT" Operation="BITNOT" />
+			
 			<Operation ID="0xB1A" LHS="VAR_INT" />
 			<Operation ID="0xB1A" LHS="LVAR_INT" />
 		</Operator>
 		<Operator Name="%" Comp="%=">
+			<Auto LHS="INT" RHS="INT" Operation="BITMOD" />
+			
 			<Operation ID="0xB1B" LHS="VAR_INT" RHS="INT" />
 			<Operation ID="0xB1B" LHS="LVAR_INT" RHS="INT" />
 		</Operator>
 		<Operator Name=">>" Comp=">>=">
+			<Auto LHS="INT" RHS="INT" Operation="BITRSH" />
+			
 			<Operation ID="0xB1C" LHS="VAR_INT" RHS="INT" />
 			<Operation ID="0xB1C" LHS="LVAR_INT" RHS="INT" />
 		</Operator>
 		<Operator Name="<<" Comp="<<=">
+			<Auto LHS="INT" RHS="INT" Operation="BITLSH" />
+			
 			<Operation ID="0xB1D" LHS="VAR_INT" RHS="INT" />
 			<Operation ID="0xB1D" LHS="LVAR_INT" RHS="INT" />
 		</Operator>

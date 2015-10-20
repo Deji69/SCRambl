@@ -20,7 +20,7 @@ WAIT 0x7F*/
 start:
 {
 	VAR_INT var1
-	var1 = 0
+	var1 = 0 + 1
 	WAIT var1
 	LVAR_INT lvar1 lvar2
 	var1 += lvar2

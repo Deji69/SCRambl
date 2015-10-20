@@ -24,6 +24,7 @@ Parser::Parser(Task& task, Engine& engine, Build& build) :
 void Parser::Init() {
 	m_TokenIt = m_Tokens.Begin();
 	m_Task.Event<event_begin>();
+	m_BuildConfig = m_Engine.GetBuildConfig();
 	m_State = parsing;
 	m_OnNewLine = true;
 	m_ParsingCommandArgs = false;

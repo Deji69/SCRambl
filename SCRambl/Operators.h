@@ -246,7 +246,7 @@ namespace SCRambl
 			OperationRef m_Ref;
 			size_t m_Index;
 			VecRef<Types::Type> m_RHS, m_LHS;
-			bool m_HasLHV = false, m_HasRHV = false, m_Swapped = false;
+			bool m_HasLHV = false, m_HasRHV = false, m_Swapped = false, m_IsAuto = false;
 			long m_LHV = 0, m_RHV = 0;
 
 		public:
@@ -264,6 +264,7 @@ namespace SCRambl
 			size_t GetIndex() const { return m_Index; }
 			Types::Type* LHS() const { return m_LHS.Ptr(); }
 			Types::Type* RHS() const { return m_RHS.Ptr(); }
+			bool IsAuto() const { return m_IsAuto; }
 			bool HasLHS() const { return LHS() != nullptr; }
 			bool HasRHS() const { return RHS() != nullptr; }
 			bool HasLHV() const { return m_HasLHV; }
@@ -295,20 +296,35 @@ namespace SCRambl
 			Operator(OperatorRef ref, std::string op, VecRef<Types::Type> type, bool iscond, bool isass = false, Sign sign = Sign::none) : m_Ref(ref), m_Op(op),
 				m_Type(type), m_IsConditional(iscond), m_IsAssignment(isass), m_Sign(sign)
 			{ }
-			Operator(const Operator& v) : m_Op(v.m_Op), m_Type(v.m_Type), m_IsConditional(v.m_IsConditional), m_IsAssignment(v.m_IsAssignment), m_Sign(v.m_Sign), m_Ref(v.m_Ref) {
+			Operator(const Operator& v) : m_Op(v.m_Op), m_Type(v.m_Type), m_IsConditional(v.m_IsConditional), m_IsAssignment(v.m_IsAssignment), m_Sign(v.m_Sign),
+				m_Ref(v.m_Ref)
+			{
 				for (auto& pr : v.m_Operations) {
 					m_Operations.emplace_back(pr);
 					m_Operations.back().m_Operator = m_Ref;
 					m_Operations.back().m_Ref = { m_Operations, m_Operations.size() - 1 };
+				}
+				for (auto& pr : v.m_Autos) {
+					m_Autos.emplace_back(pr);
+					m_Autos.back().m_Operator = m_Ref;
+					m_Autos.back().m_Ref = { m_Autos, m_Autos.size() - 1 };
 				}
 			}
-			Operator(Operator&& v) : m_Op(v.m_Op), m_Type(std::move(v.m_Type)), m_IsConditional(v.m_IsConditional), m_IsAssignment(v.m_IsAssignment), m_Sign(v.m_Sign), m_Ref(std::move(v.m_Ref)) {
+			Operator(Operator&& v) : m_Op(v.m_Op), m_Type(std::move(v.m_Type)), m_IsConditional(v.m_IsConditional), m_IsAssignment(v.m_IsAssignment), m_Sign(v.m_Sign),
+				m_Ref(std::move(v.m_Ref))
+			{
 				for (auto& pr : v.m_Operations) {
 					m_Operations.emplace_back(pr);
 					m_Operations.back().m_Operator = m_Ref;
 					m_Operations.back().m_Ref = { m_Operations, m_Operations.size() - 1 };
 				}
+				for (auto& pr : v.m_Autos) {
+					m_Autos.emplace_back(pr);
+					m_Autos.back().m_Operator = m_Ref;
+					m_Autos.back().m_Ref = { m_Autos, m_Autos.size() - 1 };
+				}
 				v.m_Operations.clear();
+				v.m_Autos.clear();
 			}
 
 			OperatorRef GetRef() { return m_Ref; }
@@ -317,10 +333,16 @@ namespace SCRambl
 			VecRef<Types::Type> Type() const { return m_Type; }
 			bool IsAssignment() const { return m_IsAssignment; }
 			bool IsConditional() const { return m_IsConditional; }
+			bool HasAuto() const { return !m_Autos.empty(); }
 			bool IsSign() const { return m_Sign != Sign::none; }
 			bool IsNegative() const { return m_Sign == Sign::negative; }
 			bool IsPositive() const { return m_Sign == Sign::positive; }
 
+			OperationRef AddAuto(VecRef<Types::Type> lhs, VecRef<Types::Type> rhs, size_t id = -1) {
+				m_Autos.emplace_back(OperationRef(m_Autos), m_Ref, id, lhs, rhs);
+				m_Autos.back().m_IsAuto = true;
+				return m_Autos.back().GetRef();
+			}
 			OperationRef AddOperation(size_t id, VecRef<Types::Type> lhs, VecRef<Types::Type> rhs) {
 				m_Operations.emplace_back(OperationRef(m_Operations), m_Ref, id, lhs, rhs);
 				return m_Operations.back().GetRef();
@@ -328,12 +350,18 @@ namespace SCRambl
 			size_t GetNumOperations() const {
 				return m_Operations.size();
 			}
+			size_t GetNumAutos() const {
+				return m_Autos.size();
+			}
+			OperationRef GetAuto(size_t idx) {
+				return idx < m_Autos.size() ? m_Autos[idx].GetRef() : OperationRef();
+			}
 			OperationRef GetOperation(size_t idx) {
 				return idx < m_Operations.size() ? m_Operations[idx].GetRef() : OperationRef();
 			}
-		
-			OperationRef GetUnaryOperation(Variable*, bool rhs_var = false);
+			
 			OperationRef GetOperation(Variable*, const Types::Type*);
+			OperationRef GetUnaryOperation(Variable*, bool rhs_var = false);
 
 		private:
 			static Sign GetSign(std::string);
@@ -343,6 +371,7 @@ namespace SCRambl
 			OperatorRef m_Ref;
 			VecRef<Types::Type> m_Type;
 			std::vector<Operation> m_Operations;
+			std::vector<Operation> m_Autos;
 			bool m_IsConditional = false,
 				m_IsAssignment = false;
 			Sign m_Sign = Sign::none;
