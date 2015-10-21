@@ -54,16 +54,18 @@ namespace SCRambl
 		};
 
 		static Level GetOptimisationLevelByName(const std::string name) {
-			static const std::unordered_map<const char*, Level> map = {
+			static const std::unordered_map<std::string, Level> map = {
 				{ "NONE", NONE }, { "ALL", ALL },
 				{ "LOW", LOW }, { "MEDIUM", MEDIUM }, { "HIGH", HIGH },
 				{ "CHAIN_CONST_OPS", CHAIN_CONST_OPS }
 			};
 			uint32_t level = NONE;
 			enum { op_nop, op_and, op_or } op = op_nop;
-			for (int i = 0; i != name.npos; ++i) {
-				int j = i;
-				while (std::isalpha(name[i]) || name[i] == '_') ++i;
+			for (size_t i = 0; i < name.size(); ++i) {
+				size_t j = i;
+				while (std::isalpha(name[i]) || name[i] == '_')
+					if (++i == name.size())
+						break;
 				if (j == i) {
 					if (name[i] == '|')
 						op = op_or;
@@ -72,7 +74,7 @@ namespace SCRambl
 				}
 				else {
 					auto str = toupper(name.substr(j, i));
-					auto it = map.find(str.c_str());
+					auto it = map.find(str);
 					if (it != map.end()) {
 						if (op == op_and)
 							level &= it->second;
