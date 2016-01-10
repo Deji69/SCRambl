@@ -95,7 +95,7 @@ namespace SCRambl {
 		Operand(int64_t v, std::string str) : m_Type(IntValue),
 			m_UIntValue(v), m_Text(str), m_Size(CountBitOccupation(v))
 		{ }
-		Operand(float v, std::string str) : m_Type(FloatValue),
+		Operand(double v, std::string str) : m_Type(FloatValue),
 			m_UIntValue(0), m_FloatValue(v), m_Text(str), m_Size(BytesToBits(sizeof(float)))
 		{ }
 		Operand(std::string v) : m_Type(TextValue),
@@ -114,12 +114,18 @@ namespace SCRambl {
 		template<> inline const int64_t& Value() const { return m_IntValue; }
 		template<> inline uint64_t& Value() { return m_UIntValue; }
 		template<> inline const uint64_t& Value() const { return m_UIntValue; }
-		template<> inline float& Value() { return m_FloatValue; }
-		template<> inline const float& Value() const { return m_FloatValue; }
+		template<> inline double& Value() { return m_FloatValue; }
+		template<> inline const double& Value() const { return m_FloatValue; }
 		template<> inline ScriptLabel& Value() { return *m_LabelValue; }
 		template<> inline const ScriptLabel& Value() const { return *m_LabelValue; }
 		template<> inline ScriptVariable& Value() { return *m_VariableValue; }
 		template<> inline const ScriptVariable& Value() const { return *m_VariableValue; }
+		inline bool IsNumberType() const { return m_Type == IntValue || m_Type == FloatValue; }
+		inline bool IsIntType() const { return m_Type == IntValue; }
+		inline bool IsFloatType() const { return m_Type == FloatValue; }
+		inline bool IsTextType() const { return m_Type == TextValue; }
+		inline bool IsLabelType() const { return m_Type == LabelValue; }
+		inline bool IsVariableType() const { return m_Type == VariableValue; }
 		inline Type GetType() const { return m_Type; }
 		inline std::string Text() const { return m_Text; }
 		inline bool HasSize() const { return m_Size != -1; }
@@ -144,7 +150,7 @@ namespace SCRambl {
 		union {
 			uint64_t m_UIntValue = 0;
 			int64_t m_IntValue;
-			float m_FloatValue;
+			double m_FloatValue;
 		};
 		ScriptLabel* m_LabelValue = nullptr;
 		ScriptVariable* m_VariableValue = nullptr;

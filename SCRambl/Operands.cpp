@@ -9,7 +9,7 @@ Operand::Attributes Operand::GetNumberAttributes() const {
 		auto size = CountByteOccupation(Value<uint64_t>());
 		attrs.SetAttribute(Types::DataAttributeID::Size, size);
 		if (GetType() == Type::FloatValue)
-			attrs.SetAttribute(Types::DataAttributeID::Value, Value<float>());
+			attrs.SetAttribute(Types::DataAttributeID::Value, Value<double>());
 		else
 			attrs.SetAttribute(Types::DataAttributeID::Value, Value<int64_t>());
 	}

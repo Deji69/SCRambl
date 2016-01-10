@@ -81,10 +81,12 @@ namespace SCRambl
 				invalid_command,
 				label_on_line,
 				unsupported_value_type,
+				unmatched_closing_delimiter,
 				expected_identifier,			// expected an identifier (_id1/i_d1/_1id)
 				expected_key_identifier,		// expected a key identifier (identifier/number/"string")
 				expected_colon_punctuator,		// expected a :
 				expected_integer_constant,
+				expected_rhs_value,				// expected rhs of operation
 				too_many_args,					// too many args, not enough params
 
 				// fatal errors
@@ -189,10 +191,12 @@ namespace SCRambl
 			{ LinkEvent<event_error>("event_error"); }
 		};
 		using error_too_many_args				= event_error<Error::too_many_args>;
+		using error_unmatched_closing_delimiter = event_error<Error::unmatched_closing_delimiter, Delimiter>;
 		using error_expected_identifier			= event_error<Error::expected_identifier>;
 		using error_expected_key_identifier		= event_error<Error::expected_key_identifier>;
 		using error_expected_colon_punctuator	= event_error<Error::expected_colon_punctuator>;
 		using error_expected_integer_constant	= event_error<Error::expected_integer_constant>;
+		using error_expected_rhs_value			= event_error<Error::expected_rhs_value>;
 		using error_invalid_identifier			= event_error<Error::invalid_identifier, Scripts::Range>;
 		using error_invalid_command				= event_error<Error::invalid_command>;
 		using error_invalid_operator			= event_error<Error::invalid_operator, Scripts::Range>;
@@ -267,19 +271,20 @@ namespace SCRambl
 					size_t size;
 				};
 				enum State {
-					init, startOperator, startVariable,
+					init, startOperator, startVariable, startValue,
 					waitRHS, finishedRHS, finishedUnary,
 				} m_State = init;
 
 				Parser& m_Parser;
+				bool m_SubEval = false;
 				bool m_Chaining = false;
 				bool m_Negate = false;
-				std::vector<Operand> m_OperandChain;
+				std::vector<std::pair<Operand, const SCRambl::Types::Type*>> m_OperandChain;
 				std::vector<Operators::OperationRef> m_OperationChain;
 				Operators::OperatorRef m_Operator;
 
-				OperationParseState_(Parser& parser) : m_Parser(parser),
-					m_Chaining(false), m_Negate(false), m_Operator(nullptr)
+				OperationParseState_(Parser& parser, bool subeval = false) : m_Parser(parser),
+					m_Chaining(false), m_Negate(false), m_Operator(nullptr), m_SubEval(subeval)
 				{ }
 				
 				void Reset() {
@@ -298,7 +303,7 @@ namespace SCRambl
 						m_Operator = oper;
 						return true;
 					}
-					else if (m_State == startVariable) {
+					else if (m_State == startVariable || m_State == startValue) {
 						// wait for RHS or complete postfix op
 						m_State = waitRHS;
 						m_Operator = oper;
@@ -313,7 +318,7 @@ namespace SCRambl
 						}
 						else {
 							// try to complete postfix unary
-							if (auto op = m_Operator->GetUnaryOperation(m_OperandChain.front().Value<ScriptVariable>().Ptr(), false)) {
+							if (auto op = m_Operator->GetUnaryOperation(m_OperandChain.front().first.Value<ScriptVariable>().Ptr(), false)) {
 								m_OperationChain.emplace_back(op);
 							}
 							else {
@@ -340,26 +345,26 @@ namespace SCRambl
 				bool MeetVariable(ScriptVariable* var) {
 					if (m_State == init) {
 						// await postfix op or full op
-						m_OperandChain.emplace_back(m_Negate ? Operand(var).Negate() : var);
+						m_OperandChain.emplace_back(m_Negate ? Operand(var).Negate() : var, var->Get().Type());
 						m_State = startVariable;
 						return true;
 					}
 					else if (m_State == startOperator) {
 						// complete prefix op
-						auto op = m_Operator->GetOperation(m_OperandChain.front().Value<ScriptVariable>().Ptr(), var->Get().Type());
+						auto op = m_Operator->GetOperation(m_OperandChain.front().first.Value<ScriptVariable>().Ptr(), var->Get().Type());
 						if (op) {
 							m_OperationChain.emplace_back(op);
-							m_OperandChain.emplace_back(m_Negate ? Operand(var).Negate() : var);
+							m_OperandChain.emplace_back(m_Negate ? Operand(var).Negate() : var, var->Get().Type());
 							m_State = finishedUnary;
 							return true;
 						}
 					}
 					else if (m_State == waitRHS) {
 						// complete op
-						auto op = m_Operator->GetOperation(m_OperandChain.front().Value<ScriptVariable>().Ptr(), var->Get().Type());
+						auto op = m_Operator->GetOperation(m_OperandChain.front().first.Value<ScriptVariable>().Ptr(), var->Get().Type());
 						if (op) {
 							m_OperationChain.emplace_back(op);
-							m_OperandChain.emplace_back(m_Negate ? Operand(var).Negate() : var);
+							m_OperandChain.emplace_back(m_Negate ? Operand(var).Negate() : var, var->Get().Type());
 							m_State = finishedRHS;
 							return true;
 						}
@@ -368,23 +373,43 @@ namespace SCRambl
 				}
 				// return true if valid
 				bool MeetValue(Operand operand, const Types::ITypeRef& type) {
+					return MeetValue(operand, type.Ptr());
+				}
+				bool MeetValue(Operand operand, const Types::Type* type) {
 					if (operand.GetType() == Operand::VariableValue)
 						return MeetVariable(&operand.Value<ScriptVariable>());
+					if (m_State == init && m_SubEval) {
+						if (m_Negate) operand.Negate();
+						m_OperandChain.emplace_back(operand, type);
+						m_State = startValue;
+						return true;
+					}
 					if (m_State == waitRHS) {
-						// if we're chaining, check the chained operations for extra opportunities...
-						if (m_Chaining) {
-							if (m_Parser.m_BuildConfig->Optimisation().CheckLevel(OptimisationConfig::CHAIN_CONST_OPS)) {
-								if (m_Operator->HasAuto()) {
-
+						// if we're chaining or in sub-expression, check the chained operations for extra opportunities...
+						if (m_Chaining || (m_SubEval && !m_OperandChain.empty())) {
+							// allow for auto operations on consecutive constants
+							if	(m_OperandChain.back().first.GetType() != Operand::VariableValue) {
+								auto& last_operand = m_OperandChain.back();
+								if (m_Parser.m_BuildConfig->Optimisation().CheckLevel(OptimisationConfig::CHAIN_CONST_OPS)) {
+									if (m_Operator->HasAuto()) {
+										auto op = m_Operator->GetAutoOperation(last_operand.second, type);
+										if (op) {
+											// evaluate new operand
+											if (m_Negate) operand.Negate();
+											last_operand.first = op->EvaluateAuto(last_operand.first, operand);
+											m_State = finishedRHS;
+											return true;
+										}
+									}
 								}
 							}
 						}
 
-						auto op = m_Operator->GetOperation(m_OperandChain.front().Value<ScriptVariable>().Ptr(), type.Ptr());
+						auto op = m_Operator->GetOperation(m_OperandChain.front().first.Value<ScriptVariable>().Ptr(), type);
 						if (op) {
 							if (m_Negate) operand.Negate();
 							m_OperationChain.emplace_back(op);
-							m_OperandChain.emplace_back(operand);
+							m_OperandChain.emplace_back(operand, type);
 							m_State = finishedRHS;
 							return true;
 						}
@@ -428,7 +453,7 @@ namespace SCRambl
 								size += value->GetTranslation()->GetSize(FormArgumentXlate(*xlation, args.back()));
 							}
 							else if (operand_it != m_OperandChain.end()) {
-								auto& svar = operand_it->Value<ScriptVariable>();
+								auto& svar = operand_it->first.Value<ScriptVariable>();
 								auto var = svar.Ptr();
 								auto value = m_Parser.AllFittingValues<Types::VariableValue>(Types::ValueSet::Variable, var->Value()->GetSize(), [&var](Types::VariableValue* value){
 									return value->IsGlobal() == var->IsGlobal();
@@ -450,7 +475,7 @@ namespace SCRambl
 								size += value->GetTranslation()->GetSize(FormArgumentXlate(*xlation, args.back()));
 							}
 							else if (operand_it != m_OperandChain.end()) {
-								auto& operand = *operand_it;
+								auto& operand = operand_it->first;
 								if (operand.GetType() == Operand::VariableValue) {
 									auto& svar = operand.Value<ScriptVariable>();
 									auto var = svar.Ptr();
@@ -496,7 +521,8 @@ namespace SCRambl
 					}
 					return true;
 				}
-			} m_OperationParseState_;
+			};
+			std::vector<OperationParseState_> m_OperationParseStates;
 			struct NumberParseState {
 				bool ItIsFloat = false;
 				bool ItIsNegated = false;
@@ -626,8 +652,9 @@ namespace SCRambl
 				if (!intinfo) {
 					m_Task.Event<error_expected_integer_constant>();
 				}
-				else
+				else {
 					return static_cast<T>(*intinfo->GetValue<SCRambl::Tokens::Number::NumberValue>());
+				}
 				return default_val;
 			}
 
@@ -675,22 +702,31 @@ namespace SCRambl
 				return Tokens::Character::GetCharacter<Character>(*toke);
 			}
 			static bool IsCharacter(IToken* toke) {
-				return toke->GetType<Tokens::Type>() == Tokens::Type::Character;
+				return IsTokenType(toke, Tokens::Type::Character);
 			}
 			static bool IsCharacterEOL(IToken* toke) {
 				return IsCharacter(toke) && GetCharacterValue(toke) == Character::EOL;
 			}
+			static bool IsDelimiter(IToken* toke) {
+				return IsTokenType(toke, Tokens::Type::Delimiter);
+			}
 			static bool IsSubscriptDelimiter(IToken* toke) {
-				return Tokens::Delimiter::GetDelimiterType<Delimiter>(*toke) == Delimiter::Subscript;
+				return IsDelimiter(toke) && Tokens::Delimiter::GetDelimiterType<Delimiter>(*toke) == Delimiter::Subscript;
 			}
 			static bool IsSubscriptDelimiterClosing(IToken* toke) {
 				return IsSubscriptDelimiter(toke) && Tokens::Delimiter::GetScriptRange(*toke).End() == Tokens::Delimiter::GetScriptPosition(*toke);
 			}
 			static bool IsScopeDelimiter(IToken* toke) {
-				return Tokens::Delimiter::GetDelimiterType<Delimiter>(*toke) == Delimiter::Scope;
+				return IsDelimiter(toke) && Tokens::Delimiter::GetDelimiterType<Delimiter>(*toke) == Delimiter::Scope;
 			}
 			static bool IsScopeDelimiterClosing(IToken* toke) {
 				return IsScopeDelimiter(toke) && Tokens::Delimiter::GetScriptRange(*toke).End() == Tokens::Delimiter::GetScriptPosition(*toke);
+			}
+			static bool IsEvaluationDelimiter(IToken* toke) {
+				return IsDelimiter(toke) && Tokens::Delimiter::GetDelimiterType<Delimiter>(*toke) == Delimiter::Evaluation;
+			}
+			static bool IsEvaluationDelimiterClosing(IToken* toke) {
+				return IsEvaluationDelimiter(toke) && Tokens::Delimiter::GetScriptRange(*toke).End() == Tokens::Delimiter::GetScriptPosition(*toke);
 			}
 			static bool IsOperator(IToken* toke) {
 				return toke->GetType<Tokens::Type>() == Tokens::Type::Operator;

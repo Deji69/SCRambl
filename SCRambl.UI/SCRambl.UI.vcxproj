@@ -1,13 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Debug|Win32">
+    <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
-      <Platform>Win32</Platform>
+      <Platform>x64</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|Win32">
+    <ProjectConfiguration Include="Release|x64">
       <Configuration>Release</Configuration>
-      <Platform>Win32</Platform>
+      <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -16,8 +16,8 @@
     <Keyword>Qt4VSv1.0</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <PlatformToolSet>v120_xp</PlatformToolSet>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <PlatformToolSet>v120</PlatformToolSet>
     <OutputDirectory>..\Win32\Debug\</OutputDirectory>
     <ATLMinimizesCRunTimeLibraryUsage>false</ATLMinimizesCRunTimeLibraryUsage>
     <CharacterSet>NotSet</CharacterSet>
@@ -25,7 +25,7 @@
     <IntermediateDirectory>debug\</IntermediateDirectory>
     <PrimaryOutput>SCRambl.UI</PrimaryOutput>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <PlatformToolSet>v120</PlatformToolSet>
     <OutputDirectory>..\Win32\Debug\</OutputDirectory>
     <ATLMinimizesCRunTimeLibraryUsage>false</ATLMinimizesCRunTimeLibraryUsage>
@@ -36,31 +36,31 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings" />
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" />
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\Win32\Debug\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">debug\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">SCRambl.UI</TargetName>
-    <IgnoreImportLibrary Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</IgnoreImportLibrary>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\Win32\Debug\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">release\</IntDir>
-    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">SCRambl.UI</TargetName>
-    <IgnoreImportLibrary Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</IgnoreImportLibrary>
-    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">..\Win32\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">debug\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">SCRambl.UI</TargetName>
+    <IgnoreImportLibrary Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</IgnoreImportLibrary>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">..\Win32\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">release\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">SCRambl.UI</TargetName>
+    <IgnoreImportLibrary Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</IgnoreImportLibrary>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
   </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir);GeneratedFiles;.;GeneratedFiles\Debug;$(QTDIR)\include;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtCore;GeneratedFiles\debug;GeneratedFiles;$(QTDIR)\mkspecs\win32-msvc2013;$(QTDIR)\include\QtConcurrent;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalOptions>-Zm200 -w34100 -w34189 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>.;$(SolutionDir);GeneratedFiles;.;GeneratedFiles\Debug;C:\qt\qt5.5.1\5.5\msvc2013_64\include;C:\qt\qt5.5.1\5.5\msvc2013_64\include\QtWidgets;C:\qt\qt5.5.1\5.5\msvc2013_64\include\QtGui;C:\qt\qt5.5.1\5.5\msvc2013_64\include\QtANGLE;C:\qt\qt5.5.1\5.5\msvc2013_64\include\QtCore;GeneratedFiles\debug;GeneratedFiles;C:\qt\qt5.5.1\5.5\msvc2013_64\mkspecs\win32-msvc2013;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>-w34100 -w34189 -w44996 %(AdditionalOptions)</AdditionalOptions>
       <AssemblerListingLocation>debug\</AssemblerListingLocation>
       <BrowseInformation>false</BrowseInformation>
-      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <ExceptionHandling>Sync</ExceptionHandling>
       <ForcedIncludeFiles>stdafx.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <ObjectFileName>debug\</ObjectFileName>
@@ -68,7 +68,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>$(IntDir)\SCRambl.UI.pch</PrecompiledHeaderOutputFile>
-      <PreprocessorDefinitions>_WINDOWS;UNICODE;WIN32;WIN64;QT_DLL;QT_WIDGETS_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;QT_CONCURRENT_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDOWS;UNICODE;WIN32;WIN64;WIN64;QT_DLL;QT_WIDGETS_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessToFile>false</PreprocessToFile>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
@@ -77,8 +77,8 @@
       <WarningLevel>Level3</WarningLevel>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>qtmaind.lib;shell32.lib;Qt5Cored.lib;Qt5Widgetsd.lib;Qt5Guid.lib;Qt5Concurrentd.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(QTDIR)\lib;$(QTDIR)\lib;$(QTDIR)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>C:\qt\qt5.5.1\5.5\msvc2013_64\lib\qtmaind.lib;shell32.lib;C:/qt/qt5.5.1/5.5/msvc2013_64/lib\Qt5Cored.lib;C:\qt\qt5.5.1\5.5\msvc2013_64\lib\Qt5Widgetsd.lib;C:\qt\qt5.5.1\5.5\msvc2013_64\lib\Qt5Guid.lib;C:\qt\qt5.5.1\5.5\msvc2013_64\lib\Qt5Cored.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\qt\qt5.5.1\5.5\msvc2013_64\lib;C:/qt/qt5.5.1/5.5/msvc2013_64/lib;$(QTDIR)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>"/MANIFESTDEPENDENCY:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' publicKeyToken='6595b64144ccf1df' language='*' processorArchitecture='*'" %(AdditionalOptions)</AdditionalOptions>
       <DataExecutionPrevention>true</DataExecutionPrevention>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -87,7 +87,6 @@
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
       <SubSystem>Windows</SubSystem>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <Midl>
       <DefaultCharType>Unsigned</DefaultCharType>
@@ -95,13 +94,13 @@
       <WarningLevel>0</WarningLevel>
     </Midl>
     <ResourceCompile>
-      <PreprocessorDefinitions>_WINDOWS;UNICODE;WIN32;WIN64;QT_DLL;QT_WIDGETS_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDOWS;UNICODE;WIN32;WIN64;WIN64;QT_DLL;QT_WIDGETS_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>GeneratedFiles;.;GeneratedFiles\Debug;$(QTDIR)\include;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtCore;GeneratedFiles\release;GeneratedFiles;$(QTDIR)\mkspecs\win32-msvc2013;$(QTDIR)\include\QtConcurrent;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalOptions>-Zm200 -Zc:strictStrings -w34100 -w34189 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>.;$(SolutionDir);GeneratedFiles;.;GeneratedFiles\Debug;C:\qt\qt5.5.1\5.5\msvc2013_64\include;C:\qt\qt5.5.1\5.5\msvc2013_64\include\QtWidgets;C:\qt\qt5.5.1\5.5\msvc2013_64\include\QtGui;C:\qt\qt5.5.1\5.5\msvc2013_64\include\QtANGLE;C:\qt\qt5.5.1\5.5\msvc2013_64\include\QtCore;GeneratedFiles\release;GeneratedFiles;C:\qt\qt5.5.1\5.5\msvc2013_64\mkspecs\win32-msvc2013;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>-Zc:strictStrings -w34100 -w34189 -w44996 %(AdditionalOptions)</AdditionalOptions>
       <AssemblerListingLocation>release\</AssemblerListingLocation>
       <BrowseInformation>false</BrowseInformation>
       <DebugInformationFormat>None</DebugInformationFormat>
@@ -112,7 +111,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>$(IntDir)\SCRambl.UI.pch</PrecompiledHeaderOutputFile>
-      <PreprocessorDefinitions>_WINDOWS;UNICODE;WIN32;WIN64;QT_DLL;QT_WIDGETS_LIB;QT_NO_DEBUG;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;NDEBUG;QT_CONCURRENT_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDOWS;UNICODE;WIN32;WIN64;WIN64;QT_DLL;QT_WIDGETS_LIB;QT_NO_DEBUG;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessToFile>false</PreprocessToFile>
       <ProgramDataBaseFileName>
       </ProgramDataBaseFileName>
@@ -123,8 +122,8 @@
       <WarningLevel>Level3</WarningLevel>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>qtmain.lib;shell32.lib;Qt5Core.lib;Qt5Widgets.lib;Qt5Gui.lib;Qt5Concurrent.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(QTDIR)\lib;$(QTDIR)\lib;$(QTDIR)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>C:\qt\qt5.5.1\5.5\msvc2013_64\lib\qtmain.lib;shell32.lib;C:/qt/qt5.5.1/5.5/msvc2013_64/lib\Qt5Core.lib;C:\qt\qt5.5.1\5.5\msvc2013_64\lib\Qt5Widgets.lib;C:\qt\qt5.5.1\5.5\msvc2013_64\lib\Qt5Gui.lib;C:\qt\qt5.5.1\5.5\msvc2013_64\lib\Qt5Core.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\qt\qt5.5.1\5.5\msvc2013_64\lib;C:/qt/qt5.5.1/5.5/msvc2013_64/lib;$(QTDIR)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>"/MANIFESTDEPENDENCY:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' publicKeyToken='6595b64144ccf1df' language='*' processorArchitecture='*'" %(AdditionalOptions)</AdditionalOptions>
       <DataExecutionPrevention>true</DataExecutionPrevention>
       <GenerateDebugInformation>false</GenerateDebugInformation>
@@ -141,102 +140,92 @@
       <WarningLevel>0</WarningLevel>
     </Midl>
     <ResourceCompile>
-      <PreprocessorDefinitions>_WINDOWS;UNICODE;WIN32;WIN64;QT_DLL;QT_WIDGETS_LIB;QT_NO_DEBUG;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDOWS;UNICODE;WIN32;WIN64;WIN64;QT_DLL;QT_WIDGETS_LIB;QT_NO_DEBUG;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="config.cpp" />
     <ClCompile Include="editor.cpp" />
-    <ClCompile Include="GeneratedFiles\Debug\moc_parser.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_parser.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="highlighter.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="parser.cpp" />
-    <ClCompile Include="project.cpp" />
-    <ClCompile Include="pugixml.cpp" />
     <ClCompile Include="scrambl_opts.cpp" />
     <ClCompile Include="scramblui.cpp" />
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="editor.h">
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">editor.h;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">setlocal
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">editor.h;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 if errorlevel 1 goto VCEnd
-$(QTDIR)\bin\moc.exe  -DUNICODE -DWIN32 -DWIN64 -DQT_DLL -DQT_WIDGETS_LIB -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB -D_MSC_VER=1800 -D_WIN32 -IC:/qt/qt5.4.0/5.4/msvc2013/mkspecs/win32-msvc2013 -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles" -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles/Debug" -IC:/qt/qt5.4.0/5.4/msvc2013/include -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtWidgets -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtGui -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtANGLE -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtCore editor.h -o GeneratedFiles\debug\moc_editor.cpp
-if errorlevel 1 goto VCEnd
-endlocal</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">MOC editor.h</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">GeneratedFiles\debug\moc_editor.cpp;%(Outputs)</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">editor.h;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">setlocal
-if errorlevel 1 goto VCEnd
-$(QTDIR)\bin\moc.exe  -DUNICODE -DWIN32 -DWIN64 -DQT_DLL -DQT_WIDGETS_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB -D_MSC_VER=1800 -D_WIN32 -IC:/qt/qt5.4.0/5.4/msvc2013/mkspecs/win32-msvc2013 -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles" -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles/Debug" -IC:/qt/qt5.4.0/5.4/msvc2013/include -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtWidgets -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtGui -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtANGLE -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtCore editor.h -o GeneratedFiles\release\moc_editor.cpp
+C:\qt\qt5.5.1\5.5\msvc2013_64\bin\moc.exe  -DUNICODE -DWIN32 -DWIN64 -DWIN64 -DQT_DLL -DQT_WIDGETS_LIB -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB -D_MSC_VER=1800 -D_WIN32 -D_WIN64 -IC:/qt/qt5.5.1/5.5/msvc2013_64/mkspecs/win32-msvc2013 -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles" -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles/Debug" -IC:/qt/qt5.5.1/5.5/msvc2013_64/include -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtWidgets -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtGui -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtANGLE -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtCore editor.h -o GeneratedFiles\debug\moc_editor.cpp
 if errorlevel 1 goto VCEnd
 endlocal</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MOC editor.h</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">GeneratedFiles\release\moc_editor.cpp;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">MOC editor.h</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">GeneratedFiles\debug\moc_editor.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">editor.h;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+if errorlevel 1 goto VCEnd
+C:\qt\qt5.5.1\5.5\msvc2013_64\bin\moc.exe  -DUNICODE -DWIN32 -DWIN64 -DWIN64 -DQT_DLL -DQT_WIDGETS_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB -D_MSC_VER=1800 -D_WIN32 -D_WIN64 -IC:/qt/qt5.5.1/5.5/msvc2013_64/mkspecs/win32-msvc2013 -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles" -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles/Debug" -IC:/qt/qt5.5.1/5.5/msvc2013_64/include -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtWidgets -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtGui -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtANGLE -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtCore editor.h -o GeneratedFiles\release\moc_editor.cpp
+if errorlevel 1 goto VCEnd
+endlocal</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MOC editor.h</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">GeneratedFiles\release\moc_editor.cpp;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="highlighter.h">
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">highlighter.h;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">setlocal
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">highlighter.h;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 if errorlevel 1 goto VCEnd
-$(QTDIR)\bin\moc.exe  -DUNICODE -DWIN32 -DWIN64 -DQT_DLL -DQT_WIDGETS_LIB -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB -D_MSC_VER=1800 -D_WIN32 -IC:/qt/qt5.4.0/5.4/msvc2013/mkspecs/win32-msvc2013 -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles" -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles/Debug" -IC:/qt/qt5.4.0/5.4/msvc2013/include -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtWidgets -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtGui -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtANGLE -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtCore highlighter.h -o GeneratedFiles\debug\moc_highlighter.cpp
-if errorlevel 1 goto VCEnd
-endlocal</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">MOC highlighter.h</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">GeneratedFiles\debug\moc_highlighter.cpp;%(Outputs)</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">highlighter.h;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">setlocal
-if errorlevel 1 goto VCEnd
-$(QTDIR)\bin\moc.exe  -DUNICODE -DWIN32 -DWIN64 -DQT_DLL -DQT_WIDGETS_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB -D_MSC_VER=1800 -D_WIN32 -IC:/qt/qt5.4.0/5.4/msvc2013/mkspecs/win32-msvc2013 -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles" -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles/Debug" -IC:/qt/qt5.4.0/5.4/msvc2013/include -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtWidgets -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtGui -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtANGLE -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtCore highlighter.h -o GeneratedFiles\release\moc_highlighter.cpp
+C:\qt\qt5.5.1\5.5\msvc2013_64\bin\moc.exe  -DUNICODE -DWIN32 -DWIN64 -DWIN64 -DQT_DLL -DQT_WIDGETS_LIB -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB -D_MSC_VER=1800 -D_WIN32 -D_WIN64 -IC:/qt/qt5.5.1/5.5/msvc2013_64/mkspecs/win32-msvc2013 -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles" -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles/Debug" -IC:/qt/qt5.5.1/5.5/msvc2013_64/include -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtWidgets -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtGui -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtANGLE -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtCore highlighter.h -o GeneratedFiles\debug\moc_highlighter.cpp
 if errorlevel 1 goto VCEnd
 endlocal</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MOC highlighter.h</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">GeneratedFiles\release\moc_highlighter.cpp;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">MOC highlighter.h</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">GeneratedFiles\debug\moc_highlighter.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">highlighter.h;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+if errorlevel 1 goto VCEnd
+C:\qt\qt5.5.1\5.5\msvc2013_64\bin\moc.exe  -DUNICODE -DWIN32 -DWIN64 -DWIN64 -DQT_DLL -DQT_WIDGETS_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB -D_MSC_VER=1800 -D_WIN32 -D_WIN64 -IC:/qt/qt5.5.1/5.5/msvc2013_64/mkspecs/win32-msvc2013 -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles" -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles/Debug" -IC:/qt/qt5.5.1/5.5/msvc2013_64/include -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtWidgets -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtGui -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtANGLE -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtCore highlighter.h -o GeneratedFiles\release\moc_highlighter.cpp
+if errorlevel 1 goto VCEnd
+endlocal</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MOC highlighter.h</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">GeneratedFiles\release\moc_highlighter.cpp;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="scrambl_opts.h">
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">scrambl_opts.h;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">setlocal
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">scrambl_opts.h;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 if errorlevel 1 goto VCEnd
-$(QTDIR)\bin\moc.exe  -DUNICODE -DWIN32 -DWIN64 -DQT_DLL -DQT_WIDGETS_LIB -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB -D_MSC_VER=1800 -D_WIN32 -IC:/qt/qt5.4.0/5.4/msvc2013/mkspecs/win32-msvc2013 -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles" -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles/Debug" -IC:/qt/qt5.4.0/5.4/msvc2013/include -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtWidgets -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtGui -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtANGLE -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtCore scrambl_opts.h -o GeneratedFiles\debug\moc_scrambl_opts.cpp
-if errorlevel 1 goto VCEnd
-endlocal</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">MOC scrambl_opts.h</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">GeneratedFiles\debug\moc_scrambl_opts.cpp;%(Outputs)</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">scrambl_opts.h;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">setlocal
-if errorlevel 1 goto VCEnd
-$(QTDIR)\bin\moc.exe  -DUNICODE -DWIN32 -DWIN64 -DQT_DLL -DQT_WIDGETS_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB -D_MSC_VER=1800 -D_WIN32 -IC:/qt/qt5.4.0/5.4/msvc2013/mkspecs/win32-msvc2013 -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles" -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles/Debug" -IC:/qt/qt5.4.0/5.4/msvc2013/include -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtWidgets -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtGui -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtANGLE -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtCore scrambl_opts.h -o GeneratedFiles\release\moc_scrambl_opts.cpp
+C:\qt\qt5.5.1\5.5\msvc2013_64\bin\moc.exe  -DUNICODE -DWIN32 -DWIN64 -DWIN64 -DQT_DLL -DQT_WIDGETS_LIB -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB -D_MSC_VER=1800 -D_WIN32 -D_WIN64 -IC:/qt/qt5.5.1/5.5/msvc2013_64/mkspecs/win32-msvc2013 -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles" -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles/Debug" -IC:/qt/qt5.5.1/5.5/msvc2013_64/include -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtWidgets -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtGui -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtANGLE -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtCore scrambl_opts.h -o GeneratedFiles\debug\moc_scrambl_opts.cpp
 if errorlevel 1 goto VCEnd
 endlocal</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MOC scrambl_opts.h</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">GeneratedFiles\release\moc_scrambl_opts.cpp;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">MOC scrambl_opts.h</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">GeneratedFiles\debug\moc_scrambl_opts.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">scrambl_opts.h;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+if errorlevel 1 goto VCEnd
+C:\qt\qt5.5.1\5.5\msvc2013_64\bin\moc.exe  -DUNICODE -DWIN32 -DWIN64 -DWIN64 -DQT_DLL -DQT_WIDGETS_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB -D_MSC_VER=1800 -D_WIN32 -D_WIN64 -IC:/qt/qt5.5.1/5.5/msvc2013_64/mkspecs/win32-msvc2013 -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles" -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles/Debug" -IC:/qt/qt5.5.1/5.5/msvc2013_64/include -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtWidgets -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtGui -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtANGLE -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtCore scrambl_opts.h -o GeneratedFiles\release\moc_scrambl_opts.cpp
+if errorlevel 1 goto VCEnd
+endlocal</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MOC scrambl_opts.h</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">GeneratedFiles\release\moc_scrambl_opts.cpp;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="scramblui.h">
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">scramblui.h;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">setlocal
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">scramblui.h;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 if errorlevel 1 goto VCEnd
-$(QTDIR)\bin\moc.exe  -DUNICODE -DWIN32 -DWIN64 -DQT_DLL -DQT_WIDGETS_LIB -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB -D_MSC_VER=1800 -D_WIN32 -IC:/qt/qt5.4.0/5.4/msvc2013/mkspecs/win32-msvc2013 -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles" -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles/Debug" -IC:/qt/qt5.4.0/5.4/msvc2013/include -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtWidgets -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtGui -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtANGLE -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtCore scramblui.h -o GeneratedFiles\debug\moc_scramblui.cpp
-if errorlevel 1 goto VCEnd
-endlocal</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">MOC scramblui.h</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">GeneratedFiles\debug\moc_scramblui.cpp;%(Outputs)</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">scramblui.h;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">setlocal
-if errorlevel 1 goto VCEnd
-$(QTDIR)\bin\moc.exe  -DUNICODE -DWIN32 -DWIN64 -DQT_DLL -DQT_WIDGETS_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB -D_MSC_VER=1800 -D_WIN32 -IC:/qt/qt5.4.0/5.4/msvc2013/mkspecs/win32-msvc2013 -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles" -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/Deji/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles/Debug" -IC:/qt/qt5.4.0/5.4/msvc2013/include -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtWidgets -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtGui -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtANGLE -IC:/qt/qt5.4.0/5.4/msvc2013/include/QtCore scramblui.h -o GeneratedFiles\release\moc_scramblui.cpp
+C:\qt\qt5.5.1\5.5\msvc2013_64\bin\moc.exe  -DUNICODE -DWIN32 -DWIN64 -DWIN64 -DQT_DLL -DQT_WIDGETS_LIB -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB -D_MSC_VER=1800 -D_WIN32 -D_WIN64 -IC:/qt/qt5.5.1/5.5/msvc2013_64/mkspecs/win32-msvc2013 -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles" -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles/Debug" -IC:/qt/qt5.5.1/5.5/msvc2013_64/include -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtWidgets -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtGui -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtANGLE -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtCore scramblui.h -o GeneratedFiles\debug\moc_scramblui.cpp
 if errorlevel 1 goto VCEnd
 endlocal</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MOC scramblui.h</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">GeneratedFiles\release\moc_scramblui.cpp;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">MOC scramblui.h</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">GeneratedFiles\debug\moc_scramblui.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">scramblui.h;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+if errorlevel 1 goto VCEnd
+C:\qt\qt5.5.1\5.5\msvc2013_64\bin\moc.exe  -DUNICODE -DWIN32 -DWIN64 -DWIN64 -DQT_DLL -DQT_WIDGETS_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB -D_MSC_VER=1800 -D_WIN32 -D_WIN64 -IC:/qt/qt5.5.1/5.5/msvc2013_64/mkspecs/win32-msvc2013 -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles" -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI" -I"C:/Users/deji6/Documents/Visual Studio 2013/Projects/SCRambl/SCRambl.UI/GeneratedFiles/Debug" -IC:/qt/qt5.5.1/5.5/msvc2013_64/include -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtWidgets -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtGui -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtANGLE -IC:/qt/qt5.5.1/5.5/msvc2013_64/include/QtCore scramblui.h -o GeneratedFiles\release\moc_scramblui.cpp
+if errorlevel 1 goto VCEnd
+endlocal</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MOC scramblui.h</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">GeneratedFiles\release\moc_scramblui.cpp;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="stdafx.h">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">echo /*-------------------------------------------------------------------- &gt;stdafx.h.cpp
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">echo /*-------------------------------------------------------------------- &gt;stdafx.h.cpp
 if errorlevel 1 goto VCEnd
 echo * Precompiled header source file used by Visual Studio.NET to generate&gt;&gt;stdafx.h.cpp
 if errorlevel 1 goto VCEnd
@@ -267,9 +256,9 @@ if errorlevel 1 goto VCEnd
 echo --------------------------------------------------------------------*/&gt;&gt;stdafx.h.cpp
 if errorlevel 1 goto VCEnd
 echo #include "stdafx.h"&gt;&gt;stdafx.h.cpp</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Generating precompiled header source file %27stdafx.h.cpp%27 ...</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">stdafx.h.cpp;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">echo /*-------------------------------------------------------------------- &gt;stdafx.h.cpp
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating precompiled header source file 'stdafx.h.cpp' ...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdafx.h.cpp;%(Outputs)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">echo /*-------------------------------------------------------------------- &gt;stdafx.h.cpp
 if errorlevel 1 goto VCEnd
 echo * Precompiled header source file used by Visual Studio.NET to generate&gt;&gt;stdafx.h.cpp
 if errorlevel 1 goto VCEnd
@@ -300,356 +289,120 @@ if errorlevel 1 goto VCEnd
 echo --------------------------------------------------------------------*/&gt;&gt;stdafx.h.cpp
 if errorlevel 1 goto VCEnd
 echo #include "stdafx.h"&gt;&gt;stdafx.h.cpp</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Generating precompiled header source file %27stdafx.h.cpp%27 ...</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">stdafx.h.cpp;%(Outputs)</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </AdditionalInputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </AdditionalInputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating precompiled header source file 'stdafx.h.cpp' ...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdafx.h.cpp;%(Outputs)</Outputs>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GeneratedFiles\debug\moc_editor.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\release\moc_editor.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\debug\moc_highlighter.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\release\moc_highlighter.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\debug\moc_scrambl_opts.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\release\moc_scrambl_opts.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\debug\moc_scramblui.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\release\moc_scramblui.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\qrc_scramblui.cpp" />
     <ClCompile Include="stdafx.h.cpp">
-      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(NOINHERIT)</ForcedIncludeFiles>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">stdafx.h</PrecompiledHeaderFile>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(NOINHERIT)</ForcedIncludeFiles>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">stdafx.h</PrecompiledHeaderFile>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(NOINHERIT)</ForcedIncludeFiles>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdafx.h</PrecompiledHeaderFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(NOINHERIT)</ForcedIncludeFiles>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdafx.h</PrecompiledHeaderFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <CustomBuild Include="config.h">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Performing Custom Build Tools</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Performing Custom Build Tools</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </AdditionalInputs>
-    </CustomBuild>
-    <CustomBuild Include="GeneratedFiles\ui_scrambl_opts.h">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Performing Custom Build Tools</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Performing Custom Build Tools</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </AdditionalInputs>
-    </CustomBuild>
-    <CustomBuild Include="GeneratedFiles\ui_scramblui.h">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Performing Custom Build Tools</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Performing Custom Build Tools</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </AdditionalInputs>
-    </CustomBuild>
-    <CustomBuild Include="parser.h">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">"$(QTDIR)\bin\moc.exe"  "%(FullPath)" -o ".\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp" "-fstdafx.h" "-f../../parser.h"  -D_WINDOWS -DUNICODE -DWIN32 -DWIN64 -DQT_DLL -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB -DQT_CONCURRENT_LIB "-I$(SolutionDir)\." "-I.\GeneratedFiles" "-I." "-I.\GeneratedFiles\Debug" "-I$(QTDIR)\include" "-I$(QTDIR)\include\QtWidgets" "-I$(QTDIR)\include\QtGui" "-I$(QTDIR)\include\QtANGLE" "-I$(QTDIR)\include\QtCore" "-I.\GeneratedFiles\debug" "-I$(QTDIR)\mkspecs\win32-msvc2013" "-I$(QTDIR)\include\QtConcurrent"</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Moc%27ing parser.h...</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">"$(QTDIR)\bin\moc.exe"  "%(FullPath)" -o ".\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp" "-fstdafx.h" "-f../../parser.h"  -D_WINDOWS -DUNICODE -DWIN32 -DWIN64 -DQT_DLL -DQT_WIDGETS_LIB -DQT_NO_DEBUG -DQT_GUI_LIB -DQT_CORE_LIB -DNDEBUG -DQT_CONCURRENT_LIB "-I.\GeneratedFiles" "-I." "-I.\GeneratedFiles\Debug" "-I$(QTDIR)\include" "-I$(QTDIR)\include\QtWidgets" "-I$(QTDIR)\include\QtGui" "-I$(QTDIR)\include\QtANGLE" "-I$(QTDIR)\include\QtCore" "-I.\GeneratedFiles\release" "-I$(QTDIR)\mkspecs\win32-msvc2013" "-I$(QTDIR)\include\QtConcurrent"</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Moc%27ing parser.h...</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
-    </CustomBuild>
-    <CustomBuild Include="project.h">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Performing Custom Build Tools</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Performing Custom Build Tools</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </AdditionalInputs>
-    </CustomBuild>
+    <ClInclude Include="GeneratedFiles\ui_scrambl_opts.h" />
+    <ClInclude Include="GeneratedFiles\ui_scramblui.h" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="scrambl.ui_en.ts">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Performing Custom Build Tools</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Performing Custom Build Tools</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </AdditionalInputs>
-    </CustomBuild>
+    <None Include="scrambl.ui_en.ts" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="scrambl_opts.ui">
       <FileType>Document</FileType>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">scrambl_opts.ui;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">setlocal
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">scrambl_opts.ui;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 if errorlevel 1 goto VCEnd
-$(QTDIR)\bin\uic.exe scrambl_opts.ui -o GeneratedFiles\ui_scrambl_opts.h
-if errorlevel 1 goto VCEnd
-endlocal</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">UIC scrambl_opts.ui</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">GeneratedFiles\ui_scrambl_opts.h;%(Outputs)</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">scrambl_opts.ui;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">setlocal
-if errorlevel 1 goto VCEnd
-$(QTDIR)\bin\uic.exe scrambl_opts.ui -o GeneratedFiles\ui_scrambl_opts.h
+C:\qt\qt5.5.1\5.5\msvc2013_64\bin\uic.exe scrambl_opts.ui -o GeneratedFiles\ui_scrambl_opts.h
 if errorlevel 1 goto VCEnd
 endlocal</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">UIC scrambl_opts.ui</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">GeneratedFiles\ui_scrambl_opts.h;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">UIC scrambl_opts.ui</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">GeneratedFiles\ui_scrambl_opts.h;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">scrambl_opts.ui;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+if errorlevel 1 goto VCEnd
+C:\qt\qt5.5.1\5.5\msvc2013_64\bin\uic.exe scrambl_opts.ui -o GeneratedFiles\ui_scrambl_opts.h
+if errorlevel 1 goto VCEnd
+endlocal</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">UIC scrambl_opts.ui</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">GeneratedFiles\ui_scrambl_opts.h;%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="scramblui.ui">
       <FileType>Document</FileType>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">scramblui.ui;editor.h;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">setlocal
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">scramblui.ui;editor.h;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 if errorlevel 1 goto VCEnd
-$(QTDIR)\bin\uic.exe scramblui.ui -o GeneratedFiles\ui_scramblui.h
-if errorlevel 1 goto VCEnd
-endlocal</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">UIC scramblui.ui</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">GeneratedFiles\ui_scramblui.h;%(Outputs)</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">scramblui.ui;editor.h;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">setlocal
-if errorlevel 1 goto VCEnd
-$(QTDIR)\bin\uic.exe scramblui.ui -o GeneratedFiles\ui_scramblui.h
+C:\qt\qt5.5.1\5.5\msvc2013_64\bin\uic.exe scramblui.ui -o GeneratedFiles\ui_scramblui.h
 if errorlevel 1 goto VCEnd
 endlocal</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">UIC scramblui.ui</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">GeneratedFiles\ui_scramblui.h;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">UIC scramblui.ui</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">GeneratedFiles\ui_scramblui.h;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">scramblui.ui;editor.h;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+if errorlevel 1 goto VCEnd
+C:\qt\qt5.5.1\5.5\msvc2013_64\bin\uic.exe scramblui.ui -o GeneratedFiles\ui_scramblui.h
+if errorlevel 1 goto VCEnd
+endlocal</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">UIC scramblui.ui</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">GeneratedFiles\ui_scramblui.h;%(Outputs)</Outputs>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="Resources\icon1.gif">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Performing Custom Build Tools</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Performing Custom Build Tools</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </AdditionalInputs>
-    </CustomBuild>
-    <CustomBuild Include="Resources\icon_build.gif">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Performing Custom Build Tools</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Performing Custom Build Tools</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </AdditionalInputs>
-    </CustomBuild>
-    <CustomBuild Include="Resources\icon_buildrun.gif">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Performing Custom Build Tools</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Performing Custom Build Tools</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </AdditionalInputs>
-    </CustomBuild>
-    <CustomBuild Include="Resources\icon_open.gif">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Performing Custom Build Tools</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Performing Custom Build Tools</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </AdditionalInputs>
-    </CustomBuild>
-    <CustomBuild Include="Resources\icon_opts.gif">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Performing Custom Build Tools</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Performing Custom Build Tools</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </AdditionalInputs>
-    </CustomBuild>
-    <CustomBuild Include="Resources\icon_redo.gif">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Performing Custom Build Tools</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Performing Custom Build Tools</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </AdditionalInputs>
-    </CustomBuild>
-    <CustomBuild Include="Resources\icon_save.gif">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Performing Custom Build Tools</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Performing Custom Build Tools</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </AdditionalInputs>
-    </CustomBuild>
-    <CustomBuild Include="Resources\icon_saveall.gif">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Performing Custom Build Tools</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Performing Custom Build Tools</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </AdditionalInputs>
-    </CustomBuild>
-    <CustomBuild Include="Resources\icon_undo.gif">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Performing Custom Build Tools</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Performing Custom Build Tools</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </AdditionalInputs>
-    </CustomBuild>
+    <None Include="Resources\icon1.gif" />
+    <None Include="Resources\icon_build.gif" />
+    <None Include="Resources\icon_buildrun.gif" />
+    <None Include="Resources\icon_open.gif" />
+    <None Include="Resources\icon_opts.gif" />
+    <None Include="Resources\icon_redo.gif" />
+    <None Include="Resources\icon_save.gif" />
+    <None Include="Resources\icon_saveall.gif" />
+    <None Include="Resources\icon_undo.gif" />
     <CustomBuild Include="scramblui.qrc">
       <FileType>Document</FileType>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">scramblui.qrc;Resources\icon_opts.gif;Resources\icon_undo.gif;Resources\icon_buildrun.gif;Resources\icon1.gif;Resources\icon_build.gif;Resources\icon_save.gif;Resources\icon_redo.gif;Resources\icon_saveall.gif;Resources\icon_open.gif;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">setlocal
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">scramblui.qrc;Resources\icon_opts.gif;Resources\icon_undo.gif;Resources\icon_buildrun.gif;Resources\icon1.gif;Resources\icon_build.gif;Resources\icon_save.gif;Resources\icon_redo.gif;Resources\icon_saveall.gif;Resources\icon_open.gif;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 if errorlevel 1 goto VCEnd
-$(QTDIR)\bin\rcc.exe -name scramblui scramblui.qrc -o GeneratedFiles\qrc_scramblui.cpp
-if errorlevel 1 goto VCEnd
-endlocal</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">RCC scramblui.qrc</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">GeneratedFiles\qrc_scramblui.cpp;%(Outputs)</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">scramblui.qrc;Resources\icon_opts.gif;Resources\icon_undo.gif;Resources\icon_buildrun.gif;Resources\icon1.gif;Resources\icon_build.gif;Resources\icon_save.gif;Resources\icon_redo.gif;Resources\icon_saveall.gif;Resources\icon_open.gif;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">setlocal
-if errorlevel 1 goto VCEnd
-$(QTDIR)\bin\rcc.exe -name scramblui scramblui.qrc -o GeneratedFiles\qrc_scramblui.cpp
+C:\qt\qt5.5.1\5.5\msvc2013_64\bin\rcc.exe -name scramblui scramblui.qrc -o GeneratedFiles\qrc_scramblui.cpp
 if errorlevel 1 goto VCEnd
 endlocal</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">RCC scramblui.qrc</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">GeneratedFiles\qrc_scramblui.cpp;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">RCC scramblui.qrc</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">GeneratedFiles\qrc_scramblui.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">scramblui.qrc;Resources\icon_opts.gif;Resources\icon_undo.gif;Resources\icon_buildrun.gif;Resources\icon1.gif;Resources\icon_build.gif;Resources\icon_save.gif;Resources\icon_redo.gif;Resources\icon_saveall.gif;Resources\icon_open.gif;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+if errorlevel 1 goto VCEnd
+C:\qt\qt5.5.1\5.5\msvc2013_64\bin\rcc.exe -name scramblui scramblui.qrc -o GeneratedFiles\qrc_scramblui.cpp
+if errorlevel 1 goto VCEnd
+endlocal</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">RCC scramblui.qrc</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">GeneratedFiles\qrc_scramblui.cpp;%(Outputs)</Outputs>
     </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\SCRambl\SCRambl.vcxproj">
-      <Project>{21289682-e904-4a81-bb60-f09ee5f14b64}</Project>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
-  <ProjectExtensions>
-    <VisualStudio>
-      <UserProperties Qt5Version_x0020_Win32="msvc2013" />
-    </VisualStudio>
-  </ProjectExtensions>
 </Project>

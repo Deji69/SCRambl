@@ -226,7 +226,7 @@ namespace SCRambl
 		class Delimiter {
 		public:
 			enum Type {
-				None, Scope, Subscript, Cast
+				None, Scope, Subscript, Cast, Evaluation
 			};
 
 			Delimiter() = default;

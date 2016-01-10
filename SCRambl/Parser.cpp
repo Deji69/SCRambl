@@ -7,6 +7,7 @@
 #include "Tokens.h"
 #include "Engine.h"
 #include "Tasks.h"
+#include "Numbers.h"
 #include <cctype>
 
 using namespace SCRambl;
@@ -18,9 +19,10 @@ Parser::Parser(Task& task, Engine& engine, Build& build) :
 	m_Task(task), m_Engine(engine), m_Build(build), m_State(init),
 	m_Tokens(build.GetScript().GetTokens()),
 	m_Commands(build.GetCommands()),
-	m_Types(build.GetTypes()),
-	m_OperationParseState_(*this)
-{ }
+	m_Types(build.GetTypes())
+{
+	m_OperationParseStates.emplace_back(*this);
+}
 void Parser::Init() {
 	m_TokenIt = m_Tokens.Begin();
 	m_Task.Event<event_begin>();
@@ -115,7 +117,7 @@ bool Parser::GetDelimitedArrayIntegerConstant(size_t& i) {
 		}
 		EnterSubscript(next);
 		if (next = PeekToken(Tokens::Type::Number, 2)) {
-			i = GetIntegerConstant<size_t>(next);
+			i = GetIntegerConstant<Numbers::IntegerType::ULongType>(next);
 			b = true;
 			++m_TokenIt;
 		}
@@ -143,8 +145,11 @@ States Parser::Parse_Neutral_CheckCharacter(IToken* tok) {
 		switch (m_ActiveState) {
 		case state_parsing_operator: {
 			OperationParseState_::ParseResult result;
-			if (m_OperationParseState_.Finish()) {
-				m_OperationParseState_.Reset();
+			if (m_OperationParseStates.size() > 1)
+				BREAK(); // error: finish yo damn evaluation
+
+			if (m_OperationParseStates.back().Finish()) {
+				m_OperationParseStates.back().Reset();
 			}
 			else {
 				BREAK();
@@ -244,7 +249,46 @@ States Parser::Parse_Neutral_CheckDelimiter(IToken* tok) {
 			BREAK();
 	}
 	else {
-		if (IsScopeDelimiterClosing(tok)) {
+		if (IsEvaluationDelimiter(tok)) {
+			switch (m_ActiveState) {
+			case state_parsing_operator:
+				if (!IsEvaluationDelimiterClosing(tok)) {
+					if (m_OperationParseStates.back().m_State == OperationParseState_::waitRHS) {
+						// enter sub-evaluation
+						m_OperationParseStates.emplace_back(*this, true);
+					}
+					else {
+						m_Task.Event<error_expected_rhs_value>();	// error: bad place in the operation for sub-evaluation
+					}
+				}
+				else if (m_OperationParseStates.size() <= 1) {
+					m_Task.Event<error_unmatched_closing_delimiter>(Tokens::Delimiter::GetDelimiterType<Delimiter>(*tok));
+				}
+				else {
+					// combine sub-expression with parent expression
+					auto& opState = m_OperationParseStates[m_OperationParseStates.size() - 2];
+					auto& subexp = m_OperationParseStates.back();
+					if (subexp.m_OperandChain.size() == 1 && subexp.m_OperationChain.empty()) {
+						opState.MeetValue(subexp.m_OperandChain[0].first, subexp.m_OperandChain[0].second);
+					}
+					else {
+						if (!subexp.Finish()) {
+							BREAK();
+						}
+						/*for (auto& op : m_OperationParseStates.back().m_OperandChain)  {
+							opState.m_OperandChain.emplace_back(op);
+						}
+						for (auto& op : m_OperationParseStates.back().m_OperationChain)  {
+							opState.m_OperationChain.emplace_back(op);
+						}*/
+					}
+
+					m_OperationParseStates.pop_back();
+				}
+				break;
+			}
+		}
+		else if (IsScopeDelimiterClosing(tok)) {
 			m_Build.CloseVarScope();
 			m_Build.CloseLabelScope();
 		}
@@ -362,7 +406,7 @@ States Parser::Parse_Number() {
 		return state_neutral;
 	}
 	else if (m_ActiveState == state_parsing_operator) {
-		m_OperationParseState_.MeetValue(operand, type);
+		m_OperationParseStates.back().MeetValue(operand, type);
 		++m_TokenIt;
 		return state_neutral;
 	}
@@ -401,7 +445,7 @@ States Parser::Parse_Label() {
 States Parser::Parse_Variable() {
 	// If we're not parsing command args, parse an operation
 	if (m_ActiveState != state_parsing_command_args) {
-		m_OperationParseState_.MeetVariable(m_Variable);
+		m_OperationParseStates.back().MeetVariable(m_Variable);
 		++m_TokenIt;
 		return state_neutral;
 	}
@@ -555,7 +599,7 @@ States Parser::Parse_Command_Arglist() {
 	return state_neutral;
 }
 States Parser::Parse_Operator() {
-	if (m_OperationParseState_.MeetOperator(m_CurrentOperator)) {
+	if (m_OperationParseStates.back().MeetOperator(m_CurrentOperator)) {
 		m_ActiveState = state_parsing_operator;
 		++m_TokenIt;
 		return state_neutral;

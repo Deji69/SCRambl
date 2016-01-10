@@ -26,6 +26,8 @@ namespace SCRambl
 			
 			typedef long long MaxType;
 			typedef unsigned long long MaxUType;
+			typedef long LongType;
+			typedef unsigned long ULongType;
 			typedef char MinType;
 			typedef unsigned char MinUType;
 
@@ -83,7 +85,7 @@ namespace SCRambl
 			inline operator unsigned long() const { return GetValue<unsigned long>(); }
 			inline operator unsigned short() const { return GetValue<unsigned short>(); }
 			inline operator unsigned char() const { return GetValue<unsigned char>(); }
-			inline operator size_t() const { return GetValue<size_t>(); }
+			//inline operator size_t() const { return GetValue<size_t>(); }
 
 			static Type GetSignedType(Type type) {
 				switch (type) {

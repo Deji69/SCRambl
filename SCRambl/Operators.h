@@ -194,7 +194,7 @@ namespace SCRambl
 
 		public:
 			Scanner(Table<T>& table) : m_Table(table)
-			{}
+			{ }
 			bool Scan(Lexing::State& state, Scripts::Position& pos) {
 				switch (state)
 				{
@@ -248,6 +248,7 @@ namespace SCRambl
 			VecRef<Types::Type> m_RHS, m_LHS;
 			bool m_HasLHV = false, m_HasRHV = false, m_Swapped = false, m_IsAuto = false;
 			long m_LHV = 0, m_RHV = 0;
+			Type m_AutoType = Type::max_operator;
 
 		public:
 			using Attributes = Attributes<Types::DataAttributeID, Types::DataAttributeSet>;
@@ -264,6 +265,7 @@ namespace SCRambl
 			size_t GetIndex() const { return m_Index; }
 			Types::Type* LHS() const { return m_LHS.Ptr(); }
 			Types::Type* RHS() const { return m_RHS.Ptr(); }
+			Type AutoType() const { return m_AutoType; }
 			bool IsAuto() const { return m_IsAuto; }
 			bool HasLHS() const { return LHS() != nullptr; }
 			bool HasRHS() const { return RHS() != nullptr; }
@@ -282,6 +284,101 @@ namespace SCRambl
 				m_HasRHV = true;
 			}
 			void SetSwapped(bool v) { m_Swapped = v; }
+			void SetAutoType(Type type) { m_AutoType = type; }
+
+			Operand EvaluateAuto(const Operand&, const Operand&);
+
+		private:
+			template<typename T1, typename T2, typename R = T1>
+			static R AutoResult(Type type, T1 v1, T2 v2) {
+				R v = static_cast<R>(v1);
+				R u = static_cast<R>(v2);
+				switch (type) {
+				case Type::add:
+				case Type::comp_add:
+					v += u;
+					break;
+				case Type::sub:
+				case Type::comp_sub:
+					v -= u;
+					break;
+				case Type::mult:
+				case Type::comp_mult:
+					v *= u;
+					break;
+				case Type::div:
+				case Type::comp_div:
+					v /= u;
+					break;
+				case Type::mod:
+				case Type::comp_mod:
+					v = static_cast<R>(static_cast<int64_t>(v) % static_cast<int64_t>(u));
+					break;
+				case Type::inc:
+					v = u + 1;
+					break;
+				case Type::dec:
+					v = u - 1;
+					break;
+				case Type::bit_and:
+				case Type::comp_bit_and:
+					v = static_cast<R>(static_cast<int64_t>(v)& static_cast<int64_t>(u));
+					break;
+				case Type::bit_or:
+				case Type::comp_bit_or:
+					v = static_cast<R>(static_cast<int64_t>(v) | static_cast<int64_t>(u));
+					break;
+				case Type::bit_xor:
+				case Type::comp_bit_xor:
+					v = static_cast<R>(static_cast<int64_t>(v) ^ static_cast<int64_t>(u));
+					break;
+				case Type::bit_shl:
+				case Type::comp_bit_shl:
+					v = static_cast<R>(static_cast<int64_t>(v) << static_cast<int64_t>(u));
+					break;
+				case Type::bit_shr:
+				case Type::comp_bit_shr:
+					v = static_cast<R>(static_cast<int64_t>(v) >> static_cast<int64_t>(u));
+					break;
+				case Type::bit_not:
+					v = static_cast<R>(~static_cast<int64_t>(u));
+					break;
+				case Type::eq:
+					v = v == u;
+					break;
+				case Type::neq:
+					v = v != u;
+					break;
+				case Type::gt:
+					v = v > u;
+					break;
+				case Type::lt:
+					v = v < u;
+					break;
+				case Type::geq:
+					v = v >= u;
+					break;
+				case Type::leq:
+					v = v <= u;
+					break;
+				case Type::not:
+					v = !u;
+					break;
+				case Type::and:
+					v = v && u;
+					break;
+				case Type::or:
+					v = v || u;
+					break;
+				case Type::cond:
+					if (v) v = u;
+					break;
+				case Type::condel:
+					if (!v) v = u;
+					break;
+				}
+				return v;
+			}
 		};
 
 		// Smooth Operator
@@ -360,6 +457,7 @@ namespace SCRambl
 				return idx < m_Operations.size() ? m_Operations[idx].GetRef() : OperationRef();
 			}
 			
+			OperationRef GetAutoOperation(const Types::Type*, const Types::Type*);
 			OperationRef GetOperation(Variable*, const Types::Type*);
 			OperationRef GetUnaryOperation(Variable*, bool rhs_var = false);
 
@@ -428,6 +526,9 @@ namespace SCRambl
 			OperatorTable& GetTable() { return m_Table; }
 			const OperatorTable& GetTable() const { return m_Table; }
 			size_t Size() const { return m_Storage.size(); }
+
+		public:
+			static Type GetTypeByName(std::string name);
 
 		private:
 			OperatorRef Add(std::string op, VecRef<Types::Type> type, Operator::Sign sign, bool is_conditional = false, bool is_assignment = false) {

@@ -83,6 +83,7 @@
   <ItemGroup>
     <ClInclude Include="..\SCRambl.h" />
     <ClInclude Include="Attributes.h" />
+    <ClInclude Include="AutoOperation.h" />
     <ClInclude Include="BuildConfig.h" />
     <ClInclude Include="Builder.h" />
     <ClInclude Include="Commands.h" />
@@ -138,6 +139,7 @@
     <ClInclude Include="XML.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AutoOperation.cpp" />
     <ClCompile Include="BuildConfig.cpp" />
     <ClCompile Include="Builder.cpp" />
     <ClCompile Include="Commands.cpp" />

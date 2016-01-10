@@ -5,6 +5,7 @@
 #include "Parser.h"
 
 using namespace SCRambl;
+using namespace SCRambl::Building;
 
 /* Build */
 ScriptVariable* Build::AddScriptVariable(std::string name, VecRef<Types::Type> type, size_t array_size) {
@@ -93,7 +94,7 @@ void Build::ParseCommands(const std::multimap<const std::string, Tokens::Iterato
 			}
 		}
 		else if (parsecmd.second->Required.AsBool()) {
-			BREAK();
+			Event<error_required_command_omitted>(parsecmd.first.AsString());
 		}
 	}
 }

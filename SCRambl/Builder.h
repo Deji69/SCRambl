@@ -126,6 +126,35 @@ namespace SCRambl
 		}
 	};
 
+	/* build error ID */
+	class BuildError {
+	public:
+		enum ID {
+			// involuntary errors (errors that should be impossible!!)
+			invalid_character = 500,
+
+			// normal errors
+			required_command_omitted = 1000,				// no script name/destination specified
+
+			// fatal errors
+			fatal_begin = 4000,
+			//include_failed = 4000,
+			fatal_end,
+		};
+
+		BuildError(ID id) : m_ID(id)
+		{ }
+		inline operator ID() const { return m_ID; }
+
+		static inline std::string Formatter(BuildError type) { return s_map[type]; }
+
+	private:
+		static std::map<ID, std::string> s_map;
+
+	private:
+		ID m_ID;
+	};
+
 	/* build events */
 	struct build_event : public task_event {
 		explicit build_event(const Engine& engine) : m_Engine(engine) {
@@ -176,6 +205,16 @@ namespace SCRambl
 		explicit event_parsed_token(const Engine& engine, Scripts::Range rg) : token_event(engine, rg) {
 			LinkEvent<event_parsed_token>("parsed_token");
 		}
+	};
+	/* build error events */
+	namespace Building {
+		template<BuildError::ID TID, typename... TArgs>
+		struct event_error : public error_event_data<TArgs...> {
+			event_error(const Engine& engine, TArgs... args) : error_event_data(Basic::Error(engine, TID), std::forward<TArgs>(args)...) {
+				LinkEvent<event_error>("event_error");
+			}
+		};
+		using error_required_command_omitted = event_error<BuildError::required_command_omitted, std::string>;
 	};
 
 	class BuildEnvironment {
@@ -360,6 +399,11 @@ namespace SCRambl
 		bool IsTaskFinished() const override { return m_CurrentTask == std::end(m_Tasks); }
 		void ResetTask() override { Init(); }
 		void RunTask() override { Run(); }
+
+		template<typename TEvent, typename... TArgs>
+		inline size_t Event(TArgs&&... args) {
+			return CallEvent(TEvent(m_Engine, std::forward<TArgs>(args)...));
+		}
 
 	private:
 		void Setup();

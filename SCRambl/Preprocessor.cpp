@@ -364,6 +364,8 @@ void Preprocessor::HandleComment() {
 void Preprocessor::LexerPhase() {
 	if (m_State == lexing) {
 		if (m_CodePos) {
+			while (m_CodePos && m_CodePos->IsIgnorable())
+				++m_CodePos;
 			if (m_CodePos->IsEOL()) {
 				if (!m_WasLastTokenEOL) {
 					AddToken<Tokens::Character::Info<Character>>(m_CodePos, Tokens::Type::Character, m_CodePos, Character::EOL);
@@ -410,8 +412,15 @@ void Preprocessor::LexerPhase() {
 						success = CloseDelimiter(m_CodePos, type = Delimiter::Scope);
 						open = false;
 						break;
+					case '(':
+						success = OpenDelimiter(m_CodePos, type = Delimiter::Evaluation);
+						break;
+					case ')':
+						success = CloseDelimiter(m_CodePos, type = Delimiter::Evaluation);
+						open = false;
+						break;
 					default:
-						BREAK();
+						//BREAK();
 						break;
 					}
 
@@ -857,11 +866,11 @@ Lexing::Result Preprocessor::Lex() {
 			m_ParserOperatorScanner.Disable();	// disable parser (proper) operators
 
 			if (m_CodePos->GetType() == Symbol::punctuator) {
-				switch (char c = *m_CodePos)
+				switch (m_CodePos->GetGrapheme())
 				{
-				case '(':
-				case ')':
-					m_Token(c == '(' ? TokenType::OpenParen : TokenType::CloseParen, m_CodePos, m_CodePos, m_CodePos + 1);
+				case Grapheme::left_paren:
+				case Grapheme::right_paren:
+					m_Token(m_CodePos->GetGrapheme() == Grapheme::left_paren ? TokenType::OpenParen : TokenType::CloseParen, m_CodePos, m_CodePos, m_CodePos + 1);
 					m_CodePos = m_Token.End();
 					return Lexing::Result::found_token;
 				default:
@@ -1290,12 +1299,13 @@ bool BlockCommentScanner::Scan(Lexing::State& state, Scripts::Position& pos) {
 				else if (last_char == '/' && pos == '*') {
 					++depth;
 				}
-
-				last_char = *pos;
 			}
+
+			last_char = *pos;
 		} while (++pos);
 
-		if (depth) throw(Error::end_of_file_reached);
+		if (depth)
+			throw(Error::end_of_file_reached);
 		ASSERT(!depth);			// TODO: throw error "still in comment at end-of-file"
 		return true;
 

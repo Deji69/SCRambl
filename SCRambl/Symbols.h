@@ -84,8 +84,8 @@ namespace SCRambl
 							{ /* % */ punctuator, Grapheme::percent },
 							{ /* & */ punctuator, Grapheme::and },
 							{ /* ' */ delimiter },
-							{ /* ( */ punctuator, Grapheme::left_paren},
-							{ /* ) */ punctuator, Grapheme::right_paren},
+							{ /* ( */ delimiter, Grapheme::left_paren },
+							{ /* ) */ delimiter, Grapheme::right_paren },
 							{ /* * */ punctuator, Grapheme::multiply },
 							{ /* + */ punctuator, Grapheme::plus },
 							{ /* , */ separator },
@@ -129,6 +129,8 @@ namespace SCRambl
 			int8_t ch = character;
 			ASSERT(character >= 0 && character <= 127);
 			ASSERT(character_set.size() == 0x80);
+			ASSERT(character_set['('].second == Grapheme::left_paren);
+			ASSERT(character_set[')'].second == Grapheme::right_paren);
 			m_Type = character_set[ch].first;
 			m_Grapheme = character_set[ch].second;
 		}
