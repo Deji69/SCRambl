@@ -62,9 +62,9 @@ size_t OperationValue::GetValueSize(const Operation::Attributes& op) const {
 	case Types::DataType::String:
 		return op.GetAttribute(GetAttributeID()).AsString().size() * 8;
 	case Types::DataType::Float:
-		return sizeof(float);
+		return sizeof(float) * 8;
 	case Types::DataType::Char:
-		return sizeof(char);
+		return sizeof(char) * 8;
 	default: BREAK();
 	}
 	return 0;
@@ -216,13 +216,44 @@ void Master::Init(Build& build) {
 			auto ass_attr = xml["Assign"];	// teeheehee
 			auto sign_attr = xml["Sign"];
 			auto cond_attr = xml["Cond"];
-			auto op = Add(name->AsString(), type, Operator::GetSign(sign_attr->AsString()), cond_attr->AsBool(), ass_attr->AsBool());
+			auto default_attr = xml["Default"];
+			// if we find any of these, don't allow additional ones
+			bool found_default = false,
+				found_comp = false,
+				found_not = false;
+			OperatorRef op;
+
+			// try and find an operator that already has this spec (sign is irrelevant)
+			Get(name->AsString(), [&op, &found_default, &found_comp, &found_not, ass_attr, cond_attr](std::pair<OperatorRef, OperatorType> pr){
+				if (pr.first->IsConditional() != cond_attr->AsBool())
+					return false;
+				if (pr.first->IsAssignment() != ass_attr->AsBool()) {
+					found_comp = true;
+					return false;
+				}
+				if (pr.first->IsDefault())
+					found_default = true;
+				if (pr.second != OperatorType::None) {
+					if (pr.second == OperatorType::Compound)
+						found_comp = true;
+					else if (pr.second == OperatorType::Not)
+						found_not = true;
+					return false;
+				}
+				if (!op) op = pr.first;
+				return false;
+			});
+			if (!op) {
+				// nothing found? add it then!
+				op = Add(name->AsString(), type, Operator::GetSign(sign_attr->AsString()), cond_attr->AsBool(), ass_attr->AsBool(), default_attr->AsBool(false) && !found_default);
+			}
+
 			if (op) {
 				// map pseudonyms
 				auto comp_attr = xml["Comp"];
 				auto not_attr = xml["Not"];
-				if (*comp_attr) Add(comp_attr->AsString(), op, OperatorType::Compound);
-				if (*not_attr) Add(not_attr->AsString(), op, OperatorType::Not);
+				if (*comp_attr && !found_comp) Add(comp_attr->AsString(), op, OperatorType::Compound);
+				if (*not_attr && cond_attr->AsBool() && !found_not) Add(not_attr->AsString(), op, OperatorType::Not);
 			}
 			obj = op.Ptr();
 		}

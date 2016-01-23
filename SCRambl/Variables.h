@@ -32,7 +32,9 @@ namespace SCRambl
 		inline size_t ID() const { return m_ID; }
 		inline size_t Index() const { return m_Index; }
 		inline size_t Offset() const { return m_Offset; }
+		//inline size_t Size() const { return (m_ArraySize ? m_ArraySize : 1) * (Value()->GetSize()); }
 		inline std::string Name() const { return m_Name; }
+		inline size_t ArraySize() const { return m_ArraySize ? m_ArraySize : 1; }
 		inline const Types::Type* Type() const { return m_Type; }
 		inline const Types::VariableValue* Value() const { return IsArray() ? m_ArrayValue : m_VarValue; }
 		inline const Types::ArrayValue* ArrayValue() const {

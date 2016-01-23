@@ -2,9 +2,12 @@
 
 <SCRambl Version="1.0" FileVersion="0.0.0.0">
     <Operators>
+		<!-- Sets the TYPE associated with operators -->
 		<OperatorType Type="COMMAND" />
 		
-		<Operator Name="=" Assign="true">
+		<!-- 'Assign' specifies that this operator can begin a full operation
+			 'Default' specifies that this operator is to be picked for parse code generation -->
+		<Operator Name="=" Assign="true" Default="true">
 			<!--- Val to var -->
 			<Operation ID="0x4" LHS="VAR_INT" RHS="INT" />
 			<Operation ID="0x5" LHS="VAR_FLOAT" RHS="FLOAT" />
@@ -19,6 +22,12 @@
 			<Operation ID="0x89" LHS="LVAR_FLOAT" RHS="VAR_FLOAT" />
 			<Operation ID="0x8A" LHS="VAR_INT" RHS="LVAR_INT" />
 			<Operation ID="0x8B" LHS="LVAR_INT" RHS="VAR_INT" />
+		</Operator>
+		<!-- As long as the operator name and spec match, the operations just add to existing operators
+			 The 'Sign' and 'Default' attributes are ignored when matching the spec
+			 Defaults cannot be changed after first being set, even when using a different spec
+			 The operations are picked by type matching once the operator spec is matched -->
+		<Operator Name="=" Assign="true">
 			<!-- Text label to var -->
 			<Operation ID="0x5A9" LHS="VAR_TEXT_LABEL" RHS="TEXT_LABEL" Size="8" />
 			<Operation ID="0x5A9" LHS="VAR_TEXT_LABEL" RHS="VAR_TEXT_LABEL" />
@@ -34,6 +43,8 @@
 			<Operation ID="0x6D2" LHS="LVAR_STRING" RHS="VAR_STRING" />
 			<Operation ID="0x6D2" LHS="LVAR_STRING" RHS="LVAR_STRING" />
 		</Operator>
+		<!-- 'Comp' (compound) operator variants are always assignment
+			 If a matching assignment/compound operator is already found this is ignored -->
 		<Operator Name="+" Comp="+=" Sign="positive">
 			<Auto LHS="INT" RHS="INT" Operation="ADD" />
 			<Auto LHS="FLOAT" RHS="FLOAT" Operation="ADD" />
@@ -67,7 +78,7 @@
 			<Operation ID="0x66" LHS="VAR_INT" RHS="LVAR_INT" />
 			<Operation ID="0x67" LHS="VAR_FLOAT" RHS="LVAR_FLOAT" />
 		</Operator>
-		<Operator Name="*" Comp="*=" Precedence="1">
+		<Operator Name="*" Comp="*=">
 			<Auto LHS="INT" RHS="INT" Operation="MUL" />
 			
 			<Operation ID="0x10" LHS="VAR_INT" RHS="INT" />
@@ -83,7 +94,7 @@
 			<Operation ID="0x6E" LHS="LVAR_INT" RHS="VAR_INT" />
 			<Operation ID="0x6F" LHS="LVAR_FLOAT" RHS="VAR_FLOAT" />
 		</Operator>
-		<Operator Name="/" Comp="/=" Precedence="1">
+		<Operator Name="/" Comp="/=">
 			<Auto LHS="INT" RHS="INT" Operation="DIV" />
 			
 			<Operation ID="0x14" LHS="VAR_INT" RHS="INT" />
@@ -115,7 +126,7 @@
 			<Operation ID="0x82" LHS="LVAR_FLOAT" RHS="VAR_FLOAT" />
 			<Operation ID="0x83" LHS="VAR_FLOAT" RHS="LVAR_FLOAT" />
 		</Operator>
-		<Operator Name="=#">
+		<Operator Name="=#" Assign="true">
 			<!-- Automatically cast constants and use assignment -->
 			<Auto ID="0x4" LHS="VAR_INT" RHS="FLOAT" Operation="FTOI" />
 			<Auto ID="0x5" LHS="VAR_FLOAT" RHS="INT" Operation="ITOF" />
@@ -133,7 +144,9 @@
 		</Operator>
 		
 		<!-- Conditional-->
-		<Operator Name="=" Comp="==" Not="!=" Cond="true" Precedence="-3">
+		<!-- 'Not' is ignored if 'Cond' is not set true
+			 'Cond' takes highest precedence in operator spec matching -->
+		<Operator Name="=" Comp="==" Not="!=" Cond="true">
 			<Auto LHS="INT" RHS="INT" Operation="CMPEQ" />
 			<Auto LHS="FLOAT" RHS="FLOAT" Operation="CMPEQ" />
 			
@@ -166,7 +179,7 @@
 			<Operation ID="0x8FA" LHS="LVAR_STRING" RHS="LVAR_STRING" />
 			<Operation ID="0x8FA" LHS="LVAR_STRING" RHS="VAR_STRING" />
 		</Operator>
-		<Operator Name=">" Not="<=" Cond="true" Precedence="-2">
+		<Operator Name=">" Not="<=" Cond="true">
 			<Auto LHS="INT" RHS="INT" Operation="CMPGT" />
 			<Auto LHS="FLOAT" RHS="FLOAT" Operation="CMPGT" />
 			
@@ -187,7 +200,7 @@
 			<Operation ID="0x26" LHS="VAR_FLOAT" RHS="LVAR_FLOAT" />
 			<Operation ID="0x27" LHS="LVAR_FLOAT" RHS="VAR_FLOAT" />
 		</Operator>
-		<Operator Name=">=" Not="<" Cond="true" Precedence="-2">
+		<Operator Name=">=" Not="<" Cond="true">
 			<Auto LHS="INT" RHS="INT" Operation="CMPLT" />
 			<Auto LHS="FLOAT" RHS="FLOAT" Operation="CMPLT" />
 			
@@ -210,13 +223,13 @@
 		</Operator>
 		
 		<!-- Pseudo -->
-		<Operator Name="++" Precedence="2">
+		<Operator Name="++">
 			<Operation ID="0x8" LHS="VAR_INT" RHV="1" />				<!-- Post-increment, e.g. var_int++ -->
 			<Operation ID="0x8" RHS="VAR_INT" LHV="1" Swap="on" />		<!-- Pre-increment - swapped when parsed, ++lvar_int -->
 			<Operation ID="0xA" LHS="LVAR_INT" RHV="1" />				<!-- lvar_int++ -->
 			<Operation ID="0xA" RHS="LVAR_INT" LHV="1" Swap="on" />		<!-- ++lvar_int -->
 		</Operator>
-		<Operator Name="--" Precedence="2">
+		<Operator Name="--">
 			<Operation ID="0xC" LHS="VAR_INT" RHV="1" />				<!-- var_int-- -->
 			<Operation ID="0xC" RHS="VAR_INT" LHV="1" Swap="on"/>		<!-- --var_int -->
 			<Operation ID="0xE" LHS="LVAR_INT" RHV="1" />				<!-- lvar_int-- -->
@@ -224,43 +237,43 @@
 		</Operator>
 		
 		<!-- CLEO 4.3 IntOperations -->
-		<Operator Name="&" Comp="&=" Precedence="-4">
+		<Operator Name="&" Comp="&=">
 			<Auto LHS="INT" RHS="INT" Operation="BIT_AND" />
 			
 			<Operation ID="0xB17" LHS="VAR_INT" RHS="INT" />
 			<Operation ID="0xB17" LHS="LVAR_INT" RHS="INT" />
 		</Operator>
-		<Operator Name="|" Comp="|=" Precedence="-6">
+		<Operator Name="|" Comp="|=">
 			<Auto LHS="INT" RHS="INT" Operation="BIT_OR" />
 		
 			<Operation ID="0xB18" LHS="VAR_INT" RHS="INT" />
 			<Operation ID="0xB18" LHS="LVAR_INT" RHS="INT" />
 		</Operator>
-		<Operator Name="^" Comp="^=" Precedence="-5">
+		<Operator Name="^" Comp="^=">
 			<Auto LHS="INT" RHS="INT" Operation="BIT_XOR" />
 			
 			<Operation ID="0xB19" LHS="VAR_INT" RHS="INT" />
 			<Operation ID="0xB19" LHS="LVAR_INT" RHS="INT" />
 		</Operator>
-		<Operator Name="~" Precedence="2">
+		<Operator Name="~">
 			<Auto LHS="INT" RHS="INT" Operation="BIT_NOT" />
 			
 			<Operation ID="0xB1A" LHS="VAR_INT" />
 			<Operation ID="0xB1A" LHS="LVAR_INT" />
 		</Operator>
-		<Operator Name="%" Comp="%=" Precedence="1">
+		<Operator Name="%" Comp="%=">
 			<Auto LHS="INT" RHS="INT" Operation="MOD" />
 			
 			<Operation ID="0xB1B" LHS="VAR_INT" RHS="INT" />
 			<Operation ID="0xB1B" LHS="LVAR_INT" RHS="INT" />
 		</Operator>
-		<Operator Name=">>" Comp=">>=" Precedence="-1">
+		<Operator Name=">>" Comp=">>=">
 			<Auto LHS="INT" RHS="INT" Operation="BIT_SHR" />
 			
 			<Operation ID="0xB1C" LHS="VAR_INT" RHS="INT" />
 			<Operation ID="0xB1C" LHS="LVAR_INT" RHS="INT" />
 		</Operator>
-		<Operator Name="<<" Comp="<<=" Precedence="-1">
+		<Operator Name="<<" Comp="<<=">
 			<Auto LHS="INT" RHS="INT" Operation="BIT_SHL" />
 			
 			<Operation ID="0xB1D" LHS="VAR_INT" RHS="INT" />

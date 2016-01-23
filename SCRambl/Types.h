@@ -95,7 +95,7 @@ namespace SCRambl
 			// TODO: meh
 			Type(size_t id, std::string name, TypeSet type) : m_ID(id), m_Name(name), m_Type(type)
 			{ }
-			Type(const Type& type) : m_ID(type.m_ID), m_Name(type.m_Name), m_Type(type.m_Type) {
+			Type(const Type& type) : m_ID(type.m_ID), m_Name(type.m_Name), m_Type(type.m_Type), m_VarTypes(type.m_VarTypes), m_ArrayTypes(type.m_ArrayTypes) {
 				CopyValues(type);
 			}
 			Type(Type&&);
@@ -157,11 +157,18 @@ namespace SCRambl
 				}
 			}
 
+			inline void AddVarType(size_t id) { m_VarTypes.emplace(id); }
+			inline void AddArrayType(size_t id) { m_VarTypes.emplace(id); }
+			inline const std::set<size_t>& VarTypes() const { return m_VarTypes; }
+			inline const std::set<size_t>& ArrayTypes() const { return m_ArrayTypes; }
+
 		private:
 			size_t m_ID;
 			std::string m_Name;
 			TypeSet m_Type;
 			std::vector<Value*> m_Values;
+			std::set<size_t> m_VarTypes;
+			std::set<size_t> m_ArrayTypes;
 		};
 
 		class Basic : public Type {
@@ -192,7 +199,7 @@ namespace SCRambl
 			bool IsGlobal() const { return lengthcompare(m_Scope.AsString("global"), "local") == 0; }
 			XMLValue IsArray() const { return m_IsArray; }
 			XMLValue MinIndex() const { return m_MinIndex; }
-			XMLValue MaxIndex() const { return m_MinIndex; }
+			XMLValue MaxIndex() const { return m_MaxIndex; }
 			XMLValue Size() const { return m_Size; }
 
 			void SetMinIndex(XMLValue v) { m_MinIndex = v; }
@@ -750,8 +757,8 @@ namespace SCRambl
 				if (!m_TypePointers.empty() && cap != m_Types.GetCapacity()) UpdatePointers(old);
 				return &type.AsVariable();
 			}
-			template<typename T = Type>
-			inline TypeRef<T> GetType(std::string name) { return m_Types.Get<T>(name); }
+			template<typename T = Type, typename K = std::string>
+			inline TypeRef<T> GetType(K id) { return m_Types.Get<T>(id); }
 			inline void AddValue(ValueSet valtype, Value* value) {
 				m_Values.emplace(valtype, value);
 			}

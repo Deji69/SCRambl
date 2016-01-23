@@ -11,10 +11,14 @@ using namespace SCRambl::Building;
 ScriptVariable* Build::AddScriptVariable(std::string name, VecRef<Types::Type> type, size_t array_size) {
 	if (auto val = array_size ? type->GetArrayValue() : type->GetVarValue()) {
 		auto var = m_Variables.Add(type.Ptr(), name, array_size);
-		//if (var->Get().ID() > var->Get().Value()->GetVarType()->GetVarMaxIndex())
+		if ((var->Get().Index() + array_size) > var->Get().Value()->GetVarType()->GetVarMaxIndex()) {
+			Event<error_var_out_of_range>(&m_Variables, var);
+		}
 		return var;
 	}
-	else BREAK();
+	else {
+		Event<error_invalid_var_type>(type.Ptr(), static_cast<long>(array_size));
+	}
 	return nullptr;
 }
 ScriptVariable* Build::GetScriptVariable(std::string name) {

@@ -135,6 +135,8 @@ namespace SCRambl
 
 			// normal errors
 			required_command_omitted = 1000,				// no script name/destination specified
+			var_out_of_range = 1001,						// variable declaration passed script limit
+			invalid_var_type = 1002,						// type has no value for var or array
 
 			// fatal errors
 			fatal_begin = 4000,
@@ -215,6 +217,8 @@ namespace SCRambl
 			}
 		};
 		using error_required_command_omitted = event_error<BuildError::required_command_omitted, std::string>;
+		using error_var_out_of_range = event_error<BuildError::var_out_of_range, ScriptObjects<Variable>*, ScriptObjects<Variable>::ScriptObject*>;
+		using error_invalid_var_type = event_error<BuildError::invalid_var_type, Types::Type*, long>;
 	};
 
 	class BuildEnvironment {
@@ -424,6 +428,8 @@ namespace SCRambl
 		std::vector<BuildInput> m_BuildInputs;
 		std::vector<std::string> m_Files;
 		Xlations m_Xlations;
+		size_t m_NumReservedVariables = 0;
+		size_t m_NumReservedLabels = 0;
 
 		//
 		ScriptObjects<Variable> m_Variables;

@@ -109,14 +109,20 @@ inline const ArrayValue* VariableValue::ToArray() const {
 }
 VariableValue::VariableValue(Storage& types, size_t type_idx, size_t size, VecRef<SCRambl::Types::Variable> var, VecRef<Type> val, bool) : Value(types, type_idx, ValueSet::Array, size),
 	m_VarType(var), m_ValType(val)
-{ }
+{
+	m_ValType->AddVarType(type_idx);
+}
 VariableValue::VariableValue(Storage& types, size_t type_idx, size_t size, VecRef<SCRambl::Types::Variable> var, VecRef<Type> val) : Value(types, type_idx, ValueSet::Variable, size),
 	m_VarType(var), m_ValType(val)
-{ }
+{
+	m_ValType->AddVarType(type_idx);
+}
 
 /* ArrayValue */
 ArrayValue::ArrayValue(Storage& types, size_t type_idx, size_t size, VecRef<SCRambl::Types::Variable> var, VecRef<Type> val) : VariableValue(types, type_idx, size, var, val, true)
-{ }
+{
+	val->AddArrayType(type_idx);
+}
 
 /* Translation */
 size_t Translation::GetSize(Xlation xlate) {
@@ -245,7 +251,7 @@ void Type::MoveValues(Type&& other) {
 	}
 	other.m_Values.clear();
 }
-Type::Type(Type&& type) : m_ID(type.m_ID), m_Name(type.m_Name), m_Type(type.m_Type) {
+Type::Type(Type&& type) : m_ID(type.m_ID), m_Name(type.m_Name), m_Type(type.m_Type), m_VarTypes(type.m_VarTypes), m_ArrayTypes(type.m_ArrayTypes) {
 	MoveValues(std::forward<Type>(type));
 }
 
@@ -339,11 +345,18 @@ void SCRambl::Types::Types::AddValueAttributes(XMLConfig* type) {
 		else {
 			auto vartype = GetType<Variable>(type_attr);
 			auto valtype = GetType(value_attr);
+
 			ASSERT(vartype && valtype);
 			ASSERT(vartype.IsVariable());
 
 			auto value = type->AddValue<VariableValue>(m_Types, type->GetID(), vec["Size"]->AsNumber<uint32_t>(), vartype.Ref(), valtype.Ref());
-			AddValue(ValueSet::Variable, value);
+			ASSERT(value);
+
+			if (value) {
+				AddValue(ValueSet::Variable, value);
+				valtype.Get().AddVarType(type->GetID());
+			}
+
 			obj = value;
 		}
 	});
@@ -362,14 +375,20 @@ void SCRambl::Types::Types::AddValueAttributes(XMLConfig* type) {
 			BREAK();
 		}
 		else {
-			auto vartype = GetType<Variable>(type_attr);
-			auto valtype = GetType(value_attr);
+			auto& vartype = GetType<Variable>(type_attr);
+			auto& valtype = GetType(value_attr);
 
 			ASSERT(vartype && valtype);
 			ASSERT(vartype.IsVariable() && vartype.AsVariable().IsArray());
 
 			auto value = type->AddValue<ArrayValue>(m_Types, type->GetID(), vec["Size"]->AsNumber<uint32_t>(), vartype.Ref(), valtype.Ref());
-			AddValue(ValueSet::Array, value);
+			ASSERT(value);
+
+			if (value) {
+				AddValue(ValueSet::Array, value);
+				valtype.Get().AddArrayType(type->GetID());
+			}
+
 			obj = value;
 		}
 	});
@@ -402,7 +421,7 @@ void SCRambl::Types::Types::Init(Build& build) {
 			auto type = static_cast<Variable*>(obj);
 			type->SetMinIndex(vec->AsNumber<size_t>());
 		});
-		vartype->AddClass("MinIndex", [this](const XMLNode vec, void*& obj) {
+		vartype->AddClass("MaxIndex", [this](const XMLNode vec, void*& obj) {
 			auto type = static_cast<Variable*>(obj);
 			type->SetMaxIndex(vec->AsNumber<size_t>());
 		});

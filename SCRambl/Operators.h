@@ -390,11 +390,11 @@ namespace SCRambl
 			};
 
 		public:
-			Operator(OperatorRef ref, std::string op, VecRef<Types::Type> type, bool iscond, bool isass = false, Sign sign = Sign::none) : m_Ref(ref), m_Op(op),
-				m_Type(type), m_IsConditional(iscond), m_IsAssignment(isass), m_Sign(sign)
+			Operator(OperatorRef ref, std::string op, VecRef<Types::Type> type, bool iscond, bool isass = false, Sign sign = Sign::none, bool isdef = false) : m_Ref(ref), m_Op(op),
+				m_Type(type), m_IsConditional(iscond), m_IsAssignment(isass), m_IsDefault(isdef), m_Sign(sign)
 			{ }
-			Operator(const Operator& v) : m_Op(v.m_Op), m_Type(v.m_Type), m_IsConditional(v.m_IsConditional), m_IsAssignment(v.m_IsAssignment), m_Sign(v.m_Sign),
-				m_Ref(v.m_Ref)
+			Operator(const Operator& v) : m_Op(v.m_Op), m_Type(v.m_Type), m_IsDefault(v.m_IsDefault), m_IsConditional(v.m_IsConditional), m_IsAssignment(v.m_IsAssignment),
+				m_Sign(v.m_Sign), m_Ref(v.m_Ref)
 			{
 				for (auto& pr : v.m_Operations) {
 					m_Operations.emplace_back(pr);
@@ -407,8 +407,8 @@ namespace SCRambl
 					m_Autos.back().m_Ref = { m_Autos, m_Autos.size() - 1 };
 				}
 			}
-			Operator(Operator&& v) : m_Op(v.m_Op), m_Type(std::move(v.m_Type)), m_IsConditional(v.m_IsConditional), m_IsAssignment(v.m_IsAssignment), m_Sign(v.m_Sign),
-				m_Ref(std::move(v.m_Ref))
+			Operator(Operator&& v) : m_Op(v.m_Op), m_Type(std::move(v.m_Type)), m_IsDefault(v.m_IsDefault), m_IsConditional(v.m_IsConditional), m_IsAssignment(v.m_IsAssignment),
+				m_Sign(v.m_Sign), m_Ref(std::move(v.m_Ref))
 			{
 				for (auto& pr : v.m_Operations) {
 					m_Operations.emplace_back(pr);
@@ -428,6 +428,7 @@ namespace SCRambl
 
 			const std::string& Name() const { return m_Op; }
 			VecRef<Types::Type> Type() const { return m_Type; }
+			bool IsDefault() const { return m_IsDefault; }
 			bool IsAssignment() const { return m_IsAssignment; }
 			bool IsConditional() const { return m_IsConditional; }
 			bool HasAuto() const { return !m_Autos.empty(); }
@@ -464,13 +465,13 @@ namespace SCRambl
 		private:
 			static Sign GetSign(std::string);
 
-		private:
 			std::string m_Op;
 			OperatorRef m_Ref;
 			VecRef<Types::Type> m_Type;
 			std::vector<Operation> m_Operations;
 			std::vector<Operation> m_Autos;
-			bool m_IsConditional = false,
+			bool m_IsDefault = false, 
+				m_IsConditional = false,
 				m_IsAssignment = false;
 			Sign m_Sign = Sign::none;
 		};
@@ -523,19 +524,30 @@ namespace SCRambl
 				}
 				return pr;
 			}
+			template<typename TFunc>
+			bool Get(std::string op, TFunc func) {
+				auto rg = m_OpMap.equal_range(op);
+				std::pair<OperatorRef, OperatorType> pr;
+				for (auto it = rg.first; it != rg.second; ++it) {
+					if (func(it->second)) return true;
+				}
+				return false;
+			}
 			OperatorTable& GetTable() { return m_Table; }
 			const OperatorTable& GetTable() const { return m_Table; }
 			size_t Size() const { return m_Storage.size(); }
+			const std::vector<OperatorRef>& DefaultOperators() const { return m_DefaultOperators; }
 
 		public:
 			static Type GetTypeByName(std::string name);
 
 		private:
-			OperatorRef Add(std::string op, VecRef<Types::Type> type, Operator::Sign sign, bool is_conditional = false, bool is_assignment = false) {
-				auto ref = Insert(op, type, is_conditional, is_assignment, sign);
+			OperatorRef Add(std::string op, VecRef<Types::Type> type, Operator::Sign sign, bool is_conditional = false, bool is_assignment = false, bool is_default = false) {
+				auto ref = Insert(op, type, is_conditional, is_assignment, sign, is_default);
 				if (ref) {
-					m_OpMap.emplace(op, std::make_pair(ref, OperatorType::Inline));
+					m_OpMap.emplace(op, std::make_pair(ref, OperatorType::None));
 					m_Table.AddOperator(op, ref);
+					if (is_default) m_DefaultOperators.emplace_back(ref);
 				}
 				return ref;
 			}
@@ -545,6 +557,7 @@ namespace SCRambl
 
 			XMLConfiguration* m_Config;
 			std::vector<Operator> m_Storage;
+			std::vector<OperatorRef> m_DefaultOperators;
 			std::unordered_multimap<std::string, std::pair<OperatorRef, OperatorType>> m_OpMap;
 			OperatorTable m_Table;
 		};

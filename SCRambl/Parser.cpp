@@ -27,6 +27,8 @@ void Parser::Init() {
 	m_TokenIt = m_Tokens.Begin();
 	m_Task.Event<event_begin>();
 	m_BuildConfig = m_Engine.GetBuildConfig();
+	m_ParseVars.clear();
+	m_UsedParseVars.clear();
 	m_State = parsing;
 	m_OnNewLine = true;
 	m_ParsingCommandArgs = false;
@@ -128,6 +130,77 @@ bool Parser::GetDelimitedArrayIntegerConstant(size_t& i) {
 		m_TokenIt += 2;
 	}
 	return b;
+}
+ScriptVariable* Parser::CreateParseVar(const Types::Type* type, size_t array_size) {
+	ScriptVariable* var = nullptr;
+
+	if (!m_ParseVars.empty() && m_UsedParseVars.size() < m_ParseVars.size()) {
+		size_t i = 0;
+		for (; i < m_ParseVars.size(); ++i) {
+			if (m_UsedParseVars.find(m_ParseVars[i]) == m_UsedParseVars.end())
+				break;
+		}
+		if (i < m_ParseVars.size()) {
+			var = m_ParseVars[i];
+		}
+	}
+
+	if (!var) {
+		if (!type->HasValueType(array_size ? Types::ValueSet::Array : Types::ValueSet::Variable)) {
+			auto types = array_size ? type->ArrayTypes() : type->VarTypes();
+			const Types::Type* best = nullptr;
+			bool preferLocal = m_Build.GetVariables().LocalDepth() > 0;
+			bool bestIsLocal = false;
+			if (!types.empty()) {
+				Types::MatchLevel bestLevel = Types::MatchLevel::None;
+
+				for (auto id : types) {
+					auto& newtype = m_Types.GetType(id);
+					auto matchLevel = newtype.Ref()->GetMatchLevel(type);
+					bool bestOnScope = false;
+
+					if (best && preferLocal) {
+						if (!bestIsLocal && newtype.Ref()->GetVarValue()->GetVarType()->IsScopedVar())
+							bestOnScope = true;
+					}
+					
+					switch (matchLevel) {
+					case Types::MatchLevel::Loose:
+					case Types::MatchLevel::Basic:
+						if (bestLevel == Types::MatchLevel::Basic && !bestOnScope)
+							continue;
+					case Types::MatchLevel::Strict:
+						if (bestLevel != Types::MatchLevel::Strict) {
+							break;
+						}
+						else if (bestLevel == matchLevel && bestOnScope)
+							break;
+					default: continue;
+					}
+
+					best = newtype.Ptr();
+					bestLevel = matchLevel;
+					bestIsLocal = best->IsScopedVar();
+				}
+			}
+			
+			if (best) type = best;
+			else {
+				ASSERT(best);
+				m_Task.Event<error_no_var_type_for_subexp>(type);
+			}
+		}
+
+		std::string name = "__PV" + std::to_string(m_ParseVars.size()) + "_" + type->GetName();
+		var = m_Build.AddScriptVariable(name, m_Types.GetType(type->GetID()).Ref(), array_size);
+		m_ParseVars.emplace_back(var);
+	}
+
+	m_UsedParseVars.emplace(var);
+	return var;
+}
+void Parser::FreeParseVar(ScriptVariable* var) {
+	m_UsedParseVars.erase(var);
 }
 Tokens::CommandArgs::Arg* Parser::AddCommandArg(Operand op, Types::Value* val) {
 	if (m_ActiveState == state_parsing_command_args) {
@@ -275,6 +348,8 @@ States Parser::Parse_Neutral_CheckDelimiter(IToken* tok) {
 						if (!subexp.Finish()) {
 							BREAK();
 						}
+
+						if (subexp.m_EvalVar) opState.MeetVariable(subexp.m_EvalVar);
 						/*for (auto& op : m_OperationParseStates.back().m_OperandChain)  {
 							opState.m_OperandChain.emplace_back(op);
 						}
@@ -625,272 +700,6 @@ void Parser::Parse() {
 		newstate = (this->*funcs[m_ParseState = newstate])();
 	} while (newstate != m_ParseState && newstate != state_neutral);
 	m_ParseState = newstate;
-	return;
-
-	/*auto& types = m_Build.GetTypes();
-	auto ptr = *m_TokenIt;
-	auto type = ptr->GetToken()->GetType<Tokens::Type>();
-	bool newline = false;
-	bool just_found_command = false;
-	Types::ValueSet val_type = Types::ValueSet::INVALID;
-
-	switch (type) {
-	case Tokens::Type::Label: {
-		auto& token = ptr->GetToken()->Get<Tokens::Label::Info>();
-		auto label = token.GetValue<Tokens::Label::Parameter::LabelValue>();
-				
-		if (!m_OnNewLine) {
-			SendError(Error::label_on_line, label);
-		}
-
-		val_type = Types::ValueSet::Label;
-				
-		auto scriptLabel = m_Build.GetScriptLabel(label);
-		if (scriptLabel) {
-			AddLabel(scriptLabel, m_TokenIt);
-			m_LabelTokens.emplace_back(m_TokenIt);
-		}
-		//m_UnusedLabels
-		break;
-	}
-	case Tokens::Type::Identifier: {
-		Commands::Vector vec;
-		auto& token = ptr->GetToken()->Get<Tokens::Identifier::Info<>>();
-		auto range = token.GetValue<Tokens::Identifier::ScriptRange>();
-		auto name = range.Format();
-
-		if (IsCommandParsing() && !AreCommandArgsParsed()) {
-			if (m_CommandArgIt->IsReturn()) {
-			}
-			else {
-				auto type = m_CommandArgIt->GetType();
-				auto val_vec = type->GetValueTypes<>(Types::ValueSet::Text);
-				if (val_vec.size()) {
-					Types::Value* val;
-					for (auto v : val_vec) {
-						auto stringval = static_cast<Types::TextValue*>(v);
-						auto translation = stringval->GetTranslation();
-						ASSERT(translation);
-					}
-
-					auto symbol = CreateSymbol<Tokens::String::Value<Types::Value*>>(val, name);
-					m_TokenIt->GetSymbol() = symbol;
-
-					val_type = Types::ValueSet::Text;
-					break;
-				}
-			}
-		}
-
-		if (auto type = GetType(name)) {
-		}
-		else if (auto ptr = m_Build.GetScriptLabel(name)) {
-			// this is a label pointer!
-			m_Jumps.emplace_back(ptr->Ptr(), m_TokenIt);
-
-			auto tok = CreateToken<Tokens::Label::Info>(Tokens::Type::LabelRef, range, ptr->Ptr());
-			m_TokenIt.Get()->SetToken(tok);
-			m_TokenIt.Get()->SetSymbol(CreateSymbol<Tokens::Label::Jump>(tok));
-
-			AddLabelRef(ptr, m_TokenIt);
-		}
-		else if (m_Commands.FindCommands(name, vec) > 0) {
-			// make a token and store it
-			if (vec.size() == 1)
-				m_TokenIt.Get()->SetToken(CreateToken<Tokens::Command::Info<Command>>(Tokens::Type::Command, range, vec[0]));
-			else
-				m_TokenIt.Get()->SetToken(CreateToken<Tokens::Command::OverloadInfo<Command>>(Tokens::Type::CommandOverload, range, vec));
-				//m_TokenIt.Get().SetToken(ScriptsTokens::MakeShared < Tokens::Command::OverloadInfo<Command> >(range.Begin(), Tokens::Type::CommandOverload, range, vec));
-
-			if (ParseCommandOverloads(vec)) {
-				BeginCommandParsing();
-				just_found_command = true;
-			}
-		}
-		else if (false /*check variables /) {
-
-		}
-		else if (IsCommandParsing()/* && m_CommandArgIt->GetType().IsCompatible()/) {
-
-		}
-		else {
-			SendError(Error::invalid_identifier, range);
-		}
-
-		val_type = Types::ValueSet::Label;
-				
-		break;
-	}
-	case Tokens::Type::String: {
-		auto& token = ptr->GetToken()->Get<Tokens::String::Info>();
-		auto range = token.GetValue<0>();
-		auto string = range.Format();
-
-				
-
-		val_type = Types::ValueSet::Text;
-		break;
-	}
-	case Tokens::Type::Number: {
-		auto type = Tokens::Number::GetValueType(*ptr->GetToken());
-		bool is_int = type != Numbers::Float;
-		Numbers::IntegerType int_value;
-		Numbers::FloatType float_value;
-				
-		size_t size;
-		if (is_int) {
-			auto info = ptr->GetToken()->Get<Tokens::Number::Info<Numbers::IntegerType>>();
-			int_value = info.GetValue<Tokens::Number::Parameter::NumberValue>();
-			size = CountBitOccupation(int_value.GetValue<Numbers::IntegerType::MaxType>());
-		}
-		else {
-			auto info = ptr->GetToken()->Get<Tokens::Number::Info<Numbers::FloatType>>();
-			float_value = info.GetValue<Tokens::Number::Parameter::NumberValue>();
-			size = 32;
-		}
-				
-		// 
-		Types::Value* best_value_match;
-		size_t smallest_fitting_value_size = 0;
-
-		// Contain compatible Value's
-		std::vector<Types::Value*> vec;
-		// Number of compatible Value's
-		size_t n;
-		if (IsCommandParsing() && !AreCommandArgsParsed()) {
-			auto type = m_CommandArgIt->GetType();
-			n = types.GetValues(Types::ValueSet::Number, size, vec, [&best_value_match, &smallest_fitting_value_size, is_int, &vec](Types::Value* value){
-				// Keep this value?
-				auto& num_value = value->Extend<Types::NumberValue>();
-				if (num_value.GetNumberType() != (is_int ? Types::NumberValueType::Integer : Types::NumberValueType::Float))
-					return false;
-
-				// Oh, is this the only one we need?
-				auto ntype = value->GetType();
-				if (!best_value_match || smallest_fitting_value_size > value->GetSize()) {
-					best_value_match = value;
-					smallest_fitting_value_size = value->GetSize();
-				}
-				return true;
-			});
-
-			// The value isn't compatible with this command argument
-			if (!n) {
-				BREAK();
-			}
-		}
-		else
-		{
-			// TODO: figure out what to keep
-			n = types.GetValues(Types::ValueSet::Number, size, vec, [this, is_int, &vec](Types::Value* value){
-				// Keep this value?
-				auto& num_value = value->Extend<Types::NumberValue>();
-				if (num_value.GetNumberType() != (is_int ? Types::NumberValueType::Integer : Types::NumberValueType::Float))
-					return false;
-				return true;
-			});
-		}
-
-		// No values? Poopy...
-		if (!n) {
-			SendError(Error::unsupported_value_type);
-		}
-
-		// Do we have a chosen Value?
-		if (best_value_match) {
-			// Now create a token for the value itself
-			auto number_val = static_cast<Types::NumberValue*>(best_value_match);
-			auto val_symbol = is_int
-				? CreateSymbol<Tokens::Number::Value<Types::NumberValue*>>(number_val, *ptr->GetToken<Tokens::Number::Info<Numbers::IntegerType>>())
-				: CreateSymbol<Tokens::Number::Value<Types::NumberValue*>>(number_val, *ptr->GetToken<Tokens::Number::Info<Numbers::FloatType>>());
-
-			// Store it back in the script token
-			m_TokenIt.Get()->GetSymbol() = val_symbol;
-		}
-		else {
-			// TODO: something
-		}
-				
-		// Victory!
-		val_type = Types::ValueSet::Number;
-		break;
-	}
-	case Tokens::Type::Character: {
-		auto& token = ptr->GetToken()->Get<Tokens::Character::Info<Character>>();
-		switch (auto ch = token.GetValue<Tokens::Character::Parameter::CharacterValue>()) {
-		case Character::EOL:
-			if (IsCommandParsing()) {
-				if (!AreCommandArgsParsed()) {
-					BREAK();
-				}
-				else {
-					m_CommandTokenMap.emplace(m_CurrentCommand->GetName(), m_CommandTokenIt);
-					FinishCommandParsing();
-				}
-			}
-			newline = true;
-			break;
-		default:
-			SendError(Error::invalid_character, ch);
-			break;
-		}
-		break;
-	}
-	case Tokens::Type::Delimiter: {
-		auto& token = ptr->GetToken()->Get<Tokens::Delimiter::Info<Delimiter>>();
-
-		/*switch (auto type = token.GetValue<Tokens::Delimiter::DelimiterType>()) {
-		case Delimiter::BeginScope:
-			type.Open();
-			break;
-		case Delimiter::EndScope:
-			type.Close();
-			break;
-		}*
-		break;
-	}
-	case Tokens::Type::Command: {
-		BREAK();			// this shouldn't happen
-		++m_TokenIt;
-		break;
-	}
-	case Tokens::Type::Operator: {
-		auto& token = ptr->GetToken()->Get<Tokens::Operator::Info<Operators::Type>>();
-		auto type = token.GetValue<Tokens::Operator::Parameter::OperatorType>();
-		auto rg = token.GetValue<Tokens::Operator::Parameter::ScriptRange>();
-		rg.Begin();
-		break;
-	}
-	default:
-				
-		break;
-	}
-
-	if (just_found_command) {
-		//auto tok = m_TokenIt.Get().GetToken<Tokens::Command::Info<Command>>();
-		//auto cmd = tok->GetValue<Tokens::Command::CommandType>();
-		m_CommandTokens.emplace_back(m_CommandTokenIt);
-	}
-	else if (IsCommandParsing()) {
-		if (!AreCommandArgsParsed()) {
-			if (val_type != Types::ValueSet::INVALID) {
-				switch (val_type) {
-				case Types::ValueSet::Null:
-					break;
-				case Types::ValueSet::Text: {
-					break;
-				}
-				}
-
-				m_CommandArgTokens.emplace_back(m_TokenIt.Get());
-			}
-			else BREAK();
-			NextCommandArg();
-		}
-	}
-
-	m_OnNewLine = newline;
-	++m_TokenIt;*/
 }
 void Parser::Reset()
 { }
@@ -947,11 +756,13 @@ std::map<Error::ID, std::string> Error::s_map = {
 	{ Error::expected_identifier, "expected identifier" },
 	{ Error::expected_integer_constant, "expected integer constant" },
 	{ Error::expected_key_identifier, "expected key identifier" },
+	{ Error::expected_rhs_value, "expected rhs value" },
 	{ Error::invalid_character, "invalid character" },
 	{ Error::invalid_command, "invalid command" },
 	{ Error::invalid_identifier, "invalid identifier" },
 	{ Error::invalid_operator, "invalid operator" },
 	{ Error::label_on_line, "label on line" },
 	{ Error::too_many_args, "too many args" },
+	{ Error::unmatched_closing_delimiter, "unmatched closing delimiter" },
 	{ Error::unsupported_value_type, "unsupported value type" },
 };
