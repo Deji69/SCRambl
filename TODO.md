@@ -1,10 +1,10 @@
 # SCRambl
 
-Deadline: Christmas...
+Deadline: Som-err-time...
 
-**Completed: 44 / 99**
+**Completed: 63 / 100**
 
-est. 44.444...% Complete
+est. 63% Complete!
 
 ## Engine ##
 - [x] Task System
@@ -66,23 +66,23 @@ Completed: 9 / 9
 	- [x] Character Mapping
 	- [x] Tokenization
 
-Completed: 20 / 31
+Completed: 23 / 32
 
 ## Parser ##
 - [ ] SCR Elements
 	- [ ] Commands
 		- [x] Built-in
 		- [ ] User-defined
-	- [ ] Labels
-	- [ ] Operators
+	- [x] Labels
+	- [x] Operators
 	- [x] Constants
 	- [x] Enums
 	- [ ] Variables
-		- [ ] Arrays
+		- [x] Arrays
 		- [ ] Predefined / Timers
-	- [ ] Types
-		- [ ] Basic Types
-		- [ ] Extended Types
+	- [x] Types
+		- [x] Basic Types
+		- [x] Extended Types
 	- [x] XML Loading
 	- [x] XML Syntax
 - [ ] Control Structures
@@ -95,25 +95,26 @@ Completed: 20 / 31
 	- [ ] Argument Type Detection
 - [ ] Label Syntax
 	- [ ] Scope
-- [ ] Variable Syntax
-	- [ ] Scope
+- [x] Variable Syntax
+	- [x] Scope
 - [ ] Operator Syntax
 	- [x] Basic Operations
 	- [x] Incremental Operations
-	- [ ] Complex Operations
-	- [ ] Chained Operations
-	- [ ] Operator Overloading
-	- [ ] Operand Type Detection
-- [ ] Other
-	- [ ] Constant Expressions ?
+	- [x] Complex Operations
+	- [x] Chained Operations
+	- [x] Operator Overloading
+	- [x] Operand Type Detection
+	- [ ] Conditional Operations
+- [x] Other
+	- [x] Constant Expressions
 
-Completed: 7 / 37
+Completed: 21 / 37
 
 ## Compiler ##
-- [ ] Translation
-- [ ] Compilation
+- [x] Translation
+- [x] Compilation
 
-Completed: 0 / 2
+Completed: 2 / 2
 
 ## Linker ##
 - [ ] Linker Formats

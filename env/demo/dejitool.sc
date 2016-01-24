@@ -20,7 +20,7 @@ WAIT 0x7F*/
 start:
 {
 	VAR_INT var1 var2
-	var1 = 2 * var1 + (2 + --var2 + 1)
+	var1 = 2 * var1 + (2 + --var2 + 1) / 5 + var2
 	//var1 += 2 + 2 * 2 * var1 * 2 * (4 * var1)// + 1 * 1 + 1
 	WAIT var1
 	LVAR_INT lvar1 lvar2
