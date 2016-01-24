@@ -451,7 +451,7 @@ namespace SCRambl
 						m_State = startValue;
 						return true;
 					}
-					if (m_State == waitRHS || m_State == finishedUnary) {
+					if (m_State == waitRHS || m_State == finishedUnary || (m_State == startValueWaitRHS && m_SubEval)) {
 						// if we're chaining or in sub-expression, check the chained operations for extra opportunities...
 						if (m_Chaining || (m_SubEval && !m_OperandChain.empty())) {
 							// allow for auto operations on consecutive constants
@@ -461,11 +461,32 @@ namespace SCRambl
 									if (m_Operator->HasAuto()) {
 										auto op = m_Operator->GetAutoOperation(last_operand.second, type);
 										if (op) {
-											// evaluate new operand
-											if (m_Negate) operand.Negate();
-											last_operand.first = op->EvaluateAuto(last_operand.first, operand);
-											m_State = finishedRHS;
-											return true;
+											switch (op->AutoType()) {
+											default:
+												// if there have been variables we can't auto evaluate const expression operators, 'cept these...
+												if (!m_NumVars) {
+												case Operators::Type::add:
+												case Operators::Type::sub:
+												case Operators::Type::inc:
+												case Operators::Type::dec:
+												case Operators::Type::bit_not:
+												case Operators::Type::eq:
+												case Operators::Type::neq:
+												case Operators::Type::lt:
+												case Operators::Type::gt:
+												case Operators::Type::leq:
+												case Operators::Type::geq:
+												case Operators::Type::not:
+												case Operators::Type::and:
+												case Operators::Type::or:
+													// evaluate new operand
+													if (m_Negate) operand.Negate();
+													last_operand.first = op->EvaluateAuto(last_operand.first, operand);
+													m_State = finishedRHS;
+													return true;
+												}
+												break;
+											}
 										}
 									}
 								}
