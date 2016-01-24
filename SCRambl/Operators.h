@@ -267,6 +267,7 @@ namespace SCRambl
 			Types::Type* RHS() const { return m_RHS.Ptr(); }
 			Type AutoType() const { return m_AutoType; }
 			bool IsAuto() const { return m_IsAuto; }
+			bool IsSwapped() const { return m_Swapped; }
 			bool HasLHS() const { return LHS() != nullptr; }
 			bool HasRHS() const { return RHS() != nullptr; }
 			bool HasLHV() const { return m_HasLHV; }

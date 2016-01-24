@@ -274,10 +274,10 @@ namespace SCRambl
 				};
 				enum State {
 					init, startOperator, startVariable, startValue,
-					waitRHS, startValueWaitRHS, finishedRHS, finishedUnary,
+					waitRHS, waitUnaryRHS, startValueWaitRHS, finishedRHS, finishedUnary, finishedUnaryRHS,
 				} m_State = init;
 				enum class OperandType {
-					Operation, Operator, Value, Variable
+					Operation, Operator, PreUnaryOperator, PostUnaryOperator, Value, Variable
 				};
 
 				Parser& m_Parser;
@@ -311,6 +311,19 @@ namespace SCRambl
 					m_OperandTypes.emplace_back(OperandType::Operator);
 					m_OperatorChain.emplace_back(op);
 				}
+				Operators::OperatorRef PopOperator() {
+					ASSERT(!m_OperatorChain.empty());
+					
+					auto op = m_OperatorChain.back();
+					for (auto it = m_OperandTypes.rbegin(); it != m_OperandTypes.rend(); ++it) {
+						if (*it == OperandType::Operator) {
+							m_OperandTypes.erase(it.base());
+							break;
+						}
+					}
+					m_OperatorChain.pop_back();
+					return op;
+				}
 				// return true if valid
 				bool MeetOperator(Operators::OperatorRef oper) {
 					if (m_State == init) {
@@ -326,7 +339,7 @@ namespace SCRambl
 						return true;
 					}
 					else if (m_State == startOperator);
-					else if (m_State == waitRHS || m_State == startValueWaitRHS) {
+					else if (m_State == waitRHS || m_State == startValueWaitRHS || m_State == finishedUnaryRHS) {
 						if (oper->IsNegative()) {
 							m_Negate = !m_Negate;
 							//m_State = waitRHS;
@@ -336,15 +349,22 @@ namespace SCRambl
 							if (!m_SubEval) {
 								// TODO: check for increment auto-operation?
 								// try to complete postfix unary
-								BREAK();
-								if (auto op = m_Operator->GetUnaryOperation(m_OperandChain.front().first.Value<ScriptVariable>().Ptr(), false)) {
-									AddOperation(op);
-									m_State = finishedRHS;
+								if (m_OperandTypes.back() == OperandType::Variable) {
+									if (auto op = m_Operator->GetUnaryOperation(m_OperandChain.back().first.Value<ScriptVariable>().Ptr(), false)) {
+										AddOperation(op);
+										AddVariable(&m_OperandChain.back().first.Value<ScriptVariable>());
+										m_State = finishedUnary;
+									}
 								}
-								else {
-									BREAK();		// expected RHS / invalid postfix unary
-									return false;
+
+								if (m_State != finishedUnary) {
+									m_State = waitUnaryRHS;
+									AddOperator(m_Operator);
 								}
+							}
+							else {
+								//AddVariable(&m_OperandChain.back().first.Value<ScriptVariable>());
+								AddOperator(m_Operator);
 							}
 
 							// proceed with chaining
@@ -376,17 +396,18 @@ namespace SCRambl
 						m_State = startVariable;
 						return true;
 					}
-					else if (m_State == startOperator) {
+					else if (m_State == startOperator || m_State == waitUnaryRHS) {
 						// complete prefix op
-						auto op = m_Operator->GetOperation(m_OperandChain.front().first.Value<ScriptVariable>().Ptr(), var->Get().Type());
+						auto op = m_Operator->GetUnaryOperation(var->Ptr(), true);
 						if (op) {
 							AddOperation(op);
 							AddVariable(var);
-							m_State = finishedUnary;
-							return true;
+							m_Operator = PopOperator();
+							m_State = finishedUnaryRHS;
+							return MeetVariable(var);		// weee'll meet again...
 						}
 					}
-					else if (m_State == waitRHS || m_State == startValueWaitRHS) {
+					else if (m_State == waitRHS || m_State == startValueWaitRHS || m_State == finishedUnaryRHS) {
 						// complete op
 						if (!m_SubEval) {
 							auto op = m_State == startValueWaitRHS
@@ -430,7 +451,7 @@ namespace SCRambl
 						m_State = startValue;
 						return true;
 					}
-					if (m_State == waitRHS) {
+					if (m_State == waitRHS || m_State == finishedUnary) {
 						// if we're chaining or in sub-expression, check the chained operations for extra opportunities...
 						if (m_Chaining || (m_SubEval && !m_OperandChain.empty())) {
 							// allow for auto operations on consecutive constants
@@ -497,10 +518,8 @@ namespace SCRambl
 						
 						newState.MeetVariable(m_EvalVar);
 						newState.MeetOperator(defop);
-						//newState.AddVariable(var);
-						//newState.AddOperation(op);
 
-						// rebuild the rest of the operation and complete where necessary
+						// rebuild the rest of the operation
 						size_t opidx = 0;
 						size_t operidx = 0;
 						size_t opertidx = 0;
@@ -508,7 +527,6 @@ namespace SCRambl
 						for (auto type : m_OperandTypes) {
 							switch (type) {
 							case OperandType::Operator:
-								//opr = m_OperatorChain[opidx++];
 								newState.MeetOperator(m_OperatorChain[opidx++]);
 								break;
 							case OperandType::Operation:
@@ -518,19 +536,9 @@ namespace SCRambl
 								break;
 							case OperandType::Value:
 								newState.MeetValue(m_OperandChain[operidx].first, m_OperandChain[operidx].second);
-								operidx++;
+								++operidx;
 								break;
 							case OperandType::Variable:
-								/*if (opr) {
-									auto op = opr->GetOperation(m_EvalVar->Ptr(), m_OperandChain[operidx].second);
-									if (op) {
-										newState.AddOperation(op);
-										newState.AddValue(m_OperandChain[operidx].first, m_OperandChain[operidx].second);
-									}
-									opr = nullptr;
-								}
- 								else newState.AddValue(m_OperandChain[operidx].first, m_OperandChain[operidx].second);
-								++operidx;*/
 								newState.MeetValue(m_OperandChain[operidx].first, m_OperandChain[operidx].second);
 								++operidx;
 								break;
@@ -571,7 +579,7 @@ namespace SCRambl
 						std::vector<Tokens::CommandArgs::Arg> args;
 
 						// sort lhs
-						if (oper->HasLHS()) {
+						if (oper->HasLHS() || oper->HasLHV()) {
 							if (oper->HasLHV()) {
 								Numbers::IntegerType v = static_cast<long long>(oper->GetLHV());
 								auto value = m_Parser.GetBestValue(Types::ValueSet::Number, v.Size());
@@ -580,7 +588,7 @@ namespace SCRambl
 								size += value->GetTranslation()->GetSize(FormArgumentXlate(*xlation, args.back()));
 							}
 							else if (operand_it != m_OperandChain.end()) {
-								auto& svar = (oper->HasRHV() ? operand_it++ : begin_it)->first.Value<ScriptVariable>();
+								auto& svar = (oper->HasRHV() ? operand_it : begin_it)->first.Value<ScriptVariable>();
 								auto var = svar.Ptr();
 								auto value = m_Parser.AllFittingValues<Types::VariableValue>(Types::ValueSet::Variable, var->Value()->GetSize(), [&var](Types::VariableValue* value){
 									return value->IsGlobal() == var->IsGlobal();
@@ -592,13 +600,19 @@ namespace SCRambl
 							}
 							else BREAK();
 						}
-						if (oper->HasRHS()) {
+						if (oper->HasRHS() || oper->HasRHV()) {
+							/*if (!oper->HasLHV() && oper->HasRHV() && operand_it != begin_it && (operand_it - 1)->first.GetType() == Operand::VariableValue) {
+								--operand_it;
+							}*/
 							if (oper->HasRHV()) {
 								Numbers::IntegerType v = static_cast<long long>(oper->GetRHV());
 								auto value = m_Parser.GetBestValue(Types::ValueSet::Number, v.Size());
 								if (!value) BREAK();
-
-								args.emplace_back(Operand(v, m_Parser.m_Engine.Format(v)), value);
+								
+								if (oper->IsSwapped())
+									args.emplace(args.begin(), Operand(v, m_Parser.m_Engine.Format(v)), value);
+								else
+									args.emplace_back(Operand(v, m_Parser.m_Engine.Format(v)), value);
 								size += value->GetTranslation()->GetSize(FormArgumentXlate(*xlation, args.back()));
 							}
 							else if (operand_it != m_OperandChain.end()) {
@@ -611,7 +625,10 @@ namespace SCRambl
 									});
 									ASSERT(value);
 									if (value) {
-										args.emplace_back(operand, value);
+										if (oper->IsSwapped())
+											args.emplace(args.begin(), operand, value);
+										else
+											args.emplace_back(operand, value);
 										size += value->GetTranslation()->GetSize(FormArgumentXlate(*xlation, args.back()));
 									}
 									else {
@@ -630,17 +647,20 @@ namespace SCRambl
 									auto value = m_Parser.GetBestValue(valtype, operand.Size());
 									ASSERT(value);
 									if (value) {
-										args.emplace_back(operand, value);
+										if (oper->IsSwapped())
+											args.emplace(args.begin(), operand, value);
+										else
+											args.emplace_back(operand, value);
 										size += value->GetTranslation()->GetSize(FormArgumentXlate(*xlation, args.back()));
 									}
 									else {
 										return false;
 									}
 								}
-
-								++operand_it;
 							}
 							else BREAK();
+
+							++operand_it;
 						}
 
 						auto token = m_Parser.CreateToken<Tokens::CommandArgs::Info>(Tokens::Type::ArgList, args);
