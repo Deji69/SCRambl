@@ -14,6 +14,7 @@
 #include "Commands.h"
 #include "Operators.h"
 #include "Constants.h"
+#include "Constructs.h"
 #include "Types.h"
 #include "Tokens.h"
 #include "Standard.h"
@@ -302,6 +303,10 @@ namespace SCRambl
 		inline Commands& GetCommands() { return m_Commands; }
 		inline const Commands& GetCommands() const { return m_Commands; }
 
+		// Constructs
+		inline Constructing::Constructs& GetConstructs() { return m_Constructs; }
+		inline const Constructing::Constructs& GetConstructs() const { return m_Constructs ; }
+
 		// Operators
 		inline Operators::Master& GetOperators() { return m_Operators; }
 		inline const Operators::Master& GetOperators() const { return m_Operators; }
@@ -417,6 +422,7 @@ namespace SCRambl
 		Engine& m_Engine;
 		Constants m_Constants;
 		Commands m_Commands;
+		Constructing::Constructs m_Constructs;
 		Operators::Master m_Operators;
 		Types::Types m_Types;
 		BuildEnvironment m_Env;

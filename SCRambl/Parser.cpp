@@ -235,6 +235,7 @@ States Parser::Parse_Neutral_CheckCharacter(IToken* tok) {
 				BREAK();
 			}
 			// figure out the translation data size of the arg list
+			if (!m_CommandParseState.command->IsTranslationDisabled())
 			{
 				size_t size = m_Xlation->GetTranslation()->GetSize(*m_Xlation);
 				for (auto arg : m_CommandParseState.args) {
@@ -245,9 +246,14 @@ States Parser::Parse_Neutral_CheckCharacter(IToken* tok) {
 				}
 
 				m_SizeCount += BitsToBytes(size);
+				m_CommandTokenMap.emplace(m_CommandParseState.command->Name(), m_CommandTokenIt);
+				auto token = CreateToken<Tokens::CommandArgs::Info>(Tokens::Type::ArgList, m_CommandParseState.args);
 			}
-			m_CommandTokenMap.emplace(m_CommandParseState.command->Name(), m_CommandTokenIt);
-			auto token = CreateToken<Tokens::CommandArgs::Info>(Tokens::Type::ArgList, m_CommandParseState.args);
+			// lets follow that up with construct blocks
+			if (auto construct = m_CommandParseState.command->GetConstruct()) {
+				m_ActiveState = state_neutral;
+				return state_parsing_construct;
+			}
 			break;
 		}
 		m_ActiveState = state_neutral;
@@ -661,10 +667,14 @@ States Parser::Parse_Command() {
 		return false;
 	});
 	if (cmdval) {
-		m_Xlation = m_Build.AddSymbol(cmdval->GetTranslation());
-		m_Xlation->SetAttributes(Types::DataSourceID::Command, attributes);
+		if (!m_CurrentCommand->IsTranslationDisabled()) {
+			m_Xlation = m_Build.AddSymbol(cmdval->GetTranslation());
+			m_Xlation->SetAttributes(Types::DataSourceID::Command, attributes);
+		}
+		
 		++m_TokenIt;
-		return m_CurrentCommand->NumParams() > 0 ? state_parsing_command_args : state_neutral;
+
+		return m_CurrentCommand->NumParams() > 0 ? state_parsing_command_args : (m_CurrentCommand->GetConstruct() ? state_parsing_construct : state_neutral);
 	}
 	else m_Task.Event<error_invalid_command>();
 	return state_neutral;
@@ -686,6 +696,14 @@ States Parser::Parse_Subscript() {
 		BREAK();
 	return state_parsing_subscript;
 }
+States Parser::Parse_Construct() {
+	if (!m_CommandParseState.command->GetConstruct()) {
+		BREAK();
+	}
+
+	m_ConstructParseState.Init(m_CommandParseState.command->GetConstruct());
+	return state_neutral;
+}
 void Parser::Parse() {
 	States newstate = m_ParseState;
 	do {
@@ -695,7 +713,7 @@ void Parser::Parse() {
 
 			&Parser::Parse_Subscript,
 			&Parser::Parse_Type_Varlist, &Parser::Parse_Type_CommandDef,
-			&Parser::Parse_Command_Arglist
+			&Parser::Parse_Command_Arglist, &Parser::Parse_Construct
 		};
 		newstate = (this->*funcs[m_ParseState = newstate])();
 	} while (newstate != m_ParseState && newstate != state_neutral);

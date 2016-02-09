@@ -141,20 +141,22 @@ bool Build::LoadXML(std::string path) {
 	return false;
 }
 void Build::Setup() {
-	m_CurrentTask = std::end(m_Tasks);
-	m_Types.Init(*this);
-	m_Constants.Init(*this);
-	m_Commands.Init(*this);
-	m_Operators.Init(*this);
 	AddEvent<task_event>("task_event");
 	AddEvent<build_event>("build_event");
 	AddEvent<token_event>("token_event");
 	AddEvent<error_event>("error_event");
+	m_CurrentTask = std::end(m_Tasks);
+	m_Types.Init(*this);
+	m_Constants.Init(*this);
+	m_Commands.Init(*this);
+	m_Constructs.Init(*this);
+	m_Operators.Init(*this);
 }
 void Build::Init() {
 	m_CurrentTask = std::begin(m_Tasks);
 
 	LoadDefinitions();
+	m_Commands.ResolveCommandConstructs(m_Constructs);		//
 
 	for (auto& scr : m_Config->GetScripts()) {
 		m_BuildScripts.emplace_back(scr.first, m_Env.Val(scr.second.Name).AsString() + m_Env.Val(scr.second.Ext).AsString());

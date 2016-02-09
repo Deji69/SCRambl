@@ -11,6 +11,10 @@ const CommandAttributeSet Attributes<CommandAttributeID, CommandAttributeSet>::s
 // CommandArg
 CommandArg::CommandArg(VecRef<Type> type, size_t index, bool isRet, size_t size) : m_Type(type), m_Index(index), m_IsReturn(isRet), m_Size(size)
 { }
+// CommandVarArg
+CommandVarArg::CommandVarArg(VecRef<Type> type, size_t index, bool isRet, size_t size, size_t max, size_t min) : CommandArg(type, index, isRet, size),
+	m_Maximum(max), m_Minimum(min)
+{ }
 	
 // CommandValue
 size_t CommandValue::GetValueSize(const Command::Attributes& cmd) const {
@@ -73,15 +77,23 @@ void Commands::Init(Build& build) {
 		type = types.GetType(xml["Type"]->AsString()).Ref();
 		if (!type) BREAK();
 	});
-	auto args = m_Config->AddClass("Command", [this, &type, &types](const XMLNode xml, void*& obj){
+	auto command = m_Config->AddClass("Command", [this, &type, &types](const XMLNode xml, void*& obj){
 		// store the command to the object pointer so we can access it again
 		auto stype = type;
 		if (auto type_attr = xml.GetAttribute("Type")) {
 			stype = types.GetType(type_attr->AsString()).Ref();
 		}
 		auto command = AddCommand(CaseConvert(xml["Name"]->AsString()), *xml["ID"], stype);
+		if (auto construct = xml["Construct"]) {
+			AddCommandConstruct(construct->AsString(), command);
+		}
 		obj = command.Ptr();
-	})->AddClass("Args");
+	});
+	command->AddClass("DisableTranslation", [this](const XMLNode xml, void*& obj){
+		auto& command = *static_cast<SCRambl::Command*>(obj);
+		command.SetDisableTranslation(true);
+	});
+	auto args = command->AddClass("Args");
 	args->AddClass("Arg", [this, &types](const XMLNode xml, void*& obj){
 		// retrieve the object poiter as a SCR command we know it to be
 		auto& command = *static_cast<SCRambl::Command*>(obj);
@@ -92,6 +104,25 @@ void Commands::Init(Build& build) {
 			auto name = xml.GetAttribute("Type").GetValue().AsString();
 			name.size();
 		}
+	});
+	auto varargs = command->AddClass("VarArgs", [this,&types](const XMLNode xml, void*& obj){
+		auto& command = *static_cast<SCRambl::Command*>(obj);
+		auto conf = &command.GetVarArgsConfig();;
+		
+		if (auto type = types.GetType(xml["Type"]->AsString()))
+			conf->SetType(type);
+
+		conf->SetIndex(*xml["ID"]);
+		obj = conf;
+	});
+	varargs->AddClass("VarArg", [this, &type, &types](const XMLNode xml, void*& obj){
+		auto& varargs = *static_cast<SCRambl::Command::VarArgsConfig*>(obj);
+		if (auto type = types.GetType(xml["Type"]->AsString())) {
+			//varargs.AddVarArg();
+			//obj = arg;
+			return;
+		}
+		obj = nullptr;
 	});
 }
 Command::Ref Commands::GetCommand(size_t index) {
@@ -110,7 +141,7 @@ Command::Ref Commands::AddCommand(std::string name, XMLValue id, VecRef<Types::T
 	return { m_Commands, m_Commands.size() - 1 };
 }
 long Commands::FindCommands(std::string name, Vector& vec) {
-	return ForCommandsNamed(name, [&vec](Command::Ref ptr){ vec.push_back(ptr); });
+	return ForCommandsNamed(name, [&vec](Command::Ref ptr){ if (!ptr->IsCallDisabled()) { vec.push_back(ptr); } return true;  });
 }
 std::string Commands::CaseConvert(std::string str) const {
 	if (m_UseCaseConversion) {
@@ -119,5 +150,3 @@ std::string Commands::CaseConvert(std::string str) const {
 	}
 	return str;
 }
-Commands::Commands()
-{ }

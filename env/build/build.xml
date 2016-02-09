@@ -10,10 +10,11 @@
 			<DefinitionPath Path="config/gtasa/">
 				<!-- Definition files to load (from this path) by default -->
 				<!-- <Definition> can be used outside of this nest to search through all Path's -->
-				<Definition>delimiters.xml</Definition>
+				<!--<Definition>delimiters.xml</Definition>-->
 				<Definition>types.xml</Definition>
 				<Definition>constants.xml</Definition>
 				<Definition>commands.xml</Definition>
+				<Definition>constructs.xml</Definition>
 				<Definition>operators.xml</Definition>
 			</DefinitionPath>
 			

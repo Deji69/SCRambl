@@ -85,6 +85,9 @@
     <ClCompile Include="AutoOperation.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Constructs.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Builder.h">
@@ -253,6 +256,9 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="AutoOperation.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Constructs.h">
       <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>

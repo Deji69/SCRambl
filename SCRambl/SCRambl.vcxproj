@@ -89,6 +89,7 @@
     <ClInclude Include="Commands.h" />
     <ClInclude Include="Compiler.h" />
     <ClInclude Include="Constants.h" />
+    <ClInclude Include="Constructs.h" />
     <ClInclude Include="Delimiters.h" />
     <ClInclude Include="Labels.h" />
     <ClInclude Include="Linker.h" />
@@ -146,6 +147,7 @@
     <ClCompile Include="Compiler.cpp" />
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="Constants.cpp" />
+    <ClCompile Include="Constructs.cpp" />
     <ClCompile Include="Delimiters.cpp" />
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="Environment.cpp" />

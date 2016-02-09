@@ -5,7 +5,7 @@
 
 <SCRambl Version="1.0" FileVersion="0.0.0.0">
     <Commands>
-		<!-- CaseConvert
+		<!-- CaseConvert	
 			Types:
 			 Casing: none - ignore casing
 					 lowercase - convert to lower-case
@@ -33,7 +33,7 @@
 			Attributes:
 			 Type (string): the type name
 			Description:
-			 Sets the TYPE used for commands for the rest of <Command>
+			 Sets the default TYPE used for commands for the rest of <Commands>
 		-->
 		<CommandType Type="COMMAND" />
 		
@@ -362,11 +362,18 @@
                 <Arg Type="FLOAT" Desc="Radius" />
             </Args>
         </Command>
-        <Command Name="if" ID="0xD6">
+		<Command Name="if" ID="0xCF" Construct="if">
+			<DisableTranslation />
+		</Command>
+        <Command Name="andor" ID="0xD6">
+			<DisableCall />
             <Args>
-                <Arg Type="INT" Desc="" />
+				<Arg Type="INT" />
             </Args>
         </Command>
+		<Command Name="and">
+			
+		</Command>
         <Command Name="launch_mission" ID="0xD7">
             <Args>
                 <Arg Type="LABEL" />
@@ -9198,6 +9205,7 @@
             </Args>
         </Command>
         <Command Name="switch" ID="0x848">
+			<NoTranslate />
         </Command>
         <Command Name="endswitch" ID="0x849">
         </Command>

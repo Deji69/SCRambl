@@ -25,7 +25,7 @@ namespace SCRambl
 #ifdef _WIN32
 	#define BREAK() do{__debugbreak();}while(0)
 #else
-	#define BREAK() do{}while(0)
+	#define BREAK() if(0)
 #endif
 
 #if (_MSC_VER <= 1800)
@@ -229,6 +229,18 @@ namespace SCRambl {
 			return is;
 		}
 	};
+
+	static size_t tokenize(std::vector<std::string>& out, std::string str) {
+		auto it = str.begin();
+		size_t n = 0;
+		for (auto end = std::find_if(it, str.end(), IsSpace); end != str.end(); end = std::find_if(it, str.end(), IsSpace)) {
+			std::string tok(it, end);
+			if (tok.empty()) continue;
+			out.emplace_back(tok);
+			++n;
+		}
+		return n;
+	}
 
 	// returns how long the strings match for (in bytes, not time - but that would be cool)
 	static inline size_t lengthcompare(const std::string& a, const std::string& b) {

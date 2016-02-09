@@ -38,9 +38,9 @@ namespace SCRambl
 
 		XMLConfig* AddClass(const std::string&);
 		
-		template<typename T>
-		inline XMLConfig* AddClass(const std::string & name, T& func) {
-			auto pr = m_Objects.emplace(name, func);
+		template<typename T, typename T2 = std::function<void(const XMLNode, void*&)>>
+		inline XMLConfig* AddClass(const std::string& name, T& func, T2& recurse_func = T2()) {
+			auto pr = m_Objects.emplace(name, XMLObject(func, recurse_func));
 			return pr.second ? &pr.first->second : nullptr;
 		}
 	};
@@ -49,12 +49,14 @@ namespace SCRambl
 	{
 		friend class Configuration;
 		std::function<void(const XMLNode, void*&)> m_Func;
+		std::function<void(const XMLNode, void*&)> m_RecurseFunc;
 
 	public:
 		XMLObject() = default;
-		template<typename T>
-		XMLObject(T& func) {
+		template<typename T, typename T2 = std::function<void(const XMLNode, void*&)>>
+		XMLObject(T& func, T2& recurse_func = T2()) {
 			m_Func = func;
+			m_RecurseFunc = recurse_func;
 		}
 		~XMLObject() { }
 

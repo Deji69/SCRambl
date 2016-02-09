@@ -36,7 +36,7 @@ namespace SCRambl
 			state_neutral, state_parsing_type, state_parsing_command, state_parsing_operator,
 			state_parsing_number, state_parsing_string, state_parsing_label, state_parsing_variable,
 			state_parsing_subscript, state_parsing_type_varlist, state_parsing_type_command,
-			state_parsing_command_args,
+			state_parsing_command_args, state_parsing_construct,
 			max_state
 		};
 
@@ -342,7 +342,6 @@ namespace SCRambl
 					else if (m_State == waitRHS || m_State == startValueWaitRHS || m_State == finishedUnaryRHS) {
 						if (oper->IsNegative()) {
 							m_Negate = !m_Negate;
-							//m_State = waitRHS;
 							return true;
 						}
 						else {
@@ -363,14 +362,12 @@ namespace SCRambl
 								}
 							}
 							else {
-								//AddVariable(&m_OperandChain.back().first.Value<ScriptVariable>());
 								AddOperator(m_Operator);
 							}
 
 							// proceed with chaining
 							m_Operator = oper;
 							m_Chaining = true;
-							//m_State = waitRHS;
 						}
 						return true;
 					}
@@ -622,9 +619,6 @@ namespace SCRambl
 							else BREAK();
 						}
 						if (oper->HasRHS() || oper->HasRHV()) {
-							/*if (!oper->HasLHV() && oper->HasRHV() && operand_it != begin_it && (operand_it - 1)->first.GetType() == Operand::VariableValue) {
-								--operand_it;
-							}*/
 							if (oper->HasRHV()) {
 								Numbers::IntegerType v = static_cast<long long>(oper->GetRHV());
 								auto value = m_Parser.GetBestValue(Types::ValueSet::Number, v.Size());
@@ -725,6 +719,50 @@ namespace SCRambl
 				inline bool IsNegated() const { return ItIsNegated; }
 				inline bool IsFloat() const { return ItIsFloat; }
 			} m_NumberParseState;
+			struct ConstructParseState {
+				enum State {
+					init, parsing, parsingConditionList,
+					finish
+				};
+				
+				void Init(Constructing::Construct* construct_) {
+					construct = construct_;
+					if (construct->NumBlocks()) {
+						blockStack.emplace(&construct->GetBlock(0));
+						state = blockStack.top()->HasConditionList() ? parsingConditionList : parsing;
+					}
+					else state = finish;
+				}
+
+				void ProcessBlock() {
+					auto block = blockStack.top();
+					std::vector<Constructing::Data*> data;
+
+					switch (state) {
+					case parsing:
+					case parsingConditionList:
+						if (block->HasConditionList()) {
+							if (state != parsingConditionList) {
+								state = parsingConditionList;
+							}
+							break;
+						}
+						else state = init;
+
+						// check if there is code data before the block
+						if (block->GetDataAt(data, Constructing::DataPosition::Block, true)) {
+							for (auto dat : data) {
+								
+							}
+						}
+						break;
+					}
+				}
+
+				State state = init;
+				Constructing::Construct* construct = nullptr;
+				std::stack<Constructing::Block*> blockStack;
+			} m_ConstructParseState;
 
 		public:
 			enum State {
@@ -764,6 +802,7 @@ namespace SCRambl
 			States Parse_Label();
 			States Parse_Variable();
 			States Parse_Subscript();
+			States Parse_Construct();
 
 			inline bool IsEOLReached() const {
 				return m_TokenIt == m_Tokens.end() || IsCharacterEOL(m_TokenIt->GetToken());
